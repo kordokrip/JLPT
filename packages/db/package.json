@@ -1,0 +1,40 @@
+{
+  "name": "@nihongo-n3/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/schema.ts",
+  "types": "./src/schema.ts",
+  "exports": {
+    ".": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate:local": "wrangler d1 migrations apply nihongo-n3-prod --local --config ../../apps/api/wrangler.toml",
+    "migrate:remote": "wrangler d1 migrations apply nihongo-n3-prod --remote --config ../../apps/api/wrangler.toml",
+    "seed:local": "tsx src/seed/seed.ts --local",
+    "seed:remote": "tsx src/seed/seed.ts --remote",
+    "seed:diff": "tsx src/seed/seed-diff.ts --local",
+    "seed:diff:local": "tsx src/seed/seed-diff.ts --local",
+    "seed:diff:remote": "tsx src/seed/seed-diff.ts --remote",
+    "verify": "tsx src/seed/verify.ts --local",
+    "verify:remote": "tsx src/seed/verify.ts --remote",
+    "studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.31.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "drizzle-kit": "^0.22.7",
+    "mdast-util-to-string": "^4.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.5",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0",
+    "wrangler": "^3.60.0"
+  }
+}

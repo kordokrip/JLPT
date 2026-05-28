@@ -1,0 +1,86 @@
+import { expect, test, type Page } from '@playwright/test';
+
+const ROUTES = [
+  { path: '/', label: '홈', text: /오늘 할 일|Today's Tasks|今日のタスク/ },
+  { path: '/review', label: '복습', text: /복습|Review|復習/ },
+  { path: '/browse/vocab', label: '찾아보기', text: /어휘 찾아보기|Browse Vocabulary|語彙ブラウズ/ },
+  { path: '/quiz', label: '퀴즈', text: /퀴즈|Quiz|クイズ/ },
+  { path: '/reading', label: '독해', text: /독해|Reading|読解/ },
+  { path: '/curriculum', label: '커리큘럼', text: /16주 학습 계획|16-Week|16週/ },
+  { path: '/self-check', label: '자가진단', text: /자가진단|Self-Check|自己診断/ },
+  { path: '/stats', label: '통계', text: /학습 통계|Learning Stats|学習統計/ },
+  { path: '/settings', label: '설정', text: /설정|Settings|設定/ },
+] as const;
+
+async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
+  const failures: string[] = [];
+  const badResponses: string[] = [];
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+
+  page.on('requestfailed', (request) => {
+    const failure = request.failure();
+    if (failure?.errorText !== 'net::ERR_ABORTED') {
+      failures.push(`${request.method()} ${request.url()} ${failure?.errorText ?? 'failed'}`);
+    }
+  });
+  page.on('response', (response) => {
+    const url = response.url();
+    if (url.includes('/api/v1/') && response.status() >= 400) {
+      badResponses.push(`${response.status()} ${url}`);
+    }
+  });
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', (err) => pageErrors.push(err.message));
+
+  await run();
+
+  expect(failures, 'network request failures').toEqual([]);
+  expect(badResponses, 'bad API responses').toEqual([]);
+  expect(consoleErrors, 'browser console errors').toEqual([]);
+  expect(pageErrors, 'uncaught page errors').toEqual([]);
+}
+
+async function expectVisibleHref(page: Page, href: string, label: string) {
+  await expect
+    .poll(async () => {
+      return page.locator(`a[href="${href}"]`).evaluateAll((links) =>
+        links.some((link) => {
+          const style = window.getComputedStyle(link);
+          const rect = link.getBoundingClientRect();
+          return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+        }),
+      );
+    }, { message: `${label} nav link`, timeout: 10_000 })
+    .toBe(true);
+}
+
+test.describe('운영 메뉴 smoke', () => {
+  for (const viewport of [
+    { name: 'desktop', width: 1280, height: 900 },
+    { name: 'mobile', width: 390, height: 844 },
+  ] as const) {
+    test(`${viewport.name}: 모든 주요 메뉴가 렌더링되고 라우팅된다`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+      await assertNoRuntimeFailures(page, async () => {
+        await page.goto('/', { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+
+        for (const route of ROUTES) {
+          await expectVisibleHref(page, route.path, route.label);
+        }
+
+        for (const route of ROUTES) {
+          await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+          await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+          await expect(page.locator('main').getByText(route.text).first(), `${route.path} content`).toBeVisible({
+            timeout: 15_000,
+          });
+        }
+      });
+    });
+  }
+});

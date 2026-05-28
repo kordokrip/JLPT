@@ -1,0 +1,194 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* JLPT N3 Studio Design System */
+  /* Inspired by washi paper, vermillion ink, and Japanese minimalism */
+
+  --font-size: 16px;
+
+  /* Core Palette - Washi & Ink */
+  --background: #FAFAF7;
+  --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --muted: #8B8680;
+  --border: #ECECE8;
+
+  /* The Only Accent - Vermillion (朱色) */
+  --accent: #C8332B;
+  --accent-foreground: #FFFFFF;
+  --accent-soft: #FBEAE8;
+
+  /* Semantic Colors */
+  --success: #5C7F4F; /* matcha green */
+  --warning: #C89B6E; /* warm ochre */
+  --info: #6B7F8C; /* cool grey */
+
+  /* Typography Scale */
+  --text-11: 0.6875rem;
+  --text-13: 0.8125rem;
+  --text-14: 0.875rem;
+  --text-15: 0.9375rem;
+  --text-18: 1.125rem;
+  --text-24: 1.5rem;
+  --text-28: 1.75rem;
+  --text-32: 2rem;
+  --text-36: 2.25rem;
+  --text-48: 3rem;
+  --text-64: 4rem;
+  --text-72: 4.5rem;
+  --text-96: 6rem;
+
+  /* Spacing Rhythm */
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-28: 1.75rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+  --space-80: 5rem;
+
+  /* Shape */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 320ms;
+  --duration-flip: 600ms;
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-flip: cubic-bezier(0.7, 0, 0.3, 1);
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+}
+
+.dark {
+  --background: #1A1A1C;
+  --foreground: #F0EDE6;
+  --card: #232325;
+  --card-foreground: #F0EDE6;
+  --muted: #9A9690;
+  --border: #333336;
+  --accent-soft: #3D2320;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: var(--font-weight-normal);
+    letter-spacing: 0;
+    line-height: 1.5;
+  }
+
+  /* Typography Defaults */
+  h1, h2, h3 {
+    font-weight: var(--font-weight-medium);
+    letter-spacing: -0.02em;
+  }
+
+  .font-serif-jp {
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  .font-sans-jp {
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .font-pretendard {
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  /* Japanese body text gets generous line-height */
+  .text-jp-body {
+    line-height: 1.7;
+  }
+
+  /* NO shadows, depth comes from hairline borders only */
+  .card-hairline {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+  }
+
+  /* Hover treatment for desktop */
+  .hover-lift {
+    transition: all var(--duration-base) ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    border-color: #D8D5D0;
+  }
+
+  /* Button press feedback */
+  .press-feedback:active {
+    transform: scale(0.97);
+    transition: transform var(--duration-fast) ease;
+  }
+
+  /* Hide scrollbars but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 3D Card Flip */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* Pulse animation for current week */
+  @keyframes pulse-ring {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
+  }
+
+  .animate-pulse-ring {
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@nihongo-n3/content",
+  "version": "0.0.1",
+  "private": true,
+  "description": "JLPT N3 학습 마크다운 원본 콘텐츠 (00_source_map ~ C_self_check 15개+)",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

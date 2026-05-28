@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # npm/pnpm 패키지 (grouped)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 10
+    groups:
+      # Cloudflare Workers 관련 패키지 묶음
+      cloudflare:
+        patterns:
+          - "@cloudflare/*"
+          - "wrangler"
+          - "hono"
+          - "@hono/*"
+      # React 생태계 묶음
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "@tanstack/*"
+      # Playwright
+      playwright:
+        patterns:
+          - "@playwright/*"
+      # TypeScript 도구
+      typescript-tools:
+        patterns:
+          - "typescript"
+          - "tsup"
+          - "vite"
+          - "@vitejs/*"
+    ignore:
+      # 메이저 버전 자동 업그레이드 방지 (breaking changes 가능성)
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions 워크플로우 자동 업그레이드
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
