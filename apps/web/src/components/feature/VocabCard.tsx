@@ -5,7 +5,7 @@ import { cn } from '../../lib/cn';
 import { useTranslation } from 'react-i18next';
 import { Badge, levelVariant } from '../ui/Badge';
 import { Ruby } from '../ui/Ruby';
-import { audioPlayer } from '../../lib/audio';
+import { PronunciationButton } from './PronunciationButton';
 import type { VocabItem } from '../../lib/db';
 
 interface VocabCardProps {
@@ -16,12 +16,7 @@ interface VocabCardProps {
 
 export function VocabCard({ item, onClick, className }: VocabCardProps) {
   const { t } = useTranslation();
-  const handleAudio = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (item.audio_path) {
-      audioPlayer.play(item.audio_path, item.reading || item.word).catch(() => {/* ignore */});
-    }
-  };
+  const pronunciationText = item.reading || item.word;
 
   return (
     <article
@@ -58,25 +53,14 @@ export function VocabCard({ item, onClick, className }: VocabCardProps) {
       {/* 우측: 레벨 배지 + 오디오 */}
       <div className="flex flex-col items-end gap-2 shrink-0">
         <Badge variant={levelVariant(item.level)}>{item.level.toUpperCase()}</Badge>
-        {item.audio_path && (
-          <button
-            onClick={handleAudio}
-            aria-label={`${item.word} ${t('browse.playPronunciation')}`}
-            className="text-[var(--text-muted)] hover:text-primary transition-colors rounded-full p-1"
-          >
-            <SpeakerIcon className="h-4 w-4" />
-          </button>
-        )}
+        <PronunciationButton
+          compact
+          text={pronunciationText}
+          audioPath={item.audio_path}
+          label={`${item.word} ${t('browse.playPronunciation')}`}
+          className="border-0 bg-transparent p-1"
+        />
       </div>
     </article>
-  );
-}
-
-function SpeakerIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <path d="M15.54 8.46a5 5 0 010 7.07" />
-    </svg>
   );
 }

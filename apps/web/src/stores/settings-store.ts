@@ -3,7 +3,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PlaybackRate } from '../lib/audio';
+import type { PlaybackRate, VoiceGender } from '../lib/audio';
 import type { SupportedLang } from '../i18n';
 
 interface SettingsState {
@@ -22,6 +22,8 @@ interface SettingsState {
   // 오디오
   playbackRate:    PlaybackRate;
   setPlaybackRate: (r: PlaybackRate) => void;
+  voiceGender:     VoiceGender;
+  setVoiceGender:  (v: VoiceGender) => void;
   autoPronounce:   boolean;
   setAutoPronounce:(v: boolean) => void;
 
@@ -48,6 +50,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       playbackRate:    1.0,
       setPlaybackRate: (r) => set({ playbackRate: r }),
+      voiceGender:     'female',
+      setVoiceGender:  (v) => set({ voiceGender: v }),
       autoPronounce:   true,
       setAutoPronounce:(v) => set({ autoPronounce: v }),
 

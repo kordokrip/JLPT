@@ -6,9 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useVocabItem } from '../hooks/useVocab';
 import { useGrammarItem, useKanjiItem } from '../hooks/useContent';
 import { Badge, levelVariant } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
 import { Ruby } from '../components/ui/Ruby';
-import { audioPlayer } from '../lib/audio';
+import { PronunciationButton } from '../components/feature/PronunciationButton';
 
 type ContentType = 'vocab' | 'grammar' | 'kanji';
 
@@ -50,15 +49,14 @@ function VocabDetail({ id }: { id: number }) {
         <p className="text-xl text-[var(--text-secondary)]">{item.meaning}</p>
       </header>
 
-      {item.audio_path && (
-        <Button variant="outline" size="sm" onClick={() => audioPlayer.play(item.audio_path!, item.reading || item.word).catch(() => {})}>
-          🔊 {t('browse.playPronunciation')}
-        </Button>
-      )}
+      <PronunciationButton text={item.reading || item.word} audioPath={item.audio_path} />
 
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
-          <p className="text-sm font-medium text-[var(--text-muted)]">{t('browse.example')}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-[var(--text-muted)]">{t('browse.example')}</p>
+            <PronunciationButton compact text={item.example_jp} label={t('browse.playExamplePronunciation')} />
+          </div>
           <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
           {item.example_ko && <p className="text-sm text-[var(--text-secondary)]">{item.example_ko}</p>}
         </section>
@@ -68,6 +66,7 @@ function VocabDetail({ id }: { id: number }) {
 }
 
 function GrammarDetail({ id }: { id: number }) {
+  const { t } = useTranslation();
   const { item, loading } = useGrammarItem(id);
   if (loading) return <Skeleton />;
   if (!item) return <NotFound />;
@@ -89,7 +88,10 @@ function GrammarDetail({ id }: { id: number }) {
       )}
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
-          <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
+            <PronunciationButton compact text={item.example_jp} label={t('browse.playExamplePronunciation')} />
+          </div>
           {item.example_ko && <p className="text-sm text-[var(--text-secondary)]">{item.example_ko}</p>}
         </section>
       )}
@@ -112,11 +114,10 @@ function KanjiDetail({ id }: { id: number }) {
         </div>
         <p className="text-lg text-[var(--text-secondary)]">{item.meaning}</p>
       </header>
-      {item.audio_path && (
-        <Button variant="outline" size="sm" onClick={() => audioPlayer.play(item.audio_path!, item.reading_on || item.reading_kun || item.character).catch(() => {})}>
-          🔊 {t('browse.playPronunciation')}
-        </Button>
-      )}
+      <PronunciationButton
+        text={item.reading_on || item.reading_kun || item.character}
+        audioPath={item.audio_path}
+      />
       <dl className="space-y-2 text-sm">
         {item.reading_on && (
           <div className="flex gap-3">

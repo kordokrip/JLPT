@@ -15,6 +15,22 @@ export function buildAudioUrl(path: string): string {
 }
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
+export type VoiceGender = 'female' | 'male';
+export type AudioSourcePreference = 'browser' | 'server';
+
+interface SpeechOptions {
+  voiceGender?: VoiceGender;
+  lang?: string;
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: () => void;
+}
+
+interface PronunciationOptions {
+  text?: string | undefined;
+  audioPath?: string | undefined;
+  prefer?: AudioSourcePreference;
+}
 
 interface AudioEntry {
   path: string;
@@ -28,11 +44,28 @@ class AudioPlayer {
   private cache = new Map<string, AudioEntry>();
   private currentSource: AudioBufferSourceNode | null = null;
   private _rate: PlaybackRate = 1.0;
+  private _voiceGender: VoiceGender = 'female';
+  private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
+  private voicesReady: Promise<void> | null = null;
 
   get rate(): PlaybackRate { return this._rate; }
   set rate(v: PlaybackRate) { this._rate = v; }
+  get voiceGender(): VoiceGender { return this._voiceGender; }
+  set voiceGender(v: VoiceGender) { this._voiceGender = v; }
+  get sourcePreference(): AudioSourcePreference { return this._sourcePreference; }
+  set sourcePreference(v: AudioSourcePreference) { this._sourcePreference = v; }
   set onEnd(cb: () => void) { this._onEnd = cb; }
+
+  configure(options: {
+    rate?: PlaybackRate;
+    voiceGender?: VoiceGender;
+    sourcePreference?: AudioSourcePreference;
+  }): void {
+    if (options.rate !== undefined) this._rate = options.rate;
+    if (options.voiceGender !== undefined) this._voiceGender = options.voiceGender;
+    if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
+  }
 
   private getCtx(): AudioContext {
     if (!this.ctx || this.ctx.state === 'closed') {
@@ -67,14 +100,87 @@ class AudioPlayer {
     }
   }
 
-  speakText(text: string): void {
-    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+  private async warmVoices(): Promise<void> {
+    if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.getVoices().length > 0) return;
+    if (this.voicesReady) return this.voicesReady;
+
+    this.voicesReady = new Promise((resolve) => {
+      const timer = window.setTimeout(resolve, 600);
+      window.speechSynthesis.addEventListener(
+        'voiceschanged',
+        () => {
+          window.clearTimeout(timer);
+          resolve();
+        },
+        { once: true },
+      );
+    });
+    return this.voicesReady;
+  }
+
+  private pickJapaneseVoice(gender: VoiceGender, lang = 'ja-JP'): SpeechSynthesisVoice | undefined {
+    if (!('speechSynthesis' in window)) return undefined;
+    const voices = window.speechSynthesis.getVoices();
+    const langPrefix = lang.split('-')[0]?.toLowerCase() ?? 'ja';
+    const japaneseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
+    if (japaneseVoices.length === 0) return undefined;
+
+    const femaleHints = ['female', 'woman', 'kyoko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
+    const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show'];
+    const hints = gender === 'female' ? femaleHints : maleHints;
+    const oppositeHints = gender === 'female' ? maleHints : femaleHints;
+
+    const scored = japaneseVoices
+      .map((voice) => {
+        const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
+        const score =
+          hints.some((hint) => haystack.includes(hint)) ? 2 :
+          oppositeHints.some((hint) => haystack.includes(hint)) ? -1 :
+          0;
+        return { voice, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    return scored[0]?.voice;
+  }
+
+  async speakText(text: string, options: SpeechOptions = {}): Promise<void> {
+    if (!text.trim() || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
+    await this.warmVoices();
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ja-JP';
+    utterance.lang = options.lang ?? 'ja-JP';
     utterance.rate = this._rate;
-    utterance.onend = () => this._onEnd?.();
+    const voice = this.pickJapaneseVoice(options.voiceGender ?? this._voiceGender, utterance.lang);
+    if (voice) utterance.voice = voice;
+    utterance.onstart = options.onStart ?? null;
+    utterance.onend = () => {
+      options.onEnd?.();
+      this._onEnd?.();
+    };
+    utterance.onerror = () => {
+      options.onError?.();
+      this._onEnd?.();
+    };
     window.speechSynthesis.speak(utterance);
+  }
+
+  async playPronunciation({
+    text,
+    audioPath,
+    prefer = this._sourcePreference,
+  }: PronunciationOptions): Promise<void> {
+    const normalized = text?.trim();
+    if (prefer === 'browser' && normalized) {
+      await this.speakText(normalized);
+      return;
+    }
+    if (audioPath) {
+      await this.play(audioPath, normalized);
+      return;
+    }
+    if (normalized) await this.speakText(normalized);
   }
 
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
@@ -96,7 +202,7 @@ class AudioPlayer {
     }
 
     if (!entry.buffer) {
-      if (fallbackText) this.speakText(fallbackText);
+      if (fallbackText) await this.speakText(fallbackText);
       return;
     }
 

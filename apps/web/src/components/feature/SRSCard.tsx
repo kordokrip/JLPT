@@ -4,7 +4,9 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PronunciationButton } from './PronunciationButton';
 import { audioPlayer } from '../../lib/audio';
+import { useSettingsStore } from '../../stores/settings-store';
 import type { SrsCard } from '../../lib/db';
 import type { Rating } from '../../lib/fsrs-client';
 
@@ -36,6 +38,7 @@ export function SRSCard({
   card, heading, reading, meaning, partOfSpeech, example, exampleKo, audioPath, onRate, loading = false,
 }: SRSCardProps) {
   const { t } = useTranslation();
+  const autoPronounce = useSettingsStore((s) => s.autoPronounce);
   const [flipped, setFlipped] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -56,9 +59,12 @@ export function SRSCard({
     }
   };
 
-  const playAudio = () => {
-    if (audioPath) audioPlayer.play(audioPath, reading || heading).catch(() => {/* ignore */});
-  };
+  useEffect(() => {
+    setFlipped(false);
+    if (autoPronounce) {
+      audioPlayer.playPronunciation({ text: reading || heading, audioPath }).catch(() => {/* ignore */});
+    }
+  }, [audioPath, autoPronounce, heading, reading]);
 
   /* 키보드 단축키 */
   useEffect(() => {
@@ -153,17 +159,13 @@ export function SRSCard({
               )}
               <div className="font-pretendard text-[13px] text-foreground font-medium flex items-center gap-2">
                 {meaning}
-                {audioPath && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); playAudio(); }}
-                    aria-label={t('browse.playPronunciation')}
-                    className="text-[var(--muted-foreground)] hover:text-foreground transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-                    </svg>
-                  </button>
-                )}
+                <PronunciationButton
+                  compact
+                  text={reading || heading}
+                  audioPath={audioPath}
+                  label={t('browse.playPronunciation')}
+                  className="border-0 bg-transparent p-1"
+                />
               </div>
             </div>
 
@@ -174,7 +176,10 @@ export function SRSCard({
             {example && (
               <div>
               <div className="text-[8px] uppercase tracking-[0.12em] text-[var(--muted-foreground)] mb-1">{t('review.example')}</div>
-                <p className="font-sans-jp text-[11px] text-[var(--muted-foreground)] text-jp-body mb-0.5">{example}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-sans-jp text-[11px] text-[var(--muted-foreground)] text-jp-body mb-0.5">{example}</p>
+                  <PronunciationButton compact text={example} label={t('browse.playExamplePronunciation')} />
+                </div>
                 {exampleKo && <p className="font-pretendard text-[10px] text-[var(--muted-foreground)]">{exampleKo}</p>}
               </div>
             )}

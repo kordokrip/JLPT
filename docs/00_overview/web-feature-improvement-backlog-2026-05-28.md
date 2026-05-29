@@ -572,3 +572,39 @@ VITE_API_URL=https://nihongo-n3-api.kordokrip.workers.dev pnpm -F @nihongo-n3/we
 | Test env vars warning | `wrangler.toml`의 top-level vars/bindings가 `env.test`로 상속되지 않는다는 경고가 남아 있다. 테스트는 통과하지만 구성 중복 정리가 필요하다. |
 | 실제 오디오 품질 | 외부 유료 API 없이 Cloudflare Workers AI + 브라우저 음성 fallback으로 운영 중이다. R2 오디오 물량과 일본어 음질은 계속 개선 대상이다. |
 | GitHub 반영 | 현재 로컬 `.git` 부재와 `gh` 미인증/MCP timeout으로 원격 commit/push는 별도 인증 복구 후 진행해야 한다. |
+
+### 2026-05-29 7차 오디오/발음 UX 개선
+
+#### 완료 항목
+
+| 영역 | 처리 내용 | 결과 |
+|---|---|---|
+| 공통 오디오 | `audioPlayer`에 브라우저 일본어 음성 합성 우선 재생, 남성/여성 음성 선호, 재생 속도 연동을 추가했다. | R2/서버 MP3가 없어도 일본어 텍스트가 있으면 즉시 발음 재생 가능 |
+| 설정 | 설정 화면에 일본어 발음 음성 성별 선택을 추가했다. | 여성/남성 선택 시 미리듣기 문장이 즉시 재생됨 |
+| 단어/한자 | 목록 카드와 상세 화면에서 `audio_path` 존재 여부와 무관하게 발음 버튼을 표시하도록 개선했다. | 모든 단어/한자 읽기 텍스트를 브라우저 음성으로 재생 가능 |
+| 예문 | 단어/문법/SRS 예문에 발음 버튼을 추가했다. | 예문 단위 발음 학습 가능 |
+| 복습 카드 | 카드 앞면 자동 발음 재생과 수동 발음 버튼을 공통 재생기로 통합했다. | 설정의 자동 재생/성별/속도와 복습 카드가 일관되게 동작 |
+| 퀴즈 | 퀴즈 문항에 일본어 텍스트가 있으면 오디오 버튼을 표시하고, 청해 fallback도 공통 재생기를 사용하도록 수정했다. | 청해/한자/어휘 퀴즈에서 서버 오디오 의존도를 낮춤 |
+
+#### 검증 로그
+
+```bash
+pnpm -F @nihongo-n3/web typecheck
+# 통과
+
+pnpm -F @nihongo-n3/web test:run
+# 통과: 17 passed
+
+VITE_API_URL=https://nihongo-n3-api.kordokrip.workers.dev pnpm -F @nihongo-n3/web build
+# 통과: PWA production build
+
+pnpm -F @nihongo-n3/e2e exec playwright test menu-smoke.spec.ts settings-theme.spec.ts vocab-search.spec.ts --project=chromium
+# 통과: 9 passed
+```
+
+#### 주의 항목
+
+| 항목 | 설명 |
+|---|---|
+| 성별 음성 선택 | Web Speech API는 표준 gender 필드를 제공하지 않으므로 브라우저 음성 이름을 기준으로 여성/남성 선호를 매칭한다. 해당 성별 음성이 없는 기기에서는 일본어 기본 음성으로 fallback한다. |
+| 서버 MP3 음성 | 현재 개선은 사용자 선택 음성을 브라우저 발음에 적용한다. R2에 이미 저장된 서버 MP3 자체의 성별을 바꾸려면 향후 서버 TTS 생성 단계에서 male/female 변형 키를 별도로 저장해야 한다. |

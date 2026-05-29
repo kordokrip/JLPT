@@ -3,7 +3,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { buildAudioUrl } from '../../lib/audio';
+import { audioPlayer } from '../../lib/audio';
 
 interface Props {
   questionId:  string;
@@ -28,29 +28,22 @@ export default function QuizQuestionMC({
 }: Props) {
   const { t } = useTranslation();
   const [usingSpeechFallback, setUsingSpeechFallback] = useState(false);
-  const speakFallback = () => {
-    if (!audioText || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(audioText);
-    utterance.lang = 'ja-JP';
-    setUsingSpeechFallback(true);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  };
+  const promptAudioText = audioText ?? (hasJapanese(prompt) ? prompt : undefined);
+  const canPlayAudio = !!audioKey || !!promptAudioText;
 
   const handleAudio = () => {
-    if (!audioKey) return;
-    const src = buildAudioUrl(audioKey);
-    const audio = new Audio(src);
     setUsingSpeechFallback(false);
-    audio.addEventListener('error', speakFallback, { once: true });
-    audio.play().catch(speakFallback);
+    audioPlayer
+      .playPronunciation({ text: promptAudioText, audioPath: audioKey })
+      .then(() => setUsingSpeechFallback(!audioKey))
+      .catch(() => setUsingSpeechFallback(!!promptAudioText));
   };
 
   return (
     <div className="space-y-4">
       {/* 문제 */}
       <div className="text-center">
-        {audioKey && (
+        {canPlayAudio && (
           <button
             type="button"
             aria-label={t('common.play')}
@@ -64,7 +57,7 @@ export default function QuizQuestionMC({
             </svg>
           </button>
         )}
-        {usingSpeechFallback && (
+        {usingSpeechFallback && promptAudioText && (
           <p className="mb-3 text-[12px] text-[var(--muted-foreground)]" role="status">
             {t('quiz.browserSpeechFallback')}
           </p>
@@ -109,4 +102,8 @@ export default function QuizQuestionMC({
       </ul>
     </div>
   );
+}
+
+function hasJapanese(text: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(text);
 }

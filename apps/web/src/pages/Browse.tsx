@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useVocabList, useVocabSearch } from '../hooks/useVocab';
 import { useGrammarList, useKanjiList } from '../hooks/useContent';
 import { levelVariant } from '../components/ui/Badge';
+import { PronunciationButton } from '../components/feature/PronunciationButton';
 import type { GrammarItem, KanjiItem, VocabItem } from '../lib/db';
 
 type ContentType = 'vocab' | 'grammar' | 'kanji';
@@ -157,8 +158,15 @@ export default function Browse() {
                           <div className="font-serif-jp text-[28px] font-normal text-foreground">
                             {item.word}
                           </div>
-                          <div className="font-sans-jp text-[12px] text-[var(--muted-foreground)] mt-0.5">
-                            {item.reading}
+                          <div className="font-sans-jp text-[12px] text-[var(--muted-foreground)] mt-0.5 flex items-center gap-1.5">
+                            <span>{item.reading}</span>
+                            <PronunciationButton
+                              compact
+                              text={item.reading || item.word}
+                              audioPath={item.audio_path}
+                              label={`${item.word} ${t('browse.playPronunciation')}`}
+                              className="h-6 w-6 border-0 bg-transparent p-0"
+                            />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
@@ -199,8 +207,15 @@ export default function Browse() {
                     >
                       {currentType === 'kanji' ? (
                         <div className="flex items-start gap-5">
-                          <div className="font-serif-jp text-[40px] font-normal text-foreground flex-shrink-0">
+                          <div className="font-serif-jp text-[40px] font-normal text-foreground flex-shrink-0 flex items-center gap-2">
                             {(item as KanjiItem).character}
+                            <PronunciationButton
+                              compact
+                              text={(item as KanjiItem).reading_on || (item as KanjiItem).reading_kun || (item as KanjiItem).character}
+                              audioPath={(item as KanjiItem).audio_path}
+                              label={`${(item as KanjiItem).character} ${t('browse.playPronunciation')}`}
+                              className="h-7 w-7 text-[var(--muted-foreground)]"
+                            />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">

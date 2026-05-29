@@ -13,7 +13,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import { buildAudioUrl } from '../lib/audio';
+import { audioPlayer, buildAudioUrl } from '../lib/audio';
 import QuizTimer from '../components/feature/QuizTimer';
 
 const MAX_PLAYS = 3;
@@ -63,7 +63,7 @@ function AudioPlayer({
   fallbackText,
   onPlaysExhausted,
 }: {
-  audioKey: string;
+  audioKey?: string | undefined;
   fallbackText?: string | undefined;
   onPlaysExhausted?: () => void;
 }) {
@@ -75,33 +75,30 @@ function AudioPlayer({
   const [duration, setDuration]       = useState(0);
   const [audioUnavailable, setAudioUnavailable] = useState(false);
 
-  const src = buildAudioUrl(audioKey);
+  const src = audioKey ? buildAudioUrl(audioKey) : '';
 
   const handlePlayPause = useCallback(() => {
     const el = audioRef.current;
-    if (!el) return;
 
-    if (audioUnavailable) {
+    if (audioUnavailable || !audioKey || !el) {
       if (!fallbackText) return;
       if (playCount >= MAX_PLAYS) { onPlaysExhausted?.(); return; }
-      if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(fallbackText);
-      utterance.lang = 'ja-JP';
-      utterance.onstart = () => setPlaying(true);
-      utterance.onend = () => setPlaying(false);
-      utterance.onerror = () => setPlaying(false);
       setPlayCount((n) => n + 1);
-      window.speechSynthesis.speak(utterance);
+      void audioPlayer.speakText(fallbackText, {
+        onStart: () => setPlaying(true),
+        onEnd:   () => setPlaying(false),
+        onError: () => setPlaying(false),
+      });
       return;
     }
     if (el.paused) {
       if (playCount >= MAX_PLAYS) { onPlaysExhausted?.(); return; }
+      el.playbackRate = audioPlayer.rate;
       el.play().catch(console.error);
     } else {
       el.pause();
     }
-  }, [audioUnavailable, fallbackText, playCount, onPlaysExhausted]);
+  }, [audioKey, audioUnavailable, fallbackText, playCount, onPlaysExhausted]);
 
   const handleSkipBack = useCallback(() => {
     if (!audioRef.current) return;
@@ -112,21 +109,23 @@ function AudioPlayer({
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 space-y-4">
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio
-        ref={audioRef}
-        src={src}
-        preload="auto"
-        onPlay={() => {
-          setPlaying(true);
-          setPlayCount((n) => n + 1);
-        }}
-        onPause={() => setPlaying(false)}
-        onEnded={() => setPlaying(false)}
-        onError={() => setAudioUnavailable(true)}
-        onTimeUpdate={(e) => setCurrentTime((e.currentTarget).currentTime)}
-        onLoadedMetadata={(e) => setDuration((e.currentTarget).duration)}
-      />
+      {audioKey && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <audio
+          ref={audioRef}
+          src={src}
+          preload="auto"
+          onPlay={() => {
+            setPlaying(true);
+            setPlayCount((n) => n + 1);
+          }}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          onError={() => setAudioUnavailable(true)}
+          onTimeUpdate={(e) => setCurrentTime((e.currentTarget).currentTime)}
+          onLoadedMetadata={(e) => setDuration((e.currentTarget).duration)}
+        />
+      )}
 
       {/* 진행 바 */}
       <div
@@ -203,7 +202,7 @@ function AudioPlayer({
           {t('quiz.maxPlaysReached')}
         </p>
       )}
-      {audioUnavailable && fallbackText && (
+      {(audioUnavailable || !audioKey) && fallbackText && (
         <p className="text-center text-[12px] text-[var(--muted-foreground)] font-pretendard">
           {t('quiz.browserSpeechFallback')}
         </p>
@@ -339,7 +338,7 @@ export default function QuizListening() {
       </div>
 
       {/* 오디오 플레이어 */}
-      {current.audio_key ? (
+      {current.audio_key || current.script_ja ? (
         <AudioPlayer
           audioKey={current.audio_key}
           fallbackText={current.script_ja}

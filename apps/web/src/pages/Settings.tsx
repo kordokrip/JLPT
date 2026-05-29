@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
 import { audioPlayer } from '../lib/audio';
-import type { PlaybackRate } from '../lib/audio';
+import type { PlaybackRate, VoiceGender } from '../lib/audio';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
   getNotificationPermission,
@@ -31,6 +31,7 @@ export default function Settings() {
     theme, setTheme,
     furiganaMode, setFurigana,
     playbackRate, setPlaybackRate,
+    voiceGender, setVoiceGender,
     autoPronounce, setAutoPronounce,
     dailyNewLimit, setDailyNewLimit,
     lastSyncedAt,
@@ -67,6 +68,12 @@ export default function Settings() {
   const handleRate = (r: PlaybackRate) => {
     setPlaybackRate(r);
     audioPlayer.rate = r;
+  };
+
+  const handleVoiceGender = (v: VoiceGender) => {
+    setVoiceGender(v);
+    audioPlayer.voiceGender = v;
+    void audioPlayer.speakText(t('settings.voicePreviewText'));
   };
 
   const handleThemeChange = (nextTheme: Theme) => {
@@ -150,6 +157,17 @@ export default function Settings() {
             ]}
             value={playbackRate}
             onChange={(v) => handleRate(v as PlaybackRate)}
+          />
+        </SettingRow>
+        <SettingRow label={t('settings.voiceGender')} sublabel={t('settings.voiceGenderDesc')}>
+          <SegmentControl
+            testId="voice-gender"
+            options={[
+              { value: 'female', label: t('settings.voiceFemale') },
+              { value: 'male',   label: t('settings.voiceMale')   },
+            ]}
+            value={voiceGender}
+            onChange={(v) => handleVoiceGender(v as VoiceGender)}
           />
         </SettingRow>
       </SettingSection>
