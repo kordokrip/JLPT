@@ -11,39 +11,59 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 const STORAGE_KEY = 'ios-hint-dismissed';
 
 function isIosSafari(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
-  // iOS 기기 (iPhone / iPad / iPod) + Safari (Chrome·Firefox 제외)
-  const isIos    = /iphone|ipad|ipod/i.test(ua);
+  const platform = navigator.platform ?? '';
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+  // iPadOS 13+는 데스크톱 Safari UA를 사용할 수 있어 Mac + touch 조합도 iPad로 본다.
+  const isIos    = /iphone|ipad|ipod/i.test(ua) || (platform === 'MacIntel' && maxTouchPoints > 1);
   const isSafari = /safari/i.test(ua) && !/crios|fxios|opios/i.test(ua);
   return isIos && isSafari;
 }
 
 function isStandalone(): boolean {
-  // PWA가 이미 홈 화면에서 실행 중이면 표시 불필요
-  return (
-    typeof window !== 'undefined' &&
-    (window.navigator as unknown as { standalone?: boolean }).standalone === true
-  );
+  if (typeof window === 'undefined') return false;
+  const legacyStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+  const displayModeStandalone = window.matchMedia?.('(display-mode: standalone)').matches ?? false;
+  return legacyStandalone || displayModeStandalone;
+}
+
+function getDismissed(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setDismissed(): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, '1');
+  } catch {
+    // Safari private mode or disabled storage should not block dismissing the banner in-memory.
+  }
 }
 
 export function IosInstallHint() {
   const [visible, setVisible] = useState(false);
   const { t } = useTranslation();
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(STORAGE_KEY);
-    if (!dismissed && isIosSafari() && !isStandalone()) {
+    if (pathname === '/' && !getDismissed() && isIosSafari() && !isStandalone()) {
       setVisible(true);
+    } else {
+      setVisible(false);
     }
-  }, []);
+  }, [pathname]);
 
   function dismiss() {
-    localStorage.setItem(STORAGE_KEY, '1');
+    setDismissed();
     setVisible(false);
   }
 

@@ -15,6 +15,8 @@ const ja = {
     skipToMain: 'メインコンテンツへスキップ',
     sideLabel:  'サイドナビゲーション',
     mainLabel:  'メインナビゲーション',
+    collapseSide: 'サイドメニューをたたむ',
+    expandSide:   'サイドメニューを開く',
   },
 
   common: {
@@ -136,6 +138,23 @@ const ja = {
     onyomi: '音読み',
     kunyomi: '訓読み',
     ariaSearch: '{{type}}を検索',
+  },
+
+  naturalSearch: {
+    title: 'AI自然日本語検索',
+    desc: '韓国語で思いついた表現を、直訳ではなく自然な日本語に変えて語彙検索に使えます。',
+    placeholder: '例: 今日は仕事が多くて少し疲れています',
+    convert: '自然な日本語に変換',
+    converting: '変換中...',
+    useForSearch: 'この表現で検索',
+    refine: 'もう一度整える',
+    error: '自然な日本語への変換に失敗しました。少し後でもう一度お試しください。',
+    tones: {
+      polite: '丁寧',
+      neutral: '中立',
+      casual: '会話',
+      study: '学習用',
+    },
   },
 
   quiz: {
@@ -382,6 +401,16 @@ const ja = {
     reminderActive:     '朝7時・夜10時の通知が有効',
     reminderDesc:       '朝7時・夜10時に復習通知を受け取る',
     processing:         '処理中…',
+  },
+
+  addWord: {
+    eyebrow:      '共有された単語',
+    title:        '語彙検索で開く',
+    description:  '他のアプリから共有された日本語テキストを語彙検索で開き、意味と発音をすぐ確認できます。',
+    inputLabel:   '検索する単語または文',
+    placeholder:  '例: 経験',
+    searchAction: '語彙で検索',
+    browseAction: '語彙一覧を見る',
   },
 
   notFound: {

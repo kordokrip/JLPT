@@ -26,7 +26,7 @@ export function BottomTabBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(var(--nav-height, 60px) + env(safe-area-inset-bottom))' }}
     >
       <ul
-        className="flex overflow-x-auto overscroll-x-contain scrollbar-none"
+        className="flex overflow-x-auto overscroll-x-contain scrollbar-hide"
         style={{ height: 'var(--nav-height, 60px)' }}
       >
         {TABS.map(({ to, key, icon: Icon }) => (

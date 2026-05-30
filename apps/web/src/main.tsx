@@ -16,16 +16,18 @@ import './i18n'; // i18n 초기화 (앱 시작 전 로드)
 // Service Worker 등록 (vite-plugin-pwa 빌드 시 자동 생성)
 // ─────────────────────────────────────────────
 import i18n from './i18n';
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (window.confirm(i18n.t('pwa.updateAvailable'))) {
-      updateSW(true);
-    }
-  },
-  onOfflineReady() {
-    console.info('[PWA]', i18n.t('pwa.offlineReady'));
-  },
-});
+if (import.meta.env.VITE_PWA_DEV_SW !== 'false') {
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      if (window.confirm(i18n.t('pwa.updateAvailable'))) {
+        updateSW(true);
+      }
+    },
+    onOfflineReady() {
+      console.info('[PWA]', i18n.t('pwa.offlineReady'));
+    },
+  });
+}
 
 // ─────────────────────────────────────────────
 // TanStack Query 클라이언트

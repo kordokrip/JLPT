@@ -23,6 +23,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    min-height: 100vh;
     min-height: 100dvh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -75,6 +76,11 @@
     scrollbar-width: none;
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 
   /* ── 3D 카드 플립 ── */
   .perspective-1000  { perspective: 1000px; }

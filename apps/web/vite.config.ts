@@ -4,12 +4,14 @@ import { VitePWA } from 'vite-plugin-pwa';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 
+const enablePwaDevWorker = process.env.VITE_PWA_DEV_SW !== 'false';
+
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: enablePwaDevWorker ? 'auto' : false,
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
@@ -18,6 +20,7 @@ export default defineConfig({
         name: 'JLPT N3 일본어 학습',
         short_name: '일본어 N3',
         description: 'JLPT N3 오프라인 우선 일본어 학습 PWA',
+        id: '/',
         theme_color: '#B91C1C',
         background_color: '#FAFAF7',
         display: 'standalone',
@@ -85,7 +88,8 @@ export default defineConfig({
     alias: { '@': '/src' },
   },
   build: {
-    target: 'esnext',
+    target: 'es2020',
+    cssTarget: 'safari14',
     rollupOptions: {
       treeshake: {
         moduleSideEffects: false,
@@ -101,5 +105,3 @@ export default defineConfig({
     },
   },
 });
-
-

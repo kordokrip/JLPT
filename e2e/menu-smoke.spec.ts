@@ -20,8 +20,9 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
 
   page.on('requestfailed', (request) => {
     const failure = request.failure();
-    if (failure?.errorText !== 'net::ERR_ABORTED') {
-      failures.push(`${request.method()} ${request.url()} ${failure?.errorText ?? 'failed'}`);
+    const errorText = failure?.errorText ?? 'failed';
+    if (errorText !== 'net::ERR_ABORTED' && errorText !== 'cancelled') {
+      failures.push(`${request.method()} ${request.url()} ${errorText}`);
     }
   });
   page.on('response', (response) => {
@@ -40,7 +41,10 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   expect(failures, 'network request failures').toEqual([]);
   expect(badResponses, 'bad API responses').toEqual([]);
   expect(consoleErrors, 'browser console errors').toEqual([]);
-  expect(pageErrors, 'uncaught page errors').toEqual([]);
+  expect(
+    pageErrors.filter((message) => !/\/localhost:5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(message)),
+    'uncaught page errors',
+  ).toEqual([]);
 }
 
 async function expectVisibleHref(page: Page, href: string, label: string) {

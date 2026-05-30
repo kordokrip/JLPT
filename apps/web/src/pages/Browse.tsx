@@ -2,13 +2,14 @@
  * Browse — 어휘 / 문법 / 한자 목록 + 검색
  * Figma Make 디자인 적용 + 실제 API 데이터 연결
  */
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useVocabList, useVocabSearch } from '../hooks/useVocab';
 import { useGrammarList, useKanjiList } from '../hooks/useContent';
 import { levelVariant } from '../components/ui/Badge';
 import { PronunciationButton } from '../components/feature/PronunciationButton';
+import { NaturalJapaneseSearch } from '../components/feature/NaturalJapaneseSearch';
 import type { GrammarItem, KanjiItem, VocabItem } from '../lib/db';
 
 type ContentType = 'vocab' | 'grammar' | 'kanji';
@@ -18,8 +19,9 @@ const LEVELS = ['N5', 'N4', 'N3'];
 export default function Browse() {
   const { type = 'vocab' } = useParams<{ type: ContentType }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const [query, setQuery]   = useState('');
+  const [query, setQuery]   = useState(() => searchParams.get('q') ?? searchParams.get('text') ?? '');
   const [level, setLevel]   = useState<string | undefined>(undefined);
 
   const vocabList   = useVocabList(level, 200);
@@ -28,6 +30,30 @@ export default function Browse() {
   const vocabSearch = useVocabSearch(query);
 
   const currentType = (['vocab', 'grammar', 'kanji'].includes(type) ? type : 'vocab') as ContentType;
+
+  useEffect(() => {
+    setQuery(searchParams.get('q') ?? searchParams.get('text') ?? '');
+  }, [searchParams]);
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value.trim()) {
+        next.set('q', value);
+      } else {
+        next.delete('q');
+        next.delete('text');
+      }
+      return next;
+    }, { replace: true });
+  }
+
+  function switchType(nextType: ContentType) {
+    navigate(`/browse/${nextType}`);
+    setLevel(undefined);
+    setQuery('');
+  }
 
   const items =
     query.trim().length >= 1 && currentType === 'vocab'
@@ -51,7 +77,7 @@ export default function Browse() {
           {TABS.map(({ key }) => (
             <button
               key={key}
-              onClick={() => { navigate(`/browse/${key}`); setLevel(undefined); setQuery(''); }}
+              onClick={() => switchType(key)}
               className={`w-full flex items-center justify-between py-2 px-3 rounded transition-colors ${
                 currentType === key
                   ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-l-2 border-[var(--accent)] pl-2'
@@ -109,7 +135,7 @@ export default function Browse() {
                 {TABS.map(({ key }) => (
                   <button
                     key={key}
-                    onClick={() => navigate(`/browse/${key}`)}
+                    onClick={() => switchType(key)}
                     className={`px-2 py-0.5 rounded text-[11px] font-sans-jp transition-colors ${
                       currentType === key ? 'bg-[var(--accent)] text-white' : 'bg-[var(--border)] text-[var(--muted-foreground)]'
                     }`}
@@ -127,11 +153,13 @@ export default function Browse() {
               type="search"
               placeholder={t('browse.searchPlaceholder')}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => updateQuery(e.target.value)}
               aria-label={t('browse.ariaSearch', { type: t(`browse.${currentType}`) })}
               className="w-full border-[0.5px] border-[var(--border)] rounded-lg px-4 py-2.5 text-[14px] font-sans-jp bg-card text-foreground placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--accent)] transition-colors"
             />
           </div>
+
+          {currentType === 'vocab' && <NaturalJapaneseSearch onUse={updateQuery} />}
 
           {/* 목록 */}
           {loading ? (

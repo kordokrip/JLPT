@@ -184,6 +184,32 @@ describe('GET /api/v1/vocab/:id', () => {
 });
 
 // ─────────────────────────────────────────────
+// /api/v1/ai/translate
+// ─────────────────────────────────────────────
+describe('POST /api/v1/ai/translate', () => {
+  it('한국어 입력을 자연 일본어 응답 형태로 반환한다', async () => {
+    const res = await fetch('/api/v1/ai/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '오늘은 조금 피곤해요', target: 'ja', tone: 'polite' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { translatedText: string; model: string } }>();
+    expect(body.data.translatedText).toContain('疲');
+    expect(body.data.model).toBe('@cf/meta/llama-3.3-70b-instruct-fp8-fast');
+  });
+
+  it('빈 입력은 400', async () => {
+    const res = await fetch('/api/v1/ai/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '', target: 'ja' }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────
 // /api/v1/grammar
 // ─────────────────────────────────────────────
 describe('GET /api/v1/grammar', () => {

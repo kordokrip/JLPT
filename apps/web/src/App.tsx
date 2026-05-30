@@ -18,6 +18,7 @@ const QuizListening  = lazy(() => import('./pages/QuizListening'));
 const Reading        = lazy(() => import('./pages/Reading'));
 const ReadingDetail  = lazy(() => import('./pages/ReadingDetail'));
 const Stats          = lazy(() => import('./pages/Stats'));
+const AddWord        = lazy(() => import('./pages/AddWord'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="reading"      element={<Reading />} />
           <Route path="reading/:id"  element={<ReadingDetail />} />
           <Route path="stats"        element={<Stats />} />
+          <Route path="add-word"     element={<AddWord />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

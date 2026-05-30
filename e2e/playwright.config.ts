@@ -41,6 +41,16 @@ export default defineConfig({
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
+    {
+      name: 'mobile-chromium',
+      testMatch: /.*(menu-smoke|pwa)\.spec\.ts/,
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'mobile-webkit',
+      testMatch: /.*(menu-smoke|pwa)\.spec\.ts/,
+      use: { ...devices['iPhone 13'] },
+    },
   ],
 
   // Vite dev 서버를 자동 시작 (API는 별도 터미널 또는 CI 스텝에서 실행)
@@ -53,7 +63,7 @@ export default defineConfig({
       timeout: 180_000,
     },
     {
-      command: 'pnpm -F @nihongo-n3/web dev',
+      command: 'VITE_PWA_DEV_SW=false pnpm -F @nihongo-n3/web dev',
       port: 5173,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

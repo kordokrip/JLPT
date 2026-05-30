@@ -15,6 +15,8 @@ const en = {
     skipToMain: 'Skip to main content',
     sideLabel:  'Sidebar navigation',
     mainLabel:  'Main navigation',
+    collapseSide: 'Collapse side menu',
+    expandSide:   'Expand side menu',
   },
 
   common: {
@@ -136,6 +138,23 @@ const en = {
     onyomi: 'On reading',
     kunyomi: 'Kun reading',
     ariaSearch: 'Search {{type}}',
+  },
+
+  naturalSearch: {
+    title: 'AI Natural Japanese Search',
+    desc: 'Type a Korean expression and turn it into natural Japanese for vocabulary search instead of a literal translation.',
+    placeholder: 'Example: I am a little tired because work was busy today',
+    convert: 'Convert to natural Japanese',
+    converting: 'Converting...',
+    useForSearch: 'Search this expression',
+    refine: 'Refine again',
+    error: 'Could not convert to natural Japanese. Try again in a moment.',
+    tones: {
+      polite: 'Polite',
+      neutral: 'Neutral',
+      casual: 'Casual',
+      study: 'Study',
+    },
   },
 
   quiz: {
@@ -382,6 +401,16 @@ const en = {
     reminderActive:     'Morning 7am & Evening 10pm alerts active',
     reminderDesc:       'Receive review alerts at 7am & 10pm',
     processing:         'Processing…',
+  },
+
+  addWord: {
+    eyebrow:      'Shared word',
+    title:        'Open in vocabulary search',
+    description:  'Open Japanese text shared from another app in vocabulary search and check meaning and pronunciation immediately.',
+    inputLabel:   'Word or sentence to search',
+    placeholder:  'Example: 経験',
+    searchAction: 'Search vocabulary',
+    browseAction: 'Browse vocabulary',
   },
 
   notFound: {

@@ -7,7 +7,9 @@
  * - 응답 타입: ApiResponse<T> | ApiError
  */
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? 'https://nihongo-n3-api.kordokrip.workers.dev' : '');
 
 // ─────────────────────────────────────────────
 // 공통 응답 타입
@@ -288,6 +290,20 @@ export const logsApi = {
     api.get<{ currentStreak: number; longestStreak: number; totalDays: number; lastStudyDate: string | null; frozen: boolean }>('/logs/streak'),
   heatmap: (year: number) =>
     api.get<Record<string, { count: number; intensity: 0 | 1 | 2 | 3 | 4 }>>('/logs/heatmap', { year }),
+};
+
+export interface NaturalTranslation {
+  sourceText: string;
+  translatedText: string;
+  readingHint?: string;
+  nuanceKo?: string;
+  alternatives?: string[];
+  model: string;
+}
+
+export const aiApi = {
+  naturalTranslate: (text: string, tone: 'neutral' | 'polite' | 'casual' | 'study' = 'polite') =>
+    api.post<NaturalTranslation>('/ai/translate', { text, target: 'ja', tone }),
 };
 
 export const __apiTestUtils = {

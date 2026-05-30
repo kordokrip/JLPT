@@ -10,11 +10,12 @@
  */
 import { db, type SyncOpType, type SyncQueueItem } from './db';
 import { syncApi } from './api';
+import { createClientId, isOnline } from './browser';
 
 type ServerSyncOpType = 'review' | 'daily_log' | 'quiz' | 'self_check';
 
 function uuid(): string {
-  return crypto.randomUUID();
+  return createClientId('sync');
 }
 
 function toServerOpType(type: string): ServerSyncOpType {
@@ -48,7 +49,7 @@ const MAX_RETRIES = 5;
 let flushing = false;
 
 export async function flush(): Promise<void> {
-  if (flushing || !navigator.onLine) return;
+  if (flushing || !isOnline()) return;
   flushing = true;
   try {
     const pending = await db.sync_queue
@@ -113,6 +114,6 @@ export function initSync(): () => void {
   const handler = () => void flush();
   window.addEventListener('online', handler);
   // 즉시 한 번 시도
-  if (navigator.onLine) void flush();
+  if (isOnline()) void flush();
   return () => window.removeEventListener('online', handler);
 }

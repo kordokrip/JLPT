@@ -8,6 +8,7 @@ import { db, LOCAL_USER, type SrsCard, type ItemType, type Rating } from '../lib
 import { srsApi } from '../lib/api';
 import { schedule, isDue } from '../lib/fsrs-client';
 import { enqueue } from '../lib/sync';
+import { isOnline } from '../lib/browser';
 
 /** 오늘 due 카드 목록 (IDB + 서버 병합) */
 export function useDueCards(itemType?: ItemType, limit = 20) {
@@ -100,7 +101,7 @@ export function useReviewCard() {
           reviewed_at: now.toISOString(),
         };
 
-        if (card.id !== undefined && navigator.onLine) {
+        if (card.id !== undefined && isOnline()) {
           const serverRes = await srsApi.review(card.id, rating);
           if (!serverRes.ok) await enqueue('review', syncPayload);
         } else {

@@ -2,6 +2,7 @@
  * RootLayout — 앱 공통 레이아웃 (Outlet)
  */
 import { Outlet } from 'react-router-dom';
+import type { CSSProperties } from 'react';
 import { SideNav }         from './SideNav';
 import { BottomTabBar }    from './BottomTabBar';
 import { useUiStore }      from '../../stores/ui-store';
@@ -10,10 +11,14 @@ import { useTranslation }  from 'react-i18next';
 
 export function RootLayout() {
   const isOnline = useUiStore((s) => s.isOnline);
+  const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
   const { t } = useTranslation();
+  const layoutStyle = {
+    '--sidebar-width': sideNavCollapsed ? '4.5rem' : '14rem',
+  } as CSSProperties;
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="min-h-screen bg-[var(--background)]" style={layoutStyle}>
       {/* 스크린리더용 건너뛰기 링크 */}
       <a
         href="#main-content"

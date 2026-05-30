@@ -16,6 +16,8 @@ const ko = {
     skipToMain: '메인 콘텐츠로 건너뛰기',
     sideLabel:  '사이드 내비게이션',
     mainLabel:  '메인 내비게이션',
+    collapseSide: '사이드 메뉴 접기',
+    expandSide:   '사이드 메뉴 펼치기',
   },
 
   // ── 공통 ──
@@ -141,6 +143,24 @@ const ko = {
     onyomi: '음독',
     kunyomi: '훈독',
     ariaSearch: '{{type}} 검색',
+  },
+
+  // ── 자연 일본어 검색 ──
+  naturalSearch: {
+    title: 'AI 자연 일본어 검색',
+    desc: '한국어로 떠오른 표현을 입력하면 직역이 아닌 자연스러운 일본어로 바꿔 어휘 검색에 사용할 수 있습니다.',
+    placeholder: '예: 오늘은 일이 많아서 조금 피곤해요',
+    convert: '자연 일본어로 변환',
+    converting: '변환 중...',
+    useForSearch: '이 표현으로 검색',
+    refine: '다시 다듬기',
+    error: '자연 일본어 변환에 실패했습니다. 잠시 후 다시 시도하세요.',
+    tones: {
+      polite: '정중',
+      neutral: '중립',
+      casual: '구어',
+      study: '학습용',
+    },
   },
 
   // ── 퀴즈 ──
@@ -398,6 +418,17 @@ const ko = {
     reminderActive:     '아침 7시 · 저녁 10시 알림 활성화됨',
     reminderDesc:       '아침 7시 · 저녁 10시에 복습 알림 수신',
     processing:         '처리 중…',
+  },
+
+  // ── 공유로 단어 추가 ──
+  addWord: {
+    eyebrow:      '공유로 받은 단어',
+    title:        '어휘 검색으로 연결',
+    description:  '다른 앱에서 공유한 일본어 텍스트를 어휘 검색으로 열어 의미와 발음을 바로 확인합니다.',
+    inputLabel:   '검색할 단어 또는 문장',
+    placeholder:  '例: 経験',
+    searchAction: '어휘에서 검색',
+    browseAction: '어휘 목록 보기',
   },
 
   // ── 404 ──

@@ -52,8 +52,9 @@ import { runFsrsOptimizer }                  from './jobs/optimize-fsrs.js';
 import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
+import { aiOA } from './routes/ai-oa.js';
 import { securityMiddleware } from './middleware/security.js';
-import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
+import { syncRateLimit, authRateLimit, publicRateLimit } from './middleware/rate-limit.js';
 import { sendPushToMany } from './lib/push.js';
 
 // ─────────────────────────────────────────────
@@ -150,6 +151,8 @@ v1.use('/sync*', syncRateLimit);
 v1.route('/', syncOA);
 v1.use('/quiz/generate*', authRateLimit);
 v1.route('/', quizOA);
+v1.use('/ai*', publicRateLimit);
+v1.route('/', aiOA);
 v1.use('/reading*', contentCacheMiddleware);
 v1.route('/', readingOA);
 v1.route('/', notificationsOA);  // /notifications/*
@@ -196,6 +199,7 @@ app.doc('/openapi.json', {
     { name: 'Admin',   description: '관리자 (주간 리포트)' },
     { name: 'Reading', description: '독해 지문 + 퀘즈' },
     { name: 'Notifications', description: 'Web Push 구독 및 테스트 알림' },
+    { name: 'AI', description: 'Workers AI 기반 자연어 학습 보조' },
   ],
 });
 
