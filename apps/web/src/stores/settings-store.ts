@@ -3,7 +3,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PlaybackRate, VoiceGender } from '../lib/audio';
+import type { PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
 import type { SupportedLang } from '../i18n';
 
 interface SettingsState {
@@ -24,6 +24,10 @@ interface SettingsState {
   setPlaybackRate: (r: PlaybackRate) => void;
   voiceGender:     VoiceGender;
   setVoiceGender:  (v: VoiceGender) => void;
+  selectedVoiceURI:    string | null;
+  setSelectedVoiceURI: (v: string | null) => void;
+  ttsProvider:     TtsProviderId;
+  setTtsProvider:  (v: TtsProviderId) => void;
   autoPronounce:   boolean;
   setAutoPronounce:(v: boolean) => void;
 
@@ -52,6 +56,10 @@ export const useSettingsStore = create<SettingsState>()(
       setPlaybackRate: (r) => set({ playbackRate: r }),
       voiceGender:     'female',
       setVoiceGender:  (v) => set({ voiceGender: v }),
+      selectedVoiceURI:    null,
+      setSelectedVoiceURI: (v) => set({ selectedVoiceURI: v }),
+      ttsProvider:     'browser',
+      setTtsProvider:  (v) => set({ ttsProvider: v }),
       autoPronounce:   true,
       setAutoPronounce:(v) => set({ autoPronounce: v }),
 

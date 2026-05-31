@@ -3,10 +3,11 @@
  * Figma Make 디자인 적용
  */
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
 import { audioPlayer } from '../lib/audio';
-import type { PlaybackRate, VoiceGender } from '../lib/audio';
+import type { JapaneseVoiceOption, PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
   getNotificationPermission,
@@ -32,6 +33,8 @@ export default function Settings() {
     furiganaMode, setFurigana,
     playbackRate, setPlaybackRate,
     voiceGender, setVoiceGender,
+    selectedVoiceURI, setSelectedVoiceURI,
+    ttsProvider, setTtsProvider,
     autoPronounce, setAutoPronounce,
     dailyNewLimit, setDailyNewLimit,
     lastSyncedAt,
@@ -41,10 +44,21 @@ export default function Settings() {
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
   const [pushLoading, setPushLoading]         = useState(false);
+  const [voices, setVoices]                   = useState<JapaneseVoiceOption[]>([]);
 
   useEffect(() => {
     setNotifPermission(getNotificationPermission());
     getCurrentSubscription().then((sub) => setIsSubscribed(!!sub)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    audioPlayer.getJapaneseVoices().then((items) => {
+      if (mounted) setVoices(items);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handlePushToggle = async () => {
@@ -74,6 +88,19 @@ export default function Settings() {
     setVoiceGender(v);
     audioPlayer.voiceGender = v;
     void audioPlayer.speakText(t('settings.voicePreviewText'));
+  };
+
+  const handleVoiceURI = (uri: string) => {
+    const next = uri || null;
+    setSelectedVoiceURI(next);
+    audioPlayer.voiceURI = next;
+    void audioPlayer.speakText(t('settings.voicePreviewText'), { voiceURI: next });
+  };
+
+  const handleTtsProvider = (provider: TtsProviderId) => {
+    setTtsProvider(provider);
+    audioPlayer.sourcePreference = provider === 'browser' ? 'browser' : 'server';
+    if (provider === 'browser') void audioPlayer.speakText(t('settings.voicePreviewText'));
   };
 
   const handleThemeChange = (nextTheme: Theme) => {
@@ -170,6 +197,42 @@ export default function Settings() {
             onChange={(v) => handleVoiceGender(v as VoiceGender)}
           />
         </SettingRow>
+        <SettingRow label={t('settings.browserVoice')} sublabel={t('settings.browserVoiceDesc')}>
+          <select
+            value={selectedVoiceURI ?? ''}
+            onChange={(event) => handleVoiceURI(event.target.value)}
+            className="w-[min(100vw-3rem,18rem)] rounded border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[12px] text-foreground"
+            aria-label={t('settings.browserVoice')}
+          >
+            <option value="">{t('settings.autoVoice')}</option>
+            {voices.map((voice) => (
+              <option key={voice.voiceURI} value={voice.voiceURI}>
+                {voice.name} ({voice.lang}{voice.localService ? ` · ${t('settings.localVoice')}` : ''})
+              </option>
+            ))}
+          </select>
+        </SettingRow>
+        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.ttsProviderDesc')}>
+          <SegmentControl
+            testId="tts-provider"
+            options={[
+              { value: 'browser', label: t('settings.ttsBrowser') },
+              { value: 'cloudflare', label: 'MeloTTS' },
+              { value: 'voicevox', label: 'VOICEVOX' },
+              { value: 'style-bert-vits2', label: 'Style-Bert' },
+            ]}
+            value={ttsProvider}
+            onChange={(v) => handleTtsProvider(v as TtsProviderId)}
+          />
+        </SettingRow>
+        <SettingRow label={t('settings.audioQa')} sublabel={t('settings.audioQaDesc')}>
+          <Link
+            to="/audio-qa"
+            className="rounded bg-[var(--accent)] px-3 py-2 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
+          >
+            {t('settings.openAudioQa')}
+          </Link>
+        </SettingRow>
       </SettingSection>
 
       {/* 데이터 관리 */}
@@ -230,12 +293,12 @@ function SettingSection({
 
 function SettingRow({ label, sublabel, children }: { label: string; sublabel: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 gap-4">
+    <div className="flex flex-col items-stretch justify-between gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
       <div>
         <div className="font-pretendard text-[14px] text-foreground">{label}</div>
         {sublabel && <div className="font-pretendard text-[11px] text-[var(--muted-foreground)] mt-0.5">{sublabel}</div>}
       </div>
-      <div className="flex-shrink-0">{children}</div>
+      <div className="flex shrink-0 justify-start sm:justify-end">{children}</div>
     </div>
   );
 }
@@ -268,7 +331,7 @@ function SegmentControl<T extends string | number>({
   testId?: string;
 }) {
   return (
-    <div className="flex gap-1 bg-[var(--border)]/30 rounded-lg p-0.5" data-testid={testId ? `${testId}-control` : undefined}>
+    <div className="flex flex-wrap gap-1 bg-[var(--border)]/30 rounded-lg p-0.5" data-testid={testId ? `${testId}-control` : undefined}>
       {options.map((opt) => (
         <button
           key={String(opt.value)}

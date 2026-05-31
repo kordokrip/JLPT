@@ -17,6 +17,8 @@ interface TtsEnv {
   GOOGLE_TTS_API_KEY: string;
   AZURE_TTS_KEY:     string;
   AZURE_TTS_REGION:  string;
+  VOICEVOX_URL?:      string;
+  STYLE_BERT_VITS2_URL?: string;
 }
 
 export function createTtsAdapter(env: TtsEnv): TtsAdapter {
@@ -30,6 +32,16 @@ export function createTtsAdapter(env: TtsEnv): TtsAdapter {
     case 'azure':
       if (!env.AZURE_TTS_KEY) throw new Error('AZURE_TTS_KEY 가 설정되지 않았습니다');
       return new AzureTts(env.AZURE_TTS_KEY, env.AZURE_TTS_REGION || 'japaneast');
+
+    case 'voicevox':
+      throw new Error(`VOICEVOX provider는 별도 엔진 URL 연결 후 활성화할 수 있습니다: ${env.VOICEVOX_URL || 'VOICEVOX_URL 미설정'}`);
+
+    case 'style-bert-vits2':
+      throw new Error(
+        `Style-Bert-VITS2 provider는 별도 API 서버 URL 연결 후 활성화할 수 있습니다: ${
+          env.STYLE_BERT_VITS2_URL || 'STYLE_BERT_VITS2_URL 미설정'
+        }`,
+      );
 
     default: // 'cloudflare'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

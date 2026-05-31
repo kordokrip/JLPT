@@ -15,11 +15,13 @@ AUTH_MODE = "public-owner"
 # Set AUTH_MODE = "cf-access" after both secrets are configured.
 # 주간 리포트 이메일 수신 주소 (MailChannels, 비어 있으면 발송 안 함)
 NOTIFY_EMAIL = ""
-# TTS 공급자 선택: cloudflare | google | azure
+# TTS 공급자 선택: cloudflare | google | azure | voicevox | style-bert-vits2
 TTS_PROVIDER = "cloudflare"
 GOOGLE_TTS_API_KEY = ""
 AZURE_TTS_KEY = ""
 AZURE_TTS_REGION = "japaneast"
+VOICEVOX_URL = ""
+STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
 FSRS_OPTIMIZER_TOKEN = ""
 # FSRS_OPTIMIZER_URL 비움 = 개인화 최적화 비활성(정상 운영 모드).
@@ -103,6 +105,8 @@ TTS_PROVIDER = "cloudflare"
 GOOGLE_TTS_API_KEY = ""
 AZURE_TTS_KEY = ""
 AZURE_TTS_REGION = "japaneast"
+VOICEVOX_URL = ""
+STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
 FSRS_OPTIMIZER_TOKEN = ""
 VAPID_PUBLIC_KEY = "test-vapid-public-key"

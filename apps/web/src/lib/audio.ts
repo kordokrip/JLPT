@@ -19,9 +19,19 @@ export function buildAudioUrl(path: string): string {
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
 export type AudioSourcePreference = 'browser' | 'server';
+export type TtsProviderId = 'browser' | 'cloudflare' | 'voicevox' | 'style-bert-vits2';
+
+export interface JapaneseVoiceOption {
+  voiceURI: string;
+  name: string;
+  lang: string;
+  localService: boolean;
+  default: boolean;
+}
 
 interface SpeechOptions {
   voiceGender?: VoiceGender;
+  voiceURI?: string | null | undefined;
   lang?: string;
   pitch?: number;
   onStart?: () => void;
@@ -48,6 +58,7 @@ class AudioPlayer {
   private currentSource: AudioBufferSourceNode | null = null;
   private _rate: PlaybackRate = 1.0;
   private _voiceGender: VoiceGender = 'female';
+  private _voiceURI: string | null = null;
   private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
   private voicesReady: Promise<void> | null = null;
@@ -56,6 +67,8 @@ class AudioPlayer {
   set rate(v: PlaybackRate) { this._rate = v; }
   get voiceGender(): VoiceGender { return this._voiceGender; }
   set voiceGender(v: VoiceGender) { this._voiceGender = v; }
+  get voiceURI(): string | null { return this._voiceURI; }
+  set voiceURI(v: string | null) { this._voiceURI = v; }
   get sourcePreference(): AudioSourcePreference { return this._sourcePreference; }
   set sourcePreference(v: AudioSourcePreference) { this._sourcePreference = v; }
   set onEnd(cb: () => void) { this._onEnd = cb; }
@@ -63,10 +76,12 @@ class AudioPlayer {
   configure(options: {
     rate?: PlaybackRate;
     voiceGender?: VoiceGender;
+    voiceURI?: string | null;
     sourcePreference?: AudioSourcePreference;
   }): void {
     if (options.rate !== undefined) this._rate = options.rate;
     if (options.voiceGender !== undefined) this._voiceGender = options.voiceGender;
+    if (options.voiceURI !== undefined) this._voiceURI = options.voiceURI;
     if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
   }
 
@@ -103,7 +118,7 @@ class AudioPlayer {
     }
   }
 
-  private async warmVoices(): Promise<void> {
+  async warmVoices(): Promise<void> {
     if (!('speechSynthesis' in window)) return;
     if (window.speechSynthesis.getVoices().length > 0) return;
     if (this.voicesReady) return this.voicesReady;
@@ -122,12 +137,36 @@ class AudioPlayer {
     return this.voicesReady;
   }
 
-  private pickJapaneseVoice(gender: VoiceGender, lang = 'ja-JP'): SpeechSynthesisVoice | undefined {
+  async getJapaneseVoices(): Promise<JapaneseVoiceOption[]> {
+    if (!('speechSynthesis' in window)) return [];
+    await this.warmVoices();
+    return window.speechSynthesis
+      .getVoices()
+      .filter((voice) => voice.lang.toLowerCase().startsWith('ja'))
+      .map((voice) => ({
+        voiceURI: voice.voiceURI,
+        name: voice.name,
+        lang: voice.lang,
+        localService: voice.localService,
+        default: voice.default,
+      }))
+      .sort((a, b) => Number(b.localService) - Number(a.localService) || a.name.localeCompare(b.name));
+  }
+
+  private pickJapaneseVoice(
+    gender: VoiceGender,
+    lang = 'ja-JP',
+    voiceURI: string | null = this._voiceURI,
+  ): SpeechSynthesisVoice | undefined {
     if (!('speechSynthesis' in window)) return undefined;
     const voices = window.speechSynthesis.getVoices();
     const langPrefix = lang.split('-')[0]?.toLowerCase() ?? 'ja';
     const japaneseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
     if (japaneseVoices.length === 0) return undefined;
+    if (voiceURI) {
+      const selected = japaneseVoices.find((voice) => voice.voiceURI === voiceURI);
+      if (selected) return selected;
+    }
 
     const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
     const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];
@@ -162,7 +201,11 @@ class AudioPlayer {
     const selectedGender = options.voiceGender ?? this._voiceGender;
     utterance.pitch = options.pitch ?? (selectedGender === 'male' ? 0.94 : 1.02);
     utterance.volume = 1;
-    const voice = this.pickJapaneseVoice(options.voiceGender ?? this._voiceGender, utterance.lang);
+    const voice = this.pickJapaneseVoice(
+      options.voiceGender ?? this._voiceGender,
+      utterance.lang,
+      options.voiceURI ?? this._voiceURI,
+    );
     if (voice) utterance.voice = voice;
     utterance.onstart = options.onStart ?? null;
     utterance.onend = () => {

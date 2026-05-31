@@ -53,13 +53,18 @@ if (!rootEl) throw new Error('#root element not found');
 // 다크모드 초기화 (렌더 전 적용)
 // ─────────────────────────────────────────────
 (function applyTheme() {
-  const { theme, playbackRate, voiceGender } = useSettingsStore.getState();
+  const { theme, playbackRate, selectedVoiceURI, ttsProvider, voiceGender } = useSettingsStore.getState();
   const isDark =
     theme === 'dark' ||
     (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark', isDark);
   document.documentElement.lang = i18n.language || 'ko';
-  audioPlayer.configure({ rate: playbackRate, voiceGender, sourcePreference: 'browser' });
+  audioPlayer.configure({
+    rate: playbackRate,
+    voiceGender,
+    voiceURI: selectedVoiceURI,
+    sourcePreference: ttsProvider === 'browser' ? 'browser' : 'server',
+  });
 })();
 
 // ─────────────────────────────────────────────
