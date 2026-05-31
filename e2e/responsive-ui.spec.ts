@@ -56,6 +56,35 @@ test.describe('반응형 UI 안전성', () => {
     await expect(dialog.locator('a[href="/self-check"]')).toBeVisible();
   });
 
+  test('iOS safe-area와 네이티브 터치 기본값이 적용된다', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await expect(page.getByRole('navigation', { name: /메인|Main|メイン/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /더보기|More|その他/ })).toBeVisible();
+
+    const metrics = await page.evaluate(() => {
+      const root = document.getElementById('root')!;
+      const bodyStyle = getComputedStyle(document.body);
+      const rootStyle = getComputedStyle(root);
+      const button = document.querySelector('nav button')!;
+      const buttonStyle = getComputedStyle(button);
+      return {
+        rootPaddingLeft: rootStyle.paddingLeft,
+        rootPaddingRight: rootStyle.paddingRight,
+        bodyTapHighlight: bodyStyle.getPropertyValue('-webkit-tap-highlight-color'),
+        bodyTouchCallout: bodyStyle.getPropertyValue('-webkit-touch-callout'),
+        buttonUserSelect: buttonStyle.userSelect || buttonStyle.getPropertyValue('-webkit-user-select'),
+        buttonTouchCallout: buttonStyle.getPropertyValue('-webkit-touch-callout'),
+      };
+    });
+
+    expect(metrics.rootPaddingLeft).toBeDefined();
+    expect(metrics.rootPaddingRight).toBeDefined();
+    expect(['none', '']).toContain(metrics.bodyTouchCallout);
+    expect(['none', '']).toContain(metrics.buttonTouchCallout);
+    expect(metrics.buttonUserSelect).toBe('none');
+  });
+
   test('접힌 데스크톱 사이드바도 메뉴명을 식별할 수 있다', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');

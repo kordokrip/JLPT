@@ -5,7 +5,7 @@
  * 환경변수 TTS_PROVIDER 에 따라 올바른 어댑터 반환
  */
 import type { TtsAdapter } from './types.js';
-import { CloudflareAuraTts } from './cloudflare-aura.js';
+import { CloudflareMeloTts } from './cloudflare-aura.js';
 import { GoogleCloudTts }    from './google-cloud-tts.js';
 import { AzureTts }          from './azure-tts.js';
 
@@ -33,6 +33,6 @@ export function createTtsAdapter(env: TtsEnv): TtsAdapter {
 
     default: // 'cloudflare'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return new CloudflareAuraTts(env.AI as any);
+      return new CloudflareMeloTts(env.AI as any);
   }
 }

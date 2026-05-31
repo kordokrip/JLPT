@@ -12,8 +12,20 @@ registerDocsOnlyRoutes(audioOA, [
     summary: 'R2 오디오 스트리밍',
     request: { params: audioKeyParamSchema },
     responses: {
-      200: { content: { 'audio/mpeg': { schema: { type: 'string', format: 'binary' } } }, description: '오디오 파일' },
-      206: { content: { 'audio/mpeg': { schema: { type: 'string', format: 'binary' } } }, description: 'Range 응답' },
+      200: {
+        content: {
+          'audio/mpeg': { schema: { type: 'string', format: 'binary' } },
+          'audio/wav': { schema: { type: 'string', format: 'binary' } },
+        },
+        description: '오디오 파일',
+      },
+      206: {
+        content: {
+          'audio/mpeg': { schema: { type: 'string', format: 'binary' } },
+          'audio/wav': { schema: { type: 'string', format: 'binary' } },
+        },
+        description: 'Range 응답',
+      },
       400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
       404: { content: { 'application/json': { schema: problemSchema } }, description: '파일 없음' },
       416: { description: 'Range Not Satisfiable' },

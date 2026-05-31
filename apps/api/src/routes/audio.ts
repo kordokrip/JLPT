@@ -13,9 +13,18 @@ import type { Context } from 'hono';
 import type { AppEnv } from '../types.js';
 import { notFound, badRequest } from '../lib/response.js';
 import { createTtsAdapter } from '../lib/tts/index.js';
+import { CLOUDFLARE_MELOTTS_MODEL } from '../lib/tts/cloudflare-aura.js';
 const audio = new Hono<AppEnv>();
 
 const CACHE_CONTROL = 'public, max-age=2592000, immutable';
+const GENERATED_AUDIO_VERSION = 'melotts-v2';
+
+function detectAudioContentType(buffer: ArrayBuffer): 'audio/mpeg' | 'audio/wav' {
+  const bytes = new Uint8Array(buffer.slice(0, 12));
+  const ascii = String.fromCharCode(...bytes);
+  if (ascii.startsWith('RIFF') && ascii.slice(8, 12) === 'WAVE') return 'audio/wav';
+  return 'audio/mpeg';
+}
 
 /** Range 헤더 파싱: "bytes=start-end?" → {start, end?} */
 function parseRange(header: string, totalSize: number): { start: number; end: number } | null {
@@ -85,9 +94,10 @@ async function generateAudioObject(
 
   const tts = createTtsAdapter(c.env);
   const audioBuffer = await tts.generateAudio({ text, lang: 'ja' });
+  const contentType = detectAudioContentType(audioBuffer);
   await c.env.ASSETS.put(key, audioBuffer, {
     httpMetadata: {
-      contentType: 'audio/mpeg',
+      contentType,
       cacheControl: CACHE_CONTROL,
     },
     customMetadata: {
@@ -95,11 +105,26 @@ async function generateAudioObject(
       itemId: String(parsed.id),
       level: parsed.level,
       source: 'on-demand',
+      provider: 'cloudflare',
+      model: CLOUDFLARE_MELOTTS_MODEL,
+      lang: 'ja',
+      audioVersion: GENERATED_AUDIO_VERSION,
+      contentType,
       createdAt: new Date().toISOString(),
     },
   });
   await updateAudioKey(c, parsed.kind, parsed.id, key);
   return c.env.ASSETS.get(key);
+}
+
+function shouldRegenerateGeneratedAudio(key: string, object: Pick<R2Object, 'customMetadata'> | null): boolean {
+  if (!parseGeneratedAudioKey(key)) return false;
+  if (!object) return true;
+  const meta = object.customMetadata;
+  return meta?.source === 'on-demand' && (
+    meta.model !== CLOUDFLARE_MELOTTS_MODEL ||
+    meta.audioVersion !== GENERATED_AUDIO_VERSION
+  );
 }
 
 // ── GET /audio/:key ───────────────────────────
@@ -113,7 +138,11 @@ audio.get('/audio/:key{.+}', async (c) => {
   let r2obj: R2ObjectBody | null;
   if (rangeHeader) {
     // 먼저 HEAD로 크기 조회
-    const head = await c.env.ASSETS.head(key);
+    let head = await c.env.ASSETS.head(key);
+    if (shouldRegenerateGeneratedAudio(key, head)) {
+      await generateAudioObject(c, key);
+      head = await c.env.ASSETS.head(key);
+    }
     if (!head) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
 
     const totalSize = head.size;
@@ -149,7 +178,7 @@ audio.get('/audio/:key{.+}', async (c) => {
 
   // ── 일반 요청 (전체 파일) ─────────────────
   r2obj = await c.env.ASSETS.get(key);
-  if (!r2obj) {
+  if (!r2obj || shouldRegenerateGeneratedAudio(key, r2obj)) {
     try {
       r2obj = await generateAudioObject(c, key);
     } catch (err) {

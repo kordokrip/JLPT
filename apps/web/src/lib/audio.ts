@@ -7,7 +7,9 @@
  * - R2 Range 요청 활용 (브라우저 자동 처리)
  */
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? 'https://nihongo-n3-api.kordokrip.workers.dev' : '');
 
 export function buildAudioUrl(path: string): string {
   const encodedPath = path.split('/').map(encodeURIComponent).join('/');
@@ -21,6 +23,7 @@ export type AudioSourcePreference = 'browser' | 'server';
 interface SpeechOptions {
   voiceGender?: VoiceGender;
   lang?: string;
+  pitch?: number;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: () => void;
@@ -126,8 +129,9 @@ class AudioPlayer {
     const japaneseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
     if (japaneseVoices.length === 0) return undefined;
 
-    const femaleHints = ['female', 'woman', 'kyoko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
-    const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show'];
+    const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
+    const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];
+    const naturalHints = ['premium', 'enhanced', 'siri', 'natural', 'neural', 'apple'];
     const hints = gender === 'female' ? femaleHints : maleHints;
     const oppositeHints = gender === 'female' ? maleHints : femaleHints;
 
@@ -135,9 +139,12 @@ class AudioPlayer {
       .map((voice) => {
         const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
         const score =
-          hints.some((hint) => haystack.includes(hint)) ? 2 :
-          oppositeHints.some((hint) => haystack.includes(hint)) ? -1 :
-          0;
+          (voice.lang.toLowerCase() === 'ja-jp' ? 8 : 0) +
+          (voice.localService ? 3 : 0) +
+          (voice.default ? 2 : 0) +
+          (naturalHints.some((hint) => haystack.includes(hint)) ? 3 : 0) +
+          (hints.some((hint) => haystack.includes(hint)) ? 4 : 0) +
+          (oppositeHints.some((hint) => haystack.includes(hint)) ? -3 : 0);
         return { voice, score };
       })
       .sort((a, b) => b.score - a.score);
@@ -151,7 +158,10 @@ class AudioPlayer {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang ?? 'ja-JP';
-    utterance.rate = this._rate;
+    utterance.rate = Math.min(1.2, Math.max(0.72, this._rate * 0.95));
+    const selectedGender = options.voiceGender ?? this._voiceGender;
+    utterance.pitch = options.pitch ?? (selectedGender === 'male' ? 0.94 : 1.02);
+    utterance.volume = 1;
     const voice = this.pickJapaneseVoice(options.voiceGender ?? this._voiceGender, utterance.lang);
     if (voice) utterance.voice = voice;
     utterance.onstart = options.onStart ?? null;

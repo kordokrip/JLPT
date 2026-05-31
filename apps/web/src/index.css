@@ -19,6 +19,7 @@
     scroll-behavior: smooth;
     background-color: var(--background);
     overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   body {
@@ -31,11 +32,32 @@
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     overflow-x: hidden;
     touch-action: manipulation;
+    overscroll-behavior-x: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
   #root {
     min-height: 100vh;
     min-height: 100dvh;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  button,
+  [role='button'],
+  nav a,
+  input[type='range'],
+  .native-touch {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  img,
+  svg {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 
   /* 스크롤바 */

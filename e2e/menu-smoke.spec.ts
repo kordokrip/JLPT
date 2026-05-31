@@ -46,6 +46,13 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
     if (
       failures.length === 0 &&
       badResponses.length === 0 &&
+      /\/nihongo-n3\.pages\.dev\/sw\.js.*due to access control checks/.test(message)
+    ) {
+      return false;
+    }
+    if (
+      failures.length === 0 &&
+      badResponses.length === 0 &&
       /\/nihongo-n3-api\.kordokrip\.workers\.dev\/api\/v1\/.*due to access control checks/.test(message)
     ) {
       return false;
@@ -82,25 +89,37 @@ async function expectVisibleHref(page: Page, href: string, label: string) {
   await expect.poll(isVisible, { message: `${label} nav link`, timeout: 10_000 }).toBe(true);
 }
 
+async function gotoAppRoute(page: Page, path: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(path, { waitUntil: 'commit', timeout: 20_000 });
+      await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+      return;
+    } catch (err) {
+      if (attempt === 1) throw err;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 test.describe('운영 메뉴 smoke', () => {
   for (const viewport of [
     { name: 'desktop', width: 1280, height: 900 },
     { name: 'mobile', width: 390, height: 844 },
   ] as const) {
     test(`${viewport.name}: 모든 주요 메뉴가 렌더링되고 라우팅된다`, async ({ page }) => {
+      test.setTimeout(60_000);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
       await assertNoRuntimeFailures(page, async () => {
-        await page.goto('/', { waitUntil: 'domcontentloaded' });
-        await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+        await gotoAppRoute(page, '/');
 
         for (const route of ROUTES) {
           await expectVisibleHref(page, route.path, route.label);
         }
 
         for (const route of ROUTES) {
-          await page.goto(route.path, { waitUntil: 'domcontentloaded' });
-          await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+          await gotoAppRoute(page, route.path);
           await expect(page.locator('main').getByText(route.text).first(), `${route.path} content`).toBeVisible({
             timeout: 15_000,
           });

@@ -7,8 +7,8 @@
  *
  * 처리 흐름:
  *   1. D1에서 audio_r2_key IS NULL 인 항목 최대 50개 조회 (우선순위 순)
- *   2. TTS 어댑터로 MP3 생성
- *   3. R2에 저장 (키: audio/{type}/{level}/{id}.mp3)
+ *   2. TTS 어댑터로 오디오 생성
+ *   3. R2에 저장 (호환 키: audio/{type}/{level}/{id}.mp3)
  *   4. D1 audio_r2_key 업데이트
  *
  * 단가 보호:
@@ -24,10 +24,19 @@
  */
 import type { Env } from '../types.js';
 import { createTtsAdapter } from '../lib/tts/index.js';
+import { CLOUDFLARE_MELOTTS_MODEL } from '../lib/tts/cloudflare-aura.js';
 
 const BATCH_SIZE  = 50;
 const DAILY_LIMIT = 500;
 const MAX_RETRIES = 3;
+const GENERATED_AUDIO_VERSION = 'melotts-v2';
+
+function detectAudioContentType(buffer: ArrayBuffer): 'audio/mpeg' | 'audio/wav' {
+  const bytes = new Uint8Array(buffer.slice(0, 12));
+  const ascii = String.fromCharCode(...bytes);
+  if (ascii.startsWith('RIFF') && ascii.slice(8, 12) === 'WAVE') return 'audio/wav';
+  return 'audio/mpeg';
+}
 
 interface AudioTask {
   id:       number;
@@ -168,16 +177,23 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
 
     try {
       const audioBuffer = await tts.generateAudio({ text: task.text, lang: 'ja' });
+      const contentType = detectAudioContentType(audioBuffer);
 
       await r2.put(r2Key, audioBuffer, {
         httpMetadata: {
-          contentType: 'audio/mpeg',
+          contentType,
           cacheControl: 'public, max-age=2592000, immutable',
         },
         customMetadata: {
           itemType:  task.type,
           itemId:    String(task.id),
           level:     task.level,
+          source:    'batch',
+          provider:  'cloudflare',
+          model:     CLOUDFLARE_MELOTTS_MODEL,
+          lang:      'ja',
+          audioVersion: GENERATED_AUDIO_VERSION,
+          contentType,
           createdAt: new Date().toISOString(),
         },
       });

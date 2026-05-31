@@ -31,7 +31,7 @@ export function RootLayout() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-0 inset-x-0 z-50 bg-amber-500 text-white text-xs text-center py-1"
+          className="fixed top-0 inset-x-0 z-50 bg-amber-500 text-white text-xs text-center pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-1"
         >
           {t('common.offline')}
         </div>
@@ -47,7 +47,7 @@ export function RootLayout() {
           'md:pl-[var(--sidebar-width)]',
           'pb-[calc(var(--nav-height)+env(safe-area-inset-bottom))] md:pb-0',
           'min-w-0 pt-[env(safe-area-inset-top)]',
-          !isOnline ? 'mt-6' : '',
+          !isOnline ? 'mt-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
         ].join(' ')}
       >
         <Outlet />
