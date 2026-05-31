@@ -4,6 +4,7 @@
  */
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 const TABS = [
   { to: '/',             key: 'home',       icon: HomeIcon       },
@@ -17,38 +18,93 @@ const TABS = [
   { to: '/settings',     key: 'settings',   icon: SettingsIcon   },
 ] as const;
 
+const PRIMARY_TAB_KEYS = new Set(['home', 'review', 'browse', 'quiz', 'settings']);
+const PRIMARY_TABS = TABS.filter((tab) => PRIMARY_TAB_KEYS.has(tab.key));
+const MORE_TABS = TABS.filter((tab) => !PRIMARY_TAB_KEYS.has(tab.key));
+
 export function BottomTabBar() {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
   return (
-    <nav
-      aria-label={t('nav.mainLabel')}
-      className="fixed bottom-0 inset-x-0 z-40 bg-card border-t-[0.5px] border-[var(--border)] md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(var(--nav-height, 60px) + env(safe-area-inset-bottom))' }}
-    >
-      <ul
-        className="flex overflow-x-auto overscroll-x-contain scrollbar-hide"
-        style={{ height: 'var(--nav-height, 60px)' }}
+    <>
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/20 md:hidden" onClick={() => setOpen(false)}>
+          <div
+            role="dialog"
+            aria-label={t('nav.moreMenu')}
+            className="absolute inset-x-3 bottom-[calc(var(--nav-height)+env(safe-area-inset-bottom)+0.75rem)] rounded-lg border border-[var(--border)] bg-card p-2 shadow-lg"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="grid grid-cols-2 gap-1">
+              {MORE_TABS.map(({ to, key, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex min-h-12 items-center gap-3 rounded px-3 py-2 text-[13px] transition-colors ${
+                      isActive ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'text-foreground hover:bg-accent-soft-20'
+                    }`
+                  }
+                >
+                  <Icon />
+                  <span className="font-pretendard break-keep">{t(`nav.${key}`)}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      <nav
+        aria-label={t('nav.mainLabel')}
+        className="fixed bottom-0 inset-x-0 z-50 bg-card border-t-[0.5px] border-[var(--border)] md:hidden"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'max(env(safe-area-inset-left), 0px)',
+          paddingRight: 'max(env(safe-area-inset-right), 0px)',
+          height: 'calc(var(--nav-height, 64px) + env(safe-area-inset-bottom))',
+        }}
       >
-        {TABS.map(({ to, key, icon: Icon }) => (
-          <li key={to} className="flex-none w-16">
-            <NavLink
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center h-full gap-0.5 min-h-[44px] min-w-[44px] transition-colors ${
-                  isActive
-                    ? 'text-[var(--accent)]'
-                    : 'text-[var(--muted-foreground)] hover:text-foreground'
-                }`
-              }
+        <ul
+          className="grid grid-cols-6"
+          style={{ height: 'var(--nav-height, 64px)' }}
+        >
+          {PRIMARY_TABS.map(({ to, key, icon: Icon }) => (
+            <li key={to} className="min-w-0">
+              <NavLink
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  `flex h-full min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 transition-colors ${
+                    isActive
+                      ? 'text-[var(--accent)]'
+                      : 'text-[var(--muted-foreground)] hover:text-foreground'
+                  }`
+                }
+              >
+                <Icon />
+                <span className="max-w-full truncate font-pretendard text-[10px] leading-tight">{t(`nav.${key}`)}</span>
+              </NavLink>
+            </li>
+          ))}
+          <li className="min-w-0">
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-haspopup="dialog"
+              onClick={() => setOpen((value) => !value)}
+              className={`flex h-full min-h-11 w-full min-w-0 flex-col items-center justify-center gap-0.5 px-1 transition-colors ${
+                open ? 'text-[var(--accent)]' : 'text-[var(--muted-foreground)] hover:text-foreground'
+              }`}
             >
-              <Icon />
-              <span className="font-pretendard text-[9px] mt-0.5">{t(`nav.${key}`)}</span>
-            </NavLink>
+              <MoreIcon />
+              <span className="max-w-full truncate font-pretendard text-[10px] leading-tight">{t('nav.more')}</span>
+            </button>
           </li>
-        ))}
-      </ul>
-    </nav>
+        </ul>
+      </nav>
+    </>
   );
 }
 
@@ -115,6 +171,14 @@ function StatsIcon() {
   return (
     <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  );
+}
+
+function MoreIcon() {
+  return (
+    <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01" />
     </svg>
   );
 }

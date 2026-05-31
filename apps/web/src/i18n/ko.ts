@@ -18,6 +18,8 @@ const ko = {
     mainLabel:  '메인 내비게이션',
     collapseSide: '사이드 메뉴 접기',
     expandSide:   '사이드 메뉴 펼치기',
+    more:       '더보기',
+    moreMenu:   '추가 메뉴',
   },
 
   // ── 공통 ──

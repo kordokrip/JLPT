@@ -18,8 +18,8 @@ interface StreakData {
   frozen:        boolean;
 }
 
-async function fetchStreak(): Promise<StreakData> {
-  const res = await logsApi.streak();
+async function fetchStreak(signal?: AbortSignal): Promise<StreakData> {
+  const res = await logsApi.streak(signal ? { signal } : undefined);
   if (!res.ok) throw new Error(res.message);
   return res.data;
 }
@@ -38,7 +38,7 @@ export default function Stats() {
   const { t } = useTranslation();
   const { data, isError } = useQuery<StreakData>({
     queryKey:  ['streak'],
-    queryFn:   fetchStreak,
+    queryFn:   ({ signal }) => fetchStreak(signal),
     staleTime: 5 * 60 * 1000,
   });
 

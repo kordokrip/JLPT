@@ -37,13 +37,22 @@ async function request<T>(
 ): Promise<ApiResult<T>> {
   const url = `${BASE}/api/v1${path}`;
   let res: Response;
+  const headers = new Headers(init?.headers);
+  if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+  if (init?.body !== undefined && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
   try {
     res = await fetch(url, {
       credentials: 'include',   // CF Access 쿠키 자동 포함
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
       ...init,
+      headers,
     });
   } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      return { ok: false, status: 0, message: '요청 취소됨' };
+    }
     return { ok: false, status: 0, message: '네트워크 오류' };
   }
 
@@ -75,7 +84,11 @@ async function request<T>(
 // HTTP 메서드 단축
 // ─────────────────────────────────────────────
 export const api = {
-  get: <T>(path: string, params?: Record<string, string | number | boolean | undefined>) => {
+  get: <T>(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+    init?: RequestInit,
+  ) => {
     const qs = params
       ? '?' + new URLSearchParams(
           Object.entries(params)
@@ -83,7 +96,7 @@ export const api = {
             .map(([k, v]) => [k, String(v)])
         ).toString()
       : '';
-    return request<T>(path + qs);
+    return request<T>(path + qs, init);
   },
 
   post: <T>(path: string, body?: unknown) =>
@@ -286,8 +299,8 @@ export const syncApi = {
 export const logsApi = {
   save: (date: string, reviews_done: number, new_cards: number, study_minutes: number) =>
     api.post<{ id: number }>('/logs/daily', { date, reviews_done, new_cards, study_minutes }),
-  streak: () =>
-    api.get<{ currentStreak: number; longestStreak: number; totalDays: number; lastStudyDate: string | null; frozen: boolean }>('/logs/streak'),
+  streak: (init?: RequestInit) =>
+    api.get<{ currentStreak: number; longestStreak: number; totalDays: number; lastStudyDate: string | null; frozen: boolean }>('/logs/streak', undefined, init),
   heatmap: (year: number) =>
     api.get<Record<string, { count: number; intensity: 0 | 1 | 2 | 3 | 4 }>>('/logs/heatmap', { year }),
 };

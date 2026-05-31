@@ -17,6 +17,8 @@ const ja = {
     mainLabel:  'メインナビゲーション',
     collapseSide: 'サイドメニューをたたむ',
     expandSide:   'サイドメニューを開く',
+    more:       'その他',
+    moreMenu:   '追加メニュー',
   },
 
   common: {

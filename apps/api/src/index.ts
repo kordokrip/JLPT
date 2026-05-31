@@ -66,7 +66,15 @@ const app = new OpenAPIHono<AppEnv>();
 // 글로벌 미들웨어
 // ─────────────────────────────────────────────
 app.use('*', logger());
-app.use('*', secureHeaders());
+app.use(
+  '*',
+  secureHeaders({
+    crossOriginResourcePolicy: 'cross-origin',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    strictTransportSecurity: 'max-age=31536000; includeSubDomains; preload',
+    xFrameOptions: 'DENY',
+  }),
+);
 app.use('/api/*', securityMiddleware);
 app.use(
   '/api/*',

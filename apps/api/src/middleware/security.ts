@@ -19,7 +19,7 @@ const CSP_DIRECTIVES = [
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https:",
   "media-src 'self' https://*.r2.cloudflarestorage.com",
-  "connect-src 'self' https://nihongo-n3-api.workers.dev https://nihongo-n3.pages.dev",
+  "connect-src 'self' https://nihongo-n3-api.kordokrip.workers.dev https://nihongo-n3.pages.dev",
   "worker-src 'self'",
   "manifest-src 'self'",
   "frame-ancestors 'none'",
@@ -38,6 +38,9 @@ export async function securityMiddleware(c: Context<AppEnv>, next: Next): Promis
 
   // MIME スニッフィング防止
   c.header('X-Content-Type-Options', 'nosniff');
+
+  // Pages 앱에서 Workers API를 CORS로 읽을 수 있도록 API 응답은 cross-origin을 허용한다.
+  c.header('Cross-Origin-Resource-Policy', 'cross-origin');
 
   // クリックジャッキング防止 (CSP の frame-ancestors と二重ガード)
   c.header('X-Frame-Options', 'DENY');

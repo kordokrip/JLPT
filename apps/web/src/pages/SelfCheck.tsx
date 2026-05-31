@@ -145,8 +145,8 @@ export default function SelfCheck() {
 
   const { data: savedCheck, isLoading } = useQuery<SelfCheckRow | null>({
     queryKey: ['self-check', selectedWeek],
-    queryFn: async () => {
-      const res = await api.get<SelfCheckRow>(`/self-check/${selectedWeek}`);
+    queryFn: async ({ signal }) => {
+      const res = await api.get<SelfCheckRow>(`/self-check/${selectedWeek}`, undefined, { signal });
       return res.ok ? res.data : null;
     },
     enabled: !isCurrentWeekLoading,
@@ -203,8 +203,8 @@ export default function SelfCheck() {
 
   const { data: scoresData } = useQuery<{ scores: number[]; hasData: boolean }>({
     queryKey: ['self-check-scores'],
-    queryFn: async () => {
-      const res = await api.get<{ scores: number[]; hasData: boolean }>('/self-check/scores');
+    queryFn: async ({ signal }) => {
+      const res = await api.get<{ scores: number[]; hasData: boolean }>('/self-check/scores', undefined, { signal });
       return res.ok ? res.data : { scores: [0, 0, 0, 0, 0, 0], hasData: false };
     },
     staleTime: 1000 * 60 * 5,

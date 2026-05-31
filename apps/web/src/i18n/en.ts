@@ -17,6 +17,8 @@ const en = {
     mainLabel:  'Main navigation',
     collapseSide: 'Collapse side menu',
     expandSide:   'Expand side menu',
+    more:       'More',
+    moreMenu:   'More menu',
   },
 
   common: {

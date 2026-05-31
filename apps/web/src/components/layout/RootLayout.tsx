@@ -14,11 +14,11 @@ export function RootLayout() {
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
   const { t } = useTranslation();
   const layoutStyle = {
-    '--sidebar-width': sideNavCollapsed ? '4.5rem' : '14rem',
+    '--sidebar-width': sideNavCollapsed ? '6.25rem' : '15rem',
   } as CSSProperties;
 
   return (
-    <div className="min-h-screen bg-[var(--background)]" style={layoutStyle}>
+    <div className="min-h-dvh overflow-x-clip bg-[var(--background)]" style={layoutStyle}>
       {/* 스크린리더용 건너뛰기 링크 */}
       <a
         href="#main-content"
@@ -46,7 +46,7 @@ export function RootLayout() {
         className={[
           'md:pl-[var(--sidebar-width)]',
           'pb-[calc(var(--nav-height)+env(safe-area-inset-bottom))] md:pb-0',
-          'pt-[env(safe-area-inset-top)]',
+          'min-w-0 pt-[env(safe-area-inset-top)]',
           !isOnline ? 'mt-6' : '',
         ].join(' ')}
       >

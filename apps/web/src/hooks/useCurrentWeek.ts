@@ -19,8 +19,8 @@ interface SrsStats {
 export function useCurrentWeek(): { week: number; startedAt: Date | null; isLoading: boolean } {
   const { data, isLoading } = useQuery<SrsStats>({
     queryKey: ['srs-stats'],
-    queryFn: async () => {
-      const res = await api.get<SrsStats>('/srs/stats');
+    queryFn: async ({ signal }) => {
+      const res = await api.get<SrsStats>('/srs/stats', undefined, { signal });
       return res.ok ? res.data : { new: 0, learning: 0, review: 0, relearning: 0, firstCardCreatedAt: null };
     },
     staleTime: 1000 * 60 * 10,

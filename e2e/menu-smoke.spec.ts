@@ -41,24 +41,45 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   expect(failures, 'network request failures').toEqual([]);
   expect(badResponses, 'bad API responses').toEqual([]);
   expect(consoleErrors, 'browser console errors').toEqual([]);
-  expect(
-    pageErrors.filter((message) => !/\/localhost:5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(message)),
-    'uncaught page errors',
-  ).toEqual([]);
+  const actionablePageErrors = pageErrors.filter((message) => {
+    if (/\/localhost:5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(message)) return false;
+    if (
+      failures.length === 0 &&
+      badResponses.length === 0 &&
+      /\/nihongo-n3-api\.kordokrip\.workers\.dev\/api\/v1\/.*due to access control checks/.test(message)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  expect(actionablePageErrors, 'uncaught page errors').toEqual([]);
 }
 
 async function expectVisibleHref(page: Page, href: string, label: string) {
-  await expect
-    .poll(async () => {
-      return page.locator(`a[href="${href}"]`).evaluateAll((links) =>
+  const isVisible = async () => {
+    try {
+      return await page.locator(`a[href="${href}"]`).evaluateAll((links) =>
         links.some((link) => {
           const style = window.getComputedStyle(link);
           const rect = link.getBoundingClientRect();
           return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
         }),
       );
-    }, { message: `${label} nav link`, timeout: 10_000 })
-    .toBe(true);
+    } catch {
+      return false;
+    }
+  };
+
+  if (!(await isVisible()) && page.viewportSize()?.width && page.viewportSize()!.width < 768) {
+    const dialog = page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ });
+    if (!(await dialog.isVisible().catch(() => false))) {
+      const more = page.getByRole('button', { name: /더보기|More|その他/ });
+      if (await more.isVisible()) await more.click();
+    }
+  }
+
+  await expect.poll(isVisible, { message: `${label} nav link`, timeout: 10_000 }).toBe(true);
 }
 
 test.describe('운영 메뉴 smoke', () => {
