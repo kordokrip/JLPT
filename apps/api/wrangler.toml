@@ -86,6 +86,7 @@ simple = { limit = 30, period = 60 }
 
 [ai]
 binding = "AI"
+remote = true
 
 [dev]
 port = 8787
@@ -97,3 +98,47 @@ AUTH_MODE = "public-owner"
 CF_ACCESS_AUD = "test-aud"
 CF_TEAM_DOMAIN = "test.cloudflareaccess.com"
 local_protocol = "http"
+NOTIFY_EMAIL = ""
+TTS_PROVIDER = "cloudflare"
+GOOGLE_TTS_API_KEY = ""
+AZURE_TTS_KEY = ""
+AZURE_TTS_REGION = "japaneast"
+FSRS_OPTIMIZER_URL = ""
+FSRS_OPTIMIZER_TOKEN = ""
+VAPID_PUBLIC_KEY = "test-vapid-public-key"
+
+[[env.test.d1_databases]]
+binding = "DB"
+database_name = "nihongo-n3-test"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../../packages/db/drizzle"
+
+[[env.test.r2_buckets]]
+binding = "ASSETS"
+bucket_name = "nihongo-n3-audio-test"
+
+[[env.test.r2_buckets]]
+binding = "REPORTS"
+bucket_name = "nihongo-n3-reports-test"
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_PUBLIC"
+type = "ratelimit"
+namespace_id = "test-public"
+simple = { limit = 100, period = 60 }
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_AUTH"
+type = "ratelimit"
+namespace_id = "test-auth"
+simple = { limit = 300, period = 60 }
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_SYNC"
+type = "ratelimit"
+namespace_id = "test-sync"
+simple = { limit = 30, period = 60 }
+
+[env.test.ai]
+binding = "AI"
+remote = true
