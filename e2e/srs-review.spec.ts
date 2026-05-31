@@ -15,6 +15,7 @@ async function ensureReviewCard(page: import('@playwright/test').Page) {
 
   const starterButton = page.getByRole('button', { name: /카드 10장 시작|Start 10 cards|10枚を開始/i });
   if (await starterButton.isVisible().catch(() => false)) {
+    if (!(await starterButton.isEnabled().catch(() => false))) return false;
     await starterButton.click();
     await expect(cardFront).toBeVisible({ timeout: 15_000 });
     return true;

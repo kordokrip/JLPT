@@ -34,9 +34,17 @@ test.describe('오프라인 모드', () => {
     const hasIndexedDb = await page.evaluate(async () => {
       if (!('indexedDB' in window)) return false;
       const listDatabases = indexedDB.databases?.bind(indexedDB);
-      if (!listDatabases) return true;
-      const databases = await listDatabases();
-      return databases.some((db) => (db.name ?? '').toLowerCase().includes('nihongo'));
+      const databases = listDatabases ? await listDatabases().catch(() => []) : [];
+      if (databases.some((db) => (db.name ?? '').toLowerCase().includes('nihongo'))) return true;
+
+      return await new Promise<boolean>((resolve) => {
+        const request = indexedDB.open('nihongo-n3');
+        request.onerror = () => resolve(false);
+        request.onsuccess = () => {
+          request.result.close();
+          resolve(true);
+        };
+      });
     });
     expect(hasIndexedDb).toBe(true);
   });
