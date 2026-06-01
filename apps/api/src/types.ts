@@ -29,6 +29,10 @@ export type Env = {
   AZURE_TTS_KEY:       string;
   AZURE_TTS_REGION:    string;
   VOICEVOX_URL:        string;
+  VOICEVOX_SPEAKER:    string;
+  VOICEVOX_SPEED_SCALE:string;
+  VOICEVOX_PITCH_SCALE:string;
+  VOICEVOX_INTONATION_SCALE:string;
   STYLE_BERT_VITS2_URL:string;
   /** 외부 FSRS 옵티마이저 서비스 URL (Node 배치/별도 서비스) */
   FSRS_OPTIMIZER_URL:  string;

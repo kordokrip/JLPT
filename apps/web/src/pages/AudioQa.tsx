@@ -56,8 +56,8 @@ const PROVIDERS: Array<{
   {
     id: 'voicevox',
     label: 'VOICEVOX',
-    status: 'not-connected',
-    description: '자체 호스팅 VOICEVOX 엔진 URL 연결 후 배치 생성 후보로 평가합니다.',
+    status: 'partial',
+    description: 'VOICEVOX_URL이 연결된 환경에서는 고정 샘플을 서버에서 생성해 비교합니다.',
   },
   {
     id: 'style-bert-vits2',
@@ -86,8 +86,8 @@ export default function AudioQa() {
         await audioPlayer.speakText(sample, { voiceGender, voiceURI: selectedVoiceURI });
         return;
       }
-      if (provider === 'cloudflare') {
-        const key = `audio/sentence/n3/${sampleIndex + 1}.mp3`;
+      if (provider === 'cloudflare' || provider === 'voicevox') {
+        const key = `audio/qa/${provider}/${sampleIndex + 1}.wav`;
         const audio = new Audio(buildAudioUrl(key));
         audio.playbackRate = audioPlayer.rate;
         await audio.play();
@@ -144,7 +144,7 @@ export default function AudioQa() {
       <section className="grid gap-3 md:grid-cols-2">
         {PROVIDERS.map((provider) => {
           const ratingKey = `${provider.id}:${sampleIndex}`;
-          const canPlay = provider.id === 'browser' || provider.id === 'cloudflare';
+          const canPlay = provider.id === 'browser' || provider.id === 'cloudflare' || provider.id === 'voicevox';
           return (
             <article key={provider.id} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
               <div className="mb-3 flex items-start justify-between gap-3">

@@ -16,3 +16,11 @@ export interface TtsOptions {
 export interface TtsAdapter {
   generateAudio(opts: TtsOptions): Promise<ArrayBuffer>;
 }
+
+export type TtsProviderId = 'cloudflare' | 'google' | 'azure' | 'voicevox' | 'style-bert-vits2';
+
+export interface TtsProviderInfo {
+  provider: TtsProviderId;
+  model: string;
+  audioVersion: string;
+}

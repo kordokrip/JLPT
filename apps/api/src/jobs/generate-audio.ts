@@ -23,13 +23,11 @@
  *   P4 kanji 音読み
  */
 import type { Env } from '../types.js';
-import { createTtsAdapter } from '../lib/tts/index.js';
-import { CLOUDFLARE_MELOTTS_MODEL } from '../lib/tts/cloudflare-aura.js';
+import { createTtsAdapter, getTtsProviderInfo } from '../lib/tts/index.js';
 
 const BATCH_SIZE  = 50;
 const DAILY_LIMIT = 500;
 const MAX_RETRIES = 3;
-const GENERATED_AUDIO_VERSION = 'melotts-v2';
 
 function detectAudioContentType(buffer: ArrayBuffer): 'audio/mpeg' | 'audio/wav' {
   const bytes = new Uint8Array(buffer.slice(0, 12));
@@ -81,6 +79,7 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
   const db  = env.DB;
   const r2  = env.ASSETS;
   const tts = createTtsAdapter(env);
+  const providerInfo = getTtsProviderInfo(env);
 
   // 일일 한도 체크
   const dailyCount = await getDailyCount(db).catch(() => 0);
@@ -189,10 +188,10 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
           itemId:    String(task.id),
           level:     task.level,
           source:    'batch',
-          provider:  'cloudflare',
-          model:     CLOUDFLARE_MELOTTS_MODEL,
+          provider:  providerInfo.provider,
+          model:     providerInfo.model,
           lang:      'ja',
-          audioVersion: GENERATED_AUDIO_VERSION,
+          audioVersion: providerInfo.audioVersion,
           contentType,
           createdAt: new Date().toISOString(),
         },
