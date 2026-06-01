@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CLOUDFLARE_MELOTTS_MODEL, CloudflareMeloTts } from '../lib/tts/cloudflare-aura.js';
 import { createTtsAdapter, getTtsProviderInfo } from '../lib/tts/index.js';
-import { VoicevoxTts } from '../lib/tts/voicevox.js';
+import { VoicevoxTts, probeVoicevoxEngine } from '../lib/tts/voicevox.js';
 
 describe('CloudflareMeloTts', () => {
   it('uses MeloTTS with Japanese language input and decodes base64 MP3 payloads', async () => {
@@ -63,6 +63,29 @@ describe('VoicevoxTts', () => {
       intonationScale: 1.2,
       outputSamplingRate: 44100,
       outputStereo: false,
+    });
+  });
+
+  it('probes VOICEVOX engine version and speaker list', async () => {
+    const fetcher = (async (url: string | URL | Request) => {
+      if (String(url).endsWith('/version')) return new Response('0.16.0');
+      if (String(url).endsWith('/speakers')) return Response.json([{ name: '四国めたん', styles: [] }]);
+      return new Response(null, { status: 404 });
+    }) as typeof fetch;
+
+    await expect(probeVoicevoxEngine('https://voicevox.example.com/', { fetcher })).resolves.toEqual({
+      configured: true,
+      ok: true,
+      version: '0.16.0',
+      speakerCount: 1,
+    });
+  });
+
+  it('reports disabled VOICEVOX when URL is empty', async () => {
+    await expect(probeVoicevoxEngine('')).resolves.toEqual({
+      configured: false,
+      ok: false,
+      error: 'VOICEVOX_URL 이 설정되지 않았습니다',
     });
   });
 });

@@ -23,7 +23,7 @@
  *   P4 kanji 音読み
  */
 import type { Env } from '../types.js';
-import { createTtsAdapter, getTtsProviderInfo } from '../lib/tts/index.js';
+import { createTtsAdapter, getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
 
 const BATCH_SIZE  = 50;
 const DAILY_LIMIT = 500;
@@ -42,6 +42,12 @@ interface AudioTask {
   text:     string;
   level:    string;
   attempts: number;
+}
+
+export interface AudioGenerationOptions {
+  provider?: Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
+  batchSize?: number;
+  forceRegenerate?: boolean;
 }
 
 /** 일일 생성 건수 조회 (R2 기반 카운터 대신 D1 review_logs 테이블 활용) */
@@ -75,11 +81,15 @@ async function logGeneration(
 }
 
 /** 오디오 생성 잡 메인 함수 */
-export async function runAudioGeneration(env: Env): Promise<{ processed: number; skipped: number }> {
+export async function runAudioGeneration(
+  env: Env,
+  options: AudioGenerationOptions = {},
+): Promise<{ processed: number; skipped: number }> {
   const db  = env.DB;
   const r2  = env.ASSETS;
-  const tts = createTtsAdapter(env);
-  const providerInfo = getTtsProviderInfo(env);
+  const tts = createTtsAdapter(env, options.provider);
+  const providerInfo = getTtsProviderInfo(env, options.provider);
+  const batchSize = clampInt(options.batchSize ?? BATCH_SIZE, 1, 200);
 
   // 일일 한도 체크
   const dailyCount = await getDailyCount(db).catch(() => 0);
@@ -88,7 +98,8 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
     return { processed: 0, skipped: 0 };
   }
 
-  const remaining = Math.min(BATCH_SIZE, DAILY_LIMIT - dailyCount);
+  const remaining = Math.min(batchSize, DAILY_LIMIT - dailyCount);
+  const missingOnly = options.forceRegenerate ? '' : 'AND audio_r2_key IS NULL';
 
   // ── 우선순위별 미생성 항목 조회 ─────────────────────────────────
   // P1: sentences
@@ -97,7 +108,8 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
       `SELECT id, 'sentence' AS type, ja AS text, level,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM sentences
-       WHERE audio_r2_key IS NULL
+       WHERE 1 = 1
+         ${missingOnly}
          AND COALESCE(audio_generation_attempts, 0) < ?
        ORDER BY id
        LIMIT ?`,
@@ -111,7 +123,8 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
       `SELECT id, 'vocab' AS type, ja AS text, level,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM vocab
-       WHERE audio_r2_key IS NULL
+       WHERE 1 = 1
+         ${missingOnly}
          AND level = 'N3'
          AND COALESCE(audio_generation_attempts, 0) < ?
        ORDER BY id
@@ -126,7 +139,8 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
       `SELECT id, 'vocab' AS type, ja AS text, level,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM vocab
-       WHERE audio_r2_key IS NULL
+       WHERE 1 = 1
+         ${missingOnly}
          AND level IN ('N4', 'N5')
          AND COALESCE(audio_generation_attempts, 0) < ?
        ORDER BY id
@@ -141,7 +155,8 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
       `SELECT id, 'kanji' AS type, COALESCE(on_yomi, kun_yomi, char) AS text, jlpt_level AS level,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM kanji
-       WHERE audio_r2_key IS NULL
+       WHERE 1 = 1
+         ${missingOnly}
          AND COALESCE(on_yomi, kun_yomi, char) IS NOT NULL
          AND COALESCE(audio_generation_attempts, 0) < ?
        ORDER BY id
@@ -168,7 +183,7 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
 
     // 이미 R2에 있으면 DB만 업데이트
     const existing = await r2.head(r2Key).catch(() => null);
-    if (existing) {
+    if (existing && !options.forceRegenerate && isCurrentAudio(existing, providerInfo)) {
       await updateR2Key(db, task, r2Key);
       processed++;
       continue;
@@ -209,8 +224,20 @@ export async function runAudioGeneration(env: Env): Promise<{ processed: number;
     }
   }
 
-  console.log(`[audio-gen] 완료: 생성=${processed} 스킵=${skipped}`);
+  console.log(
+    `[audio-gen] 완료: provider=${providerInfo.provider} force=${options.forceRegenerate === true} 생성=${processed} 스킵=${skipped}`,
+  );
   return { processed, skipped };
+}
+
+function isCurrentAudio(
+  object: Pick<R2Object, 'customMetadata'>,
+  providerInfo: ReturnType<typeof getTtsProviderInfo>,
+): boolean {
+  const meta = object.customMetadata;
+  return meta?.provider === providerInfo.provider &&
+    meta.model === providerInfo.model &&
+    meta.audioVersion === providerInfo.audioVersion;
 }
 
 async function updateR2Key(db: D1Database, task: AudioTask, r2Key: string): Promise<void> {
@@ -231,4 +258,9 @@ async function incrementAttempts(db: D1Database, task: AudioTask): Promise<void>
     )
     .bind(task.id)
     .run();
+}
+
+function clampInt(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.min(max, Math.max(min, Math.trunc(value)));
 }

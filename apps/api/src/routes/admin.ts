@@ -18,6 +18,9 @@ import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, problem } from '../lib/response.js';
 import { runAudioGeneration } from '../jobs/generate-audio.js';
+import { getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
+import { probeVoicevoxEngine } from '../lib/tts/voicevox.js';
+import { parseAudioQaProvider, warmupAudioQa, type AudioQaProvider } from '../lib/audio-qa.js';
 
 const admin = new Hono<AppEnv>();
 admin.use('*', cfAccessAuth);
@@ -393,7 +396,17 @@ export async function sendReportEmail(
 // ── POST /audio/queue — TTS 오디오 생성 즉시 실행 ──────────────
 // dry_run=true 시 실제 생성 없이 대상 목록만 반환
 admin.post('/audio/queue', async (c) => {
-  const body = await c.req.json<{ dry_run?: boolean; batch?: number }>().catch(() => ({}));
+  const body = (await c.req.json<{
+    dry_run?: boolean;
+    batch?: number;
+    provider?: string;
+    force_regenerate?: boolean;
+  }>().catch(() => ({}))) as {
+    dry_run?: boolean;
+    batch?: number;
+    provider?: string;
+    force_regenerate?: boolean;
+  };
 
   if (body && 'dry_run' in body && body.dry_run) {
     // 생성 대상 통계 조회만 반환
@@ -402,10 +415,12 @@ admin.post('/audio/queue', async (c) => {
     const [sentences, vocab, kanji] = await Promise.all([
       db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM sentences`).first<CountRow>(),
       db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM vocab`).first<CountRow>(),
-      db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM kanji WHERE onyomi IS NOT NULL`).first<CountRow>(),
+      db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM kanji WHERE on_yomi IS NOT NULL`).first<CountRow>(),
     ]);
     return ok(c, {
       dry_run: true,
+      provider: parseBatchProvider(body.provider) ?? getTtsProviderInfo(c.env).provider,
+      force_regenerate: body.force_regenerate === true,
       stats: {
         sentences: { total: sentences?.total ?? 0, done: sentences?.done ?? 0 },
         vocab:     { total: vocab?.total ?? 0,     done: vocab?.done ?? 0     },
@@ -414,8 +429,76 @@ admin.post('/audio/queue', async (c) => {
     });
   }
 
-  const result = await runAudioGeneration(c.env);
+  const provider = parseBatchProvider(body.provider);
+  const result = await runAudioGeneration(c.env, {
+    ...(provider ? { provider } : {}),
+    ...(typeof body.batch === 'number' ? { batchSize: body.batch } : {}),
+    forceRegenerate: body.force_regenerate === true,
+  });
   return ok(c, result);
 });
+
+admin.get('/audio/providers', async (c) => {
+  const providerInfo = getTtsProviderInfo(c.env);
+  const voicevox = await probeVoicevoxEngine(c.env.VOICEVOX_URL, { timeoutMs: 5000 });
+  return ok(c, {
+    active: providerInfo,
+    providers: {
+      cloudflare: {
+        configured: true,
+        ok: true,
+        model: getTtsProviderInfo(c.env, 'cloudflare').model,
+      },
+      voicevox: {
+        ...voicevox,
+        model: getTtsProviderInfo(c.env, 'voicevox').model,
+        urlConfigured: Boolean(c.env.VOICEVOX_URL.trim()),
+      },
+    },
+  });
+});
+
+admin.post('/audio/qa/warmup', async (c) => {
+  const body = (await c.req.json<{ provider?: string; force?: boolean }>().catch(() => ({}))) as {
+    provider?: string;
+    force?: boolean;
+  };
+  const providers = parseQaWarmupProviders(body.provider);
+  const results: Record<AudioQaProvider, Awaited<ReturnType<typeof warmupAudioQa>>> = {
+    cloudflare: [],
+    voicevox: [],
+  };
+
+  for (const provider of providers) {
+    results[provider] = await warmupAudioQa(c.env, provider, { force: body.force === true });
+  }
+
+  return ok(c, {
+    force: body.force === true,
+    providers,
+    summary: providers.map((provider) => {
+      const rows = results[provider];
+      return {
+        provider,
+        generated: rows.filter((row) => row.status === 'generated').length,
+        cached: rows.filter((row) => row.status === 'cached').length,
+        skipped: rows.filter((row) => row.status === 'skipped').length,
+        failed: rows.filter((row) => row.status === 'failed').length,
+      };
+    }),
+    results,
+  });
+});
+
+function parseBatchProvider(value: string | undefined): Extract<TtsProviderId, 'cloudflare' | 'voicevox'> | undefined {
+  if (value === 'cloudflare' || value === 'voicevox') return value;
+  return undefined;
+}
+
+function parseQaWarmupProviders(value: string | undefined): AudioQaProvider[] {
+  const provider = value ? parseAudioQaProvider(value) : null;
+  if (provider) return [provider];
+  return ['cloudflare', 'voicevox'];
+}
 
 export { admin };

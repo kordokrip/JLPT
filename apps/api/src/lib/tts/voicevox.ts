@@ -8,6 +8,10 @@
 import type { TtsAdapter, TtsOptions } from './types.js';
 
 type FetchLike = typeof fetch;
+type VoicevoxProbeStatus =
+  | { configured: false; ok: false; error: string }
+  | { configured: true; ok: true; version: string; speakerCount: number }
+  | { configured: true; ok: false; error: string };
 
 interface VoicevoxAudioQuery {
   speedScale?: number;
@@ -82,6 +86,42 @@ export class VoicevoxTts implements TtsAdapter {
     }
 
     return synthesisRes.arrayBuffer();
+  }
+}
+
+export async function probeVoicevoxEngine(
+  baseUrl: string | undefined,
+  options: { timeoutMs?: number; fetcher?: FetchLike } = {},
+): Promise<VoicevoxProbeStatus> {
+  if (!baseUrl?.trim()) {
+    return { configured: false, ok: false, error: 'VOICEVOX_URL 이 설정되지 않았습니다' };
+  }
+
+  const normalizedUrl = baseUrl.replace(/\/+$/, '');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 5000);
+  const fetcher = options.fetcher ?? fetch;
+
+  try {
+    const [versionRes, speakersRes] = await Promise.all([
+      fetcher(`${normalizedUrl}/version`, { signal: controller.signal }),
+      fetcher(`${normalizedUrl}/speakers`, { signal: controller.signal }),
+    ]);
+    if (!versionRes.ok) throw new Error(`/version HTTP ${versionRes.status}`);
+    if (!speakersRes.ok) throw new Error(`/speakers HTTP ${speakersRes.status}`);
+
+    const version = await versionRes.text();
+    const speakers = await speakersRes.json<unknown>();
+    const speakerCount = Array.isArray(speakers) ? speakers.length : 0;
+    return { configured: true, ok: true, version, speakerCount };
+  } catch (err) {
+    return {
+      configured: true,
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

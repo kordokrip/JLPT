@@ -12,18 +12,18 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { AppEnv } from '../types.js';
 import { notFound, badRequest } from '../lib/response.js';
-import { createTtsAdapter, getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
-import { AUDIO_QA_SAMPLES } from '../lib/audio-qa-samples.js';
+import { createTtsAdapter, getTtsProviderInfo } from '../lib/tts/index.js';
+import {
+  detectAudioContentType,
+  getOrGenerateQaAudio,
+  isValidAudioQaIndex,
+  parseAudioQaKey,
+  parseAudioQaProvider,
+  type AudioQaProvider,
+} from '../lib/audio-qa.js';
 const audio = new Hono<AppEnv>();
 
 const CACHE_CONTROL = 'public, max-age=2592000, immutable';
-
-function detectAudioContentType(buffer: ArrayBuffer): 'audio/mpeg' | 'audio/wav' {
-  const bytes = new Uint8Array(buffer.slice(0, 12));
-  const ascii = String.fromCharCode(...bytes);
-  if (ascii.startsWith('RIFF') && ascii.slice(8, 12) === 'WAVE') return 'audio/wav';
-  return 'audio/mpeg';
-}
 
 /** Range 헤더 파싱: "bytes=start-end?" → {start, end?} */
 function parseRange(header: string, totalSize: number): { start: number; end: number } | null {
@@ -41,23 +41,6 @@ function parseRange(header: string, totalSize: number): { start: number; end: nu
 }
 
 type AudioKind = 'sentence' | 'vocab' | 'kanji';
-type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
-type AudioQaKey = { provider: AudioQaProvider; index: number };
-
-function parseAudioQaProvider(value: string): AudioQaProvider | null {
-  return value === 'cloudflare' || value === 'voicevox' ? value : null;
-}
-
-function parseAudioQaKey(key: string): AudioQaKey | null {
-  const match = key.match(/^audio\/qa\/([^/]+)\/(\d+)\.wav$/);
-  if (!match) return null;
-  const provider = parseAudioQaProvider(match[1] as string);
-  const index = Number(match[2]);
-  if (!provider || !Number.isInteger(index) || index < 1 || index > AUDIO_QA_SAMPLES.length) {
-    return null;
-  }
-  return { provider, index };
-}
 
 function parseGeneratedAudioKey(key: string): { kind: AudioKind; level: string; id: number } | null {
   const match = key.match(/^audio\/(sentence|vocab|kanji)\/(n[1-5])\/(\d+)\.mp3$/i);
@@ -148,63 +131,15 @@ function shouldRegenerateGeneratedAudio(
   );
 }
 
-async function generateQaAudioObject(
-  c: Context<AppEnv>,
-  provider: AudioQaProvider,
-  index: number,
-): Promise<R2ObjectBody | null> {
-  const text = AUDIO_QA_SAMPLES[index - 1];
-  if (!text) return null;
-
-  const providerInfo = getTtsProviderInfo(c.env, provider);
-  const key = `audio/qa/${provider}/${index}.wav`;
-  const tts = createTtsAdapter(c.env, provider);
-  const audioBuffer = await tts.generateAudio({ text, lang: 'ja' });
-  const contentType = detectAudioContentType(audioBuffer);
-  await c.env.ASSETS.put(key, audioBuffer, {
-    httpMetadata: {
-      contentType,
-      cacheControl: CACHE_CONTROL,
-    },
-    customMetadata: {
-      itemType: 'qa',
-      itemId: String(index),
-      source: 'qa',
-      provider: providerInfo.provider,
-      model: providerInfo.model,
-      lang: 'ja',
-      audioVersion: providerInfo.audioVersion,
-      contentType,
-      createdAt: new Date().toISOString(),
-    },
-  });
-  return c.env.ASSETS.get(key);
-}
-
-function shouldRegenerateQaAudio(
-  object: Pick<R2Object, 'customMetadata'> | null,
-  providerInfo: ReturnType<typeof getTtsProviderInfo>,
-): boolean {
-  if (!object) return true;
-  const meta = object.customMetadata;
-  return meta?.source === 'qa' && (
-    meta.model !== providerInfo.model ||
-    meta.audioVersion !== providerInfo.audioVersion
-  );
-}
-
 async function serveQaAudio(c: Context<AppEnv>, provider: AudioQaProvider, index: number): Promise<Response> {
-  const key = `audio/qa/${provider}/${index}.wav`;
-  const providerInfo = getTtsProviderInfo(c.env, provider);
-  let r2obj = await c.env.ASSETS.get(key);
-  if (!r2obj || shouldRegenerateQaAudio(r2obj, providerInfo)) {
-    try {
-      r2obj = await generateQaAudioObject(c, provider, index);
-    } catch (err) {
-      console.error('[audio/qa]', err);
-      return notFound(c, `QA 오디오를 아직 생성할 수 없습니다: ${provider}#${index}`);
-    }
+  let r2obj: R2ObjectBody | null;
+  try {
+    r2obj = await getOrGenerateQaAudio(c.env, provider, index);
+  } catch (err) {
+    console.error('[audio/qa]', err);
+    return notFound(c, `QA 오디오를 아직 생성할 수 없습니다: ${provider}#${index}`);
   }
+  const key = `audio/qa/${provider}/${index}.wav`;
   if (!r2obj) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
 
   return new Response(r2obj.body as ReadableStream, {
@@ -225,7 +160,7 @@ audio.get('/audio/qa/:provider/:file', async (c) => {
   const provider = parseAudioQaProvider(c.req.param('provider'));
   const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
   const index = fileMatch ? Number(fileMatch[1]) : NaN;
-  if (!provider || !Number.isInteger(index) || index < 1 || index > AUDIO_QA_SAMPLES.length) {
+  if (!provider || !isValidAudioQaIndex(index)) {
     return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
   }
 

@@ -46,5 +46,25 @@ registerDocsOnlyRoutes(adminOA, [
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
     },
   },
+  {
+    method: 'get',
+    path: '/audio/providers',
+    tags: ['Admin', 'Audio'],
+    summary: 'TTS provider 운영 연결 상태 확인',
+    responses: {
+      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'provider 상태' },
+      401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+    },
+  },
+  {
+    method: 'post',
+    path: '/audio/qa/warmup',
+    tags: ['Admin', 'Audio'],
+    summary: '30개 QA 샘플 오디오 일괄 생성',
+    responses: {
+      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'QA 샘플 생성 결과' },
+      401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+    },
+  },
 ]);
 export { adminOA };
