@@ -42,9 +42,21 @@ function parseRange(header: string, totalSize: number): { start: number; end: nu
 
 type AudioKind = 'sentence' | 'vocab' | 'kanji';
 type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
+type AudioQaKey = { provider: AudioQaProvider; index: number };
 
 function parseAudioQaProvider(value: string): AudioQaProvider | null {
   return value === 'cloudflare' || value === 'voicevox' ? value : null;
+}
+
+function parseAudioQaKey(key: string): AudioQaKey | null {
+  const match = key.match(/^audio\/qa\/([^/]+)\/(\d+)\.wav$/);
+  if (!match) return null;
+  const provider = parseAudioQaProvider(match[1] as string);
+  const index = Number(match[2]);
+  if (!provider || !Number.isInteger(index) || index < 1 || index > AUDIO_QA_SAMPLES.length) {
+    return null;
+  }
+  return { provider, index };
 }
 
 function parseGeneratedAudioKey(key: string): { kind: AudioKind; level: string; id: number } | null {
@@ -181,14 +193,7 @@ function shouldRegenerateQaAudio(
   );
 }
 
-// ── GET /audio/qa/:provider/:index.wav ───────
-audio.get('/audio/qa/:provider/:index.wav', async (c) => {
-  const provider = parseAudioQaProvider(c.req.param('provider'));
-  const index = Number(c.req.param('index'));
-  if (!provider || !Number.isInteger(index) || index < 1 || index > AUDIO_QA_SAMPLES.length) {
-    return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
-  }
-
+async function serveQaAudio(c: Context<AppEnv>, provider: AudioQaProvider, index: number): Promise<Response> {
   const key = `audio/qa/${provider}/${index}.wav`;
   const providerInfo = getTtsProviderInfo(c.env, provider);
   let r2obj = await c.env.ASSETS.get(key);
@@ -213,12 +218,27 @@ audio.get('/audio/qa/:provider/:index.wav', async (c) => {
       'Last-Modified': r2obj.uploaded.toUTCString(),
     },
   });
+}
+
+// ── GET /audio/qa/:provider/:file ───────
+audio.get('/audio/qa/:provider/:file', async (c) => {
+  const provider = parseAudioQaProvider(c.req.param('provider'));
+  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
+  const index = fileMatch ? Number(fileMatch[1]) : NaN;
+  if (!provider || !Number.isInteger(index) || index < 1 || index > AUDIO_QA_SAMPLES.length) {
+    return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
+  }
+
+  return serveQaAudio(c, provider, index);
 });
 
 // ── GET /audio/:key ───────────────────────────
 audio.get('/audio/:key{.+}', async (c) => {
   const key = c.req.param('key');
   if (!key) return badRequest(c, '오디오 키가 없습니다');
+  const qaKey = parseAudioQaKey(key);
+  if (qaKey) return serveQaAudio(c, qaKey.provider, qaKey.index);
+  if (key.startsWith('audio/qa/')) return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
 
   const rangeHeader = c.req.header('range');
   const providerInfo = getTtsProviderInfo(c.env);
