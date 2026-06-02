@@ -1,0 +1,77 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright E2E (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @nihongo-n3/e2e exec playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Create local D1 database
+        working-directory: apps/api
+        run: |
+          pnpm exec wrangler d1 execute nihongo-n3-prod --local \
+            --command "SELECT 1" || true
+
+      - name: Run migrations (local D1)
+        working-directory: apps/api
+        run: |
+          pnpm exec wrangler d1 migrations apply nihongo-n3-prod --local \
+            --config wrangler.toml || true
+
+      - name: Run seed data (local D1)
+        working-directory: packages/db
+        run: pnpm seed:local || true
+
+      - name: Run E2E tests (${{ matrix.browser }})
+        run: pnpm --filter @nihongo-n3/e2e test:${{ matrix.browser }}
+        env:
+          CI: true
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ matrix.browser }}
+          path: e2e/test-results/
+          retention-days: 7

@@ -1,0 +1,34 @@
+{
+  "name": "nihongo-n3-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JLPT N5-N3 learning PWA monorepo (Cloudflare Workers + React PWA)",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.10.0",
+    "pnpm": ">=9.0.0"
+  },
+  "type": "module",
+  "scripts": {
+    "typecheck": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api --filter @nihongo-n3/db --filter @nihongo-n3/shared --filter @nihongo-n3/content -r typecheck",
+    "build": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r build",
+    "test": "pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
+    "test:e2e": "pnpm -F @nihongo-n3/e2e test",
+    "lint": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r lint",
+    "verify": "pnpm typecheck && pnpm test && pnpm build",
+    "dev:api": "pnpm -F @nihongo-n3/api dev",
+    "dev:web": "pnpm -F @nihongo-n3/web dev",
+    "db:seed": "pnpm -F @nihongo-n3/db seed:local",
+    "db:verify": "pnpm -F @nihongo-n3/db verify"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.95.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "6.3.5"
+    }
+  }
+}

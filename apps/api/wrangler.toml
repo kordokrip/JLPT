@@ -1,0 +1,156 @@
+name = "nihongo-n3-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Node.js 호환 플래그 활성화 (crypto, stream 등 Node 내장 모듈 사용 가능)
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+AUTH_MODE = "public-owner"
+# CF_ACCESS_AUD / CF_TEAM_DOMAIN are production secrets.
+# Set them with:
+#   wrangler secret put CF_ACCESS_AUD
+#   wrangler secret put CF_TEAM_DOMAIN
+# Set AUTH_MODE = "cf-access" after both secrets are configured.
+# 주간 리포트 이메일 수신 주소 (MailChannels, 비어 있으면 발송 안 함)
+NOTIFY_EMAIL = ""
+# TTS 공급자 선택: cloudflare | google | azure | voicevox | style-bert-vits2
+TTS_PROVIDER = "cloudflare"
+GOOGLE_TTS_API_KEY = ""
+AZURE_TTS_KEY = ""
+AZURE_TTS_REGION = "japaneast"
+VOICEVOX_URL = ""
+VOICEVOX_SPEAKER = "3"
+VOICEVOX_SPEED_SCALE = "0.94"
+VOICEVOX_PITCH_SCALE = "0"
+VOICEVOX_INTONATION_SCALE = "1.12"
+STYLE_BERT_VITS2_URL = ""
+FSRS_OPTIMIZER_URL = ""
+FSRS_OPTIMIZER_TOKEN = ""
+# FSRS_OPTIMIZER_URL 비움 = 개인화 최적화 비활성(정상 운영 모드).
+# 활성화 시 외부 optimizer는 FSRS-6 21 weights 응답을 보장해야 합니다.
+VAPID_PUBLIC_KEY = "BJHfUCRXkX43H96EVNlG51N9DWgmjcKdPZsPbJftK4I9WX2ym34ckNOJy7k71VXspgQZy9xze_DYzf_V7s_08jw"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# D1 Database
+# database_id / bucket_name은 운영 리소스 기준으로 저장소에서 관리합니다.
+# CI에서는 별도 치환 없이 이 값을 단일 진실원(Source of Truth)으로 사용합니다.
+# ─────────────────────────────────────────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "nihongo-n3-prod"
+database_id = "5a3ba67b-e5a5-4d5f-a73c-9bb7f4db9f68"
+migrations_dir = "../../packages/db/drizzle"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R2 Object Storage
+# bucket_name은 wrangler.toml 값 기준으로 배포/백업 워크플로에서 공통 사용합니다.
+# ─────────────────────────────────────────────────────────────────────────────
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "nihongo-n3-audio"
+
+# 주간 리포트 + 백업 SQL 저장 버킷
+[[r2_buckets]]
+binding = "REPORTS"
+bucket_name = "nihongo-n3-reports"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cron Triggers
+# 매주 일요일 23:00 KST = 14:00 UTC
+# ─────────────────────────────────────────────────────────────────────────────
+[triggers]
+crons = [
+  "0 14 * * SUN",  # 주간 리포트 (일요일 14:00 UTC)
+  "0 3 * * *",     # TTS 오디오 자동 생성 (매일 03:00 UTC)
+  "0 15 * * SUN",  # FSRS W 옵티마이저 (일요일 15:00 UTC)
+  "0 22 * * *",    # 아침 Push 알림 (KST 07:00 = UTC 22:00 전날)
+  "0 13 * * *",    # 취침 전 Push 알림 (KST 22:00 = UTC 13:00)
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rate Limiting (Cloudflare Workers Rate Limiting API)
+# ─────────────────────────────────────────────────────────────────────────────
+[[unsafe.bindings]]
+name = "RATE_LIMITER_PUBLIC"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 100, period = 60 }
+
+[[unsafe.bindings]]
+name = "RATE_LIMITER_AUTH"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 300, period = 60 }
+
+[[unsafe.bindings]]
+name = "RATE_LIMITER_SYNC"
+type = "ratelimit"
+namespace_id = "1003"
+simple = { limit = 30, period = 60 }
+
+[ai]
+binding = "AI"
+remote = true
+
+[dev]
+port = 8787
+
+# ── 테스트 환경 변수 (vitest + miniflare) ────────────────────────────────────
+[env.test.vars]
+ENVIRONMENT = "test"
+AUTH_MODE = "public-owner"
+CF_ACCESS_AUD = "test-aud"
+CF_TEAM_DOMAIN = "test.cloudflareaccess.com"
+local_protocol = "http"
+NOTIFY_EMAIL = ""
+TTS_PROVIDER = "cloudflare"
+GOOGLE_TTS_API_KEY = ""
+AZURE_TTS_KEY = ""
+AZURE_TTS_REGION = "japaneast"
+VOICEVOX_URL = ""
+VOICEVOX_SPEAKER = "3"
+VOICEVOX_SPEED_SCALE = "0.94"
+VOICEVOX_PITCH_SCALE = "0"
+VOICEVOX_INTONATION_SCALE = "1.12"
+STYLE_BERT_VITS2_URL = ""
+FSRS_OPTIMIZER_URL = ""
+FSRS_OPTIMIZER_TOKEN = ""
+VAPID_PUBLIC_KEY = "test-vapid-public-key"
+
+[[env.test.d1_databases]]
+binding = "DB"
+database_name = "nihongo-n3-test"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../../packages/db/drizzle"
+
+[[env.test.r2_buckets]]
+binding = "ASSETS"
+bucket_name = "nihongo-n3-audio-test"
+
+[[env.test.r2_buckets]]
+binding = "REPORTS"
+bucket_name = "nihongo-n3-reports-test"
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_PUBLIC"
+type = "ratelimit"
+namespace_id = "test-public"
+simple = { limit = 100, period = 60 }
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_AUTH"
+type = "ratelimit"
+namespace_id = "test-auth"
+simple = { limit = 300, period = 60 }
+
+[[env.test.unsafe.bindings]]
+name = "RATE_LIMITER_SYNC"
+type = "ratelimit"
+namespace_id = "test-sync"
+simple = { limit = 30, period = 60 }
+
+[env.test.ai]
+binding = "AI"
+remote = true

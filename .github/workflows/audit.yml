@@ -1,0 +1,63 @@
+name: Dependency Audit
+
+on:
+  schedule:
+    # 매일 오전 3시 (UTC) — 한국 시간 정오
+    - cron: '0 3 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'pnpm-lock.yaml'
+      - '**/package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # GitHub Security advisory 등록을 위해 필요
+  security-events: write
+
+jobs:
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run pnpm audit (high severity or above)
+        run: pnpm audit --audit-level=high
+        # high 이상의 취약점이 있으면 빌드 실패
+        # 허용 가능한 취약점은 .npmrc 또는 pnpm-audit-resolve.yaml 로 관리
+
+      - name: Run pnpm audit --json (report 저장)
+        if: always()
+        run: pnpm audit --json > audit-report.json || true
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: audit-report.json
+          retention-days: 30

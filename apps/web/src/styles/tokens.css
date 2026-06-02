@@ -1,0 +1,143 @@
+/**
+ * Design Tokens — JLPT N3 학습 PWA
+ * Extracted from _design/default_shadcn_theme.css and adapted for Japanese learning app.
+ * Primary accent: Japanese red (#B91C1C), background: warm cream (#FAFAF7)
+ */
+
+:root {
+  /* ── 브랜드 색상 ─────────────────────────────── */
+  --color-primary:     #B91C1C;  /* 일본어 빨강 */
+  --color-primary-fg:  #FFFFFF;
+  --color-primary-hover: #991B1B;
+
+  /* ── Figma Make 디자인 토큰 (주색 · 와비사비) ─── */
+  --accent:            #C8332B;  /* 주색 朱色 */
+  --accent-foreground: #FFFFFF;
+  --accent-soft:       #FBEAE8;
+  --color-accent:      var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* ── 시맨틱 색상 ──────────────────────────────── */
+  --success:    #5C7F4F; /* 말차 그린 */
+  --warning:    #C89B6E; /* 따뜻한 황토 */
+  --info:       #6B7F8C; /* 쿨 그레이 */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info:    var(--info);
+
+  /* ── 공유 별칭 ────────────────────────────────── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border:     var(--border);
+  --color-muted:      var(--muted-foreground);
+
+  /* ── 배경·표면 ───────────────────────────────── */
+  --background:        #FAFAF7;  /* 따뜻한 크림 */
+  --surface:           #FFFFFF;
+  --surface-alt:       #F8F4EE;
+  --surface-raised:    #F5F5F0;
+  --surface-glass:     rgba(255, 255, 255, 0.86);
+  --foreground:        #1A1A1A;
+
+  /* ── 카드 ────────────────────────────────────── */
+  --card:              #FFFFFF;
+  --card-foreground:   #1A1A1A;
+  --card-border:       rgba(0, 0, 0, 0.08);
+
+  /* ── 텍스트 계층 ─────────────────────────────── */
+  --text-primary:      #1A1A1A;
+  --text-secondary:    #4A4A4A;
+  --text-muted:        #8A8A8A;
+  --text-disabled:     #C4C4C4;
+
+  /* ── 중립 ────────────────────────────────────── */
+  --muted:             #ECECEC;
+  --muted-foreground:  #717182;
+  --border:            rgba(0, 0, 0, 0.1);
+  --input-bg:          #F3F3F5;
+  --ring:              #B91C1C40;
+
+  /* ── JLPT 레벨 배지 ──────────────────────────── */
+  --level-n5: #6B7280;
+  --level-n4: #2563EB;
+  --level-n3: #16A34A;
+  --level-n2: #D97706;
+  --level-n1: #B91C1C;
+
+  /* ── SRS 상태 ────────────────────────────────── */
+  --srs-new:       #6B7280;
+  --srs-learning:  #D97706;
+  --srs-review:    #16A34A;
+  --srs-relearning:#B91C1C;
+
+  /* ── 레이아웃 ────────────────────────────────── */
+  --nav-height:    4rem;     /* 64px BottomTab */
+  --sidebar-width: 14rem;    /* 224px SideNav */
+  --radius:        0.625rem;
+  --radius-sm:     0.375rem;
+  --radius-md:     0.75rem;
+  --radius-lg:     1rem;
+  --radius-xl:     1.25rem;
+  --touch-target:  44px;
+  --content-max:   58rem;
+  --content-wide:  72rem;
+
+  /* ── 타입 스케일 ─────────────────────────────── */
+  --text-xs:  0.75rem;   /* 12 */
+  --text-sm:  0.875rem;  /* 14 */
+  --text-md:  1rem;     /* 16 */
+  --text-lg:  1.25rem;  /* 20 */
+  --text-xl:  1.75rem;  /* 28 */
+  --text-2xl: 2.25rem;  /* 36 */
+
+  /* ── 그림자 ──────────────────────────────────── */
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,.12);
+  --shadow-soft: 0 12px 34px rgba(42, 30, 24, 0.08);
+  --shadow-float: 0 18px 48px rgba(42, 30, 24, 0.14);
+
+  /* ── 타이포그래피 ────────────────────────────── */
+  --font-sans:  'Noto Sans JP', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-base: 16px;
+
+  /* ── 전환 ────────────────────────────────────── */
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+  --transition-smooth: 220ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* ── 다크 모드 ──────────────────────────────────── */
+.dark {
+  --accent-soft: #3D2320;
+  --color-accent-soft: var(--accent-soft);
+  --background:        #111110;
+  --surface:           #1C1C1A;
+  --surface-alt:       #171715;
+  --surface-raised:    #242422;
+  --surface-glass:     rgba(28, 28, 26, 0.9);
+  --foreground:        #EDEDEB;
+
+  --card:              #1C1C1A;
+  --card-foreground:   #EDEDEB;
+  --card-border:       rgba(255, 255, 255, 0.08);
+
+  --text-primary:      #EDEDEB;
+  --text-secondary:    #ADADAB;
+  --text-muted:        #6D6D6B;
+  --text-disabled:     #3D3D3B;
+
+  --muted:             #2A2A28;
+  --muted-foreground:  #8A8A88;
+  --border:            rgba(255, 255, 255, 0.1);
+  --input-bg:          #242422;
+  --ring:              #B91C1C60;
+
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,.4);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,.5);
+  --shadow-soft: 0 12px 34px rgba(0,0,0,.28);
+  --shadow-float: 0 18px 48px rgba(0,0,0,.38);
+}

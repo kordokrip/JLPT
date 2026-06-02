@@ -1,0 +1,18 @@
+{
+  "name": "@nihongo-n3/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Nihongo N3 PWA — Playwright E2E 테스트",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test menu-smoke.spec.ts --project=chromium",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:chromium": "playwright test --project=chromium",
+    "test:webkit": "playwright test --project=webkit",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  }
+}

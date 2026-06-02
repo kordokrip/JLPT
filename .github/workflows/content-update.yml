@@ -1,0 +1,114 @@
+name: Content Update & DB Migration
+
+# 트리거:
+#   1. main 머지 시 마크다운 변경 → 변경분 시드 (seed:diff:remote)
+#   2. main 머지 시 drizzle 마이그레이션 파일 변경 → wrangler d1 migrations apply
+#   3. PR에 'db:migration' 라벨 + merged → 마이그레이션 강제 실행
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # 콘텐츠 마크다운 (docs 하위)
+      - 'docs/**/*.md'
+      # DB 마이그레이션
+      - 'packages/db/drizzle/**'
+  pull_request:
+    types:
+      - closed     # 머지됐을 때만 마이그레이션 실행
+    branches:
+      - main
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # A. 콘텐츠 변경분 시드 (push 이벤트, .md 파일 변경)
+  # ─────────────────────────────────────────────────────────────────
+  seed-content:
+    name: Seed Content Diff → D1
+    # push 이벤트이며 마크다운이 변경된 경우만 실행
+    if: >
+      github.event_name == 'push' &&
+      (
+        contains(toJSON(github.event.commits[*].modified), '.md') ||
+        contains(toJSON(github.event.commits[*].added),    '.md') ||
+        contains(toJSON(github.event.commits[*].removed),  '.md')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout repository (with history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2    # HEAD~1 비교를 위해 최소 2개 커밋 필요
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run diff seed (변경된 마크다운만 UPSERT)
+        # seed-diff.ts: git diff HEAD~1..HEAD → 변경 파일만 DELETE + INSERT
+        # 멱등성: 같은 source_code 범위를 통째로 교체 → 안전한 재실행
+        # deletion 감지: D 상태 파일은 DELETE만 실행
+        run: pnpm -F @nihongo-n3/db seed:diff:remote
+
+  # ─────────────────────────────────────────────────────────────────
+  # B. DB 마이그레이션 적용
+  #    조건 1: push + drizzle 파일 변경
+  #    조건 2: PR이 'db:migration' 라벨 보유 상태로 main에 머지됨
+  # ─────────────────────────────────────────────────────────────────
+  apply-migration:
+    name: Apply D1 Migration
+    if: >
+      (github.event_name == 'push' &&
+       contains(toJSON(github.event.commits[*].modified), 'packages/db/drizzle/')) ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'db:migration'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install wrangler
+        run: npm install -g wrangler@latest
+
+      - name: Apply D1 migrations (remote)
+        run: |
+          wrangler d1 migrations apply nihongo-n3-prod \
+            --remote \
+            --config=apps/api/wrangler.toml \
+            --yes
+
+      - name: Show migration status
+        run: |
+          wrangler d1 migrations list nihongo-n3-prod \
+            --remote \
+            --config=apps/api/wrangler.toml

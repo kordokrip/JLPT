@@ -1,0 +1,168 @@
+name: Deploy Web (Cloudflare Pages)
+
+# pages-action은 deprecated입니다.
+# wrangler-action@v3의 `pages deploy` 서브커맨드를 사용합니다.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Web App
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm -F @nihongo-n3/web build
+        env:
+          # API 베이스 URL: GitHub Actions Variables(비밀이 아닌 값)로 등록
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+          retention-days: 1
+
+  # ── PR Preview 배포 ────────────────────────────────────────────────────
+  # ⚠️  Preview 환경은 production D1을 절대 사용하지 않습니다.
+  # Cloudflare Pages → Settings → Environment variables → Preview 탭에서
+  # VITE_API_BASE_URL을 preview API URL로 별도 설정하세요.
+  preview:
+    name: Preview Deploy (PR)
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+      - name: Deploy Preview to Cloudflare Pages
+        id: preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: |
+            pages deploy apps/web/dist \
+              --project-name=nihongo-n3 \
+              --branch=${{ github.head_ref }} \
+              --commit-dirty=true
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref
+              .replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+            const previewUrl =
+              `https://${branch}.nihongo-n3.pages.dev`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Preview 배포 완료\n\n` +
+                    `| 항목 | URL |\n` +
+                    `|------|-----|\n` +
+                    `| Preview | ${previewUrl} |\n\n` +
+                    `> ⚠️ Preview는 production D1과 **별개** 환경입니다.`,
+            });
+
+  # ── Production 배포 ───────────────────────────────────────────────────
+  deploy:
+    name: Production Deploy
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+      - name: Deploy to Cloudflare Pages (Production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # pages deploy <출력디렉터리> --project-name=<Pages 프로젝트명>
+          # Pages 프로젝트가 없으면 CF Dashboard에서 먼저 생성하거나
+          # `wrangler pages project create nihongo-n3` 실행 후 배포하세요.
+          command: pages deploy apps/web/dist --project-name=nihongo-n3 --commit-dirty=true
+
+  smoke-test:
+    name: Smoke Test — Web
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Wait for CDN propagation
+        run: sleep 15
+
+      # / — HTML 응답 확인
+      - name: GET / → 200 HTML
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Accept: text/html" \
+            "${{ vars.WEB_BASE_URL }}")
+          echo "Status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "❌ 홈 응답 실패: $STATUS" && exit 1)
+
+      # PWA manifest 확인
+      - name: GET /manifest.webmanifest → 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ vars.WEB_BASE_URL }}/manifest.webmanifest")
+          echo "Status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "❌ manifest 응답 실패: $STATUS" && exit 1)

@@ -1,0 +1,85 @@
+name: Deploy API (Cloudflare Workers)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/api/**'
+      - 'packages/db/**'
+      - 'packages/shared/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      deployments: write
+
+    outputs:
+      worker_url: ${{ steps.deploy.outputs.deployment-url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Inject Cloudflare Access vars into wrangler.toml
+        # D1/R2 식별자는 wrangler.toml 단일 진실원을 사용.
+        # Access 관련 값만 CI에서 주입한다.
+        run: |
+          sed -i 's/__CF_ACCESS_AUD__/${{ secrets.CF_ACCESS_AUD }}/g' apps/api/wrangler.toml
+          sed -i 's/__CF_TEAM_DOMAIN__/${{ secrets.CF_TEAM_DOMAIN }}/g' apps/api/wrangler.toml
+
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          command: deploy
+
+  smoke-test:
+    name: Smoke Test — API
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Wait for propagation
+        run: sleep 10
+
+      # /api/v1/ping — 공개 엔드포인트, 인증 불필요
+      - name: GET /api/v1/ping → 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Accept: application/json" \
+            "${{ vars.API_BASE_URL }}/api/v1/ping")
+          echo "Status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "❌ ping 실패: $STATUS" && exit 1)
+
+      # /health — Workers 헬스체크
+      - name: GET /health → 200
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ vars.API_BASE_URL }}/health")
+          echo "Status: $STATUS"
+          [ "$STATUS" = "200" ] || (echo "❌ health 실패: $STATUS" && exit 1)
