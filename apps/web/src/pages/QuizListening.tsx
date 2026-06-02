@@ -18,6 +18,7 @@ import QuizTimer from '../components/feature/QuizTimer';
 
 const MAX_PLAYS = 3;
 const SKIP_BACK = 5;   // 초
+type ListeningAudioSource = 'browser' | 'server';
 
 interface ListeningQuestion {
   id:          string;
@@ -55,6 +56,11 @@ export function toSubmittedAnswers(answers: Record<string, string>): SubmittedAn
   return Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
 }
 
+export function initialListeningAudioSource(hasServerAudio: boolean): ListeningAudioSource {
+  if (!hasServerAudio) return 'browser';
+  return audioPlayer.sourcePreference === 'server' ? 'server' : 'browser';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 오디오 플레이어 서브컴포넌트
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,6 +75,7 @@ function AudioPlayer({
 }) {
   const { t } = useTranslation();
   const audioRef    = useRef<HTMLAudioElement | null>(null);
+  const [source, setSource] = useState<ListeningAudioSource>(() => initialListeningAudioSource(Boolean(audioKey)));
   const [playing, setPlaying]   = useState(false);
   const [playCount, setPlayCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -76,15 +83,17 @@ function AudioPlayer({
   const [audioUnavailable, setAudioUnavailable] = useState(false);
 
   const src = audioKey ? buildAudioUrl(audioKey) : '';
+  const useBrowserSpeech = source === 'browser' || audioUnavailable || !audioKey;
 
   const handlePlayPause = useCallback(() => {
     const el = audioRef.current;
 
-    if (audioUnavailable || !audioKey || !el) {
+    if (useBrowserSpeech || !el) {
       if (!fallbackText) return;
       if (playCount >= MAX_PLAYS) { onPlaysExhausted?.(); return; }
       setPlayCount((n) => n + 1);
       void audioPlayer.speakText(fallbackText, {
+        lang: 'ja-JP',
         onStart: () => setPlaying(true),
         onEnd:   () => setPlaying(false),
         onError: () => setPlaying(false),
@@ -98,12 +107,12 @@ function AudioPlayer({
     } else {
       el.pause();
     }
-  }, [audioKey, audioUnavailable, fallbackText, playCount, onPlaysExhausted]);
+  }, [fallbackText, playCount, onPlaysExhausted, useBrowserSpeech]);
 
   const handleSkipBack = useCallback(() => {
-    if (!audioRef.current) return;
+    if (useBrowserSpeech || !audioRef.current) return;
     audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - SKIP_BACK);
-  }, []);
+  }, [useBrowserSpeech]);
 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -127,6 +136,32 @@ function AudioPlayer({
         />
       )}
 
+      {audioKey && fallbackText && (
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-alt)] p-1" role="group" aria-label={t('quiz.audioSource')}>
+          {(['browser', 'server'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                audioRef.current?.pause();
+                audioPlayer.stop();
+                setPlaying(false);
+                setAudioUnavailable(false);
+                setSource(option);
+              }}
+              className={[
+                'min-h-11 rounded-lg px-3 text-sm font-semibold transition-colors',
+                source === option
+                  ? 'bg-[var(--card)] text-[var(--accent)] shadow-sm'
+                  : 'text-[var(--muted-foreground)] hover:text-foreground',
+              ].join(' ')}
+            >
+              {option === 'browser' ? t('quiz.browserVoice') : t('quiz.serverAudio')}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* 진행 바 */}
       <div
         className="h-1.5 w-full rounded-full bg-[var(--surface-alt)] overflow-hidden"
@@ -148,8 +183,9 @@ function AudioPlayer({
           type="button"
           aria-label={t('quiz.rewindSeconds', { seconds: SKIP_BACK })}
           onClick={handleSkipBack}
+          disabled={useBrowserSpeech}
           className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[var(--muted-foreground)]
-                     hover:text-foreground transition-colors"
+                     hover:text-foreground transition-colors disabled:opacity-40"
         >
           <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" aria-hidden="true">
             <path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
@@ -202,9 +238,9 @@ function AudioPlayer({
           {t('quiz.maxPlaysReached')}
         </p>
       )}
-      {(audioUnavailable || !audioKey) && fallbackText && (
+      {useBrowserSpeech && fallbackText && (
         <p className="text-center text-[12px] text-[var(--muted-foreground)] font-pretendard">
-          {t('quiz.browserSpeechFallback')}
+          {source === 'browser' ? t('quiz.browserSpeechPreferred') : t('quiz.browserSpeechFallback')}
         </p>
       )}
     </div>
@@ -340,6 +376,7 @@ export default function QuizListening() {
       {/* 오디오 플레이어 */}
       {current.audio_key || current.script_ja ? (
         <AudioPlayer
+          key={current.id}
           audioKey={current.audio_key}
           fallbackText={current.script_ja}
           onPlaysExhausted={() => setPlaysOut(true)}
