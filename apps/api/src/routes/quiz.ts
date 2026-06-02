@@ -348,15 +348,26 @@ quiz.post('/quiz/submit', async (c) => {
   const now = new Date().toISOString();
   const score = attempt.total > 0 ? Math.round((correctCount / attempt.total) * 100) : 0;
 
-  // 결과 업데이트
-  await db
-    .prepare(
-      `UPDATE quiz_attempts
-         SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
-       WHERE id = ?`,
-    )
-    .bind(correctCount, JSON.stringify(detail), now, now, quiz_id)
-    .run();
+  // 결과 업데이트. 로컬/이전 D1 스키마에는 finished_at 컬럼이 없을 수 있다.
+  try {
+    await db
+      .prepare(
+        `UPDATE quiz_attempts
+           SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
+         WHERE id = ?`,
+      )
+      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id)
+      .run();
+  } catch {
+    await db
+      .prepare(
+        `UPDATE quiz_attempts
+           SET correct = ?, detail_json = ?, updated_at = ?
+         WHERE id = ?`,
+      )
+      .bind(correctCount, JSON.stringify(detail), now, quiz_id)
+      .run();
+  }
 
   return ok(c, {
     quiz_id,
@@ -373,19 +384,35 @@ quiz.post('/quiz/submit', async (c) => {
 quiz.get('/quiz/history', async (c) => {
   const userId = c.get('userId');
 
-  const rows = await c.env.DB
-    .prepare(
-      `SELECT id, quiz_type, total, correct, created_at, finished_at
-       FROM quiz_attempts
-       WHERE user_id = ?
-       ORDER BY created_at DESC
-       LIMIT 20`,
-    )
-    .bind(userId)
-    .all<{
-      id: number; quiz_type: string; total: number;
-      correct: number; created_at: string; finished_at: string | null;
-    }>();
+  type HistoryRow = {
+    id: number; quiz_type: string; total: number;
+    correct: number; created_at: string; finished_at: string | null;
+  };
+
+  let rows;
+  try {
+    rows = await c.env.DB
+      .prepare(
+        `SELECT id, quiz_type, total, correct, created_at, finished_at
+         FROM quiz_attempts
+         WHERE user_id = ?
+         ORDER BY created_at DESC
+         LIMIT 20`,
+      )
+      .bind(userId)
+      .all<HistoryRow>();
+  } catch {
+    rows = await c.env.DB
+      .prepare(
+        `SELECT id, quiz_type, total, correct, created_at, NULL AS finished_at
+         FROM quiz_attempts
+         WHERE user_id = ?
+         ORDER BY created_at DESC
+         LIMIT 20`,
+      )
+      .bind(userId)
+      .all<HistoryRow>();
+  }
 
   return ok(c, rows.results ?? []);
 });

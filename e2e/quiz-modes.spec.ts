@@ -66,6 +66,29 @@ test.describe('퀴즈 기능 smoke', () => {
     });
   }
 
+  test('일반 퀴즈는 선택지 풀이 후 제출하고 결과 화면으로 이동한다', async ({ page }) => {
+    await expectNoConsoleErrors(page, async () => {
+      await page.goto('/quiz/vocab_mc');
+      await page.getByRole('button', { name: /시작하기|Start|開始/ }).click();
+
+      for (let i = 0; i < 5; i += 1) {
+        await expect(page.getByRole('radiogroup')).toBeVisible({ timeout: 20_000 });
+        await page.getByRole('radio').first().click();
+
+        const submit = page.getByRole('button', { name: /제출|Submit|提出/ });
+        if (await submit.isVisible()) {
+          await submit.click();
+          break;
+        }
+
+        await page.getByRole('button', { name: /다음|Next|次へ/ }).click();
+      }
+
+      await expect(page.getByRole('heading', { name: /결과|Results|結果/ })).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(/정답|correct|正解/i).first()).toBeVisible();
+    });
+  });
+
   test('청해 전용 화면은 브라우저 일본어 음성을 기본 선택지로 제공한다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.addInitScript(() => {
