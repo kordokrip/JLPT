@@ -1,6 +1,6 @@
 import type { Env } from '../types.js';
 import { AUDIO_QA_SAMPLES } from './audio-qa-samples.js';
-import { createTtsAdapter, getTtsProviderInfo, type TtsProviderId } from './tts/index.js';
+import { createTtsAdapter, getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from './tts/index.js';
 
 export type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
 export type AudioQaKey = { provider: AudioQaProvider; index: number };
@@ -110,7 +110,7 @@ export async function warmupAudioQa(
   provider: AudioQaProvider,
   options: { force?: boolean } = {},
 ): Promise<AudioQaWarmupResult[]> {
-  if (provider === 'voicevox' && !env.VOICEVOX_URL.trim()) {
+  if (provider === 'voicevox' && !getVoicevoxUrl(env).trim()) {
     return AUDIO_QA_SAMPLES.map((_, index) => ({
       provider,
       index: index + 1,

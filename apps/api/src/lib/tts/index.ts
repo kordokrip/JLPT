@@ -21,6 +21,7 @@ interface TtsEnv {
   AZURE_TTS_KEY:     string;
   AZURE_TTS_REGION:  string;
   VOICEVOX_URL?:      string;
+  VOICEVOX_URL_SECRET?: string;
   VOICEVOX_SPEAKER?:  string;
   VOICEVOX_SPEED_SCALE?: string;
   VOICEVOX_PITCH_SCALE?: string;
@@ -42,7 +43,7 @@ export function createTtsAdapter(env: TtsEnv, providerOverride?: TtsProviderId):
 
     case 'voicevox':
       return new VoicevoxTts({
-        baseUrl: env.VOICEVOX_URL ?? '',
+        baseUrl: getVoicevoxUrl(env),
         speaker: parseOptionalNumber(env.VOICEVOX_SPEAKER) ?? 3,
         speedScale: parseOptionalNumber(env.VOICEVOX_SPEED_SCALE) ?? 0.94,
         pitchScale: parseOptionalNumber(env.VOICEVOX_PITCH_SCALE) ?? 0,
@@ -92,4 +93,8 @@ function parseOptionalNumber(value: string | undefined): number | undefined {
   if (value === undefined || value.trim() === '') return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function getVoicevoxUrl(env: Pick<TtsEnv, 'VOICEVOX_URL' | 'VOICEVOX_URL_SECRET'>): string {
+  return env.VOICEVOX_URL_SECRET?.trim() || env.VOICEVOX_URL?.trim() || '';
 }

@@ -18,7 +18,7 @@ import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, problem } from '../lib/response.js';
 import { runAudioGeneration } from '../jobs/generate-audio.js';
-import { getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
+import { getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from '../lib/tts/index.js';
 import { probeVoicevoxEngine } from '../lib/tts/voicevox.js';
 import { parseAudioQaProvider, warmupAudioQa, type AudioQaProvider } from '../lib/audio-qa.js';
 
@@ -440,7 +440,8 @@ admin.post('/audio/queue', async (c) => {
 
 admin.get('/audio/providers', async (c) => {
   const providerInfo = getTtsProviderInfo(c.env);
-  const voicevox = await probeVoicevoxEngine(c.env.VOICEVOX_URL, { timeoutMs: 5000 });
+  const voicevoxUrl = getVoicevoxUrl(c.env);
+  const voicevox = await probeVoicevoxEngine(voicevoxUrl, { timeoutMs: 5000 });
   return ok(c, {
     active: providerInfo,
     providers: {
@@ -452,7 +453,7 @@ admin.get('/audio/providers', async (c) => {
       voicevox: {
         ...voicevox,
         model: getTtsProviderInfo(c.env, 'voicevox').model,
-        urlConfigured: Boolean(c.env.VOICEVOX_URL.trim()),
+        urlConfigured: Boolean(voicevoxUrl),
       },
     },
   });

@@ -29,6 +29,8 @@ export type Env = {
   AZURE_TTS_KEY:       string;
   AZURE_TTS_REGION:    string;
   VOICEVOX_URL:        string;
+  /** Optional secret override for VOICEVOX_URL. Prefer this for production URLs. */
+  VOICEVOX_URL_SECRET?: string;
   VOICEVOX_SPEAKER:    string;
   VOICEVOX_SPEED_SCALE:string;
   VOICEVOX_PITCH_SCALE:string;

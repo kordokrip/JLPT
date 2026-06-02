@@ -75,11 +75,35 @@ VITE_API_URL=https://nihongo-n3-api.kordokrip.workers.dev pnpm -F @nihongo-n3/we
 wrangler pages deploy apps/web/dist --project-name=nihongo-n3 --branch=main
 ```
 
+## VOICEVOX 운영 연결
+
+VOICEVOX Engine은 Docker/native 서버가 필요하므로 Cloudflare Workers/Pages 안에서 직접 실행할 수 없습니다. 먼저 외부에서 접근 가능한 HTTPS VOICEVOX Engine URL을 준비한 뒤 연결합니다.
+
+```bash
+# 1. URL, speaker, 실제 WAV 합성까지 사전 검증
+node scripts/voicevox-connect.mjs --url https://VOICEVOX_ENGINE_URL --speaker 3
+
+# 2. 검증 통과 후 Cloudflare secret 설정, API 재배포, 30개 QA 샘플 생성
+node scripts/voicevox-connect.mjs --url https://VOICEVOX_ENGINE_URL --speaker 3 --apply --warmup
+```
+
+연결 후 확인:
+
+```bash
+curl https://nihongo-n3-api.kordokrip.workers.dev/admin/audio/providers
+curl -X POST https://nihongo-n3-api.kordokrip.workers.dev/admin/audio/qa/warmup \
+  -H 'content-type: application/json' \
+  --data '{"provider":"voicevox","force":true}'
+```
+
+`/audio-qa`에서 30개 샘플을 비교한 뒤 VOICEVOX가 더 낫다고 판정되면, 관리자 오디오 큐에서 `provider: "voicevox"`, `force_regenerate: true`로 R2 오디오를 순차 재생성합니다.
+
 ## 운영상 중요한 주의사항
 
 - 현재 `AUTH_MODE=public-owner`는 Cloudflare Access 미설정 상태에서 단일 owner 학습 흐름을 살리기 위한 임시 모드입니다.
 - 실제 다중 사용자 운영 전에는 `CF_ACCESS_AUD`, `CF_TEAM_DOMAIN`, Cloudflare Access policy를 설정하고 `AUTH_MODE=cf-access`로 전환해야 합니다.
 - 외부 유료 TTS/OpenAI/Google API를 새로 추가하지 않습니다. 기본 TTS는 기존 Cloudflare Workers AI 바인딩을 사용합니다.
+- VOICEVOX 연결 URL은 `VOICEVOX_URL_SECRET` secret으로 설정합니다. repo의 `VOICEVOX_URL` 기본값은 빈 문자열로 유지합니다.
 - 일부 N3 어휘는 한국어 의미가 비어 있어 콘텐츠 보강이 필요합니다.
 - Listening 품질은 TTS/R2 생성량이 늘어날수록 개선됩니다.
 
