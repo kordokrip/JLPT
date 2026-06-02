@@ -16,7 +16,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
-import { ok, problem } from '../lib/response.js';
+import { badRequest, ok, problem } from '../lib/response.js';
 import { runAudioGeneration } from '../jobs/generate-audio.js';
 import { getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from '../lib/tts/index.js';
 import { probeVoicevoxEngine } from '../lib/tts/voicevox.js';
@@ -408,6 +408,11 @@ admin.post('/audio/queue', async (c) => {
     force_regenerate?: boolean;
   };
 
+  const provider = parseBatchProvider(body.provider);
+  if (body.provider && !provider) {
+    return badRequest(c, `지원하지 않는 TTS provider입니다: ${body.provider}`);
+  }
+
   if (body && 'dry_run' in body && body.dry_run) {
     // 생성 대상 통계 조회만 반환
     const db = c.env.DB;
@@ -419,7 +424,7 @@ admin.post('/audio/queue', async (c) => {
     ]);
     return ok(c, {
       dry_run: true,
-      provider: parseBatchProvider(body.provider) ?? getTtsProviderInfo(c.env).provider,
+      provider: provider ?? getTtsProviderInfo(c.env).provider,
       force_regenerate: body.force_regenerate === true,
       stats: {
         sentences: { total: sentences?.total ?? 0, done: sentences?.done ?? 0 },
@@ -429,7 +434,17 @@ admin.post('/audio/queue', async (c) => {
     });
   }
 
-  const provider = parseBatchProvider(body.provider);
+  if (provider === 'voicevox') {
+    const voicevoxUrl = getVoicevoxUrl(c.env);
+    if (!voicevoxUrl) {
+      return badRequest(c, 'VOICEVOX_URL_SECRET 또는 VOICEVOX_URL 설정 후 R2 재생성을 실행하십시오');
+    }
+    const voicevox = await probeVoicevoxEngine(voicevoxUrl, { timeoutMs: 5000 });
+    if (!voicevox.ok) {
+      return badRequest(c, `VOICEVOX provider가 준비되지 않았습니다: ${voicevox.error}`);
+    }
+  }
+
   const result = await runAudioGeneration(c.env, {
     ...(provider ? { provider } : {}),
     ...(typeof body.batch === 'number' ? { batchSize: body.batch } : {}),

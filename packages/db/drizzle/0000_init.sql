@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS `kanji` (
   `frequency_rank`           INTEGER,
   `korean_hanja_pronunciation` TEXT,
   `related_vocab_ids`        TEXT    NOT NULL DEFAULT '[]',
+  `audio_r2_key`             TEXT,
   `created_at`               INTEGER NOT NULL DEFAULT (unixepoch()),
   `updated_at`               INTEGER NOT NULL DEFAULT (unixepoch()),
   CONSTRAINT kanji_char_uk UNIQUE (`char`)

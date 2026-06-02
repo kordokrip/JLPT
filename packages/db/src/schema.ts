@@ -126,6 +126,7 @@ export const kanji = sqliteTable(
     frequencyRank: integer('frequency_rank'),
     koreanHanjaPronu: text('korean_hanja_pronunciation'),
     relatedVocabIds: text('related_vocab_ids').notNull().default('[]').$type<string>(),
+    audioR2Key: text('audio_r2_key'),
     ...timestamps,
   },
   (t) => ({
