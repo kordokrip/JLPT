@@ -17,9 +17,9 @@ describe('initialListeningAudioSource', () => {
     expect(initialListeningAudioSource(true)).toBe('browser');
   });
 
-  it('uses server audio only when server audio exists and the user preference is server', () => {
+  it('keeps browser voice as the listening default even when the global preference is server', () => {
     audioPlayer.sourcePreference = 'server';
-    expect(initialListeningAudioSource(true)).toBe('server');
+    expect(initialListeningAudioSource(true)).toBe('browser');
   });
 
   it('falls back to browser voice when no server audio exists', () => {

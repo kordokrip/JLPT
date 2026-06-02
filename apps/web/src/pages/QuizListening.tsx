@@ -56,9 +56,8 @@ export function toSubmittedAnswers(answers: Record<string, string>): SubmittedAn
   return Object.entries(answers).map(([question_id, answer]) => ({ question_id, answer }));
 }
 
-export function initialListeningAudioSource(hasServerAudio: boolean): ListeningAudioSource {
-  if (!hasServerAudio) return 'browser';
-  return audioPlayer.sourcePreference === 'server' ? 'server' : 'browser';
+export function initialListeningAudioSource(_hasServerAudio: boolean): ListeningAudioSource {
+  return 'browser';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

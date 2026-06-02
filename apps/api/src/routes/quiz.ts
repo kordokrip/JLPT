@@ -30,6 +30,23 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function buildChoices(answer: string, candidates: string[], maxDistractors = 3): string[] {
+  const seen = new Set<string>();
+  const answerKey = answer.trim();
+  if (answerKey) seen.add(answerKey);
+
+  const distractors: string[] = [];
+  for (const candidate of shuffle(candidates)) {
+    const key = candidate.trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    distractors.push(candidate);
+    if (distractors.length >= maxDistractors) break;
+  }
+
+  return shuffle([answer, ...distractors]);
+}
+
 function firstExampleJa(raw: string | null): string | null {
   if (!raw) return null;
   try {
@@ -104,17 +121,15 @@ quiz.post('/quiz/generate', async (c) => {
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
-        const distractors = pool
+        const distractorCandidates = pool
           .filter((r) => r.id !== ans.id)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
           .map((r) => r.meaning_ko);
 
         questions.push({
           id:      `q_${ans.id}`,
           type:    'vocab_mc',
           prompt:  ans.word,
-          choices: shuffle([ans.meaning_ko, ...distractors]),
+          choices: buildChoices(ans.meaning_ko, distractorCandidates),
           answer:  ans.meaning_ko,
           item_id: ans.id,
         });
@@ -140,17 +155,15 @@ quiz.post('/quiz/generate', async (c) => {
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
-        const distractors = pool
+        const distractorCandidates = pool
           .filter((r) => r.id !== ans.id)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
           .map((r) => r.primary_reading);
 
         questions.push({
           id:      `q_${ans.id}`,
           type:    'kanji_reading',
           prompt:  ans.kanji,
-          choices: shuffle([ans.primary_reading, ...distractors]),
+          choices: buildChoices(ans.primary_reading, distractorCandidates),
           answer:  ans.primary_reading,
           item_id: ans.id,
         });
@@ -183,17 +196,15 @@ quiz.post('/quiz/generate', async (c) => {
 
       for (const ans of answers) {
         const prompt = ans.example_ja.replace(ans.pattern, '＿＿＿');
-        const distractors = pool
+        const distractorCandidates = pool
           .filter((r) => r.id !== ans.id)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
           .map((r) => r.pattern);
 
         questions.push({
           id:      `q_${ans.id}`,
           type:    'grammar_fill',
           prompt,
-          choices: shuffle([ans.pattern, ...distractors]),
+          choices: buildChoices(ans.pattern, distractorCandidates),
           answer:  ans.pattern,
           item_id: ans.id,
         });
@@ -223,17 +234,15 @@ quiz.post('/quiz/generate', async (c) => {
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
-        const distractors = pool
+        const distractorCandidates = pool
           .filter((r) => r.id !== ans.id)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3)
           .map((r) => r.sentence_ko);
 
         questions.push({
           id:       `q_${ans.id}`,
           type:     'listening',
           prompt:   '음성을 듣고 올바른 해석을 고르세요.',
-          choices:  shuffle([ans.sentence_ko, ...distractors]),
+          choices:  buildChoices(ans.sentence_ko, distractorCandidates),
           answer:   ans.sentence_ko,
           item_id:  ans.id,
           audio_key: ans.audio_r2_key ?? `audio/sentence/${ans.level.toLowerCase()}/${ans.id}.mp3`,

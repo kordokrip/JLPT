@@ -35,6 +35,7 @@ test.describe('퀴즈 기능 smoke', () => {
       expect(body.data.questions.length, `${mode} question count`).toBeGreaterThan(0);
       for (const question of body.data.questions) {
         expect(question.choices.length, `${mode} choices`).toBeGreaterThanOrEqual(2);
+        expect(new Set(question.choices).size, `${mode} choices are unique`).toBe(question.choices.length);
         if (mode === 'listening') {
           expect(question.script_ja, 'listening script_ja').toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
           expect(question.audio_key, 'listening audio key').toMatch(/^audio\/sentence\/n[1-5]\/\d+\.mp3$/);

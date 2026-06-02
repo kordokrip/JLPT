@@ -76,10 +76,10 @@ export default function QuizQuestionMC({
         aria-labelledby={`q-${questionId}-prompt`}
         className="grid grid-cols-1 sm:grid-cols-2 gap-2"
       >
-        {choices.map((choice) => {
+        {choices.map((choice, index) => {
           const isSelected = selected === choice;
           return (
-            <li key={choice}>
+            <li key={`${questionId}-${index}-${choice}`}>
               <button
                 type="button"
                 role="radio"
