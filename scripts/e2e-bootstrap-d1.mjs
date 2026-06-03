@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const migrationPaths = [
   join(root, 'packages/db/drizzle/0000_init.sql'),
+  join(root, 'packages/db/drizzle/0001_self_check_templates.sql'),
   join(root, 'packages/db/src/migrate/phase8-audio-reading.sql'),
   join(root, 'packages/db/src/migrate/phase9-push.sql'),
 ];

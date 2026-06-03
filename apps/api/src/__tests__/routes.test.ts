@@ -19,6 +19,8 @@ declare module '*.sql?raw' {
 
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawMigration from '../../../../packages/db/drizzle/0000_init.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawSelfCheckMigration from '../../../../packages/db/drizzle/0001_self_check_templates.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -27,7 +29,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = (rawMigration as string)
+  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}`
     .split('\n')
     .filter(line => {
       const t = line.trim();
@@ -345,6 +347,41 @@ describe('POST /api/v1/sync (dev bypass)', () => {
     expect(res.status).toBe(200);
     const body = await res.json<{ data: { processed_op_ids: string[] } }>();
     expect(body.data.processed_op_ids).toContain('00000000-0000-4000-8000-000000000001');
+  });
+});
+
+describe('Self-check routes (dev bypass)', () => {
+  it('한국어 N3 자기진단 템플릿을 반환한다', async () => {
+    const res = await fetch('/api/v1/self-check/templates?level=N3');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { templates: Array<{ item_ko: string; recommendation_ko: string }> } }>();
+    expect(body.data.templates.length).toBeGreaterThan(0);
+    expect(body.data.templates[0]?.item_ko).toMatch(/[가-힣]/);
+    expect(body.data.templates[0]?.recommendation_ko).toMatch(/[가-힣]/);
+  });
+
+  it('독해와 회화 점수를 포함해 자기진단을 저장한다', async () => {
+    const save = await fetch('/api/v1/self-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        week_no: 3,
+        vocab_score: 70,
+        grammar_score: 60,
+        reading_score: 55,
+        listening_score: 40,
+        speaking_score: 30,
+        writing_score: 65,
+        domain_score: 50,
+      }),
+    });
+    expect(save.status).toBe(201);
+
+    const res = await fetch('/api/v1/self-check/3');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { reading_score: number; speaking_score: number } }>();
+    expect(body.data.reading_score).toBe(55);
+    expect(body.data.speaking_score).toBe(30);
   });
 });
 

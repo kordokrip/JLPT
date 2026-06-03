@@ -13,7 +13,9 @@ interface SelfCheckRow {
   week_no: number;
   vocab_score: number | null;
   grammar_score: number | null;
+  reading_score: number | null;
   listening_score: number | null;
+  speaking_score: number | null;
   writing_score: number | null;
   domain_score: number | null;
   notes: string | null;
@@ -24,20 +26,57 @@ interface SelfCheckPayload {
   week_no: number;
   vocab_score: number;
   grammar_score: number;
+  reading_score: number;
   listening_score: number;
+  speaking_score: number;
   writing_score: number;
   domain_score: number;
+  notes?: string;
 }
 
-/* 정적 체크리스트 섹션 */
-const SECTIONS = [
-  { key: '基礎', labelKey: 'base', items: ['ひらがな・カタカナを読める', 'N5基本文型を理解している', '日常挨拶ができる', '数字・時間表現がわかる', '基本助詞（は/が/を/に）を使える'] },
-  { key: '文法', labelKey: 'grammar', items: ['て形・た形・ない形が作れる', '条件表現（〜たら・〜ば・〜と）がわかる', '受け身・使役・使役受け身を理解している', '〜ている/〜てある/〜てしまうの違いがわかる', 'N3レベルの文型を10個以上使える'] },
-  { key: '語彙', labelKey: 'vocab', items: ['N5〜N4語彙1000語以上を知っている', 'N3語彙を300語以上学習した', '複合語・派生語がわかる', 'カタカナ語（外来語）を読める', '文脈から意味を推測できる'] },
-  { key: '実践', labelKey: 'practice', items: ['短い文章を読んで内容を理解できる', '日常会話で基本的なやり取りができる', 'メールや手紙の基本的な書き方がわかる', 'N3レベルの読解問題を練習した', '模擬試験を1回以上受けた'] },
-  { key: '試験', labelKey: 'exam', items: ['JLPT N3の試験形式を理解している', '時間配分の練習をした', '言語知識・読解・聴解の配点がわかる', '苦手な分野を特定している', '試験当日の準備ができている'] },
-  { key: '習慣', labelKey: 'habit', items: ['毎日30分以上日本語を学習している', 'SRS復習を毎日続けている', '日本語のコンテンツ（アニメ・音楽など）に触れている', '学習記録をつけている'] },
-  { key: 'リスニング', labelKey: 'listening', items: ['自然なスピードの会話がある程度わかる', 'N3レベルの聴解問題を練習した', '発音・アクセントを意識している'] },
+type SelfCheckCategory = 'vocab' | 'grammar' | 'reading' | 'listening' | 'speaking' | 'writing' | 'strategy';
+
+interface SelfCheckTemplate {
+  code: string;
+  level: string;
+  category: SelfCheckCategory;
+  sort_order: number;
+  item_ko: string;
+  evidence_ko: string | null;
+  recommendation_ko: string;
+  source_name: string;
+  source_url: string;
+}
+
+interface TemplateResponse {
+  level: string;
+  templates: SelfCheckTemplate[];
+}
+
+const CATEGORY_ORDER: SelfCheckCategory[] = ['vocab', 'grammar', 'reading', 'listening', 'speaking', 'writing', 'strategy'];
+const CATEGORY_TITLE: Record<SelfCheckCategory, string> = {
+  vocab: '어휘',
+  grammar: '문법',
+  reading: '독해',
+  listening: '청해',
+  speaking: '회화',
+  writing: '작문',
+  strategy: '시험 전략',
+};
+
+const DEFAULT_SELF_CHECK_TEMPLATES: SelfCheckTemplate[] = [
+  { code: 'n3_vocab_01', level: 'N3', category: 'vocab', sort_order: 10, item_ko: 'N3 지문에서 모르는 단어가 있어도 앞뒤 문맥으로 뜻을 추정할 수 있다.', evidence_ko: 'JLPT N3는 어휘와 문맥 이해를 언어지식 영역에서 확인한다.', recommendation_ko: '매일 N3 어휘 20개를 예문과 함께 SRS에 추가하고 문장 단위로 복습하세요.', source_name: 'JLPT 공식 시험 구성', source_url: 'https://www.jlpt.jp/e/guideline/testsections.html' },
+  { code: 'n3_vocab_02', level: 'N3', category: 'vocab', sort_order: 20, item_ko: '한자로 쓰인 N3 빈출 단어의 읽기와 의미를 함께 떠올릴 수 있다.', evidence_ko: 'N3 어휘 영역에는 한자 읽기와 표기 이해가 포함된다.', recommendation_ko: '한자-읽기-뜻을 한 카드에 묶어 복습하고, 오답 한자는 같은 음독 단어와 같이 정리하세요.', source_name: 'JLPT N3 문제 목적', source_url: 'https://www.jlpt.jp/e/guideline/pdf/n3_e.pdf' },
+  { code: 'n3_grammar_01', level: 'N3', category: 'grammar', sort_order: 10, item_ko: 'N3 문형을 보고 의미, 접속, 쓰는 상황을 함께 설명할 수 있다.', evidence_ko: 'N3는 문법 지식과 독해를 같은 시험 시간 안에서 확인한다.', recommendation_ko: '문형은 뜻만 보지 말고 접속 형태와 예문 2개를 같이 소리 내어 읽으세요.', source_name: 'JLPT 공식 시험 구성', source_url: 'https://www.jlpt.jp/e/guideline/testsections.html' },
+  { code: 'n3_grammar_02', level: 'N3', category: 'grammar', sort_order: 20, item_ko: '비슷한 문형의 의미 차이와 쓰임 차이를 구분할 수 있다.', evidence_ko: 'N3 문법은 문장 안에서 적절한 표현 선택을 요구한다.', recommendation_ko: '헷갈리는 문형은 주체, 의도, 결과, 예문을 나눠 비교 노트를 만드세요.', source_name: 'JLPT N3 문제 목적', source_url: 'https://www.jlpt.jp/e/guideline/pdf/n3_e.pdf' },
+  { code: 'n3_reading_01', level: 'N3', category: 'reading', sort_order: 10, item_ko: '짧은 안내문, 이메일, 공지문에서 핵심 정보를 빠르게 찾을 수 있다.', evidence_ko: 'N3는 일상적인 주제의 글을 읽고 내용을 이해하는 능력을 본다.', recommendation_ko: '읽기 전에 질문을 먼저 보고 날짜, 조건, 이유, 결론에 표시하면서 읽으세요.', source_name: 'JLPT 레벨 요약', source_url: 'https://jlpt.jp/sp/e/about/levelsummary.html' },
+  { code: 'n3_reading_02', level: 'N3', category: 'reading', sort_order: 20, item_ko: '중간 길이의 글에서 필자의 주장과 이유를 구분할 수 있다.', evidence_ko: 'N3 독해는 글의 요지와 세부 정보를 함께 확인한다.', recommendation_ko: '문단마다 한 줄 요약을 한국어로 적고 마지막 문장에서 결론 표현을 찾으세요.', source_name: 'JLPT N3 문제 목적', source_url: 'https://www.jlpt.jp/e/guideline/pdf/n3_e.pdf' },
+  { code: 'n3_listening_01', level: 'N3', category: 'listening', sort_order: 10, item_ko: '일상 대화에서 누가, 무엇을, 왜 하는지 핵심 정보를 들을 수 있다.', evidence_ko: 'N3 청해는 요지와 세부 정보를 듣고 이해하는 능력을 본다.', recommendation_ko: '스크립트를 보기 전 2회 듣고 사람, 장소, 행동, 이유만 받아 적으세요.', source_name: 'JLPT N3 문제 목적', source_url: 'https://www.jlpt.jp/e/guideline/pdf/n3_e.pdf' },
+  { code: 'n3_listening_02', level: 'N3', category: 'listening', sort_order: 20, item_ko: '자연스러운 속도의 짧은 대화에서 정답 단서를 놓치지 않는다.', evidence_ko: 'N3 청해 시간은 40분이며 실제 속도 적응이 필요하다.', recommendation_ko: '브라우저 일본어 음성으로 먼저 듣고 스크립트를 보며 놓친 조사를 확인하세요.', source_name: 'JLPT 공식 시험 구성', source_url: 'https://www.jlpt.jp/e/guideline/testsections.html' },
+  { code: 'n3_speaking_01', level: 'N3', category: 'speaking', sort_order: 10, item_ko: '일상 주제에 대해 3~5문장으로 내 의견과 이유를 말할 수 있다.', evidence_ko: 'JF Standard Can-do는 실제 상황에서 일본어로 무엇을 할 수 있는지에 초점을 둔다.', recommendation_ko: '오늘 배운 문형 하나를 써서 30초 자기 의견 말하기를 녹음하세요.', source_name: 'JF Standard Can-do', source_url: 'https://www.jfstandard.jpf.go.jp/summaryen/ja/render.do' },
+  { code: 'n3_writing_01', level: 'N3', category: 'writing', sort_order: 10, item_ko: '배운 문형을 사용해 짧은 일기나 학습 기록을 일본어로 쓸 수 있다.', evidence_ko: 'Can-do는 실제 산출 활동도 학습 진단에 포함한다.', recommendation_ko: '하루 3문장 일본어 기록을 쓰고 문형, 어휘, 조사를 하나씩 점검하세요.', source_name: 'JF Standard Can-do', source_url: 'https://www.jfstandard.jpf.go.jp/summaryen/ja/render.do' },
+  { code: 'n3_strategy_01', level: 'N3', category: 'strategy', sort_order: 10, item_ko: 'N3 시험의 3개 주요 영역과 시간 배분을 알고 있다.', evidence_ko: 'N3는 어휘 30분, 문법·독해 70분, 청해 40분으로 진행된다.', recommendation_ko: '주 1회는 실제 시간에 맞춰 어휘, 문법·독해, 청해 블록 학습을 해보세요.', source_name: 'JLPT 공식 시험 구성', source_url: 'https://www.jlpt.jp/e/guideline/testsections.html' },
+  { code: 'n3_strategy_02', level: 'N3', category: 'strategy', sort_order: 20, item_ko: '최근 7일 학습에서 가장 약한 영역을 하나 고르고 보충 계획을 세울 수 있다.', evidence_ko: 'JLPT는 총점뿐 아니라 영역별 약점 관리가 중요하다.', recommendation_ko: '70점 미만 영역을 하나 골라 3일 보충 루틴을 만드세요.', source_name: 'JLPT 공식 성적 구분', source_url: 'https://www.jlpt.jp/e/guideline/results.html' },
 ];
 
 const RADAR_LABEL_KEYS = ['vocab', 'grammar', 'reading', 'listening', 'speaking', 'writing'] as const;
@@ -54,42 +93,71 @@ function average(nums: number[]): number {
   return Math.round(nums.reduce((sum, n) => sum + n, 0) / nums.length);
 }
 
-export function calcScore(sectionKey: string, local: Set<string>, sections: typeof SECTIONS = SECTIONS): number {
-  const idx = sections.findIndex(s => s.key === sectionKey);
-  if (idx === -1) return 0;
-  const sec = sections[idx];
-  if (!sec) return 0;
-  const items = sec.items;
-  const checked = items.filter((_, ii) => local.has(`${idx}-${ii}`)).length;
+function templatesFor(category: SelfCheckCategory, templates: SelfCheckTemplate[]): SelfCheckTemplate[] {
+  return templates.filter((item) => item.category === category);
+}
+
+export function calcScore(category: SelfCheckCategory, local: Set<string>, templates: SelfCheckTemplate[] = DEFAULT_SELF_CHECK_TEMPLATES): number {
+  const items = templatesFor(category, templates);
+  const checked = items.filter((item) => local.has(item.code)).length;
   return items.length > 0 ? Math.round((checked / items.length) * 100) : 0;
 }
 
-export function buildSelfCheckPayload(weekNo: number, local: Set<string>): SelfCheckPayload {
-  const baseScore = calcScore('基礎', local);
-  const examScore = calcScore('試験', local);
-  const habitScore = calcScore('習慣', local);
+export function buildSelfCheckPayload(
+  weekNo: number,
+  local: Set<string>,
+  templates: SelfCheckTemplate[] = DEFAULT_SELF_CHECK_TEMPLATES,
+): SelfCheckPayload {
+  const strategyScore = calcScore('strategy', local, templates);
+  const speakingScore = calcScore('speaking', local, templates);
+  const writingScore = calcScore('writing', local, templates);
 
   return {
     week_no: weekNo,
-    vocab_score: calcScore('語彙', local),
-    grammar_score: calcScore('文法', local),
-    listening_score: calcScore('リスニング', local),
-    writing_score: calcScore('実践', local),
-    domain_score: average([baseScore, examScore, habitScore]),
+    vocab_score: calcScore('vocab', local, templates),
+    grammar_score: calcScore('grammar', local, templates),
+    reading_score: calcScore('reading', local, templates),
+    listening_score: calcScore('listening', local, templates),
+    speaking_score: speakingScore,
+    writing_score: writingScore,
+    domain_score: average([strategyScore, speakingScore, writingScore]),
+    notes: JSON.stringify({ checked_items: [...local].sort(), template_level: 'N3' }),
   };
 }
 
 function scoresFromSaved(row: SelfCheckRow | null | undefined): number[] | null {
   if (!row) return null;
-  const writing = row.writing_score ?? 0;
   return [
     row.vocab_score ?? 0,
     row.grammar_score ?? 0,
-    writing,
+    row.reading_score ?? row.writing_score ?? 0,
     row.listening_score ?? 0,
-    row.domain_score ?? 0,
-    writing,
+    row.speaking_score ?? row.domain_score ?? 0,
+    row.writing_score ?? 0,
   ];
+}
+
+function sectionsFromTemplates(templates: SelfCheckTemplate[]) {
+  return CATEGORY_ORDER
+    .map((category) => ({
+      category,
+      title: CATEGORY_TITLE[category],
+      items: templatesFor(category, templates).sort((a, b) => a.sort_order - b.sort_order),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+function buildRecommendations(local: Set<string>, templates: SelfCheckTemplate[]): SelfCheckTemplate[] {
+  return CATEGORY_ORDER
+    .map((category) => ({
+      category,
+      score: calcScore(category, local, templates),
+      item: templatesFor(category, templates).find((template) => !local.has(template.code)),
+    }))
+    .filter((entry): entry is { category: SelfCheckCategory; score: number; item: SelfCheckTemplate } => Boolean(entry.item))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3)
+    .map((entry) => entry.item);
 }
 
 function RadarChart({ scores }: { scores: number[] }) {
@@ -163,6 +231,23 @@ export default function SelfCheck() {
 
   const [local, setLocal] = useState<Set<string>>(new Set());
 
+  const { data: templateData } = useQuery<TemplateResponse>({
+    queryKey: ['self-check-templates', 'N3'],
+    queryFn: async ({ signal }) => {
+      const res = await api.get<TemplateResponse>('/self-check/templates', { level: 'N3' }, { signal });
+      return res.ok ? res.data : { level: 'N3', templates: [] };
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const templates = templateData?.templates.length ? templateData.templates : DEFAULT_SELF_CHECK_TEMPLATES;
+  const sections = useMemo(() => sectionsFromTemplates(templates), [templates]);
+  const validCodes = useMemo(() => new Set(templates.map((item) => item.code)), [templates]);
+  const checkedLocal = useMemo(
+    () => new Set([...local].filter((key) => validCodes.has(key))),
+    [local, validCodes],
+  );
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -185,21 +270,19 @@ export default function SelfCheck() {
     });
   };
 
-  const allItems = SECTIONS.flatMap((s, si) =>
-    s.items.map((text, ii) => ({ id: `${si}-${ii}`, section: s.key, text }))
-  );
-  const checkedCount = local.size;
+  const allItems = templates;
+  const checkedCount = checkedLocal.size;
   const totalCount = allItems.length;
   const pct = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
 
   const localRadarScores = useMemo(() => [
-    calcScore('語彙', local),
-    calcScore('文法', local),
-    calcScore('実践', local),
-    calcScore('リスニング', local),
-    calcScore('実践', local),
-    calcScore('習慣', local),
-  ], [local]);
+    calcScore('vocab', checkedLocal, templates),
+    calcScore('grammar', checkedLocal, templates),
+    calcScore('reading', checkedLocal, templates),
+    calcScore('listening', checkedLocal, templates),
+    calcScore('speaking', checkedLocal, templates),
+    calcScore('writing', checkedLocal, templates),
+  ], [checkedLocal, templates]);
 
   const { data: scoresData } = useQuery<{ scores: number[]; hasData: boolean }>({
     queryKey: ['self-check-scores'],
@@ -214,6 +297,7 @@ export default function SelfCheck() {
   const radarScores = checkedCount > 0
     ? localRadarScores
     : savedRadarScores ?? (scoresData?.hasData ? scoresData.scores : localRadarScores);
+  const recommendations = buildRecommendations(checkedLocal, templates);
 
   return (
     <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
@@ -243,6 +327,32 @@ export default function SelfCheck() {
         </div>
       </div>
 
+      <div className="card-hairline rounded-xl p-5 mb-8">
+        <div className="flex flex-col gap-1 mb-4">
+          <h2 className="font-pretendard text-[15px] font-semibold text-foreground">
+            {t('selfCheck.recommendTitle')}
+          </h2>
+          <p className="font-pretendard text-[12px] text-[var(--muted-foreground)]">
+            {t('selfCheck.recommendSubtitle')}
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {recommendations.map((item) => (
+            <article key={item.code} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+              <p className="mb-2 text-[11px] font-semibold text-[var(--accent)]">
+                {CATEGORY_TITLE[item.category]}
+              </p>
+              <p className="mb-3 text-[13px] leading-relaxed text-foreground">
+                {item.recommendation_ko}
+              </p>
+              <p className="text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+                {item.evidence_ko}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -251,16 +361,16 @@ export default function SelfCheck() {
         </div>
       ) : (
         <div className="space-y-6">
-          {SECTIONS.map((section, si) => (
-            <div key={section.key}>
+          {sections.map((section) => (
+            <div key={section.category}>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="font-sans-jp text-[15px] font-medium text-foreground">{section.key}</h2>
-                <span className="text-[11px] text-[var(--muted-foreground)] font-pretendard">{t(`selfCheck.sections.${section.labelKey}`)}</span>
+                <h2 className="font-pretendard text-[15px] font-medium text-foreground">{section.title}</h2>
+                <span className="text-[11px] text-[var(--muted-foreground)] font-pretendard">{section.items.length}{t('selfCheck.itemUnit')}</span>
               </div>
               <div className="card-hairline rounded-lg divide-y divide-[var(--border)]">
-                {section.items.map((text, ii) => {
-                  const key = `${si}-${ii}`;
-                  const isChecked = local.has(key);
+                {section.items.map((item) => {
+                  const key = item.code;
+                  const isChecked = checkedLocal.has(key);
                   return (
                     <label
                       key={key}
@@ -278,8 +388,8 @@ export default function SelfCheck() {
                         )}
                       </div>
                       <input type="checkbox" className="sr-only" checked={isChecked} onChange={() => toggle(key)} />
-                      <span className={`font-sans-jp text-[13px] ${isChecked ? 'line-through text-[var(--muted-foreground)]' : 'text-foreground'}`}>
-                        {text}
+                      <span className={`font-pretendard text-[13px] leading-relaxed ${isChecked ? 'line-through text-[var(--muted-foreground)]' : 'text-foreground'}`}>
+                        {item.item_ko}
                       </span>
                     </label>
                   );
@@ -293,7 +403,7 @@ export default function SelfCheck() {
       <div className="mt-8">
         <button
           disabled={submit.isPending}
-          onClick={() => submit.mutate(buildSelfCheckPayload(selectedWeek, local))}
+          onClick={() => submit.mutate(buildSelfCheckPayload(selectedWeek, checkedLocal, templates))}
           className="w-full py-3 bg-[var(--accent)] text-white rounded-lg font-medium font-pretendard text-[14px] hover:opacity-90 transition-opacity press-feedback disabled:opacity-50"
         >
           {submit.isPending ? t('common.saving') : t('selfCheck.save')}

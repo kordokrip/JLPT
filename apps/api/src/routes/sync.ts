@@ -168,21 +168,38 @@ async function applySelfCheck(
   const p = op.payload as Record<string, unknown>;
   if (!p.week_no) return;
 
-  await db
-    .prepare(
-      `INSERT OR IGNORE INTO self_check
-         (user_id, week_no, vocab_score, grammar_score,
-          listening_score, writing_score, domain_score, notes, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      userId, Number(p.week_no),
-      p.vocab_score ?? null, p.grammar_score ?? null,
-      p.listening_score ?? null, p.writing_score ?? null,
-      p.domain_score ?? null, p.notes ?? null,
-      new Date(op.occurred_at).toISOString(),
-    )
-    .run();
+  const updatedAt = new Date(op.occurred_at).toISOString();
+  try {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO self_check
+           (user_id, week_no, vocab_score, grammar_score, reading_score,
+            listening_score, speaking_score, writing_score, domain_score, notes, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        userId, Number(p.week_no),
+        p.vocab_score ?? null, p.grammar_score ?? null, p.reading_score ?? null,
+        p.listening_score ?? null, p.speaking_score ?? null, p.writing_score ?? null,
+        p.domain_score ?? null, p.notes ?? null, updatedAt,
+      )
+      .run();
+  } catch {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO self_check
+           (user_id, week_no, vocab_score, grammar_score,
+            listening_score, writing_score, domain_score, notes, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        userId, Number(p.week_no),
+        p.vocab_score ?? null, p.grammar_score ?? null,
+        p.listening_score ?? null, p.writing_score ?? null,
+        p.domain_score ?? null, p.notes ?? null, updatedAt,
+      )
+      .run();
+  }
 }
 
 // ─────────────────────────────────────────────

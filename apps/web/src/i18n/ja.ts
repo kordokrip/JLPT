@@ -305,6 +305,9 @@ const ja = {
     save:     '診断を保存する',
     saved:    '保存しました',
     completion: '完了率',
+    itemUnit: '項目',
+    recommendTitle: 'おすすめ学習方針',
+    recommendSubtitle: '未チェックの領域とJLPT/JF Can-do基準をもとに、今日補強する学習を提案します。',
     radar: {
       vocab: '語彙',
       grammar: '文法',

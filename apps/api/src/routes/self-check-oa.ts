@@ -8,6 +8,16 @@ selfCheckOA.route('/', selfCheck);
 registerDocsOnlyRoutes(selfCheckOA, [
   {
     method: 'get',
+    path: '/self-check/templates',
+    tags: ['SelfCheck'],
+    summary: '자가진단 한국어 템플릿 목록',
+    responses: {
+      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '자가진단 템플릿 목록' },
+      401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+    },
+  },
+  {
+    method: 'get',
     path: '/self-check/scores',
     tags: ['SelfCheck'],
     summary: '자가진단 점수 목록',

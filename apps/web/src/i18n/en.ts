@@ -305,6 +305,9 @@ const en = {
     save:     'Save self-check',
     saved:    'Saved',
     completion: 'Completion',
+    itemUnit: ' items',
+    recommendTitle: 'Recommended study focus',
+    recommendSubtitle: 'Suggestions are based on unchecked areas and JLPT/JF Can-do oriented diagnostics.',
     radar: {
       vocab: 'Vocabulary',
       grammar: 'Grammar',

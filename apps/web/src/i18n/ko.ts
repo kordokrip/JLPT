@@ -315,6 +315,9 @@ const ko = {
     save:     '진단 저장',
     saved:    '저장되었습니다',
     completion: '완료율',
+    itemUnit: '개 항목',
+    recommendTitle: '추천 학습 방향',
+    recommendSubtitle: '체크하지 못한 영역과 JLPT/JF Can-do 기준을 바탕으로 오늘 보완할 학습을 제안합니다.',
     radar: {
       vocab: '어휘',
       grammar: '문법',

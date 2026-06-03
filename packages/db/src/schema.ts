@@ -329,7 +329,9 @@ export const selfCheck = sqliteTable(
     weekNo: integer('week_no').notNull(),
     vocabScore: integer('vocab_score'),
     grammarScore: integer('grammar_score'),
+    readingScore: integer('reading_score'),
     listeningScore: integer('listening_score'),
+    speakingScore: integer('speaking_score'),
     writingScore: integer('writing_score'),
     domainScore: integer('domain_score'),
     notes: text('notes'),
@@ -340,6 +342,26 @@ export const selfCheck = sqliteTable(
   },
   (t) => ({
     userWeekUk: uniqueIndex('self_check_user_week_uk').on(t.userId, t.weekNo),
+  }),
+);
+
+export const selfCheckTemplates = sqliteTable(
+  'self_check_templates',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    code: text('code').notNull().unique(),
+    level: text('level').notNull().default('N3'),
+    category: text('category').notNull(),
+    sortOrder: integer('sort_order').notNull(),
+    itemKo: text('item_ko').notNull(),
+    evidenceKo: text('evidence_ko'),
+    recommendationKo: text('recommendation_ko').notNull(),
+    sourceName: text('source_name').notNull(),
+    sourceUrl: text('source_url').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    levelIdx: index('self_check_templates_level_idx').on(t.level, t.category, t.sortOrder),
   }),
 );
 
@@ -376,3 +398,5 @@ export type QuizAttempt = typeof quizAttempts.$inferSelect;
 export type NewQuizAttempt = typeof quizAttempts.$inferInsert;
 export type SelfCheck = typeof selfCheck.$inferSelect;
 export type NewSelfCheck = typeof selfCheck.$inferInsert;
+export type SelfCheckTemplate = typeof selfCheckTemplates.$inferSelect;
+export type NewSelfCheckTemplate = typeof selfCheckTemplates.$inferInsert;

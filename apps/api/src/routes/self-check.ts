@@ -15,6 +15,41 @@ import { selfCheckBodySchema, weekParamSchema } from '@nihongo-n3/shared';
 const selfCheck = new Hono<AppEnv>();
 selfCheck.use('*', cfAccessAuth);
 
+// ── GET /self-check/templates ────────────────
+selfCheck.get('/self-check/templates', async (c) => {
+  const level = (c.req.query('level') || 'N3').toUpperCase();
+  if (!/^N[1-5]$/.test(level)) return badRequest(c, '유효하지 않은 level 파라미터');
+
+  type TemplateRow = {
+    id: number;
+    code: string;
+    level: string;
+    category: string;
+    sort_order: number;
+    item_ko: string;
+    evidence_ko: string | null;
+    recommendation_ko: string;
+    source_name: string;
+    source_url: string;
+  };
+
+  try {
+    const rows = await c.env.DB.prepare(
+      `SELECT id, code, level, category, sort_order, item_ko,
+              evidence_ko, recommendation_ko, source_name, source_url
+       FROM self_check_templates
+       WHERE level = ?
+       ORDER BY category, sort_order, id`,
+    )
+      .bind(level)
+      .all<TemplateRow>();
+
+    return ok(c, { level, templates: rows.results ?? [] });
+  } catch {
+    return ok(c, { level, templates: [] });
+  }
+});
+
 // ── GET /self-check/scores ────────────────────
 // Phase 7-F: SRS 정확도 기반 레이더 점수 계산 (최근 7일)
 selfCheck.get('/self-check/scores', async (c) => {
@@ -57,7 +92,7 @@ selfCheck.get('/self-check/scores', async (c) => {
     quiz[row.quiz_type] = row.avg_score ?? 0;
   }
 
-  // 레이더 6축: 語彙/文法/読解/聴解/会話/作文
+  // 레이더 6축: 어휘/문법/독해/청해/회화/작문
   const scores = [
     acc['vocab']   ?? acc['sysprog']   ?? 0,    // 語彙
     acc['grammar'] ?? 0,                          // 文法
@@ -97,24 +132,47 @@ selfCheck.post('/self-check', async (c) => {
   const d = body.data;
   const now = new Date().toISOString();
 
-  await c.env.DB.prepare(
-    `INSERT OR REPLACE INTO self_check
-       (user_id, week_no, vocab_score, grammar_score,
-        listening_score, writing_score, domain_score, notes, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(
-      userId,
-      d.week_no,
-      d.vocab_score ?? null,
-      d.grammar_score ?? null,
-      d.listening_score ?? null,
-      d.writing_score ?? null,
-      d.domain_score ?? null,
-      d.notes ?? null,
-      now,
+  try {
+    await c.env.DB.prepare(
+      `INSERT OR REPLACE INTO self_check
+         (user_id, week_no, vocab_score, grammar_score, reading_score,
+          listening_score, speaking_score, writing_score, domain_score, notes, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run();
+      .bind(
+        userId,
+        d.week_no,
+        d.vocab_score ?? null,
+        d.grammar_score ?? null,
+        d.reading_score ?? null,
+        d.listening_score ?? null,
+        d.speaking_score ?? null,
+        d.writing_score ?? null,
+        d.domain_score ?? null,
+        d.notes ?? null,
+        now,
+      )
+      .run();
+  } catch {
+    await c.env.DB.prepare(
+      `INSERT OR REPLACE INTO self_check
+         (user_id, week_no, vocab_score, grammar_score,
+          listening_score, writing_score, domain_score, notes, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(
+        userId,
+        d.week_no,
+        d.vocab_score ?? null,
+        d.grammar_score ?? null,
+        d.listening_score ?? null,
+        d.writing_score ?? null,
+        d.domain_score ?? null,
+        d.notes ?? null,
+        now,
+      )
+      .run();
+  }
 
   return created(c, { week_no: d.week_no });
 });
