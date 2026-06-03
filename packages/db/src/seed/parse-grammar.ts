@@ -27,33 +27,53 @@ interface GrammarEntry {
 }
 
 function parseGrammarEntry(heading: string, body: string): GrammarEntry | null {
-  // 제목 파싱: "G1-1. ~は ~です — "~은 ~입니다""
-  const dashSplit = heading.split(/\s+[—–-]\s+/);
-  const rawPattern = dashSplit[0]?.replace(/^[GgNn\d-]+\.\s*/, '').trim() ?? '';
-  const meaningKo  = dashSplit[1]?.replace(/^["「]|["」]$/g, '').trim() ?? '';
+  // 제목 파싱:
+  // - "G1-1. ~は ~です — "~은 ~입니다""
+  // - "G1-1. ~そうだ (양태) "~할 것 같다""
+  const withoutCode = heading.replace(/^[GgNn\d-]+\.\s*/, '').trim();
+  const dashSplit = withoutCode.split(/\s+[—–-]\s+/);
+  const quotedMeaning = withoutCode.match(/["「]([^"」]+)["」]\s*$/);
+  const rawPattern = (dashSplit.length > 1
+    ? dashSplit[0]
+    : withoutCode.replace(/\s*["「][^"」]+["」]\s*$/, '')
+  )?.trim() ?? '';
+  const meaningKo = (dashSplit.length > 1
+    ? dashSplit[1]
+    : quotedMeaning?.[1]
+  )?.replace(/^["「]|["」]$/g, '').trim() ?? '';
 
   if (!rawPattern || !meaningKo) return null;
 
-  // **구조**: ...
-  const connectionMatch = body.match(/\*\*구조\*\*[：:]\s*(.+)/);
+  // **구조** / **접속**: ...
+  const connectionMatch = body.match(/\*\*(?:구조|접속)\*\*[：:]\s*(.+)/);
   const connection = connectionMatch?.[1]?.trim() ?? null;
 
-  // **흔한 오류**: ...
-  const errorMatch = body.match(/\*\*흔한\s*오류\*\*[：:]\s*(.+)/);
+  // **흔한 오류** / **오류**: ...
+  const errorMatch = body.match(/\*\*(?:흔한\s*)?오류\*\*[：:]\s*(.+)/);
   const errorNote = errorMatch?.[1]?.trim() ?? null;
 
-  // 예문: 리스트 항목 파싱 "- 일본어 → 한국어" 또는 "- 일본어" (한국어 생략)
+  // 예문: 리스트 항목 파싱
+  // - "- 일본어 → 한국어"
+  // - "1. 日本語。 (한국어)"
   const examples: Array<{ ja: string; ko: string }> = [];
-  const bulletMatches = body.matchAll(/^[-*]\s+(.+)/gm);
+  const exampleStart = body.search(/\*\*예문\*\*[：:]?/);
+  const exampleBody = exampleStart >= 0 ? body.slice(exampleStart) : body;
+  const bulletMatches = exampleBody.matchAll(/^\s*(?:[-*]|\d+\.)\s+(.+)/gm);
   for (const m of bulletMatches) {
     const line = m[1]!;
+    if (/^\*\*/.test(line.trim())) continue;
     const arrowIdx = line.search(/[→⇒]/);
     if (arrowIdx !== -1) {
       const ja = line.slice(0, arrowIdx).trim();
       const ko = line.slice(arrowIdx + 1).trim();
       if (ja) examples.push({ ja, ko });
     } else {
-      if (line.trim()) examples.push({ ja: line.trim(), ko: '' });
+      const parenKo = line.match(/^(.+?)\s*[（(]([^()（）]+)[）)]\s*$/);
+      if (parenKo?.[1]) {
+        examples.push({ ja: parenKo[1].trim(), ko: parenKo[2]?.trim() ?? '' });
+      } else if (line.trim()) {
+        examples.push({ ja: line.trim(), ko: '' });
+      }
     }
   }
 

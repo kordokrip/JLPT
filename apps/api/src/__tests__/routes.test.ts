@@ -21,6 +21,10 @@ declare module '*.sql?raw' {
 import rawMigration from '../../../../packages/db/drizzle/0000_init.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawSelfCheckMigration from '../../../../packages/db/drizzle/0001_self_check_templates.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawPhase8Migration from '../../../../packages/db/src/migrate/phase8-audio-reading.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawPracticeContentMigration from '../../../../packages/db/drizzle/0002_jlpt_n3_practice_content.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -29,7 +33,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}`
+  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}\n${rawPhase8Migration}\n${rawPracticeContentMigration}`
     .split('\n')
     .filter(line => {
       const t = line.trim();
@@ -245,6 +249,33 @@ describe('GET /api/v1/curriculum', () => {
   it('GET /curriculum/:week — 유효하지 않은 week → 404', async () => {
     const res = await fetch('/api/v1/curriculum/999');
     expect(res.status).toBe(404);
+  });
+});
+
+describe('Supplemental JLPT practice content', () => {
+  it('N3 독해 지문과 문제가 seed되어 조회된다', async () => {
+    const listRes = await fetch('/api/v1/reading?level=N3');
+    expect(listRes.status).toBe(200);
+    const listBody = await listRes.json<{ data: { items: Array<{ id: number; title_ja: string }> } }>();
+    expect(listBody.data.items.length).toBeGreaterThan(0);
+
+    const firstId = listBody.data.items[0]!.id;
+    const detailRes = await fetch(`/api/v1/reading/${firstId}`);
+    expect(detailRes.status).toBe(200);
+    const detailBody = await detailRes.json<{ data: { questions: unknown[] } }>();
+    expect(detailBody.data.questions.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('N3 실전 회화 예문이 sentences API에서 조회된다', async () => {
+    const first = await fetch('/api/v1/sentences?level=N3&register=conversation&limit=200');
+    expect(first.status).toBe(200);
+    const firstBody = await first.json<{ data: Array<{ ja: string; ko: string }>; meta?: { nextCursor?: string } }>();
+
+    const second = await fetch(`/api/v1/sentences?level=N3&register=conversation&limit=200&cursor=${encodeURIComponent(firstBody.meta?.nextCursor ?? '')}`);
+    expect(second.status).toBe(200);
+    const secondBody = await second.json<{ data: Array<{ ja: string; ko: string }> }>();
+    const items = [...firstBody.data, ...secondBody.data];
+    expect(items.some((item) => item.ja.includes('予約した時間を変更したい'))).toBe(true);
   });
 });
 
