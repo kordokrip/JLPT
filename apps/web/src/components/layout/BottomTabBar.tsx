@@ -12,6 +12,7 @@ const TABS = [
   { to: '/review',       key: 'review',     icon: ReviewIcon     },
   { to: '/browse/vocab', key: 'browse',     icon: BrowseIcon     },
   { to: '/quiz',         key: 'quiz',       icon: QuizIcon       },
+  { to: '/characters',   key: 'characters', icon: CharacterIcon  },
   { to: '/reading',      key: 'reading',    icon: ReadingIcon    },
   { to: '/curriculum',   key: 'curriculum', icon: CurriculumIcon },
   { to: '/self-check',   key: 'selfCheck',  icon: CheckIcon      },
@@ -160,6 +161,13 @@ function QuizIcon() {
   return (
     <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+    </svg>
+  );
+}
+function CharacterIcon() {
+  return (
+    <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14M7 5v14M4 19h16M12 5c-.2 4.8-2.2 8.8-6 12M12 5c.2 4.8 2.2 8.8 6 12" />
     </svg>
   );
 }

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const ROUTES = ['/', '/browse/vocab', '/quiz', '/review', '/reading', '/stats', '/settings', '/audio-qa'];
+const ROUTES = ['/', '/browse/vocab', '/quiz', '/characters', '/review', '/reading', '/stats', '/settings', '/audio-qa'];
 const DEVICES = [
   { name: 'iphone-se', width: 320, height: 568 },
   { name: 'small-android', width: 360, height: 740 },
@@ -53,6 +53,7 @@ test.describe('반응형 UI 안전성', () => {
     const dialog = page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ });
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('a[href="/curriculum"]')).toBeVisible();
+    await expect(dialog.locator('a[href="/characters"]')).toBeVisible();
     await expect(dialog.locator('a[href="/self-check"]')).toBeVisible();
   });
 

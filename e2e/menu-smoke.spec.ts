@@ -5,6 +5,7 @@ const ROUTES = [
   { path: '/review', label: '복습', text: /복습|Review|復習/ },
   { path: '/browse/vocab', label: '찾아보기', text: /어휘 찾아보기|Browse Vocabulary|語彙ブラウズ/ },
   { path: '/quiz', label: '퀴즈', text: /퀴즈|Quiz|クイズ/ },
+  { path: '/characters', label: '문자암기', text: /문자 암기|Moji Trainer|Characters/ },
   { path: '/reading', label: '독해', text: /독해|Reading|読解/ },
   { path: '/curriculum', label: '커리큘럼', text: /16주 학습 계획|16-Week|16週/ },
   { path: '/self-check', label: '자가진단', text: /자가진단|Self-Check|自己診断/ },

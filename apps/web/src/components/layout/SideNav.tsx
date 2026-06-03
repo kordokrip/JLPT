@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/review',       key: 'review',     icon: ReviewIcon     },
   { to: '/browse/vocab', key: 'browse',     icon: BrowseIcon     },
   { to: '/quiz',         key: 'quiz',       icon: QuizIcon       },
+  { to: '/characters',   key: 'characters', icon: CharacterIcon  },
   { to: '/reading',      key: 'reading',    icon: ReadingIcon    },
   { to: '/curriculum',   key: 'curriculum', icon: CurriculumIcon },
   { to: '/self-check',   key: 'selfCheck',  icon: CheckIcon      },
@@ -136,6 +137,9 @@ function BrowseIcon() {
 }
 function QuizIcon() {
   return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M12 17.3h.01M9.3 8.7a3.4 3.4 0 0 1 5.4 2.7c0 2.3-2.7 2.4-2.7 4.1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></NavIcon>;
+}
+function CharacterIcon() {
+  return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14M7 5v14M4 19h16M12 5c-.2 4.8-2.2 8.8-6 12M12 5c.2 4.8 2.2 8.8 6 12" /></NavIcon>;
 }
 function ReadingIcon() {
   return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A8 8 0 0 1 12 7a8 8 0 0 1 8-1.5v13A8 8 0 0 0 12 20a8 8 0 0 0-8-1.5v-13Zm8 1.5v13" /></NavIcon>;

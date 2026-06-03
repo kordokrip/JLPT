@@ -7,6 +7,7 @@ const ja = {
     review:     '復習',
     browse:     'ブラウズ',
     quiz:       'クイズ',
+    characters: '文字練習',
     reading:    '読解',
     curriculum: 'カリキュラム',
     selfCheck:  '自己診断',

@@ -12,6 +12,7 @@ const ROUTES = [
   '/quiz',
   '/quiz/vocab_mc',
   '/quiz/listening',
+  '/characters',
   '/reading',
   '/reading/1',
   '/curriculum',

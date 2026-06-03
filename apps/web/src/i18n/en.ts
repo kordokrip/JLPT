@@ -7,6 +7,7 @@ const en = {
     review:     'Review',
     browse:     'Browse',
     quiz:       'Quiz',
+    characters: 'Characters',
     reading:    'Reading',
     curriculum: 'Curriculum',
     selfCheck:  'Self-Check',

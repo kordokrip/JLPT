@@ -8,6 +8,7 @@ const ko = {
     review:     '복습',
     browse:     '찾아보기',
     quiz:       '퀴즈',
+    characters: '문자암기',
     reading:    '독해',
     curriculum: '커리큘럼',
     selfCheck:  '자가진단',
