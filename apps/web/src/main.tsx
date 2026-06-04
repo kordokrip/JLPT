@@ -53,7 +53,7 @@ if (!rootEl) throw new Error('#root element not found');
 // 다크모드 초기화 (렌더 전 적용)
 // ─────────────────────────────────────────────
 (function applyTheme() {
-  const { theme, playbackRate, selectedVoiceURI, ttsProvider, voiceGender } = useSettingsStore.getState();
+  const { theme, playbackRate, selectedVoiceURI, voiceGender } = useSettingsStore.getState();
   const isDark =
     theme === 'dark' ||
     (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -63,7 +63,7 @@ if (!rootEl) throw new Error('#root element not found');
     rate: playbackRate,
     voiceGender,
     voiceURI: selectedVoiceURI,
-    sourcePreference: ttsProvider === 'browser' ? 'browser' : 'server',
+    sourcePreference: 'browser',
   });
 })();
 

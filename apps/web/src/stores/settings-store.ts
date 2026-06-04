@@ -69,6 +69,18 @@ export const useSettingsStore = create<SettingsState>()(
       lastSyncedAt:  new Date(0).toISOString(),
       setLastSyncedAt:(t) => set({ lastSyncedAt: t }),
     }),
-    { name: 'nihongo-n3-settings' },
+    {
+      name: 'nihongo-n3-settings',
+      version: 2,
+      migrate: (persisted) => {
+        const state = persisted && typeof persisted === 'object'
+          ? persisted as Partial<SettingsState>
+          : {};
+        return {
+          ...state,
+          ttsProvider: 'browser' as TtsProviderId,
+        };
+      },
+    },
   ),
 );

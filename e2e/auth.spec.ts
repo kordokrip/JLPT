@@ -15,9 +15,16 @@ test.describe('로그인 온보딩', () => {
     await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
   });
 
-  test('Google SSO 버튼은 설정 전 비활성 상태를 설명한다', async ({ page }) => {
+  test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText('Google SSO는 운영 환경변수 설정 후 활성화됩니다.')).toBeVisible();
+    const googleLogin = page.getByRole('link', { name: 'Google로 로그인' });
+    await expect(googleLogin).toBeVisible();
+    const href = await googleLogin.getAttribute('href');
+    if (href) {
+      expect(href).toContain('/api/v1/auth/google/start');
+    } else {
+      await expect(page.getByText('Google SSO는 운영 환경변수 설정 후 활성화됩니다.')).toBeVisible();
+    }
   });
 
   test('회원가입 후 로그아웃하고 같은 계정으로 다시 로그인할 수 있다', async ({ page }) => {

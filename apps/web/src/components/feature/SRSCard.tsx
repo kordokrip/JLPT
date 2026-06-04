@@ -62,7 +62,12 @@ export function SRSCard({
   useEffect(() => {
     setFlipped(false);
     if (autoPronounce) {
-      audioPlayer.playPronunciation({ text: reading || heading, audioPath }).catch(() => {/* ignore */});
+      audioPlayer.playPronunciation({
+        text: reading || heading,
+        audioPath,
+        prefer: reading || heading ? 'browser' : 'server',
+        preferGoogleVoice: true,
+      }).catch(() => {/* ignore */});
     }
   }, [audioPath, autoPronounce, heading, reading]);
 

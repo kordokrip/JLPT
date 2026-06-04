@@ -38,10 +38,28 @@ export function SideNav() {
       style={{ width: 'var(--sidebar-width, 220px)' }}
     >
       {/* 로고 */}
-      <div className={`flex h-16 items-center border-b-[0.5px] border-[var(--border)] ${collapsed ? 'justify-center px-2' : 'justify-between px-5'}`}>
-        <span className={`font-serif-jp text-[var(--accent)] tracking-tight ${collapsed ? 'text-base' : 'text-lg'}`}>
-          {collapsed ? 'N3' : 'JLPT N3'}
-        </span>
+      <div className={`flex h-[72px] items-center border-b-[0.5px] border-[var(--border)] ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <NavLink
+          to="/"
+          aria-label="Nihongo N3 홈"
+          className={`group flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}
+        >
+          <img
+            src="/brand-mark.png"
+            alt=""
+            className={`${collapsed ? 'h-11 w-11' : 'h-12 w-12'} shrink-0 rounded-2xl border border-black/10 object-cover shadow-[0_10px_24px_rgba(42,30,24,0.14)] transition-transform group-hover:scale-[1.03]`}
+          />
+          {!collapsed && (
+            <span className="min-w-0">
+              <span className="block font-serif-jp text-[17px] font-semibold leading-none tracking-[0.04em] text-[#1f1a17] dark:text-[#fff8ef]">
+                Nihongo N3
+              </span>
+              <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+                Study OS
+              </span>
+            </span>
+          )}
+        </NavLink>
         {!collapsed && (
           <button
             type="button"

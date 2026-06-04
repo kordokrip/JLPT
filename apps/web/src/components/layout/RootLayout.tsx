@@ -18,7 +18,16 @@ export function RootLayout() {
   } as CSSProperties;
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-[var(--background)]" style={layoutStyle}>
+    <div className="relative min-h-dvh overflow-x-clip bg-[var(--background)]" style={layoutStyle}>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-0 bg-no-repeat opacity-[0.055] dark:opacity-[0.13]"
+        style={{
+          backgroundImage: "url('/page-bg-bamboo.png')",
+          backgroundPosition: 'right max(1.25rem, env(safe-area-inset-right)) bottom max(4.75rem, env(safe-area-inset-bottom))',
+          backgroundSize: 'min(56vw, 520px) auto',
+        }}
+      />
       {/* 스크린리더용 건너뛰기 링크 */}
       <a
         href="#main-content"
@@ -44,6 +53,7 @@ export function RootLayout() {
       <main
         id="main-content"
         className={[
+          'relative z-10',
           'md:pl-[var(--sidebar-width)]',
           'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto md:h-auto md:min-h-dvh md:overflow-visible',
           'pb-0 md:pb-0',

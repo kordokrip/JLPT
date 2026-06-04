@@ -33,7 +33,9 @@ interface SpeechOptions {
   voiceGender?: VoiceGender;
   voiceURI?: string | null | undefined;
   lang?: string;
+  rate?: number;
   pitch?: number;
+  preferGoogleVoice?: boolean;
   onStart?: () => void;
   onEnd?: () => void;
   onError?: () => void;
@@ -43,6 +45,10 @@ interface PronunciationOptions {
   text?: string | undefined;
   audioPath?: string | undefined;
   prefer?: AudioSourcePreference;
+  forceBrowser?: boolean;
+  slow?: boolean;
+  repeat?: number;
+  preferGoogleVoice?: boolean;
 }
 
 interface AudioEntry {
@@ -150,19 +156,23 @@ class AudioPlayer {
         localService: voice.localService,
         default: voice.default,
       }))
-      .sort((a, b) => Number(b.localService) - Number(a.localService) || a.name.localeCompare(b.name));
+      .sort((a, b) => voiceSortScore(b) - voiceSortScore(a) || a.name.localeCompare(b.name));
   }
 
   private pickJapaneseVoice(
     gender: VoiceGender,
     lang = 'ja-JP',
     voiceURI: string | null = this._voiceURI,
+    preferGoogleVoice = true,
   ): SpeechSynthesisVoice | undefined {
     if (!('speechSynthesis' in window)) return undefined;
     const voices = window.speechSynthesis.getVoices();
     const langPrefix = lang.split('-')[0]?.toLowerCase() ?? 'ja';
     const japaneseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
     if (japaneseVoices.length === 0) return undefined;
+    const googleVoice = preferGoogleVoice ? japaneseVoices.find(isGoogleJapaneseVoice) : undefined;
+    if (googleVoice) return googleVoice;
+
     if (voiceURI) {
       const selected = japaneseVoices.find((voice) => voice.voiceURI === voiceURI);
       if (selected) return selected;
@@ -170,7 +180,7 @@ class AudioPlayer {
 
     const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
     const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];
-    const naturalHints = ['premium', 'enhanced', 'siri', 'natural', 'neural', 'apple'];
+    const naturalHints = ['premium', 'enhanced', 'siri', 'natural', 'neural', 'apple', 'google'];
     const hints = gender === 'female' ? femaleHints : maleHints;
     const oppositeHints = gender === 'female' ? maleHints : femaleHints;
 
@@ -179,6 +189,7 @@ class AudioPlayer {
         const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
         const score =
           (voice.lang.toLowerCase() === 'ja-jp' ? 8 : 0) +
+          (isGoogleJapaneseVoice(voice) ? 20 : 0) +
           (voice.localService ? 3 : 0) +
           (voice.default ? 2 : 0) +
           (naturalHints.some((hint) => haystack.includes(hint)) ? 3 : 0) +
@@ -197,7 +208,7 @@ class AudioPlayer {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang ?? 'ja-JP';
-    utterance.rate = Math.min(1.2, Math.max(0.72, this._rate * 0.95));
+    utterance.rate = Math.min(1.2, Math.max(0.58, options.rate ?? this._rate * 0.95));
     const selectedGender = options.voiceGender ?? this._voiceGender;
     utterance.pitch = options.pitch ?? (selectedGender === 'male' ? 0.94 : 1.02);
     utterance.volume = 1;
@@ -205,28 +216,41 @@ class AudioPlayer {
       options.voiceGender ?? this._voiceGender,
       utterance.lang,
       options.voiceURI ?? this._voiceURI,
+      options.preferGoogleVoice ?? true,
     );
     if (voice) utterance.voice = voice;
-    utterance.onstart = options.onStart ?? null;
-    utterance.onend = () => {
-      options.onEnd?.();
-      this._onEnd?.();
-    };
-    utterance.onerror = () => {
-      options.onError?.();
-      this._onEnd?.();
-    };
-    window.speechSynthesis.speak(utterance);
+    await new Promise<void>((resolve) => {
+      utterance.onstart = options.onStart ?? null;
+      utterance.onend = () => {
+        options.onEnd?.();
+        this._onEnd?.();
+        resolve();
+      };
+      utterance.onerror = () => {
+        options.onError?.();
+        this._onEnd?.();
+        resolve();
+      };
+      window.speechSynthesis.speak(utterance);
+    });
   }
 
   async playPronunciation({
     text,
     audioPath,
     prefer = this._sourcePreference,
+    forceBrowser = false,
+    slow = false,
+    repeat = 1,
+    preferGoogleVoice = true,
   }: PronunciationOptions): Promise<void> {
     const normalized = text?.trim();
-    if (prefer === 'browser' && normalized) {
-      await this.speakText(normalized);
+    if ((forceBrowser || prefer === 'browser') && normalized) {
+      const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
+      await this.speakText(spokenText, {
+        ...(slow ? { rate: 0.68 } : {}),
+        preferGoogleVoice,
+      });
       return;
     }
     if (audioPath) {
@@ -294,6 +318,22 @@ class AudioPlayer {
       this.cache.delete(k);
     }
   }
+}
+
+export function isGoogleJapaneseVoice(voice: Pick<SpeechSynthesisVoice, 'name' | 'voiceURI' | 'lang'>): boolean {
+  const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
+  return voice.lang.toLowerCase().startsWith('ja') && haystack.includes('google');
+}
+
+export function voiceSortScore(voice: JapaneseVoiceOption): number {
+  const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
+  return (
+    (voice.lang.toLowerCase() === 'ja-jp' ? 10 : 0) +
+    (haystack.includes('google') ? 30 : 0) +
+    (haystack.includes('natural') || haystack.includes('neural') || haystack.includes('premium') ? 6 : 0) +
+    (voice.localService ? 2 : 0) +
+    (voice.default ? 1 : 0)
+  );
 }
 
 /** 싱글톤 플레이어 */

@@ -8,6 +8,9 @@ interface PronunciationButtonProps {
   label?: string;
   className?: string;
   compact?: boolean;
+  forceBrowser?: boolean;
+  slow?: boolean;
+  repeat?: number;
 }
 
 export function PronunciationButton({
@@ -16,6 +19,9 @@ export function PronunciationButton({
   label,
   className = '',
   compact = false,
+  forceBrowser = false,
+  slow = false,
+  repeat = 1,
 }: PronunciationButtonProps) {
   const { t } = useTranslation();
   const playableText = text?.trim();
@@ -23,7 +29,14 @@ export function PronunciationButton({
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    void audioPlayer.playPronunciation({ text: playableText, audioPath });
+    void audioPlayer.playPronunciation({
+      text: playableText,
+      audioPath,
+      forceBrowser,
+      slow,
+      repeat,
+      preferGoogleVoice: true,
+    });
   };
 
   return (

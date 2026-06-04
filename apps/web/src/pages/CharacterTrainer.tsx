@@ -240,9 +240,11 @@ export default function CharacterTrainer() {
               <div className="mt-3 flex justify-center">
                 <PronunciationButton
                   text={getCardAudioText(card)}
-                  audioPath={card.audioPath}
                   label={`${card.char} 발음 듣기`}
                   className="bg-[var(--card)]"
+                  forceBrowser
+                  slow
+                  repeat={card.mode === 'kanji' ? 1 : 2}
                 />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -447,8 +449,10 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
         <PronunciationButton
           compact={compact}
           text={getCardAudioText(card)}
-          audioPath={card.audioPath}
           label={`${card.char} 발음 듣기`}
+          forceBrowser
+          slow
+          repeat={card.mode === 'kanji' ? 1 : 2}
         />
       </div>
     </div>

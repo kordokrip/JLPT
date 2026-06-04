@@ -34,7 +34,12 @@ export default function QuizQuestionMC({
   const handleAudio = () => {
     setUsingSpeechFallback(false);
     audioPlayer
-      .playPronunciation({ text: promptAudioText, audioPath: audioKey })
+      .playPronunciation({
+        text: promptAudioText,
+        audioPath: audioKey,
+        prefer: promptAudioText ? 'browser' : 'server',
+        preferGoogleVoice: true,
+      })
       .then(() => setUsingSpeechFallback(!audioKey))
       .catch(() => setUsingSpeechFallback(!!promptAudioText));
   };

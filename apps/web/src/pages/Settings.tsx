@@ -103,8 +103,8 @@ export default function Settings() {
   };
 
   const handleTtsProvider = (provider: TtsProviderId) => {
-    setTtsProvider(provider);
-    audioPlayer.sourcePreference = provider === 'browser' ? 'browser' : 'server';
+    setTtsProvider('browser');
+    audioPlayer.sourcePreference = 'browser';
     if (provider === 'browser') void audioPlayer.speakText(t('settings.voicePreviewText'));
   };
 
@@ -222,11 +222,8 @@ export default function Settings() {
             testId="tts-provider"
             options={[
               { value: 'browser', label: t('settings.ttsBrowser') },
-              { value: 'cloudflare', label: 'MeloTTS' },
-              { value: 'voicevox', label: 'VOICEVOX' },
-              { value: 'style-bert-vits2', label: 'Style-Bert' },
             ]}
-            value={ttsProvider}
+            value={ttsProvider === 'browser' ? ttsProvider : 'browser'}
             onChange={(v) => handleTtsProvider(v as TtsProviderId)}
           />
         </SettingRow>

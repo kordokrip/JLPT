@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#B91C1C" rx="80"/>
-  <text x="256" y="330" font-family="Helvetica" font-size="240" font-weight="bold" fill="white" text-anchor="middle">N3</text>
+  <rect width="512" height="512" rx="96" fill="#000"/>
+  <path fill="#fff" d="M145 132h58l-38 190h-58zM197 132h118l-14 54h-95zM241 185h60v116l-52 40V231h-49zM349 126h60l-42 214h-62zM113 341h142v54H93zM255 341h64v86l-57 39v-77h-69zM339 421c65-22 102-77 119-126l24 72c-35 52-74 83-143 98zM358 175h73v46h-38v44h51v52h-108v-96h22z"/>
+  <circle cx="404" cy="404" r="46" fill="#fff"/>
 </svg>
