@@ -7,6 +7,7 @@ test.describe('문자 암기 트레이너', () => {
 
     await expect(page.getByRole('heading', { name: '문자 암기' })).toBeVisible();
     await expect(page.getByText('あ').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'あ 발음 듣기' }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: '1. 관찰' })).toBeVisible();
     await expect(page.getByText('읽기', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('a').first()).toBeVisible();
@@ -21,6 +22,7 @@ test.describe('문자 암기 트레이너', () => {
 
     await page.getByRole('button', { name: '가타카나' }).click();
     await expect(page.getByText('ア').first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ア 발음 듣기' }).first()).toBeVisible();
   });
 
   test('한자 모드는 API 데이터와 JLPT 레벨 선택 UI를 제공한다', async ({ page }) => {

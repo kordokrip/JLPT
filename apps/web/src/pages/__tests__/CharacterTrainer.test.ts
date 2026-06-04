@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChoices } from '../CharacterTrainer';
+import { buildChoices, getCardAudioText, type StudyCard } from '../CharacterTrainer';
 
 describe('CharacterTrainer', () => {
   it('buildChoices keeps the target choice and removes duplicates', () => {
@@ -16,5 +16,30 @@ describe('CharacterTrainer', () => {
     expect(choices).toContain('a');
     expect(new Set(choices).size).toBe(choices.length);
     expect(choices.length).toBe(4);
+  });
+
+  it('getCardAudioText plays kana characters and first kanji reading', () => {
+    const kana = {
+      id: 'h-あ',
+      mode: 'hiragana',
+      char: 'あ',
+      reading: 'a',
+      meaning: '히라가나',
+      strokeCount: 3,
+      hint: '',
+    } satisfies StudyCard;
+    const kanji = {
+      id: 'kanji-1',
+      mode: 'kanji',
+      char: '日',
+      reading: 'ニチ / ジツ / ひ',
+      meaning: '날 일',
+      strokeCount: 4,
+      hint: '',
+      level: 'N5',
+    } satisfies StudyCard;
+
+    expect(getCardAudioText(kana)).toBe('あ');
+    expect(getCardAudioText(kanji)).toBe('ニチ');
   });
 });

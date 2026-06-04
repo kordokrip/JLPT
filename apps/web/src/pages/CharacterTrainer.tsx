@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { PronunciationButton } from '../components/feature/PronunciationButton';
 import { kanjiApi } from '../lib/api';
 import type { KanjiItem } from '../lib/db';
 import type { PointerEvent } from 'react';
@@ -16,6 +17,7 @@ export type KanaCard = {
   meaning: string;
   strokeCount: number;
   hint: string;
+  audioPath?: string;
 };
 
 export type StudyCard = KanaCard | {
@@ -26,6 +28,7 @@ export type StudyCard = KanaCard | {
   meaning: string;
   strokeCount: number;
   hint: string;
+  audioPath?: string;
   level: JlptLevel;
 };
 
@@ -91,7 +94,7 @@ const kanjiRules = [
 
 function makeKanjiCard(item: KanjiItem): StudyCard {
   const reading = [item.reading_on, item.reading_kun].filter(Boolean).join(' / ') || '-';
-  return {
+  const card: StudyCard = {
     id: `kanji-${item.id}`,
     mode: 'kanji',
     char: item.character,
@@ -101,6 +104,17 @@ function makeKanjiCard(item: KanjiItem): StudyCard {
     hint: `${item.meaning}의 핵심 이미지를 떠올린 뒤 한국 한자음/일본어 읽기를 분리해서 말하세요.`,
     level: item.level as JlptLevel,
   };
+  if (item.audio_path) card.audioPath = item.audio_path;
+  return card;
+}
+
+export function getCardAudioText(card: StudyCard): string {
+  if (card.mode !== 'kanji') return card.char;
+  const firstReading = card.reading
+    .split(/[\/,、，・\s]+/)
+    .map((value) => value.trim())
+    .find((value) => value.length > 0 && value !== '-');
+  return firstReading ?? card.char;
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
@@ -222,6 +236,14 @@ export default function CharacterTrainer() {
                 <span className="font-serif-jp text-[112px] leading-none text-foreground">
                   {stage === 'recall' && !revealed ? '?' : card.char}
                 </span>
+              </div>
+              <div className="mt-3 flex justify-center">
+                <PronunciationButton
+                  text={getCardAudioText(card)}
+                  audioPath={card.audioPath}
+                  label={`${card.char} 발음 듣기`}
+                  className="bg-[var(--card)]"
+                />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                 <Metric label="진도" value={`${progress}/5`} />
@@ -421,6 +443,14 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
         <Info label="의미" value={card.meaning} />
         <Info label="암기 힌트" value={card.hint} wide />
       </dl>
+      <div className="mt-4">
+        <PronunciationButton
+          compact={compact}
+          text={getCardAudioText(card)}
+          audioPath={card.audioPath}
+          label={`${card.char} 발음 듣기`}
+        />
+      </div>
     </div>
   );
 }
