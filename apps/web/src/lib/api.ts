@@ -56,12 +56,6 @@ async function request<T>(
     return { ok: false, status: 0, message: '네트워크 오류' };
   }
 
-  // CF Access 인증 만료 → 로그인 페이지로 리다이렉트
-  if (res.status === 401) {
-    window.location.href = res.headers.get('Location') ?? '/';
-    return { ok: false, status: 401, message: '인증이 필요합니다' };
-  }
-
   let body: unknown;
   try {
     body = await res.json();
@@ -70,8 +64,13 @@ async function request<T>(
   }
 
   if (!res.ok) {
+    const redirectTo = res.headers.get('Location');
+    if (res.status === 401 && redirectTo && !path.startsWith('/auth/')) {
+      window.location.href = redirectTo;
+    }
     const msg =
-      (body as { detail?: string; message?: string })?.detail ??
+      (body as { detail?: string; message?: string; error?: string })?.detail ??
+      (body as { error?: string })?.error ??
       (body as { message?: string })?.message ??
       `HTTP ${res.status}`;
     return { ok: false, status: res.status, message: msg };

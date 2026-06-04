@@ -147,6 +147,37 @@ describe('App auth', () => {
     expect(logout.status).toBe(200);
   });
 
+  it('logs out cleanly with production __Host session cookies', async () => {
+    const email = `prod-user-${Date.now()}@example.com`;
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const register = await app.fetch(
+      new Request('https://api.example.test/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://nihongo-n3.pages.dev' },
+        body: JSON.stringify({ email, password: 'Passw0rd1234', display_name: '운영 쿠키 사용자' }),
+      }),
+      productionEnv,
+      createExecutionContext(),
+    );
+    expect(register.status).toBe(201);
+    const cookie = register.headers.get('set-cookie') ?? '';
+    expect(cookie).toContain('__Host-n3_session=');
+    expect(cookie).toContain('Secure');
+
+    const logout = await app.fetch(
+      new Request('https://api.example.test/api/v1/auth/logout', {
+        method: 'POST',
+        headers: { Cookie: cookie, Origin: 'https://nihongo-n3.pages.dev' },
+      }),
+      productionEnv,
+      createExecutionContext(),
+    );
+    expect(logout.status).toBe(200);
+    const cleared = logout.headers.get('set-cookie') ?? '';
+    expect(cleared).toContain('__Host-n3_session=');
+    expect(cleared).toContain('Secure');
+  });
+
   it('rejects weak passwords and invalid login attempts', async () => {
     const weak = await fetch('/api/v1/auth/register', {
       method: 'POST',

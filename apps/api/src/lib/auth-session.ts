@@ -128,7 +128,12 @@ export function setSessionCookie(c: Context<AppEnv>, token: string): void {
 }
 
 export function clearSessionCookie(c: Context<AppEnv>): void {
-  deleteCookie(c, sessionCookieName(c), { path: '/' });
+  deleteCookie(c, sessionCookieName(c), {
+    httpOnly: true,
+    secure: cookieSecure(c),
+    sameSite: cookieSameSite(c),
+    path: '/',
+  });
 }
 
 export function setOauthStateCookie(c: Context<AppEnv>, state: string): void {
@@ -146,7 +151,12 @@ export function readOauthStateCookie(c: Context<AppEnv>): string | undefined {
 }
 
 export function clearOauthStateCookie(c: Context<AppEnv>): void {
-  deleteCookie(c, oauthStateCookieName(c), { path: '/' });
+  deleteCookie(c, oauthStateCookieName(c), {
+    httpOnly: true,
+    secure: cookieSecure(c),
+    sameSite: 'Lax',
+    path: '/',
+  });
 }
 
 function requestIp(c: Context<AppEnv>): string {
