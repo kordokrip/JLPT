@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test';
 test.describe('로그인 온보딩', () => {
   test('비로그인 사용자는 온보딩을 보고 회원가입 후 앱에 진입한다', async ({ page }) => {
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /매일의 일본어 학습/ })).toBeVisible();
+    await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: /계정으로 이어지는/ })).toBeVisible();
 
     await page.getByRole('link', { name: '회원가입' }).first().click();
     await page.getByLabel('이름').fill('인증 테스트');
