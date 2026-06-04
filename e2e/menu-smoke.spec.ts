@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 const ROUTES = [
   { path: '/', label: '홈', text: /오늘 할 일|Today's Tasks|今日のタスク/ },
@@ -114,6 +115,7 @@ test.describe('운영 메뉴 smoke', () => {
     test(`${viewport.name}: 모든 주요 메뉴가 렌더링되고 라우팅된다`, async ({ page }) => {
       test.setTimeout(60_000);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await ensureAuthenticated(page);
 
       await assertNoRuntimeFailures(page, async () => {
         await gotoAppRoute(page, '/');

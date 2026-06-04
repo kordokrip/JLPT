@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 const ROUTES = ['/', '/browse/vocab', '/quiz', '/characters', '/review', '/reading', '/stats', '/settings', '/audio-qa'];
 const DEVICES = [
@@ -18,6 +19,7 @@ test.describe('반응형 UI 안전성', () => {
   for (const device of DEVICES) {
     test(`${device.name}: 주요 화면이 viewport를 넘지 않는다`, async ({ page }) => {
       await page.setViewportSize({ width: device.width, height: device.height });
+      await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
@@ -31,6 +33,7 @@ test.describe('반응형 UI 안전성', () => {
 
   test('모바일 하단 메뉴는 스크롤 없이 핵심 탭과 더보기를 제공한다', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
+    await ensureAuthenticated(page);
     await page.goto('/');
 
     const nav = page.getByRole('navigation', { name: /메인|Main|メイン/ });
@@ -59,6 +62,7 @@ test.describe('반응형 UI 안전성', () => {
 
   test('iOS safe-area와 네이티브 터치 기본값이 적용된다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await ensureAuthenticated(page);
     await page.goto('/');
     await expect(page.getByRole('navigation', { name: /메인|Main|メイン/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /더보기|More|その他/ })).toBeVisible();
@@ -88,6 +92,7 @@ test.describe('반응형 UI 안전성', () => {
 
   test('접힌 데스크톱 사이드바도 메뉴명을 식별할 수 있다', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    await ensureAuthenticated(page);
     await page.goto('/');
 
     const side = page.getByRole('navigation', { name: /사이드|Sidebar|サイド/ });

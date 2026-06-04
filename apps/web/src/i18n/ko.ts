@@ -13,6 +13,7 @@ const ko = {
     curriculum: '커리큘럼',
     selfCheck:  '자가진단',
     stats:      '통계',
+    adminUsers: '회원관리',
     settings:   '설정',
     skipToMain: '메인 콘텐츠로 건너뛰기',
     sideLabel:  '사이드 내비게이션',

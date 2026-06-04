@@ -12,6 +12,7 @@ const ja = {
     curriculum: 'カリキュラム',
     selfCheck:  '自己診断',
     stats:      '統計',
+    adminUsers: '会員管理',
     settings:   '設定',
     skipToMain: 'メインコンテンツへスキップ',
     sideLabel:  'サイドナビゲーション',

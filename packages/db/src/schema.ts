@@ -222,9 +222,43 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
   displayName: text('display_name').notNull(),
+  passwordHash: text('password_hash'),
+  role: text('role').notNull().default('user'),
+  authProvider: text('auth_provider').notNull().default('password'),
+  googleSub: text('google_sub'),
+  lastLoginAt: integer('last_login_at'),
   fsrsOptions: text('fsrs_options'), // JSON: FsrsOptions (nullable)
   ...timestamps,
 });
+
+export const authSessions = sqliteTable('auth_sessions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: integer('expires_at').notNull(),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+  lastSeenAt: integer('last_seen_at').notNull().default(sql`(unixepoch())`),
+  revokedAt: integer('revoked_at'),
+  userAgent: text('user_agent'),
+  ip: text('ip'),
+}, (t) => ({
+  userIdx: index('auth_sessions_user_idx').on(t.userId),
+  expiresIdx: index('auth_sessions_expires_idx').on(t.expiresAt),
+}));
+
+export const loginEvents = sqliteTable('login_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  email: text('email'),
+  provider: text('provider').notNull(),
+  eventType: text('event_type').notNull(),
+  ip: text('ip'),
+  userAgent: text('user_agent'),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+}, (t) => ({
+  userIdx: index('login_events_user_idx').on(t.userId, t.createdAt),
+  createdIdx: index('login_events_created_idx').on(t.createdAt),
+}));
 
 /**
  * srs_cards — FSRS-6 호환 카드 상태 테이블

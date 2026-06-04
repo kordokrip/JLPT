@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { RootLayout } from './components/layout/RootLayout';
+import { useAuthStore } from './stores/auth-store';
+import type { ReactNode } from 'react';
 
 // ─────────────────────────────────────────────
 // Lazy 페이지 로드
@@ -21,6 +23,10 @@ const ReadingDetail  = lazy(() => import('./pages/ReadingDetail'));
 const Stats          = lazy(() => import('./pages/Stats'));
 const AddWord        = lazy(() => import('./pages/AddWord'));
 const AudioQa        = lazy(() => import('./pages/AudioQa'));
+const Welcome        = lazy(() => import('./pages/Welcome'));
+const Login          = lazy(() => import('./pages/Login'));
+const Register       = lazy(() => import('./pages/Register'));
+const AdminUsers     = lazy(() => import('./pages/AdminUsers'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -31,6 +37,20 @@ function PageLoader() {
   );
 }
 
+function RequireAuth({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const status = useAuthStore((s) => s.status);
+  const refresh = useAuthStore((s) => s.refresh);
+
+  useEffect(() => {
+    if (status === 'checking') void refresh();
+  }, [status, refresh]);
+
+  if (status === 'checking') return <PageLoader />;
+  if (status === 'anonymous') return <Navigate to="/welcome" replace state={{ from: location.pathname }} />;
+  return <>{children}</>;
+}
+
 // ─────────────────────────────────────────────
 // 루트 라우터
 // ─────────────────────────────────────────────
@@ -38,7 +58,10 @@ export default function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route element={<RootLayout />}>
+        <Route path="welcome" element={<Welcome />} />
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+        <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
           <Route index          element={<Home />} />
           <Route path="review"  element={<Review />} />
           <Route path="browse/:type"     element={<Browse />} />
@@ -59,6 +82,7 @@ export default function App() {
           <Route path="stats"        element={<Stats />} />
           <Route path="add-word"     element={<AddWord />} />
           <Route path="audio-qa"     element={<AudioQa />} />
+          <Route path="admin/users"  element={<AdminUsers />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

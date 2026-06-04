@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import { useAuthStore } from '../../stores/auth-store';
 
 const TABS = [
   { to: '/',             key: 'home',       icon: HomeIcon       },
@@ -17,17 +18,20 @@ const TABS = [
   { to: '/curriculum',   key: 'curriculum', icon: CurriculumIcon },
   { to: '/self-check',   key: 'selfCheck',  icon: CheckIcon      },
   { to: '/stats',        key: 'stats',      icon: StatsIcon      },
+  { to: '/admin/users',  key: 'adminUsers', icon: AdminIcon      },
   { to: '/settings',     key: 'settings',   icon: SettingsIcon   },
 ] as const;
 
 const PRIMARY_TAB_KEYS = new Set(['home', 'review', 'browse', 'quiz', 'settings']);
-const PRIMARY_TABS = TABS.filter((tab) => PRIMARY_TAB_KEYS.has(tab.key));
-const MORE_TABS = TABS.filter((tab) => !PRIMARY_TAB_KEYS.has(tab.key));
 
 export function BottomTabBar() {
   const { t } = useTranslation();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const tabs = TABS.filter((tab) => tab.key !== 'adminUsers' || user?.role === 'admin');
+  const PRIMARY_TABS = tabs.filter((tab) => PRIMARY_TAB_KEYS.has(tab.key));
+  const MORE_TABS = tabs.filter((tab) => !PRIMARY_TAB_KEYS.has(tab.key));
   const moreActive = MORE_TABS.some((tab) => location.pathname === tab.to || location.pathname.startsWith(`${tab.to}/`));
 
   return (
@@ -190,6 +194,14 @@ function StatsIcon() {
   return (
     <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+  );
+}
+
+function AdminIcon() {
+  return (
+    <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 19 6v5.2c0 4.2-2.7 7.9-7 9.3-4.3-1.4-7-5.1-7-9.3V6l7-2.5Zm-2.8 9.1 1.9 1.9 3.7-4.1" />
     </svg>
   );
 }

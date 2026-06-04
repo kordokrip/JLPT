@@ -17,6 +17,18 @@ export type Env = {
   ENVIRONMENT:         string;
   /** production auth mode: cf-access | public-owner */
   AUTH_MODE:           string;
+  /** App session HMAC/password hashing secret. Set with wrangler secret in production. */
+  AUTH_SECRET?:        string;
+  /** Frontend origin for auth redirects. */
+  APP_ORIGIN?:         string;
+  /** Optional Google OAuth web client credentials. */
+  GOOGLE_CLIENT_ID?:   string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GOOGLE_REDIRECT_URI?: string;
+  /** Optional admin bootstrap credentials/secrets. */
+  ADMIN_EMAIL?:        string;
+  ADMIN_PASSWORD?:     string;
+  ADMIN_BOOTSTRAP_TOKEN?: string;
   /** Cloudflare Access application audience tag */
   CF_ACCESS_AUD:       string;
   /** e.g. "nihongo-n3.cloudflareaccess.com" */
@@ -51,6 +63,7 @@ export type Env = {
 export type Variables = {
   userId: string;
   userEmail: string;
+  userRole?: 'user' | 'admin';
 };
 
 // ─────────────────────────────────────────────

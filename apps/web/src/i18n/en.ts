@@ -12,6 +12,7 @@ const en = {
     curriculum: 'Curriculum',
     selfCheck:  'Self-Check',
     stats:      'Stats',
+    adminUsers: 'Users',
     settings:   'Settings',
     skipToMain: 'Skip to main content',
     sideLabel:  'Sidebar navigation',

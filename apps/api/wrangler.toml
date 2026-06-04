@@ -7,7 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "production"
-AUTH_MODE = "public-owner"
+AUTH_MODE = "app-session"
+APP_ORIGIN = "https://nihongo-n3.pages.dev"
 # CF_ACCESS_AUD / CF_TEAM_DOMAIN are production secrets.
 # Set them with:
 #   wrangler secret put CF_ACCESS_AUD
@@ -103,6 +104,13 @@ ENVIRONMENT = "test"
 AUTH_MODE = "public-owner"
 CF_ACCESS_AUD = "test-aud"
 CF_TEAM_DOMAIN = "test.cloudflareaccess.com"
+APP_ORIGIN = "http://localhost:5173"
+GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_SECRET = ""
+GOOGLE_REDIRECT_URI = ""
+ADMIN_EMAIL = ""
+ADMIN_PASSWORD = ""
+ADMIN_BOOTSTRAP_TOKEN = ""
 local_protocol = "http"
 NOTIFY_EMAIL = ""
 TTS_PROVIDER = "cloudflare"

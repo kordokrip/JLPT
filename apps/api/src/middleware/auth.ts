@@ -13,6 +13,7 @@
  */
 import type { Context, Next } from 'hono';
 import type { AppEnv } from '../types.js';
+import { getSessionUser, setAuthContext } from '../lib/auth-session.js';
 
 // ─────────────────────────────────────────────
 // JWT 내부 타입
@@ -122,6 +123,26 @@ export async function cfAccessAuth(
   c: Context<AppEnv>,
   next: Next,
 ): Promise<Response | void> {
+  const appUser = await getSessionUser(c).catch(() => null);
+  if (appUser) {
+    setAuthContext(c, appUser);
+    await next();
+    return;
+  }
+
+  if (c.env.AUTH_MODE === 'app-session') {
+    c.header('Content-Type', 'application/problem+json');
+    return c.json(
+      {
+        type: 'https://nihongo-n3.example.com/errors/unauthorized',
+        title: 'Unauthorized',
+        status: 401,
+        detail: '로그인이 필요합니다',
+      },
+      401,
+    );
+  }
+
   // ── 개발/단일 사용자 운영 우회 ─────────────────
   // Cloudflare Access가 아직 연결되지 않은 운영 배포에서는 앱의 핵심 학습
   // 흐름이 500으로 막히지 않도록 명시적 public-owner 모드로 owner 계정을 사용한다.

@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 test.describe('문자 암기 트레이너', () => {
   test('히라가나/가타카나 관찰-쓰기-퀴즈 루프가 동작한다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await ensureAuthenticated(page);
     await page.goto('/characters', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: '문자 암기' })).toBeVisible();
@@ -10,7 +12,7 @@ test.describe('문자 암기 트레이너', () => {
     await expect(page.getByRole('button', { name: 'あ 발음 듣기' }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: '1. 관찰' })).toBeVisible();
     await expect(page.getByText('읽기', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('a').first()).toBeVisible();
+    await expect(page.locator('dd').getByText('a', { exact: true }).first()).toBeVisible();
 
     await page.getByRole('button', { name: '3. 손으로 쓰기' }).click();
     await expect(page.getByLabel('쓰기 연습 캔버스')).toBeVisible();
@@ -27,6 +29,7 @@ test.describe('문자 암기 트레이너', () => {
 
   test('한자 모드는 API 데이터와 JLPT 레벨 선택 UI를 제공한다', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    await ensureAuthenticated(page);
     await page.goto('/characters', { waitUntil: 'domcontentloaded' });
 
     await page.getByRole('button', { name: '한자' }).click();

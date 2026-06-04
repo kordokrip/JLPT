@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { useUiStore } from '../../stores/ui-store';
+import { useAuthStore } from '../../stores/auth-store';
 
 const NAV_ITEMS = [
   { to: '/',             key: 'home',       icon: HomeIcon       },
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/curriculum',   key: 'curriculum', icon: CurriculumIcon },
   { to: '/self-check',   key: 'selfCheck',  icon: CheckIcon      },
   { to: '/stats',        key: 'stats',      icon: StatsIcon      },
+  { to: '/admin/users',  key: 'adminUsers', icon: AdminIcon      },
   { to: '/settings',     key: 'settings',   icon: SettingsIcon   },
 ] as const;
 
@@ -24,6 +26,9 @@ export function SideNav() {
   const { t } = useTranslation();
   const collapsed = useUiStore((s) => s.sideNavCollapsed);
   const toggleCollapsed = useUiStore((s) => s.toggleSideNavCollapsed);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const items = NAV_ITEMS.filter((item) => item.key !== 'adminUsers' || user?.role === 'admin');
 
   return (
     <nav
@@ -52,7 +57,7 @@ export function SideNav() {
 
       {/* 네비게이션 */}
       <ul className={`flex-1 space-y-1 overflow-y-auto py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
-        {NAV_ITEMS.map(({ to, key, icon: Icon }) => (
+        {items.map(({ to, key, icon: Icon }) => (
           <li key={to}>
             <NavLink
               to={to}
@@ -95,7 +100,12 @@ export function SideNav() {
             <ChevronRightIcon />
           </button>
         ) : (
-          <span className="font-pretendard text-[10px] text-[var(--muted-foreground)]">v1.0.0</span>
+          <div className="space-y-2">
+            <div className="truncate font-pretendard text-[10px] text-[var(--muted-foreground)]">{user?.email}</div>
+            <button type="button" onClick={() => void logout()} className="min-h-9 rounded-lg border border-[var(--border)] px-3 text-xs font-semibold">
+              로그아웃
+            </button>
+          </div>
         )}
       </div>
     </nav>
@@ -152,6 +162,9 @@ function CheckIcon() {
 }
 function StatsIcon() {
   return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M5 20v-7M12 20V8M19 20V4" /></NavIcon>;
+}
+function AdminIcon() {
+  return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M12 3.5 19 6v5.2c0 4.2-2.7 7.9-7 9.3-4.3-1.4-7-5.1-7-9.3V6l7-2.5Zm-2.8 9.1 1.9 1.9 3.7-4.1" /></NavIcon>;
 }
 function SettingsIcon() {
   return <NavIcon><path strokeLinecap="round" strokeLinejoin="round" d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Zm0-5.2v2M12 18.5v2M4.6 5.6l1.4 1.4M18 17l1.4 1.4M2.5 12h2M19.5 12h2M4.6 18.4 6 17M18 7l1.4-1.4" /></NavIcon>;

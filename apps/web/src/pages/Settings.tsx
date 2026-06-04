@@ -3,11 +3,13 @@
  * Figma Make 디자인 적용
  */
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
+import { useAuthStore } from '../stores/auth-store';
 import { audioPlayer } from '../lib/audio';
 import type { JapaneseVoiceOption, PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
+import type { ReactNode } from 'react';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
   getNotificationPermission,
@@ -28,6 +30,9 @@ function applyThemeClass(theme: Theme) {
 
 export default function Settings() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const authUser = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const {
     theme, setTheme,
     furiganaMode, setFurigana,
@@ -267,6 +272,30 @@ export default function Settings() {
           </SettingRow>
         )}
       </SettingSection>
+
+      <SettingSection title="계정" subtitle="">
+        <SettingRow label={authUser?.email ?? '로그인 계정'} sublabel={authUser?.role === 'admin' ? '관리자 계정' : '일반 사용자'}>
+          <div className="flex flex-wrap gap-2">
+            {authUser?.role === 'admin' && (
+              <Link
+                to="/admin/users"
+                className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--border)] px-4 text-sm font-medium"
+              >
+                회원 관리
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                void logout().then(() => navigate('/welcome', { replace: true }));
+              }}
+              className="min-h-11 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 text-sm font-medium text-white"
+            >
+              로그아웃
+            </button>
+          </div>
+        </SettingRow>
+      </SettingSection>
     </div>
   );
 }
@@ -276,7 +305,7 @@ export default function Settings() {
 function SettingSection({
   title, subtitle, children, danger = false
 }: {
-  title: string; subtitle?: string; children: React.ReactNode; danger?: boolean;
+  title: string; subtitle?: string; children: ReactNode; danger?: boolean;
 }) {
   return (
     <section className="mb-8">
@@ -291,7 +320,7 @@ function SettingSection({
   );
 }
 
-function SettingRow({ label, sublabel, children }: { label: string; sublabel: string; children: React.ReactNode }) {
+function SettingRow({ label, sublabel, children }: { label: string; sublabel: string; children: ReactNode }) {
   return (
     <div className="flex flex-col items-stretch justify-between gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4">
       <div>

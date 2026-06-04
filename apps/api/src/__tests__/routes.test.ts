@@ -25,6 +25,8 @@ import rawSelfCheckMigration from '../../../../packages/db/drizzle/0001_self_che
 import rawPhase8Migration from '../../../../packages/db/src/migrate/phase8-audio-reading.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawPracticeContentMigration from '../../../../packages/db/drizzle/0002_jlpt_n3_practice_content.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawAuthMigration from '../../../../packages/db/drizzle/0003_app_auth.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -33,7 +35,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}\n${rawPhase8Migration}\n${rawPracticeContentMigration}`
+  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}\n${rawPhase8Migration}\n${rawPracticeContentMigration}\n${rawAuthMigration}`
     .split('\n')
     .filter(line => {
       const t = line.trim();
@@ -119,6 +121,46 @@ describe('GET /api/v1/ping', () => {
   it('200 + { data: { message: "pong" } }', async () => {
     const body = await json<{ data: { message: string } }>('/api/v1/ping');
     expect(body.data.message).toBe('pong');
+  });
+});
+
+describe('App auth', () => {
+  it('registers, reads session user, and logs out with an HttpOnly cookie', async () => {
+    const email = `user-${Date.now()}@example.com`;
+    const register = await fetch('/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: 'Passw0rd1234', display_name: '테스트 사용자' }),
+    });
+    expect(register.status).toBe(201);
+    const cookie = register.headers.get('set-cookie') ?? '';
+    expect(cookie).toContain('n3_session=');
+    expect(cookie).toContain('HttpOnly');
+
+    const me = await fetch('/api/v1/auth/me', { headers: { Cookie: cookie } });
+    expect(me.status).toBe(200);
+    const meBody = await me.json<{ data: { authenticated: boolean; user: { email: string } } }>();
+    expect(meBody.data.authenticated).toBe(true);
+    expect(meBody.data.user.email).toBe(email);
+
+    const logout = await fetch('/api/v1/auth/logout', { method: 'POST', headers: { Cookie: cookie } });
+    expect(logout.status).toBe(200);
+  });
+
+  it('rejects weak passwords and invalid login attempts', async () => {
+    const weak = await fetch('/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'weak@example.com', password: 'short' }),
+    });
+    expect(weak.status).toBe(400);
+
+    const login = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'missing@example.com', password: 'Passw0rd1234' }),
+    });
+    expect(login.status).toBe(401);
   });
 });
 

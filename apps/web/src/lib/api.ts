@@ -319,6 +319,66 @@ export const aiApi = {
     api.post<NaturalTranslation>('/ai/translate', { text, target: 'ja', tone }),
 };
 
+export type AuthRole = 'user' | 'admin';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  display_name: string;
+  role: AuthRole;
+  auth_provider?: string;
+}
+
+export interface AuthConfig {
+  google_enabled: boolean;
+  auth_mode: string;
+}
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  display_name: string;
+  role: AuthRole;
+  auth_provider: string;
+  created_at: number;
+  last_login_at?: number | null;
+  active_sessions: number;
+}
+
+export interface LoginEventRow {
+  id: number;
+  user_id?: string | null;
+  email?: string | null;
+  provider: string;
+  event_type: string;
+  ip?: string | null;
+  user_agent?: string | null;
+  created_at: number;
+}
+
+export interface AdminUsersOverview {
+  stats: {
+    total_users: number;
+    admin_users: number;
+    active_sessions: number;
+    login_events_24h: number;
+  };
+  users: AdminUserRow[];
+  events: LoginEventRow[];
+}
+
+export const authApi = {
+  config: () => api.get<AuthConfig>('/auth/config'),
+  me: () => api.get<{ authenticated: boolean; user: AuthUser | null }>('/auth/me'),
+  register: (email: string, password: string, display_name: string) =>
+    api.post<{ user: AuthUser }>('/auth/register', { email, password, display_name }),
+  login: (email: string, password: string) =>
+    api.post<{ user: AuthUser }>('/auth/login', { email, password }),
+  logout: () => api.post<{ ok: boolean }>('/auth/logout'),
+  googleStartUrl: () => `${BASE}/api/v1/auth/google/start`,
+  adminUsers: () => api.get<AdminUsersOverview>('/auth/admin/users'),
+};
+
 export const __apiTestUtils = {
   normalizeVocab,
   normalizeGrammar,

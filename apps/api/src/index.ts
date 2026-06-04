@@ -15,6 +15,7 @@
  *   /api/v1/sysprog     (공개, 엣지 캐시)
  *   /api/v1/homophones  (공개, 엣지 캐시)
  *   /api/v1/audio       (공개, 엣지 캐시 30일)
+ *   /api/v1/auth        (앱 로그인/회원가입/SSO)
  *   /api/v1/srs         (인증 필요)
  *   /api/v1/logs        (인증 필요)
  *   /api/v1/quiz        (인증 필요)
@@ -53,6 +54,7 @@ import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
 import { aiOA } from './routes/ai-oa.js';
+import { auth } from './routes/auth.js';
 import { securityMiddleware } from './middleware/security.js';
 import { syncRateLimit, authRateLimit, publicRateLimit } from './middleware/rate-limit.js';
 import { sendPushToMany } from './lib/push.js';
@@ -126,6 +128,7 @@ app.get('/health', (c) =>
 const v1 = new OpenAPIHono<AppEnv>();
 
 v1.get('/ping', (c) => c.json({ data: { message: 'pong', version: '1.0.0' } }));
+v1.route('/', auth);
 
 // ── 공개 콘텐츠 라우트 (엣지 캐시 적용) ──────
 v1.use('/sources*', contentCacheMiddleware);

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 const ROUTES = [
   '/',
@@ -143,6 +144,7 @@ test.describe('iPhone 터치/겹침 감사', () => {
     test(`${viewport.name}: 전체 주요 라우트 터치 타깃과 overflow`, async ({ page }) => {
       test.setTimeout(90_000);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
