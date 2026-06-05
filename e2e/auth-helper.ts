@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 export async function ensureAuthenticated(page: Page): Promise<void> {
-  const apiBase = process.env.E2E_API_URL?.replace(/\/$/, '') ?? '';
+  const apiBase = process.env.E2E_AUTH_URL?.replace(/\/$/, '') ?? '';
   const path = (value: string) => `${apiBase}${value}`;
   const me = await page.request.get(path('/api/v1/auth/me'));
   if (me.ok()) {

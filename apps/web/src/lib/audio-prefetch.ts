@@ -13,11 +13,12 @@
  *   3. 진행 상황 콜백 제공
  */
 
+import { apiUrl } from './api-base';
+
 const CACHE_NAME = 'nihongo-audio-v1';
-const BASE       = import.meta.env.VITE_API_URL ?? '';
 
 function buildAudioUrl(key: string): string {
-  return `${BASE}/api/v1/audio/${key.split('/').map(encodeURIComponent).join('/')}`;
+  return apiUrl(`/audio/${key.split('/').map(encodeURIComponent).join('/')}`);
 }
 
 export interface PrefetchProgress {
@@ -86,7 +87,7 @@ export async function prefetchDueAudio(
   let keys: string[] = [];
 
   try {
-    const res = await fetch(`${BASE}/api/v1/srs/due-keys`, {
+    const res = await fetch(apiUrl('/srs/due-keys'), {
       credentials: 'include',
     });
     if (res.ok) {

@@ -54,8 +54,10 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-dist
-          path: apps/web/dist
+          name: web-pages
+          path: |
+            apps/web/dist
+            apps/web/functions
           retention-days: 1
 
   # ── PR Preview 배포 ────────────────────────────────────────────────────
@@ -77,8 +79,8 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: web-dist
-          path: apps/web/dist
+          name: web-pages
+          path: .
 
       - name: Deploy Preview to Cloudflare Pages
         id: preview
@@ -86,8 +88,9 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
           command: |
-            pages deploy apps/web/dist \
+            pages deploy dist \
               --project-name=nihongo-n3 \
               --branch=${{ github.head_ref }} \
               --commit-dirty=true
@@ -127,18 +130,19 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: web-dist
-          path: apps/web/dist
+          name: web-pages
+          path: .
 
       - name: Deploy to Cloudflare Pages (Production)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
           # pages deploy <출력디렉터리> --project-name=<Pages 프로젝트명>
           # Pages 프로젝트가 없으면 CF Dashboard에서 먼저 생성하거나
           # `wrangler pages project create nihongo-n3` 실행 후 배포하세요.
-          command: pages deploy apps/web/dist --project-name=nihongo-n3 --commit-dirty=true
+          command: pages deploy dist --project-name=nihongo-n3 --commit-dirty=true
 
   smoke-test:
     name: Smoke Test — Web

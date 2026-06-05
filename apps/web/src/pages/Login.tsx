@@ -11,18 +11,20 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const rawNextPath = params.get('next') || '/';
+  const nextPath = rawNextPath.startsWith('/') && !rawNextPath.startsWith('//') ? rawNextPath : '/';
 
   useEffect(() => {
     void loadConfig();
   }, [loadConfig]);
 
-  if (status === 'authenticated' && user) return <Navigate to="/" replace />;
+  if (status === 'authenticated' && user) return <Navigate to={nextPath} replace />;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
     try {
-      if (await login(email, password)) navigate('/', { replace: true });
+      if (await login(email, password)) navigate(nextPath, { replace: true });
     } finally {
       setSubmitting(false);
     }

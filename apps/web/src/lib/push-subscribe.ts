@@ -7,12 +7,9 @@
  *   - 서버 /api/v1/notifications/subscribe 로 구독 정보 전송
  */
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-const BASE = import.meta.env.VITE_API_URL ?? '';
+import { apiUrl } from './api-base';
 
-function apiUrl(path: string): string {
-  return `${BASE}/api/v1${path}`;
-}
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 /** base64url → Uint8Array */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

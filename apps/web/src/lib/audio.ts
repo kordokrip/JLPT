@@ -7,13 +7,11 @@
  * - R2 Range 요청 활용 (브라우저 자동 처리)
  */
 
-const BASE =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.PROD ? 'https://nihongo-n3-api.kordokrip.workers.dev' : '');
+import { apiUrl } from './api-base';
 
 export function buildAudioUrl(path: string): string {
   const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-  return `${BASE}/api/v1/audio/${encodedPath}`;
+  return apiUrl(`/audio/${encodedPath}`);
 }
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;

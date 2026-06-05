@@ -1,8 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ensureAuthenticated } from './auth-helper';
 
-const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:8787';
-
 const QUIZ_MODES = [
   { mode: 'vocab_mc', title: /어휘 선택|Vocab Choice|語彙選択/, pageTitle: /어휘 선택|Vocab Choice|語彙選択/ },
   { mode: 'kanji_reading', title: /한자 읽기|Kanji Reading|漢字読み/, pageTitle: /한자 읽기|Kanji Reading|漢字読み/ },
@@ -31,7 +29,7 @@ test.describe('퀴즈 기능 smoke', () => {
 
   test('API가 모든 퀴즈 모드를 실제 데이터로 생성한다', async ({ page }) => {
     for (const { mode } of QUIZ_MODES) {
-      const response = await page.request.post(`${API_BASE}/api/v1/quiz/generate`, {
+      const response = await page.request.post('/api/v1/quiz/generate', {
         data: { mode, level: 'N3', count: 3 },
       });
       expect(response.ok(), `${mode} generate status`).toBe(true);

@@ -7,9 +7,7 @@
  * - 응답 타입: ApiResponse<T> | ApiError
  */
 
-const BASE =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.PROD ? 'https://nihongo-n3-api.kordokrip.workers.dev' : '');
+import { apiBase, apiUrl } from './api-base';
 
 // ─────────────────────────────────────────────
 // 공통 응답 타입
@@ -35,7 +33,7 @@ async function request<T>(
   path: string,
   init?: RequestInit,
 ): Promise<ApiResult<T>> {
-  const url = `${BASE}/api/v1${path}`;
+  const url = apiUrl(path);
   let res: Response;
   const headers = new Headers(init?.headers);
   if (!headers.has('Accept')) headers.set('Accept', 'application/json');
@@ -375,7 +373,7 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ user: AuthUser }>('/auth/login', { email, password }),
   logout: () => api.post<{ ok: boolean }>('/auth/logout'),
-  googleStartUrl: () => `${BASE}/api/v1/auth/google/start`,
+  googleStartUrl: () => apiUrl('/auth/google/start'),
   adminUsers: () => api.get<AdminUsersOverview>('/auth/admin/users'),
 };
 
@@ -403,6 +401,6 @@ import createClient from 'openapi-fetch';
 import type { paths } from '../types/api.js';
 
 export const typedApi = createClient<paths>({
-  baseUrl: import.meta.env.VITE_API_URL ?? '',
+  baseUrl: apiBase(),
   credentials: 'include',
 });

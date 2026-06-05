@@ -15,7 +15,7 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   status: 'checking',
   user: null,
   config: null,
@@ -25,8 +25,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     const res = await authApi.me();
     if (res.ok && res.data.authenticated && res.data.user) {
       set({ status: 'authenticated', user: res.data.user, error: null });
-    } else {
+    } else if (res.ok) {
       set({ status: 'anonymous', user: null });
+    } else if (get().status !== 'authenticated') {
+      set({ status: 'anonymous', user: null, error: res.message });
     }
   },
 
