@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 ENVIRONMENT = "production"
 AUTH_MODE = "app-session"
 APP_ORIGIN = "https://nihongo-n3.pages.dev"
-GOOGLE_REDIRECT_URI = "https://nihongo-n3.pages.dev/api/v1/auth/google/callback"
+GOOGLE_REDIRECT_URI = "https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback"
 # CF_ACCESS_AUD / CF_TEAM_DOMAIN are production secrets.
 # Set them with:
 #   wrangler secret put CF_ACCESS_AUD

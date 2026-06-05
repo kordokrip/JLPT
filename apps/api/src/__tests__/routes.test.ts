@@ -178,7 +178,7 @@ describe('App auth', () => {
     expect(cleared).toContain('Secure');
   });
 
-  it('starts Google OAuth with the same-origin Pages callback in production', async () => {
+  it('starts Google OAuth with the configured Worker callback in production', async () => {
     const productionEnv = {
       ...env,
       ENVIRONMENT: 'production',
@@ -186,7 +186,7 @@ describe('App auth', () => {
       APP_ORIGIN: 'https://nihongo-n3.pages.dev',
       GOOGLE_CLIENT_ID: 'google-client-id',
       GOOGLE_CLIENT_SECRET: 'google-client-secret',
-      GOOGLE_REDIRECT_URI: 'https://nihongo-n3.pages.dev/api/v1/auth/google/callback',
+      GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
     };
     const res = await app.fetch(
       new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start', {
@@ -201,7 +201,7 @@ describe('App auth', () => {
     expect(cookie).toContain('SameSite=Lax');
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('https://accounts.google.com/o/oauth2/v2/auth');
-    expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3.pages.dev/api/v1/auth/google/callback');
+    expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback');
   });
 
   it('rejects weak passwords and invalid login attempts', async () => {

@@ -13,6 +13,7 @@ import {
   recordLoginEvent,
   revokeCurrentSession,
   setOauthStateCookie,
+  sha256Hex,
   verifyPassword,
 } from '../lib/auth-session.js';
 
@@ -72,6 +73,97 @@ async function findUserByEmail(c: Context<AppEnv>, email: string): Promise<UserR
   )
     .bind(email)
     .first<UserRow>();
+}
+
+async function ensureOAuthBridgeTable(c: Context<AppEnv>): Promise<void> {
+  await c.env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS oauth_login_tokens (
+       token_hash TEXT PRIMARY KEY,
+       user_id TEXT NOT NULL,
+       expires_at INTEGER NOT NULL,
+       created_at INTEGER NOT NULL,
+       consumed_at INTEGER
+     )`,
+  ).run();
+}
+
+async function ensureOAuthStateTable(c: Context<AppEnv>): Promise<void> {
+  await c.env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS oauth_states (
+       state_hash TEXT PRIMARY KEY,
+       expires_at INTEGER NOT NULL,
+       created_at INTEGER NOT NULL,
+       consumed_at INTEGER
+     )`,
+  ).run();
+}
+
+async function saveOAuthState(c: Context<AppEnv>, state: string): Promise<void> {
+  await ensureOAuthStateTable(c);
+  const stateHash = await sha256Hex(state);
+  const now = Math.floor(Date.now() / 1000);
+  await c.env.DB.prepare(
+    `INSERT INTO oauth_states (state_hash, expires_at, created_at)
+     VALUES (?, ?, ?)`,
+  )
+    .bind(stateHash, now + 600, now)
+    .run();
+}
+
+async function consumeOAuthState(c: Context<AppEnv>, state: string): Promise<boolean> {
+  await ensureOAuthStateTable(c);
+  const stateHash = await sha256Hex(state);
+  const now = Math.floor(Date.now() / 1000);
+  const row = await c.env.DB.prepare(
+    `SELECT state_hash
+       FROM oauth_states
+      WHERE state_hash = ?
+        AND consumed_at IS NULL
+        AND expires_at > ?
+      LIMIT 1`,
+  )
+    .bind(stateHash, now)
+    .first<{ state_hash: string }>();
+  if (!row) return false;
+  await c.env.DB.prepare('UPDATE oauth_states SET consumed_at = ? WHERE state_hash = ?')
+    .bind(now, stateHash)
+    .run();
+  return true;
+}
+
+async function createOAuthBridgeToken(c: Context<AppEnv>, userId: string): Promise<string> {
+  await ensureOAuthBridgeTable(c);
+  const token = randomToken(32);
+  const tokenHash = await sha256Hex(token);
+  const now = Math.floor(Date.now() / 1000);
+  await c.env.DB.prepare(
+    `INSERT INTO oauth_login_tokens (token_hash, user_id, expires_at, created_at)
+     VALUES (?, ?, ?, ?)`,
+  )
+    .bind(tokenHash, userId, now + 300, now)
+    .run();
+  return token;
+}
+
+async function consumeOAuthBridgeToken(c: Context<AppEnv>, token: string): Promise<string | null> {
+  await ensureOAuthBridgeTable(c);
+  const tokenHash = await sha256Hex(token);
+  const now = Math.floor(Date.now() / 1000);
+  const row = await c.env.DB.prepare(
+    `SELECT user_id
+       FROM oauth_login_tokens
+      WHERE token_hash = ?
+        AND consumed_at IS NULL
+        AND expires_at > ?
+      LIMIT 1`,
+  )
+    .bind(tokenHash, now)
+    .first<{ user_id: string }>();
+  if (!row) return null;
+  await c.env.DB.prepare('UPDATE oauth_login_tokens SET consumed_at = ? WHERE token_hash = ?')
+    .bind(now, tokenHash)
+    .run();
+  return row.user_id;
 }
 
 async function upsertGoogleUser(
@@ -230,6 +322,7 @@ auth.get('/auth/google/start', async (c) => {
   }
   const state = randomToken(24);
   setOauthStateCookie(c, state);
+  await saveOAuthState(c, state);
   await recordLoginEvent(c, { provider: 'google', eventType: 'google_start' });
   const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -248,20 +341,40 @@ auth.get('/auth/google/callback', async (c) => {
   const expected = readOauthStateCookie(c);
   clearOauthStateCookie(c);
   const origin = appOrigin(c);
-  if (!code || !state || !expected || state !== expected) {
+  if (!code || !state) {
+    return c.redirect(`${origin}/login?error=google_state`, 302);
+  }
+  const storedStateOk = state ? await consumeOAuthState(c, state) : false;
+  const cookieStateOk = Boolean(state && expected && state === expected);
+  if (!cookieStateOk && !storedStateOk) {
     return c.redirect(`${origin}/login?error=google_state`, 302);
   }
   try {
     const token = await tokenExchange(c, code);
     const profile = await fetchGoogleProfile(token.access_token);
     const user = await upsertGoogleUser(c, profile);
-    await createSession(c, user.id);
     await recordLoginEvent(c, { userId: user.id, email: user.email, provider: 'google', eventType: 'google_callback' });
+    const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
+    if (new URL(redirectUri).origin !== new URL(origin).origin) {
+      const bridgeToken = await createOAuthBridgeToken(c, user.id);
+      return c.redirect(`${origin}/api/v1/auth/complete?token=${encodeURIComponent(bridgeToken)}`, 302);
+    }
+    await createSession(c, user.id);
     return c.redirect(origin, 302);
   } catch (err) {
     console.error('[auth/google]', err);
     return c.redirect(`${origin}/login?error=google_callback`, 302);
   }
+});
+
+auth.get('/auth/complete', async (c) => {
+  const origin = appOrigin(c);
+  const token = text(c.req.query('token'));
+  if (!token) return c.redirect(`${origin}/login?error=google_callback`, 302);
+  const userId = await consumeOAuthBridgeToken(c, token);
+  if (!userId) return c.redirect(`${origin}/login?error=google_callback`, 302);
+  await createSession(c, userId);
+  return c.redirect(origin, 302);
 });
 
 auth.post('/auth/bootstrap-admin', async (c) => {
