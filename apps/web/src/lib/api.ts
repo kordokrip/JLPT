@@ -65,8 +65,9 @@ async function request<T>(
 
   if (!res.ok) {
     const redirectTo = res.headers.get('Location');
-    if (res.status === 401 && redirectTo && !path.startsWith('/auth/')) {
-      window.location.href = redirectTo;
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      const next = window.location.pathname + window.location.search;
+      window.location.href = redirectTo ?? `/login?next=${encodeURIComponent(next)}`;
     }
     const msg =
       (body as { detail?: string; message?: string; error?: string })?.detail ??

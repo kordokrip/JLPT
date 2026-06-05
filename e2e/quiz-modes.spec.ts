@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 const API_BASE = process.env.E2E_API_URL ?? 'http://localhost:8787';
 
@@ -24,9 +25,13 @@ async function expectNoConsoleErrors(page: Page, run: () => Promise<void>) {
 }
 
 test.describe('퀴즈 기능 smoke', () => {
-  test('API가 모든 퀴즈 모드를 실제 데이터로 생성한다', async ({ request }) => {
+  test.beforeEach(async ({ page }) => {
+    await ensureAuthenticated(page);
+  });
+
+  test('API가 모든 퀴즈 모드를 실제 데이터로 생성한다', async ({ page }) => {
     for (const { mode } of QUIZ_MODES) {
-      const response = await request.post(`${API_BASE}/api/v1/quiz/generate`, {
+      const response = await page.request.post(`${API_BASE}/api/v1/quiz/generate`, {
         data: { mode, level: 'N3', count: 3 },
       });
       expect(response.ok(), `${mode} generate status`).toBe(true);
