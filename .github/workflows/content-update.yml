@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout repository (with history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2    # HEAD~1 비교를 위해 최소 2개 커밋 필요
 
@@ -95,7 +95,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install wrangler
         run: npm install -g wrangler@latest
