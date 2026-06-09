@@ -206,7 +206,7 @@ class AudioPlayer {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = options.lang ?? 'ja-JP';
-    utterance.rate = Math.min(1.2, Math.max(0.58, options.rate ?? this._rate * 0.95));
+    utterance.rate = Math.min(1.2, Math.max(0.45, options.rate ?? this._rate * 0.95));
     const selectedGender = options.voiceGender ?? this._voiceGender;
     utterance.pitch = options.pitch ?? (selectedGender === 'male' ? 0.94 : 1.02);
     utterance.volume = 1;
@@ -246,7 +246,7 @@ class AudioPlayer {
     if ((forceBrowser || prefer === 'browser') && normalized) {
       const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
       await this.speakText(spokenText, {
-        ...(slow ? { rate: 0.58 } : {}),
+        ...(slow ? { rate: 0.5 } : {}),
         preferGoogleVoice,
       });
       return;

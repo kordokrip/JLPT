@@ -109,7 +109,7 @@ function makeKanjiCard(item: KanjiItem): StudyCard {
 }
 
 export function getCardAudioText(card: StudyCard): string {
-  if (card.mode !== 'kanji') return elongateKanaForSpeech(card.char);
+  if (card.mode !== 'kanji') return elongateKanaForSpeech(card.char, card.reading);
   const firstReading = card.reading
     .split(/[\/,、，・\s]+/)
     .map((value) => value.trim())
@@ -117,10 +117,32 @@ export function getCardAudioText(card: StudyCard): string {
   return firstReading ?? card.char;
 }
 
-export function elongateKanaForSpeech(char: string): string {
+export function elongateKanaForSpeech(char: string, reading = ''): string {
   const value = char.trim();
-  if (/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return `${value}ー`;
-  return value;
+  if (!/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return value;
+
+  const vowel = getRomajiVowel(reading);
+  if (!vowel) return value === 'ん' || value === 'ン' ? value : `${value}${isKatakana(value) ? 'ー' : ''}`;
+  const vowelKana = toLongVowelKana(vowel, isKatakana(value));
+  if (!vowelKana) return value;
+  return `${value}${vowelKana}`;
+}
+
+function getRomajiVowel(reading: string): 'a' | 'i' | 'u' | 'e' | 'o' | null {
+  const normalized = reading.trim().toLowerCase();
+  if (!normalized || normalized === 'n') return null;
+  const last = normalized.match(/[aiueo](?!.*[aiueo])/u)?.[0];
+  return last === 'a' || last === 'i' || last === 'u' || last === 'e' || last === 'o' ? last : null;
+}
+
+function toLongVowelKana(vowel: 'a' | 'i' | 'u' | 'e' | 'o', katakana: boolean): string {
+  const hiragana: Record<typeof vowel, string> = { a: 'あ', i: 'い', u: 'う', e: 'え', o: 'お' };
+  const katakanaMap: Record<typeof vowel, string> = { a: 'ア', i: 'イ', u: 'ウ', e: 'エ', o: 'オ' };
+  return katakana ? katakanaMap[vowel] : hiragana[vowel];
+}
+
+function isKatakana(value: string): boolean {
+  return /^[\u30a0-\u30ff]$/u.test(value);
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
