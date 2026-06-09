@@ -78,6 +78,7 @@ export default defineConfig({
         share_target: {
           action: '/add-word',
           method: 'GET',
+          enctype: 'application/x-www-form-urlencoded',
           params: { text: 'text', title: 'title', url: 'url' },
         },
       },
