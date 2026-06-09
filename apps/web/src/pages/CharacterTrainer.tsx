@@ -109,12 +109,18 @@ function makeKanjiCard(item: KanjiItem): StudyCard {
 }
 
 export function getCardAudioText(card: StudyCard): string {
-  if (card.mode !== 'kanji') return card.char;
+  if (card.mode !== 'kanji') return elongateKanaForSpeech(card.char);
   const firstReading = card.reading
     .split(/[\/,、，・\s]+/)
     .map((value) => value.trim())
     .find((value) => value.length > 0 && value !== '-');
   return firstReading ?? card.char;
+}
+
+export function elongateKanaForSpeech(char: string): string {
+  const value = char.trim();
+  if (/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return `${value}ー`;
+  return value;
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
@@ -244,7 +250,7 @@ export default function CharacterTrainer() {
                   className="bg-[var(--card)]"
                   forceBrowser
                   slow
-                  repeat={card.mode === 'kanji' ? 1 : 2}
+                  repeat={1}
                 />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -452,7 +458,7 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
           label={`${card.char} 발음 듣기`}
           forceBrowser
           slow
-          repeat={card.mode === 'kanji' ? 1 : 2}
+          repeat={1}
         />
       </div>
     </div>

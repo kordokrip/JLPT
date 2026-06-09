@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChoices, getCardAudioText, type StudyCard } from '../CharacterTrainer';
+import { buildChoices, elongateKanaForSpeech, getCardAudioText, type StudyCard } from '../CharacterTrainer';
 
 describe('CharacterTrainer', () => {
   it('buildChoices keeps the target choice and removes duplicates', () => {
@@ -39,7 +39,13 @@ describe('CharacterTrainer', () => {
       level: 'N5',
     } satisfies StudyCard;
 
-    expect(getCardAudioText(kana)).toBe('あ');
+    expect(getCardAudioText(kana)).toBe('あー');
     expect(getCardAudioText(kanji)).toBe('ニチ');
+  });
+
+  it('elongateKanaForSpeech turns a single kana into a slow pronunciation prompt', () => {
+    expect(elongateKanaForSpeech('あ')).toBe('あー');
+    expect(elongateKanaForSpeech('ア')).toBe('アー');
+    expect(elongateKanaForSpeech('日')).toBe('日');
   });
 });

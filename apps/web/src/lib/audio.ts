@@ -246,7 +246,7 @@ class AudioPlayer {
     if ((forceBrowser || prefer === 'browser') && normalized) {
       const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
       await this.speakText(spokenText, {
-        ...(slow ? { rate: 0.68 } : {}),
+        ...(slow ? { rate: 0.58 } : {}),
         preferGoogleVoice,
       });
       return;
