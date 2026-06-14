@@ -27,6 +27,12 @@ test.describe('로그인 온보딩', () => {
     }
   });
 
+  test('Google SSO 시작 경로는 앱 404가 아니라 OAuth로 리다이렉트한다', async ({ request }) => {
+    const res = await request.get('/api/v1/auth/google/start', { maxRedirects: 0 });
+    expect(res.status()).toBe(302);
+    expect(res.headers().location).toContain('https://accounts.google.com/');
+  });
+
   test('회원가입 후 로그아웃하고 같은 계정으로 다시 로그인할 수 있다', async ({ page }) => {
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const email = `login-${unique}@example.com`;
