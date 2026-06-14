@@ -36,7 +36,9 @@ cleanupOutdatedCaches();
 // ── Precache + Navigate Fallback ─────────────────────────────────────
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('/index.html')),
+  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+    denylist: [/^\/api\//],
+  }),
 );
 
 // ── Runtime Caching ──────────────────────────────────────────────────

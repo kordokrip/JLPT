@@ -170,3 +170,16 @@ jobs:
             "${{ vars.WEB_BASE_URL }}/manifest.webmanifest")
           echo "Status: $STATUS"
           [ "$STATUS" = "200" ] || (echo "❌ manifest 응답 실패: $STATUS" && exit 1)
+
+      # Pages Functions API proxy 확인
+      - name: GET /api/v1/auth/google/start → 302
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -D /tmp/google-start.headers \
+            --max-redirs 0 \
+            "${{ vars.WEB_BASE_URL }}/api/v1/auth/google/start")
+          echo "Status: $STATUS"
+          cat /tmp/google-start.headers
+          [ "$STATUS" = "302" ] || (echo "❌ Google SSO 시작 응답 실패: $STATUS" && exit 1)
+          grep -qi "location: https://accounts.google.com/" /tmp/google-start.headers || \
+            (echo "❌ Google OAuth location header 누락" && exit 1)
