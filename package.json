@@ -19,7 +19,9 @@
     "dev:api": "pnpm -F @nihongo-n3/api dev",
     "dev:web": "pnpm -F @nihongo-n3/web dev",
     "db:seed": "pnpm -F @nihongo-n3/db seed:local",
-    "db:verify": "pnpm -F @nihongo-n3/db verify"
+    "db:verify": "pnpm -F @nihongo-n3/db verify",
+    "audio:kana": "node scripts/generate-kana-audio.mjs",
+    "audio:kana:upload": "node scripts/generate-kana-audio.mjs --upload"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

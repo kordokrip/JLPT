@@ -51,6 +51,7 @@ const HIRAGANA: KanaCard[] = [
   meaning: '히라가나',
   strokeCount: Number(strokeCount),
   hint: '둥근 흐름을 유지하며 크게 쓰고, 마지막 획에서 소리와 모양을 함께 말하세요.',
+  audioPath: kanaAudioPath('hiragana', String(reading)),
 }));
 
 const KATAKANA: KanaCard[] = [
@@ -72,6 +73,7 @@ const KATAKANA: KanaCard[] = [
   meaning: '가타카나',
   strokeCount: Number(strokeCount),
   hint: '직선과 각을 분명히 쓰고, シ/ツ·ソ/ン처럼 방향이 헷갈리는 글자는 첫 획 방향을 말하세요.',
+  audioPath: kanaAudioPath('katakana', String(reading)),
 }));
 
 const STAGES: Stage[] = ['observe', 'recall', 'write', 'quiz'];
@@ -117,6 +119,15 @@ export function getCardAudioText(card: StudyCard): string {
   return firstReading ?? card.char;
 }
 
+export function getCardAudioPath(card: StudyCard): string | undefined {
+  if (card.mode === 'hiragana' || card.mode === 'katakana') return card.audioPath;
+  return card.audioPath;
+}
+
+export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): string {
+  return `audio/kana/${mode}/${reading}.m4a`;
+}
+
 export function elongateKanaForSpeech(char: string, reading = ''): string {
   const value = char.trim();
   if (!/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return value;
@@ -125,7 +136,7 @@ export function elongateKanaForSpeech(char: string, reading = ''): string {
   if (!vowel) return value === 'ん' || value === 'ン' ? value : `${value}${isKatakana(value) ? 'ー' : ''}`;
   const vowelKana = toLongVowelKana(vowel, isKatakana(value));
   if (!vowelKana) return value;
-  return `${value}${vowelKana}`;
+  return `${value}${vowelKana.repeat(3)}`;
 }
 
 function getRomajiVowel(reading: string): 'a' | 'i' | 'u' | 'e' | 'o' | null {
@@ -268,9 +279,10 @@ export default function CharacterTrainer() {
               <div className="mt-3 flex justify-center">
                 <PronunciationButton
                   text={getCardAudioText(card)}
+                  audioPath={getCardAudioPath(card)}
                   label={`${card.char} 발음 듣기`}
                   className="bg-[var(--card)]"
-                  forceBrowser
+                  prefer="server"
                   slow
                   repeat={1}
                 />
@@ -477,8 +489,9 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
         <PronunciationButton
           compact={compact}
           text={getCardAudioText(card)}
+          audioPath={getCardAudioPath(card)}
           label={`${card.char} 발음 듣기`}
-          forceBrowser
+          prefer="server"
           slow
           repeat={1}
         />

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildChoices, elongateKanaForSpeech, getCardAudioText, type StudyCard } from '../CharacterTrainer';
+import {
+  buildChoices,
+  elongateKanaForSpeech,
+  getCardAudioPath,
+  getCardAudioText,
+  kanaAudioPath,
+  type StudyCard,
+} from '../CharacterTrainer';
 
 describe('CharacterTrainer', () => {
   it('buildChoices keeps the target choice and removes duplicates', () => {
@@ -39,16 +46,33 @@ describe('CharacterTrainer', () => {
       level: 'N5',
     } satisfies StudyCard;
 
-    expect(getCardAudioText(kana)).toBe('ああ');
+    expect(getCardAudioText(kana)).toBe('ああああ');
     expect(getCardAudioText(kanji)).toBe('ニチ');
   });
 
   it('elongateKanaForSpeech turns a single kana into a slow pronunciation prompt', () => {
-    expect(elongateKanaForSpeech('あ', 'a')).toBe('ああ');
-    expect(elongateKanaForSpeech('ア', 'a')).toBe('アア');
-    expect(elongateKanaForSpeech('か', 'ka')).toBe('かあ');
-    expect(elongateKanaForSpeech('き', 'ki')).toBe('きい');
+    expect(elongateKanaForSpeech('あ', 'a')).toBe('ああああ');
+    expect(elongateKanaForSpeech('ア', 'a')).toBe('アアアア');
+    expect(elongateKanaForSpeech('か', 'ka')).toBe('かあああ');
+    expect(elongateKanaForSpeech('き', 'ki')).toBe('きいいい');
     expect(elongateKanaForSpeech('ん', 'n')).toBe('ん');
     expect(elongateKanaForSpeech('日', 'nichi')).toBe('日');
+  });
+
+  it('uses stable R2 object keys for kana audio', () => {
+    const kana = {
+      id: 'h-あ',
+      mode: 'hiragana',
+      char: 'あ',
+      reading: 'a',
+      meaning: '히라가나',
+      strokeCount: 3,
+      hint: '',
+      audioPath: kanaAudioPath('hiragana', 'a'),
+    } satisfies StudyCard;
+
+    expect(kanaAudioPath('hiragana', 'a')).toBe('audio/kana/hiragana/a.m4a');
+    expect(kanaAudioPath('katakana', 'shi')).toBe('audio/kana/katakana/shi.m4a');
+    expect(getCardAudioPath(kana)).toBe('audio/kana/hiragana/a.m4a');
   });
 });

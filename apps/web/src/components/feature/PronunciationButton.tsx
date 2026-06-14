@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { audioPlayer } from '../../lib/audio';
 import type { MouseEvent } from 'react';
+import type { AudioSourcePreference } from '../../lib/audio';
 
 interface PronunciationButtonProps {
   text?: string | undefined;
@@ -8,6 +9,7 @@ interface PronunciationButtonProps {
   label?: string;
   className?: string;
   compact?: boolean;
+  prefer?: AudioSourcePreference;
   forceBrowser?: boolean;
   slow?: boolean;
   repeat?: number;
@@ -19,6 +21,7 @@ export function PronunciationButton({
   label,
   className = '',
   compact = false,
+  prefer,
   forceBrowser = false,
   slow = false,
   repeat = 1,
@@ -32,6 +35,7 @@ export function PronunciationButton({
     void audioPlayer.playPronunciation({
       text: playableText,
       audioPath,
+      ...(prefer ? { prefer } : {}),
       forceBrowser,
       slow,
       repeat,
