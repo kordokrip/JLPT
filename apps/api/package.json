@@ -13,18 +13,18 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@hono/zod-openapi": "^0.18.0",
+    "@hono/zod-openapi": "^1.4.0",
     "@nihongo-n3/shared": "workspace:*",
     "@scalar/hono-api-reference": "^0.10.19",
     "drizzle-orm": "^0.31.2",
-    "hono": "^4.4.2",
+    "hono": "^4.12.25",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.16.10",
-    "@cloudflare/workers-types": "^4.20260531.1",
+    "@cloudflare/vitest-pool-workers": "^0.16.15",
+    "@cloudflare/workers-types": "^4.20260613.1",
     "typescript": "^5.4.5",
     "vitest": "^4.1.7",
-    "wrangler": "^4.95.0"
+    "wrangler": "^4.100.0"
   }
 }
