@@ -76,11 +76,11 @@ importers:
         specifier: 2.1.1
         version: 2.1.1
       dexie:
-        specifier: ^4.0.7
-        version: 4.4.2
+        specifier: ^4.4.4
+        version: 4.4.4
       dexie-react-hooks:
         specifier: ^4.4.0
-        version: 4.4.0(dexie@4.4.2)(react@18.3.1)
+        version: 4.4.0(dexie@4.4.4)(react@18.3.1)
       i18next:
         specifier: ^26.3.0
         version: 26.3.0(typescript@5.9.3)
@@ -1970,8 +1970,8 @@ packages:
       dexie: '>=4.2.0-alpha.1 <5.0.0'
       react: '>=16'
 
-  dexie@4.4.2:
-    resolution: {integrity: sha512-zMtV8q79EFE5U8FKZvt0Y/77PCU/Hr/RDxv1EDeo228L+m/HTbeN2AjoQm674rhQCX8n3ljK87lajt7UQuZfvw==}
+  dexie@4.4.4:
+    resolution: {integrity: sha512-jIwsYI8Os2hgnqc6O49YwFDKGc5v5QjGx0wPVp543ip1F53VFAKMLthV2pQosQcVTv3eAskTWYspOx195PM0FQ==}
 
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
@@ -5507,12 +5507,12 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  dexie-react-hooks@4.4.0(dexie@4.4.2)(react@18.3.1):
+  dexie-react-hooks@4.4.0(dexie@4.4.4)(react@18.3.1):
     dependencies:
-      dexie: 4.4.2
+      dexie: 4.4.4
       react: 18.3.1
 
-  dexie@4.4.2: {}
+  dexie@4.4.4: {}
 
   didyoumean@1.2.2: {}
 
