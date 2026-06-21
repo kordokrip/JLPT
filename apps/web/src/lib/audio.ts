@@ -18,6 +18,7 @@ export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
 export type AudioSourcePreference = 'browser' | 'server';
 export type TtsProviderId = 'browser' | 'cloudflare' | 'voicevox' | 'style-bert-vits2';
+export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
   voiceURI: string;
@@ -252,14 +253,14 @@ class AudioPlayer {
       return;
     }
     if (audioPath) {
-      await this.play(audioPath, normalized);
+      await this.play(audioPath, normalized, slow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
       return;
     }
     if (normalized) await this.speakText(normalized);
   }
 
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
-  async play(path: string, fallbackText?: string): Promise<void> {
+  async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<void> {
     this.stop();
 
     let entry = this.cache.get(path);
@@ -286,7 +287,7 @@ class AudioPlayer {
 
     const source = ctx.createBufferSource();
     source.buffer = entry.buffer;
-    source.playbackRate.value = this._rate;
+    source.playbackRate.value = options.rate ?? this._rate;
     source.connect(ctx.destination);
     source.onended = () => {
       this.currentSource = null;

@@ -128,10 +128,10 @@ export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): s
   return `audio/kana/${mode}/${reading}.m4a`;
 }
 
-export function elongateKanaForSpeech(char: string, reading = ''): string {
+export function elongateKanaForSpeech(char: string, _reading = ''): string {
   const value = char.trim();
   if (!/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return value;
-  return `${value}ーーーーーー`;
+  return value;
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {

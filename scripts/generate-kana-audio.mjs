@@ -42,7 +42,7 @@ const bucket = valueArg('--bucket', 'nihongo-n3-audio');
 const outDir = valueArg('--out-dir', '.tmp-kana-audio');
 const upload = args.has('--upload');
 const force = args.has('--force');
-const minBytes = Number(valueArg('--min-bytes', '8000'));
+const minBytes = Number(valueArg('--min-bytes', '4000'));
 
 function run(command, commandArgs, options = {}) {
   const result = spawnSync(command, commandArgs, {
@@ -54,8 +54,8 @@ function run(command, commandArgs, options = {}) {
   }
 }
 
-function elongateKana(char, reading) {
-  return `${char}ーーーーーー`;
+function elongateKana(char, _reading) {
+  return char;
 }
 
 function kanaItems() {
