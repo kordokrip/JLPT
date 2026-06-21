@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -42,6 +42,7 @@ const bucket = valueArg('--bucket', 'nihongo-n3-audio');
 const outDir = valueArg('--out-dir', '.tmp-kana-audio');
 const upload = args.has('--upload');
 const force = args.has('--force');
+const minBytes = Number(valueArg('--min-bytes', '8000'));
 
 function run(command, commandArgs, options = {}) {
   const result = spawnSync(command, commandArgs, {
@@ -54,12 +55,7 @@ function run(command, commandArgs, options = {}) {
 }
 
 function elongateKana(char, reading) {
-  if (reading === 'n') return char.repeat(4);
-  const vowel = [...reading].reverse().find((ch) => 'aiueo'.includes(ch));
-  const hiragana = { a: 'あ', i: 'い', u: 'う', e: 'え', o: 'お' };
-  const katakana = { a: 'ア', i: 'イ', u: 'ウ', e: 'エ', o: 'オ' };
-  const map = /[\u30a0-\u30ff]/u.test(char) ? katakana : hiragana;
-  return `${char}${(map[vowel] ?? '').repeat(3)}`;
+  return `${char}ーーーーーー`;
 }
 
 function kanaItems() {
@@ -90,8 +86,15 @@ function main() {
       run('say', ['-v', voice, '-r', rate, '-o', localPath, elongateKana(item.char, item.reading)]);
     }
 
+    const size = statSync(localPath).size;
+    if (size < minBytes) {
+      throw new Error(`${localPath} is too small (${size} bytes). Refusing to upload likely empty audio.`);
+    }
+
     if (upload) {
-      run('wrangler', [
+      run('pnpm', [
+        'exec',
+        'wrangler',
         'r2', 'object', 'put',
         `${bucket}/${key}`,
         '--file', localPath,

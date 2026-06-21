@@ -46,16 +46,16 @@ describe('CharacterTrainer', () => {
       level: 'N5',
     } satisfies StudyCard;
 
-    expect(getCardAudioText(kana)).toBe('ああああ');
+    expect(getCardAudioText(kana)).toBe('あーーーーーー');
     expect(getCardAudioText(kanji)).toBe('ニチ');
   });
 
   it('elongateKanaForSpeech turns a single kana into a slow pronunciation prompt', () => {
-    expect(elongateKanaForSpeech('あ', 'a')).toBe('ああああ');
-    expect(elongateKanaForSpeech('ア', 'a')).toBe('アアアア');
-    expect(elongateKanaForSpeech('か', 'ka')).toBe('かあああ');
-    expect(elongateKanaForSpeech('き', 'ki')).toBe('きいいい');
-    expect(elongateKanaForSpeech('ん', 'n')).toBe('ん');
+    expect(elongateKanaForSpeech('あ', 'a')).toBe('あーーーーーー');
+    expect(elongateKanaForSpeech('ア', 'a')).toBe('アーーーーーー');
+    expect(elongateKanaForSpeech('か', 'ka')).toBe('かーーーーーー');
+    expect(elongateKanaForSpeech('き', 'ki')).toBe('きーーーーーー');
+    expect(elongateKanaForSpeech('ん', 'n')).toBe('んーーーーーー');
     expect(elongateKanaForSpeech('日', 'nichi')).toBe('日');
   });
 

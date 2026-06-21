@@ -131,29 +131,7 @@ export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): s
 export function elongateKanaForSpeech(char: string, reading = ''): string {
   const value = char.trim();
   if (!/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return value;
-
-  const vowel = getRomajiVowel(reading);
-  if (!vowel) return value === 'ん' || value === 'ン' ? value : `${value}${isKatakana(value) ? 'ー' : ''}`;
-  const vowelKana = toLongVowelKana(vowel, isKatakana(value));
-  if (!vowelKana) return value;
-  return `${value}${vowelKana.repeat(3)}`;
-}
-
-function getRomajiVowel(reading: string): 'a' | 'i' | 'u' | 'e' | 'o' | null {
-  const normalized = reading.trim().toLowerCase();
-  if (!normalized || normalized === 'n') return null;
-  const last = normalized.match(/[aiueo](?!.*[aiueo])/u)?.[0];
-  return last === 'a' || last === 'i' || last === 'u' || last === 'e' || last === 'o' ? last : null;
-}
-
-function toLongVowelKana(vowel: 'a' | 'i' | 'u' | 'e' | 'o', katakana: boolean): string {
-  const hiragana: Record<typeof vowel, string> = { a: 'あ', i: 'い', u: 'う', e: 'え', o: 'お' };
-  const katakanaMap: Record<typeof vowel, string> = { a: 'ア', i: 'イ', u: 'ウ', e: 'エ', o: 'オ' };
-  return katakana ? katakanaMap[vowel] : hiragana[vowel];
-}
-
-function isKatakana(value: string): boolean {
-  return /^[\u30a0-\u30ff]$/u.test(value);
+  return `${value}ーーーーーー`;
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
