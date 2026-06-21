@@ -4,20 +4,21 @@ export async function onRequest({ request }) {
   const sourceUrl = new URL(request.url);
   const targetUrl = new URL(sourceUrl.pathname + sourceUrl.search, API_ORIGIN);
   const headers = new Headers(request.headers);
+
   headers.delete('host');
   headers.set('Origin', 'https://nihongo-n3.pages.dev');
+  headers.set('x-forwarded-host', sourceUrl.host);
+  headers.set('x-forwarded-proto', sourceUrl.protocol.replace(':', ''));
 
-  const init = {
-    method: request.method,
+  const method = request.method.toUpperCase();
+  const upstreamRequest = new Request(targetUrl, {
+    method,
     headers,
+    body: method === 'GET' || method === 'HEAD' ? undefined : request.body,
     redirect: 'manual',
-  };
+  });
 
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    init.body = request.body;
-  }
-
-  const response = await fetch(targetUrl.toString(), init);
+  const response = await fetch(upstreamRequest);
   const responseHeaders = new Headers(response.headers);
   responseHeaders.delete('access-control-allow-origin');
   responseHeaders.delete('access-control-allow-credentials');

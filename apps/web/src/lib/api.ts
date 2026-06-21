@@ -54,11 +54,19 @@ async function request<T>(
     return { ok: false, status: 0, message: '네트워크 오류' };
   }
 
-  let body: unknown;
-  try {
-    body = await res.json();
-  } catch {
-    return { ok: false, status: res.status, message: '응답 파싱 오류' };
+  const contentType = res.headers.get('Content-Type') ?? '';
+  const rawBody = await res.text();
+  let body: unknown = null;
+  if (rawBody) {
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      const preview = rawBody.replace(/\s+/g, ' ').trim().slice(0, 120);
+      const message = contentType.includes('text/html')
+        ? 'API 대신 웹 페이지 응답을 받았습니다. 배포 프록시 설정을 확인하세요.'
+        : `JSON이 아닌 응답입니다${preview ? `: ${preview}` : ''}`;
+      return { ok: false, status: res.status, message };
+    }
   }
 
   if (!res.ok) {
