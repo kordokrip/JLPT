@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@hono/zod-openapi": "^0.18.0",
+    "@hono/zod-openapi": "^1.4.0",
     "@nihongo-n3/shared": "workspace:*",
     "@scalar/hono-api-reference": "^0.10.19",
     "drizzle-orm": "^0.45.2",
