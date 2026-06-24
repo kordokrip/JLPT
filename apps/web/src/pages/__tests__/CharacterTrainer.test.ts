@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   buildChoices,
   elongateKanaForSpeech,
+  evaluateDrawing,
   getCardAudioPath,
   getCardAudioText,
+  getKanaPronunciationExample,
   kanaAudioPath,
   type StudyCard,
 } from '../CharacterTrainer';
@@ -25,7 +27,7 @@ describe('CharacterTrainer', () => {
     expect(choices.length).toBe(4);
   });
 
-  it('getCardAudioText plays kana characters and first kanji reading', () => {
+  it('getCardAudioText plays kana with a pronunciation example and first kanji reading', () => {
     const kana = {
       id: 'h-あ',
       mode: 'hiragana',
@@ -46,7 +48,7 @@ describe('CharacterTrainer', () => {
       level: 'N5',
     } satisfies StudyCard;
 
-    expect(getCardAudioText(kana)).toBe('あ');
+    expect(getCardAudioText(kana)).toBe('あ、あいさつ');
     expect(getCardAudioText(kanji)).toBe('ニチ');
   });
 
@@ -59,7 +61,7 @@ describe('CharacterTrainer', () => {
     expect(elongateKanaForSpeech('日', 'nichi')).toBe('日');
   });
 
-  it('uses stable R2 object keys for kana audio', () => {
+  it('uses browser example pronunciation for kana and stable R2 object keys as fallback assets', () => {
     const kana = {
       id: 'h-あ',
       mode: 'hiragana',
@@ -73,6 +75,36 @@ describe('CharacterTrainer', () => {
 
     expect(kanaAudioPath('hiragana', 'a')).toBe('audio/kana/hiragana/a.m4a');
     expect(kanaAudioPath('katakana', 'shi')).toBe('audio/kana/katakana/shi.m4a');
-    expect(getCardAudioPath(kana)).toBe('audio/kana/hiragana/a.m4a');
+    expect(getCardAudioPath(kana)).toBeUndefined();
+    expect(getKanaPronunciationExample(kana)).toMatchObject({ word: 'あいさつ', meaning: '인사' });
+  });
+
+  it('evaluates handwriting attempts with stroke count, size, and placement', () => {
+    expect(evaluateDrawing({
+      strokeCount: 0,
+      pointCount: 0,
+      bounds: null,
+      canvasWidth: 640,
+      canvasHeight: 360,
+      expectedStrokes: 3,
+    }).status).toBe('empty');
+
+    expect(evaluateDrawing({
+      strokeCount: 3,
+      pointCount: 60,
+      bounds: { minX: 150, minY: 70, maxX: 470, maxY: 300 },
+      canvasWidth: 640,
+      canvasHeight: 360,
+      expectedStrokes: 3,
+    }).status).toBe('good');
+
+    expect(evaluateDrawing({
+      strokeCount: 1,
+      pointCount: 14,
+      bounds: { minX: 10, minY: 10, maxX: 90, maxY: 60 },
+      canvasWidth: 640,
+      canvasHeight: 360,
+      expectedStrokes: 4,
+    }).status).toBe('retry');
   });
 });

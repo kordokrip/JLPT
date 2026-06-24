@@ -6,7 +6,7 @@ import type { KanjiItem } from '../lib/db';
 import type { PointerEvent } from 'react';
 
 type Mode = 'hiragana' | 'katakana' | 'kanji';
-type Stage = 'observe' | 'recall' | 'write' | 'quiz';
+type Stage = 'observe' | 'recall' | 'write' | 'writeQuiz' | 'quiz';
 type JlptLevel = 'N5' | 'N4' | 'N3';
 
 export type KanaCard = {
@@ -30,6 +30,28 @@ export type StudyCard = KanaCard | {
   hint: string;
   audioPath?: string;
   level: JlptLevel;
+};
+
+export type KanaPronunciationExample = {
+  word: string;
+  reading: string;
+  meaning: string;
+};
+
+export type DrawingEvaluation = {
+  status: 'empty' | 'retry' | 'good';
+  score: number;
+  message: string;
+  details: string[];
+};
+
+type DrawingStats = {
+  strokeCount: number;
+  pointCount: number;
+  bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
+  canvasWidth: number;
+  canvasHeight: number;
+  expectedStrokes: number;
 };
 
 const HIRAGANA: KanaCard[] = [
@@ -76,14 +98,113 @@ const KATAKANA: KanaCard[] = [
   audioPath: kanaAudioPath('katakana', String(reading)),
 }));
 
-const STAGES: Stage[] = ['observe', 'recall', 'write', 'quiz'];
+const STAGES: Stage[] = ['observe', 'recall', 'write', 'writeQuiz', 'quiz'];
 const LEVELS: JlptLevel[] = ['N5', 'N4', 'N3'];
 
 const stageText: Record<Stage, { title: string; desc: string }> = {
   observe: { title: '1. 관찰', desc: '모양, 읽기, 의미를 10초 동안 함께 봅니다.' },
   recall:  { title: '2. 가리기 인출', desc: '글자를 보지 않고 읽기와 뜻을 먼저 떠올립니다.' },
   write:   { title: '3. 손으로 쓰기', desc: '획수와 규칙을 말하면서 캔버스에 크게 씁니다.' },
-  quiz:    { title: '4. 즉시 테스트', desc: '정답을 고르고 다음 복습 강도를 결정합니다.' },
+  writeQuiz: { title: '4. 손쓰기 퀴즈', desc: '읽기와 뜻만 보고 직접 쓴 뒤 채점합니다.' },
+  quiz:    { title: '5. 즉시 테스트', desc: '정답을 고르고 다음 복습 강도를 결정합니다.' },
+};
+
+const HIRAGANA_EXAMPLES: Record<string, KanaPronunciationExample> = {
+  a: { word: 'あいさつ', reading: 'あいさつ', meaning: '인사' },
+  i: { word: 'いぬ', reading: 'いぬ', meaning: '개' },
+  u: { word: 'うみ', reading: 'うみ', meaning: '바다' },
+  e: { word: 'えき', reading: 'えき', meaning: '역' },
+  o: { word: 'おちゃ', reading: 'おちゃ', meaning: '차' },
+  ka: { word: 'かさ', reading: 'かさ', meaning: '우산' },
+  ki: { word: 'きく', reading: 'きく', meaning: '듣다' },
+  ku: { word: 'くも', reading: 'くも', meaning: '구름' },
+  ke: { word: 'けさ', reading: 'けさ', meaning: '오늘 아침' },
+  ko: { word: 'こえ', reading: 'こえ', meaning: '목소리' },
+  sa: { word: 'さくら', reading: 'さくら', meaning: '벚꽃' },
+  shi: { word: 'しお', reading: 'しお', meaning: '소금' },
+  su: { word: 'すし', reading: 'すし', meaning: '초밥' },
+  se: { word: 'せんせい', reading: 'せんせい', meaning: '선생님' },
+  so: { word: 'そら', reading: 'そら', meaning: '하늘' },
+  ta: { word: 'たこ', reading: 'たこ', meaning: '문어' },
+  chi: { word: 'ちず', reading: 'ちず', meaning: '지도' },
+  tsu: { word: 'つき', reading: 'つき', meaning: '달' },
+  te: { word: 'て', reading: 'て', meaning: '손' },
+  to: { word: 'とり', reading: 'とり', meaning: '새' },
+  na: { word: 'なつ', reading: 'なつ', meaning: '여름' },
+  ni: { word: 'にほん', reading: 'にほん', meaning: '일본' },
+  nu: { word: 'ぬの', reading: 'ぬの', meaning: '천' },
+  ne: { word: 'ねこ', reading: 'ねこ', meaning: '고양이' },
+  no: { word: 'のり', reading: 'のり', meaning: '김' },
+  ha: { word: 'はな', reading: 'はな', meaning: '꽃' },
+  hi: { word: 'ひと', reading: 'ひと', meaning: '사람' },
+  fu: { word: 'ふね', reading: 'ふね', meaning: '배' },
+  he: { word: 'へや', reading: 'へや', meaning: '방' },
+  ho: { word: 'ほし', reading: 'ほし', meaning: '별' },
+  ma: { word: 'まち', reading: 'まち', meaning: '마을' },
+  mi: { word: 'みみ', reading: 'みみ', meaning: '귀' },
+  mu: { word: 'むし', reading: 'むし', meaning: '벌레' },
+  me: { word: 'め', reading: 'め', meaning: '눈' },
+  mo: { word: 'もり', reading: 'もり', meaning: '숲' },
+  ya: { word: 'やま', reading: 'やま', meaning: '산' },
+  yu: { word: 'ゆき', reading: 'ゆき', meaning: '눈' },
+  yo: { word: 'よる', reading: 'よる', meaning: '밤' },
+  ra: { word: 'らいねん', reading: 'らいねん', meaning: '내년' },
+  ri: { word: 'りんご', reading: 'りんご', meaning: '사과' },
+  ru: { word: 'るす', reading: 'るす', meaning: '부재중' },
+  re: { word: 'れい', reading: 'れい', meaning: '예시' },
+  ro: { word: 'ろく', reading: 'ろく', meaning: '여섯' },
+  wa: { word: 'わたし', reading: 'わたし', meaning: '나' },
+  wo: { word: 'ほんをよむ', reading: 'ほんをよむ', meaning: '책을 읽다' },
+  n: { word: 'パン', reading: 'パン', meaning: '빵' },
+};
+
+const KATAKANA_EXAMPLES: Record<string, KanaPronunciationExample> = {
+  a: { word: 'アイス', reading: 'アイス', meaning: '아이스크림' },
+  i: { word: 'インク', reading: 'インク', meaning: '잉크' },
+  u: { word: 'ウイスキー', reading: 'ウイスキー', meaning: '위스키' },
+  e: { word: 'エアコン', reading: 'エアコン', meaning: '에어컨' },
+  o: { word: 'オレンジ', reading: 'オレンジ', meaning: '오렌지' },
+  ka: { word: 'カメラ', reading: 'カメラ', meaning: '카메라' },
+  ki: { word: 'キロ', reading: 'キロ', meaning: '킬로' },
+  ku: { word: 'クラス', reading: 'クラス', meaning: '수업' },
+  ke: { word: 'ケーキ', reading: 'ケーキ', meaning: '케이크' },
+  ko: { word: 'コーヒー', reading: 'コーヒー', meaning: '커피' },
+  sa: { word: 'サラダ', reading: 'サラダ', meaning: '샐러드' },
+  shi: { word: 'シャツ', reading: 'シャツ', meaning: '셔츠' },
+  su: { word: 'スキー', reading: 'スキー', meaning: '스키' },
+  se: { word: 'セーター', reading: 'セーター', meaning: '스웨터' },
+  so: { word: 'ソファ', reading: 'ソファ', meaning: '소파' },
+  ta: { word: 'タクシー', reading: 'タクシー', meaning: '택시' },
+  chi: { word: 'チーズ', reading: 'チーズ', meaning: '치즈' },
+  tsu: { word: 'ツアー', reading: 'ツアー', meaning: '투어' },
+  te: { word: 'テレビ', reading: 'テレビ', meaning: '텔레비전' },
+  to: { word: 'トマト', reading: 'トマト', meaning: '토마토' },
+  na: { word: 'ナイフ', reading: 'ナイフ', meaning: '나이프' },
+  ni: { word: 'ニュース', reading: 'ニュース', meaning: '뉴스' },
+  nu: { word: 'ヌードル', reading: 'ヌードル', meaning: '누들' },
+  ne: { word: 'ネクタイ', reading: 'ネクタイ', meaning: '넥타이' },
+  no: { word: 'ノート', reading: 'ノート', meaning: '노트' },
+  ha: { word: 'ハンバーガー', reading: 'ハンバーガー', meaning: '햄버거' },
+  hi: { word: 'ヒーター', reading: 'ヒーター', meaning: '히터' },
+  fu: { word: 'フォーク', reading: 'フォーク', meaning: '포크' },
+  he: { word: 'ヘルメット', reading: 'ヘルメット', meaning: '헬멧' },
+  ho: { word: 'ホテル', reading: 'ホテル', meaning: '호텔' },
+  ma: { word: 'マスク', reading: 'マスク', meaning: '마스크' },
+  mi: { word: 'ミルク', reading: 'ミルク', meaning: '우유' },
+  mu: { word: 'ムービー', reading: 'ムービー', meaning: '영화' },
+  me: { word: 'メール', reading: 'メール', meaning: '메일' },
+  mo: { word: 'モデル', reading: 'モデル', meaning: '모델' },
+  ya: { word: 'ヤード', reading: 'ヤード', meaning: '야드' },
+  yu: { word: 'ユニフォーム', reading: 'ユニフォーム', meaning: '유니폼' },
+  yo: { word: 'ヨガ', reading: 'ヨガ', meaning: '요가' },
+  ra: { word: 'ラジオ', reading: 'ラジオ', meaning: '라디오' },
+  ri: { word: 'リモコン', reading: 'リモコン', meaning: '리모컨' },
+  ru: { word: 'ルール', reading: 'ルール', meaning: '규칙' },
+  re: { word: 'レストラン', reading: 'レストラン', meaning: '레스토랑' },
+  ro: { word: 'ロボット', reading: 'ロボット', meaning: '로봇' },
+  wa: { word: 'ワイン', reading: 'ワイン', meaning: '와인' },
+  wo: { word: 'ヲタク', reading: 'ヲタク', meaning: '오타쿠' },
+  n: { word: 'パン', reading: 'パン', meaning: '빵' },
 };
 
 const kanjiRules = [
@@ -111,7 +232,10 @@ function makeKanjiCard(item: KanjiItem): StudyCard {
 }
 
 export function getCardAudioText(card: StudyCard): string {
-  if (card.mode !== 'kanji') return elongateKanaForSpeech(card.char, card.reading);
+  if (card.mode !== 'kanji') {
+    const example = getKanaPronunciationExample(card);
+    return example ? `${card.char}、${example.word}` : elongateKanaForSpeech(card.char, card.reading);
+  }
   const firstReading = card.reading
     .split(/[\/,、，・\s]+/)
     .map((value) => value.trim())
@@ -120,7 +244,7 @@ export function getCardAudioText(card: StudyCard): string {
 }
 
 export function getCardAudioPath(card: StudyCard): string | undefined {
-  if (card.mode === 'hiragana' || card.mode === 'katakana') return card.audioPath;
+  if (card.mode === 'hiragana' || card.mode === 'katakana') return undefined;
   return card.audioPath;
 }
 
@@ -132,6 +256,48 @@ export function elongateKanaForSpeech(char: string, _reading = ''): string {
   const value = char.trim();
   if (!/^[\u3040-\u309f\u30a0-\u30ff]$/u.test(value)) return value;
   return value;
+}
+
+export function getKanaPronunciationExample(card: StudyCard): KanaPronunciationExample | null {
+  if (card.mode === 'hiragana') return HIRAGANA_EXAMPLES[card.reading] ?? null;
+  if (card.mode === 'katakana') return KATAKANA_EXAMPLES[card.reading] ?? null;
+  return null;
+}
+
+export function evaluateDrawing(stats: DrawingStats): DrawingEvaluation {
+  if (!stats.bounds || stats.pointCount < 10 || stats.strokeCount < 1) {
+    return {
+      status: 'empty',
+      score: 0,
+      message: '아직 충분히 쓰지 않았습니다.',
+      details: ['캔버스에 크게 한 번 써 보세요.'],
+    };
+  }
+
+  const width = stats.bounds.maxX - stats.bounds.minX;
+  const height = stats.bounds.maxY - stats.bounds.minY;
+  const widthRatio = width / stats.canvasWidth;
+  const heightRatio = height / stats.canvasHeight;
+  const centerX = (stats.bounds.minX + stats.bounds.maxX) / 2 / stats.canvasWidth;
+  const centerY = (stats.bounds.minY + stats.bounds.maxY) / 2 / stats.canvasHeight;
+  const expected = Math.max(0, stats.expectedStrokes);
+  const strokeScore = expected > 0
+    ? Math.max(0, 1 - Math.abs(stats.strokeCount - expected) / Math.max(expected, 2))
+    : 0.75;
+  const sizeScore = Math.min(1, Math.min(widthRatio / 0.32, heightRatio / 0.32));
+  const centerScore = centerX >= 0.18 && centerX <= 0.82 && centerY >= 0.15 && centerY <= 0.85 ? 1 : 0.55;
+  const inkScore = Math.min(1, stats.pointCount / 45);
+  const score = Math.round((strokeScore * 0.38 + sizeScore * 0.28 + centerScore * 0.18 + inkScore * 0.16) * 100);
+  const details = [
+    `입력 획수 ${stats.strokeCount}${expected ? ` / 권장 ${expected}` : ''}`,
+    widthRatio < 0.26 || heightRatio < 0.26 ? '글자를 더 크게 써 보세요.' : '크기는 충분합니다.',
+    centerScore < 1 ? '글자를 중앙에 맞춰 다시 써 보세요.' : '위치는 안정적입니다.',
+  ];
+
+  if (score >= 72) {
+    return { status: 'good', score, message: '통과입니다. 한 번 더 쓰면 기억이 더 안정됩니다.', details };
+  }
+  return { status: 'retry', score, message: '다시 쓰는 편이 좋습니다.', details };
 }
 
 export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
@@ -251,7 +417,7 @@ export default function CharacterTrainer() {
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] p-4 text-center">
               <div className="mx-auto flex aspect-square max-w-[240px] items-center justify-center rounded-xl bg-[var(--card)] shadow-inner">
                 <span className="font-serif-jp text-[112px] leading-none text-foreground">
-                  {stage === 'recall' && !revealed ? '?' : card.char}
+                  {(stage === 'recall' || stage === 'writeQuiz') && !revealed ? '?' : card.char}
                 </span>
               </div>
               <div className="mt-3 flex justify-center">
@@ -260,8 +426,9 @@ export default function CharacterTrainer() {
                   audioPath={getCardAudioPath(card)}
                   label={`${card.char} 발음 듣기`}
                   className="bg-[var(--card)]"
-                  prefer="server"
-                  slow
+                  prefer={card.mode === 'kanji' ? 'server' : 'browser'}
+                  forceBrowser={card.mode !== 'kanji'}
+                  slow={card.mode === 'kanji'}
                   repeat={1}
                 />
               </div>
@@ -296,7 +463,30 @@ export default function CharacterTrainer() {
               {stage === 'write' && (
                 <div className="space-y-4">
                   <StrokeRules card={card} />
-                  <DrawingPad />
+                  <DrawingPad card={card} />
+                </div>
+              )}
+
+              {stage === 'writeQuiz' && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-[var(--border)] p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      {card.mode === 'kanji'
+                        ? `${card.reading} / ${card.meaning}`
+                        : `${card.reading} 소리가 나는 문자를 손으로 쓰세요.`}
+                    </p>
+                    <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+                      정답을 보기 전에 먼저 크게 쓰고 채점하세요.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setRevealed(true)}
+                      className="mt-3 min-h-10 rounded-lg border border-[var(--border)] px-3 text-sm font-semibold"
+                    >
+                      정답 보기
+                    </button>
+                  </div>
+                  <DrawingPad card={card} quiz />
                 </div>
               )}
 
@@ -456,11 +646,19 @@ function ModeControls({
 }
 
 function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boolean }) {
+  const example = getKanaPronunciationExample(card);
   return (
     <div className={`rounded-xl border border-[var(--border)] ${compact ? 'mt-4 p-3' : 'p-4'}`}>
       <dl className="grid gap-3 sm:grid-cols-2">
         <Info label="읽기" value={card.reading} />
         <Info label="의미" value={card.meaning} />
+        {example && (
+          <Info
+            label="발음 단어"
+            value={`${card.char} → ${example.word} (${example.meaning})`}
+            wide
+          />
+        )}
         <Info label="암기 힌트" value={card.hint} wide />
       </dl>
       <div className="mt-4">
@@ -469,8 +667,9 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
           text={getCardAudioText(card)}
           audioPath={getCardAudioPath(card)}
           label={`${card.char} 발음 듣기`}
-          prefer="server"
-          slow
+          prefer={card.mode === 'kanji' ? 'server' : 'browser'}
+          forceBrowser={card.mode !== 'kanji'}
+          slow={card.mode === 'kanji'}
           repeat={1}
         />
       </div>
@@ -496,9 +695,25 @@ function StrokeRules({ card }: { card: StudyCard }) {
   );
 }
 
-function DrawingPad() {
+function DrawingPad({ card, quiz = false }: { card: StudyCard; quiz?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
+  const bounds = useRef<DrawingStats['bounds']>(null);
+  const [strokeCount, setStrokeCount] = useState(0);
+  const [pointCount, setPointCount] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [result, setResult] = useState<DrawingEvaluation | null>(null);
+
+  const updateBounds = (x: number, y: number) => {
+    bounds.current = bounds.current
+      ? {
+          minX: Math.min(bounds.current.minX, x),
+          minY: Math.min(bounds.current.minY, y),
+          maxX: Math.max(bounds.current.maxX, x),
+          maxY: Math.max(bounds.current.maxY, y),
+        }
+      : { minX: x, minY: y, maxX: x, maxY: y };
+  };
 
   const getPoint = (event: PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!;
@@ -516,6 +731,10 @@ function DrawingPad() {
     if (!ctx) return;
     drawing.current = true;
     const point = getPoint(event);
+    updateBounds(point.x, point.y);
+    setStrokeCount((value) => value + 1);
+    setPointCount((value) => value + 1);
+    setResult(null);
     ctx.strokeStyle = '#3b2f2a';
     ctx.lineWidth = 12;
     ctx.lineCap = 'round';
@@ -529,6 +748,8 @@ function DrawingPad() {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     const point = getPoint(event);
+    updateBounds(point.x, point.y);
+    setPointCount((value) => value + 1);
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
   };
@@ -537,10 +758,34 @@ function DrawingPad() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    bounds.current = null;
+    setStrokeCount(0);
+    setPointCount(0);
+    setResult(null);
+  };
+
+  const check = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const evaluation = evaluateDrawing({
+      strokeCount,
+      pointCount,
+      bounds: bounds.current,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      expectedStrokes: card.strokeCount,
+    });
+    setAttempts((value) => value + 1);
+    setResult(evaluation);
   };
 
   return (
     <div className="rounded-xl border border-[var(--border)] p-3">
+      {quiz && (
+        <div className="mb-3 rounded-lg bg-[var(--surface-alt)] px-3 py-2 text-sm text-[var(--muted-foreground)]">
+          {card.mode === 'kanji' ? '뜻과 읽기를 보고 한자를 쓰세요.' : `${card.reading} 발음의 문자를 떠올려 쓰세요.`}
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         width={640}
@@ -552,9 +797,36 @@ function DrawingPad() {
         onPointerUp={() => { drawing.current = false; }}
         onPointerCancel={() => { drawing.current = false; }}
       />
-      <button type="button" onClick={clear} className="mt-3 min-h-10 rounded-lg border border-[var(--border)] px-3 text-sm font-semibold">
-        지우기
-      </button>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={check} className="min-h-10 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-white">
+          채점하기
+        </button>
+        <button type="button" onClick={clear} className="min-h-10 rounded-lg border border-[var(--border)] px-3 text-sm font-semibold">
+          지우기
+        </button>
+        <span className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-3 text-xs text-[var(--muted-foreground)]">
+          입력 {strokeCount}획 / 권장 {card.strokeCount || '?'}획
+        </span>
+        {attempts > 0 && (
+          <span className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-3 text-xs text-[var(--muted-foreground)]">
+            반복 {attempts}회
+          </span>
+        )}
+      </div>
+      {result && (
+        <div className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+          result.status === 'good'
+            ? 'bg-green-50 text-green-700'
+            : result.status === 'retry'
+              ? 'bg-yellow-50 text-yellow-800'
+              : 'bg-red-50 text-red-700'
+        }`}>
+          <p className="font-semibold">{result.message} ({result.score}점)</p>
+          <ul className="mt-1 list-disc pl-5 text-xs">
+            {result.details.map((detail) => <li key={detail}>{detail}</li>)}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

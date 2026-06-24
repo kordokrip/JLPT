@@ -5,34 +5,45 @@ test.describe('문자 암기 트레이너', () => {
   test('히라가나/가타카나 관찰-쓰기-퀴즈 루프가 동작한다', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await ensureAuthenticated(page);
-    await page.route('**/api/v1/audio/audio/kana/hiragana/a.m4a', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'audio/mp4',
-        body: Buffer.from([]),
-      });
-    });
     await page.goto('/characters', { waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { name: '문자 암기' })).toBeVisible();
     await expect(page.getByText('あ').first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'あ 발음 듣기' }).first()).toBeVisible();
+    await expect(page.getByText('あ → あいさつ (인사)')).toBeVisible();
     await expect(page.getByRole('button', { name: '1. 관찰' })).toBeVisible();
     await expect(page.getByText('읽기', { exact: true }).first()).toBeVisible();
     await expect(page.locator('dd').getByText('a', { exact: true }).first()).toBeVisible();
 
-    const audioResponse = page.waitForResponse((response) =>
-      response.url().includes('/api/v1/audio/audio/kana/hiragana/a.m4a') &&
-      response.status() === 200,
-    );
     await page.getByRole('button', { name: 'あ 발음 듣기' }).first().click();
-    await audioResponse;
 
     await page.getByRole('button', { name: '3. 손으로 쓰기' }).click();
     await expect(page.getByLabel('쓰기 연습 캔버스')).toBeVisible();
     await expect(page.getByText('쓰기 순서 힌트')).toBeVisible();
+    const canvas = page.getByLabel('쓰기 연습 캔버스');
+    const box = await canvas.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) {
+      await page.mouse.move(box.x + 80, box.y + 60);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 210, box.y + 180);
+      await page.mouse.up();
+      await page.mouse.move(box.x + 230, box.y + 70);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 120, box.y + 210);
+      await page.mouse.up();
+      await page.mouse.move(box.x + 95, box.y + 165);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 240, box.y + 165);
+      await page.mouse.up();
+    }
+    await page.getByRole('button', { name: '채점하기' }).click();
+    await expect(page.getByText(/통과입니다|다시 쓰는 편|아직 충분히/)).toBeVisible();
 
-    await page.getByRole('button', { name: '4. 즉시 테스트' }).click();
+    await page.getByRole('button', { name: '4. 손쓰기 퀴즈' }).click();
+    await expect(page.getByText('a 발음의 문자를 떠올려 쓰세요.')).toBeVisible();
+
+    await page.getByRole('button', { name: '5. 즉시 테스트' }).click();
     await page.getByRole('button', { name: /^a$/ }).click();
     await expect(page.getByText('정답입니다.')).toBeVisible();
 
