@@ -5,13 +5,17 @@ name: Backup D1 Database → R2
 
 on:
   schedule:
-    - cron: '0 15 * * *'
+    - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
       date_override:
-        description: '백업 날짜 덮어쓰기 (YYYY-MM-DD, 빈 칸이면 오늘)'
+        description: "백업 날짜 덮어쓰기 (YYYY-MM-DD, 빈 칸이면 오늘)"
         required: false
-        default: ''
+        default: ""
+
+concurrency:
+  group: backup-d1-to-r2
+  cancel-in-progress: false
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
@@ -28,47 +32,87 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_NAME: nihongo-n3-prod
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Cloudflare credentials
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || (echo "CLOUDFLARE_API_TOKEN secret이 비어 있습니다." && exit 1)
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || (echo "CLOUDFLARE_ACCOUNT_ID secret이 비어 있습니다." && exit 1)
+
+      - name: Resolve R2 reports bucket from wrangler.toml
+        id: resources
+        run: |
+          REPORTS_BUCKET="$(
+            awk '
+              $0 ~ /binding = "REPORTS"/ { in_reports = 1 }
+              in_reports && $0 ~ /bucket_name = / {
+                gsub(/.*bucket_name = "/, "", $0)
+                gsub(/".*/, "", $0)
+                print
+                exit
+              }
+            ' apps/api/wrangler.toml
+          )"
+
+          [ -n "$REPORTS_BUCKET" ] || (echo "REPORTS R2 bucket_name을 apps/api/wrangler.toml에서 찾지 못했습니다." && exit 1)
+          echo "reports_bucket=$REPORTS_BUCKET" >> "$GITHUB_OUTPUT"
+
       - name: Set backup date
         id: date
+        env:
+          DATE_OVERRIDE: ${{ inputs.date_override || '' }}
         run: |
-          if [ -n "${{ github.event.inputs.date_override }}" ]; then
-            echo "date=${{ github.event.inputs.date_override }}" >> "$GITHUB_OUTPUT"
+          if [ -n "$DATE_OVERRIDE" ]; then
+            [[ "$DATE_OVERRIDE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || (echo "date_override는 YYYY-MM-DD 형식이어야 합니다." && exit 1)
+            echo "date=$DATE_OVERRIDE" >> "$GITHUB_OUTPUT"
           else
             echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install wrangler
-        run: npm install -g wrangler@latest
-
       - name: Export D1 to SQL file
         run: |
-          wrangler d1 export nihongo-n3-prod \
+          pnpm exec wrangler d1 export "$D1_DATABASE_NAME" \
             --remote \
             --output=backup.sql \
-            --config=apps/api/wrangler.toml
+            --config=apps/api/wrangler.toml \
+            --skip-confirmation
 
       - name: Verify export file size
         run: |
           SIZE=$(wc -c < backup.sql)
           echo "백업 파일 크기: ${SIZE} bytes"
           # 최소 1KB 이상이어야 정상 백업으로 간주
-          [ "$SIZE" -gt 1024 ] || (echo "❌ 백업 파일이 너무 작습니다 (${SIZE}B). 내용을 확인하세요." && exit 1)
+          [ "$SIZE" -gt 1024 ] || (echo "백업 파일이 너무 작습니다 (${SIZE}B). 내용을 확인하세요." && exit 1)
 
       - name: Upload backup to R2
         run: |
-          wrangler r2 object put \
-            "${{ secrets.R2_REPORTS_BUCKET_NAME }}/backups/${{ steps.date.outputs.date }}.sql" \
+          pnpm exec wrangler r2 object put \
+            "${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.sql" \
             --file=backup.sql \
-            --content-type="application/sql"
+            --content-type="application/sql" \
+            --remote
 
       - name: Confirm upload
         run: |
-          echo "✅ 백업 완료: backups/${{ steps.date.outputs.date }}.sql → R2"
+          echo "백업 완료: ${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.sql → R2"
 
   # ─────────────────────────────────────────────────────────────────
   # 2. R2 lifecycle rule 설정 (30일 자동 만료)
@@ -86,6 +130,32 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Cloudflare credentials
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || (echo "CLOUDFLARE_API_TOKEN secret이 비어 있습니다." && exit 1)
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || (echo "CLOUDFLARE_ACCOUNT_ID secret이 비어 있습니다." && exit 1)
+
+      - name: Resolve R2 reports bucket from wrangler.toml
+        id: resources
+        run: |
+          REPORTS_BUCKET="$(
+            awk '
+              $0 ~ /binding = "REPORTS"/ { in_reports = 1 }
+              in_reports && $0 ~ /bucket_name = / {
+                gsub(/.*bucket_name = "/, "", $0)
+                gsub(/".*/, "", $0)
+                print
+                exit
+              }
+            ' apps/api/wrangler.toml
+          )"
+
+          [ -n "$REPORTS_BUCKET" ] || (echo "REPORTS R2 bucket_name을 apps/api/wrangler.toml에서 찾지 못했습니다." && exit 1)
+          echo "reports_bucket=$REPORTS_BUCKET" >> "$GITHUB_OUTPUT"
+
       - name: Apply R2 lifecycle rule (backups/ prefix, 30d expiration)
         # Cloudflare API: PUT /accounts/{acct}/r2/buckets/{bucket}/lifecycle
         # 문서: https://developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/lifecycle/
@@ -94,19 +164,23 @@ jobs:
         #      Logpush를 설정할 경우 해당 버킷은 제외하거나
         #      쿼리 파라미터/패스에서 userId를 마스킹하세요.
         run: |
-          curl -s -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${{ secrets.R2_REPORTS_BUCKET_NAME }}/lifecycle" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "rules": [
-                {
-                  "id": "backups-30d-expiry",
-                  "filter": { "prefix": "backups/" },
-                  "expiration": { "days": 30 },
-                  "enabled": true
-                }
-              ]
-            }' | jq -e '.success == true' \
-          || (echo "❌ lifecycle rule 설정 실패. CF API 응답을 확인하세요." && exit 1)
-          echo "✅ R2 lifecycle rule (backups/ 30d) 설정 완료"
+          RESPONSE="$(
+            curl -sS -X PUT \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${{ steps.resources.outputs.reports_bucket }}/lifecycle" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "rules": [
+                  {
+                    "id": "backups-30d-expiry",
+                    "filter": { "prefix": "backups/" },
+                    "expiration": { "days": 30 },
+                    "enabled": true
+                  }
+                ]
+              }'
+          )"
+
+          echo "$RESPONSE" | jq -e '.success == true' > /dev/null \
+            || (echo "lifecycle rule 설정 실패. CF API 응답:" && echo "$RESPONSE" && exit 1)
+          echo "R2 lifecycle rule (backups/ 30d) 설정 완료"

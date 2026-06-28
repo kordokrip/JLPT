@@ -11,12 +11,12 @@ on:
       - main
     paths:
       # 콘텐츠 마크다운 (docs 하위)
-      - 'docs/**/*.md'
+      - "docs/**/*.md"
       # DB 마이그레이션
-      - 'packages/db/drizzle/**'
+      - "packages/db/drizzle/**"
   pull_request:
     types:
-      - closed     # 머지됐을 때만 마이그레이션 실행
+      - closed # 머지됐을 때만 마이그레이션 실행
     branches:
       - main
 
@@ -30,9 +30,9 @@ jobs:
     if: >
       github.event_name == 'push' &&
       (
-        contains(toJSON(github.event.commits[*].modified), '.md') ||
-        contains(toJSON(github.event.commits[*].added),    '.md') ||
-        contains(toJSON(github.event.commits[*].removed),  '.md')
+        contains(toJSON(github.event.commits.*.modified), '.md') ||
+        contains(toJSON(github.event.commits.*.added),    '.md') ||
+        contains(toJSON(github.event.commits.*.removed),  '.md')
       )
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -48,7 +48,7 @@ jobs:
       - name: Checkout repository (with history)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2    # HEAD~1 비교를 위해 최소 2개 커밋 필요
+          fetch-depth: 2 # HEAD~1 비교를 위해 최소 2개 커밋 필요
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -58,8 +58,8 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -79,7 +79,7 @@ jobs:
     name: Apply D1 Migration
     if: >
       (github.event_name == 'push' &&
-       contains(toJSON(github.event.commits[*].modified), 'packages/db/drizzle/')) ||
+       contains(toJSON(github.event.commits.*.modified), 'packages/db/drizzle/')) ||
       (github.event_name == 'pull_request' &&
        github.event.pull_request.merged == true &&
        contains(github.event.pull_request.labels.*.name, 'db:migration'))
@@ -97,18 +97,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install wrangler
-        run: npm install -g wrangler@latest
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Cloudflare credentials
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || (echo "CLOUDFLARE_API_TOKEN secret이 비어 있습니다." && exit 1)
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || (echo "CLOUDFLARE_ACCOUNT_ID secret이 비어 있습니다." && exit 1)
 
       - name: Apply D1 migrations (remote)
         run: |
-          wrangler d1 migrations apply nihongo-n3-prod \
+          pnpm exec wrangler d1 migrations apply nihongo-n3-prod \
             --remote \
             --config=apps/api/wrangler.toml \
             --yes
 
       - name: Show migration status
         run: |
-          wrangler d1 migrations list nihongo-n3-prod \
+          pnpm exec wrangler d1 migrations list nihongo-n3-prod \
             --remote \
             --config=apps/api/wrangler.toml
