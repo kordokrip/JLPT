@@ -26,7 +26,7 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260617.1",
+    "@cloudflare/workers-types": "^4.20260628.1",
     "@types/node": "^22.10.0",
     "drizzle-kit": "^0.31.10",
     "mdast-util-to-string": "^4.0.0",
@@ -36,6 +36,6 @@
     "typescript": "^5.4.5",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "wrangler": "^4.103.0"
+    "wrangler": "^4.105.0"
   }
 }
