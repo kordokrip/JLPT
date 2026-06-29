@@ -43,7 +43,7 @@
     "typescript": "^5.4.5",
     "vite": "6.4.3",
     "vite-plugin-pwa": "^0.20.0",
-    "vitest": "^3.2.6",
+    "vitest": "^4.1.9",
     "workbox-cacheable-response": "^7.4.1",
     "workbox-core": "^7.4.1",
     "workbox-expiration": "^7.4.1",
