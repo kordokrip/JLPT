@@ -22,6 +22,19 @@ const curriculumWeekResponse = z
   .object({ data: z.record(z.string(), z.unknown()) })
   .openapi('CurriculumWeekResponse');
 
+const contentVersionResponse = z
+  .object({
+    data: z.object({
+      version: z.string(),
+      generatedAt: z.string(),
+      tables: z.record(z.string(), z.object({
+        count: z.number().int().nonnegative(),
+        updatedAt: z.number().int().nullable(),
+      })),
+    }),
+  })
+  .openapi('ContentVersionResponse');
+
 const problemSchema = z
   .object({ type: z.string(), title: z.string(), status: z.number().int(), detail: z.string() })
   .openapi('ProblemDetail');
@@ -74,6 +87,19 @@ const curriculumWeekRoute = createRoute({
   },
 });
 
+const contentVersionRoute = createRoute({
+  method: 'get',
+  path: '/content/version',
+  tags: ['Content'],
+  summary: '콘텐츠 캐시 무효화용 버전',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: contentVersionResponse } },
+      description: '콘텐츠 테이블 count/max timestamp 기반 버전',
+    },
+  },
+});
+
 const BASE = 'https://nihongo-n3.example.com/errors/';
 
 const sourcesOA = new OpenAPIHono<AppEnv>();
@@ -120,6 +146,48 @@ sourcesOA.openapi(curriculumWeekRoute, async (c) => {
     );
   }
   return c.json({ data: row as Record<string, unknown> }, 200);
+});
+
+const CONTENT_VERSION_TABLES = [
+  { name: 'sources', column: 'updated_at' },
+  { name: 'categories', column: 'updated_at' },
+  { name: 'vocab', column: 'updated_at' },
+  { name: 'grammar', column: 'updated_at' },
+  { name: 'kanji', column: 'updated_at' },
+  { name: 'sentences', column: 'updated_at' },
+  { name: 'sysprog_terms', column: 'updated_at' },
+  { name: 'curriculum_weeks', column: 'updated_at' },
+  { name: 'homophone_pairs', column: 'updated_at' },
+  { name: 'reading_passages', column: 'created_at' },
+] as const;
+
+sourcesOA.openapi(contentVersionRoute, async (c) => {
+  const tables: Record<string, { count: number; updatedAt: number | null }> = {};
+
+  for (const table of CONTENT_VERSION_TABLES) {
+    const row = await c.env.DB.prepare(
+      `SELECT COUNT(*) AS count, MAX(${table.column}) AS updatedAt FROM ${table.name}`,
+    ).first<{ count: number; updatedAt: number | null }>();
+    tables[table.name] = {
+      count: row?.count ?? 0,
+      updatedAt: row?.updatedAt ?? null,
+    };
+  }
+
+  const version = CONTENT_VERSION_TABLES
+    .map((table) => {
+      const stat = tables[table.name]!;
+      return `${table.name}:${stat.count}:${stat.updatedAt ?? 0}`;
+    })
+    .join('|');
+
+  return c.json({
+    data: {
+      version,
+      generatedAt: new Date().toISOString(),
+      tables,
+    },
+  }, 200);
 });
 
 export { sourcesOA };

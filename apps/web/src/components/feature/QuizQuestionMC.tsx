@@ -37,6 +37,7 @@ export default function QuizQuestionMC({
       .playPronunciation({
         text: promptAudioText,
         audioPath: audioKey,
+        surface: 'listening',
         prefer: promptAudioText ? 'browser' : 'server',
         preferGoogleVoice: true,
       })

@@ -1,10 +1,9 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { admin } from './admin.js';
-import { createdResponseSchema, dataResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 const adminOA = new OpenAPIHono<AppEnv>();
-adminOA.route('/', admin);
-registerDocsOnlyRoutes(adminOA, [
+mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
   {
     method: 'get',
     path: '/dashboard',

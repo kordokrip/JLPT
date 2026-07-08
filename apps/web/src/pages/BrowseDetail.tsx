@@ -49,13 +49,13 @@ function VocabDetail({ id }: { id: number }) {
         <p className="text-xl text-[var(--text-secondary)]">{item.meaning}</p>
       </header>
 
-      <PronunciationButton text={item.reading || item.word} audioPath={item.audio_path} />
+      <PronunciationButton text={item.reading || item.word} audioPath={item.audio_path} surface="vocab" />
 
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium text-[var(--text-muted)]">{t('browse.example')}</p>
-            <PronunciationButton compact text={item.example_jp} label={t('browse.playExamplePronunciation')} />
+            <PronunciationButton compact text={item.example_jp} surface="example" label={t('browse.playExamplePronunciation')} />
           </div>
           <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
           {item.example_ko && <p className="text-sm text-[var(--text-secondary)]">{item.example_ko}</p>}
@@ -90,7 +90,7 @@ function GrammarDetail({ id }: { id: number }) {
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
-            <PronunciationButton compact text={item.example_jp} label={t('browse.playExamplePronunciation')} />
+            <PronunciationButton compact text={item.example_jp} surface="example" label={t('browse.playExamplePronunciation')} />
           </div>
           {item.example_ko && <p className="text-sm text-[var(--text-secondary)]">{item.example_ko}</p>}
         </section>
@@ -117,6 +117,7 @@ function KanjiDetail({ id }: { id: number }) {
       <PronunciationButton
         text={item.reading_on || item.reading_kun || item.character}
         audioPath={item.audio_path}
+        surface="kanji"
       />
       <dl className="space-y-2 text-sm">
         {item.reading_on && (

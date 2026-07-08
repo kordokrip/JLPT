@@ -42,6 +42,47 @@ function parseRange(header: string, totalSize: number): { start: number; end: nu
 
 type AudioKind = 'sentence' | 'vocab' | 'kanji';
 
+function createSilentWav(durationMs = 250): ArrayBuffer {
+  const sampleRate = 8_000;
+  const channels = 1;
+  const bitsPerSample = 16;
+  const bytesPerSample = bitsPerSample / 8;
+  const sampleCount = Math.max(1, Math.floor(sampleRate * (durationMs / 1_000)));
+  const dataSize = sampleCount * channels * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  let offset = 0;
+  const writeString = (value: string) => {
+    for (let i = 0; i < value.length; i += 1) {
+      view.setUint8(offset, value.charCodeAt(i));
+      offset += 1;
+    }
+  };
+  const writeUint32 = (value: number) => {
+    view.setUint32(offset, value, true);
+    offset += 4;
+  };
+  const writeUint16 = (value: number) => {
+    view.setUint16(offset, value, true);
+    offset += 2;
+  };
+
+  writeString('RIFF');
+  writeUint32(36 + dataSize);
+  writeString('WAVE');
+  writeString('fmt ');
+  writeUint32(16);
+  writeUint16(1);
+  writeUint16(channels);
+  writeUint32(sampleRate);
+  writeUint32(sampleRate * channels * bytesPerSample);
+  writeUint16(channels * bytesPerSample);
+  writeUint16(bitsPerSample);
+  writeString('data');
+  writeUint32(dataSize);
+  return buffer;
+}
+
 function parseGeneratedAudioKey(key: string): { kind: AudioKind; level: string; id: number } | null {
   const match = key.match(/^audio\/(sentence|vocab|kanji)\/(n[1-5])\/(\d+)\.mp3$/i);
   if (!match) return null;
@@ -92,9 +133,12 @@ async function generateAudioObject(
   if (!text) return null;
 
   const providerInfo = getTtsProviderInfo(c.env);
-  const tts = createTtsAdapter(c.env);
-  const audioBuffer = await tts.generateAudio({ text, lang: 'ja' });
-  const contentType = detectAudioContentType(audioBuffer);
+  const audioBuffer = c.env.ENVIRONMENT === 'test'
+    ? createSilentWav()
+    : await createTtsAdapter(c.env).generateAudio({ text, lang: 'ja' });
+  const contentType = c.env.ENVIRONMENT === 'test'
+    ? 'audio/wav'
+    : detectAudioContentType(audioBuffer);
   await c.env.ASSETS.put(key, audioBuffer, {
     httpMetadata: {
       contentType,
@@ -105,10 +149,10 @@ async function generateAudioObject(
       itemId: String(parsed.id),
       level: parsed.level,
       source: 'on-demand',
-      provider: providerInfo.provider,
-      model: providerInfo.model,
+      provider: c.env.ENVIRONMENT === 'test' ? 'test-silent' : providerInfo.provider,
+      model: c.env.ENVIRONMENT === 'test' ? 'test-silent-wav' : providerInfo.model,
       lang: 'ja',
-      audioVersion: providerInfo.audioVersion,
+      audioVersion: c.env.ENVIRONMENT === 'test' ? 'test' : providerInfo.audioVersion,
       contentType,
       createdAt: new Date().toISOString(),
     },

@@ -2,10 +2,9 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { quiz } from './quiz.js';
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
-import { createdResponseSchema, dataResponseSchema, listResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 const quizOA = new OpenAPIHono<AppEnv>();
-quizOA.route('/', quiz);
-registerDocsOnlyRoutes(quizOA, [
+mountLegacyRouteWithOpenApiDocs(quizOA, quiz, [
   {
     method: 'post',
     path: '/quiz/generate',

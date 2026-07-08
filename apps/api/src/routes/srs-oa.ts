@@ -7,12 +7,11 @@ import {
   createdResponseSchema,
   dataResponseSchema,
   listResponseSchema,
+  mountLegacyRouteWithOpenApiDocs,
   problemSchema,
-  registerDocsOnlyRoutes,
 } from './openapi-docs.js';
 const srsOA = new OpenAPIHono<AppEnv>();
-srsOA.route('/', srs);
-registerDocsOnlyRoutes(srsOA, [
+mountLegacyRouteWithOpenApiDocs(srsOA, srs, [
   {
     method: 'post',
     path: '/srs/init',

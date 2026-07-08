@@ -1,5 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
+import { cfAccessAuth } from '../middleware/auth.js';
+import { aiRateLimit } from '../middleware/rate-limit.js';
 
 const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const BASE = 'https://nihongo-n3.example.com/errors/';
@@ -56,6 +58,8 @@ const naturalTranslateRoute = createRoute({
   responses: {
     200: { content: { 'application/json': { schema: naturalTranslateResponse } }, description: '자연 일본어 변환 결과' },
     400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
+    401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+    429: { content: { 'application/json': { schema: problemSchema } }, description: '요청 한도 초과' },
     502: { content: { 'application/json': { schema: problemSchema } }, description: 'AI 변환 실패' },
   },
 });
@@ -160,6 +164,8 @@ async function runNaturalTranslate(ai: AiRunner, text: string, tone: string) {
 }
 
 const aiOA = new OpenAPIHono<AppEnv>();
+aiOA.use('/ai/*', cfAccessAuth);
+aiOA.use('/ai/*', aiRateLimit);
 
 aiOA.openapi(naturalTranslateRoute, async (c) => {
   const { text, tone } = c.req.valid('json');

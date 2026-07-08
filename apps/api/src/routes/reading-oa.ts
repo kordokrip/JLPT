@@ -5,11 +5,10 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { reading } from './reading.js';
-import { createdResponseSchema, dataResponseSchema, idParamSchema, listResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, idParamSchema, listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 
 const readingOA = new OpenAPIHono<AppEnv>();
-readingOA.route('/', reading);
-registerDocsOnlyRoutes(readingOA, [
+mountLegacyRouteWithOpenApiDocs(readingOA, reading, [
   {
     method: 'get',
     path: '/reading',

@@ -33,10 +33,10 @@ export default {
         },
       },
       fontFamily: {
-        sans:        ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        'serif-jp':  ['Noto Serif JP', 'serif'],
-        'sans-jp':   ['Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'sans-serif'],
-        pretendard:  ['Pretendard', '-apple-system', 'sans-serif'],
+        sans:        ['-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Segoe UI', 'sans-serif'],
+        'serif-jp':  ['Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Apple Myungjo', 'serif'],
+        'sans-jp':   ['Hiragino Kaku Gothic ProN', 'Yu Gothic', 'YuGothic', 'Apple SD Gothic Neo', 'sans-serif'],
+        pretendard:  ['-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Segoe UI', 'sans-serif'],
         mono:        ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       borderRadius: {

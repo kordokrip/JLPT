@@ -8,6 +8,13 @@
  */
 
 import { apiBase, apiUrl } from './api-base';
+import {
+  normalizeGrammarContentItem,
+  normalizeKanjiContentItem,
+  normalizeVocabContentItem,
+  type ApiRawContentRecord,
+  type ContentVersionDto,
+} from '@nihongo-n3/shared';
 
 // ─────────────────────────────────────────────
 // 공통 응답 타입
@@ -118,7 +125,7 @@ export const api = {
 // ─────────────────────────────────────────────
 // 도메인별 API 함수
 // ─────────────────────────────────────────────
-import type { VocabItem, GrammarItem, KanjiItem, SrsCard, ItemType, Rating } from './db';
+import type { SrsCard, ItemType, Rating } from './db';
 
 export interface PaginatedResponse<T> {
   items: T[];
@@ -126,148 +133,52 @@ export interface PaginatedResponse<T> {
 }
 
 type ApiList<T> = T[] | { items?: T[] };
-type RawRecord = Record<string, unknown>;
-
 function asItems<T>(value: ApiList<T>): T[] {
   return Array.isArray(value) ? value : value.items ?? [];
-}
-
-function text(row: RawRecord, ...keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = row[key];
-    if (typeof value === 'string' && value.trim().length > 0) return value;
-  }
-  return undefined;
-}
-
-function numberValue(row: RawRecord, ...keys: string[]): number | undefined {
-  for (const key of keys) {
-    const value = row[key];
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-  }
-  return undefined;
-}
-
-function normalizeVocab(row: RawRecord): VocabItem {
-  const id = Number(row.id);
-  const level = (text(row, 'level') ?? 'N3') as VocabItem['level'];
-  const item: VocabItem = {
-    id,
-    word: text(row, 'word', 'ja') ?? '',
-    reading: text(row, 'reading', 'kana') ?? '',
-    meaning: text(row, 'meaning', 'meaning_ko', 'ko') ?? '',
-    level,
-  };
-  const partOfSpeech = text(row, 'part_of_speech', 'pos');
-  const exampleJp = text(row, 'example_jp');
-  const exampleKo = text(row, 'example_ko');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
-  const sourceId = numberValue(row, 'source_id');
-  const categoryId = numberValue(row, 'category_id');
-  if (partOfSpeech !== undefined) item.part_of_speech = partOfSpeech;
-  if (exampleJp !== undefined) item.example_jp = exampleJp;
-  if (exampleKo !== undefined) item.example_ko = exampleKo;
-  item.audio_path = audioPath ?? `audio/vocab/${level.toLowerCase()}/${id}.mp3`;
-  if (sourceId !== undefined) item.source_id = sourceId;
-  if (categoryId !== undefined) item.category_id = categoryId;
-  return item;
-}
-
-function firstExample(row: RawRecord): { jp?: string; ko?: string } {
-  const raw = text(row, 'examples');
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw) as Array<Record<string, unknown>>;
-    const first = parsed[0];
-    if (!first) return {};
-    const result: { jp?: string; ko?: string } = {};
-    const jp = text(first, 'ja', 'jp', 'example_ja', 'example_jp');
-    const ko = text(first, 'ko', 'meaning_ko', 'example_ko');
-    if (jp !== undefined) result.jp = jp;
-    if (ko !== undefined) result.ko = ko;
-    return result;
-  } catch {
-    return {};
-  }
-}
-
-function normalizeGrammar(row: RawRecord): GrammarItem {
-  const example = firstExample(row);
-  const item: GrammarItem = {
-    id: Number(row.id),
-    pattern: text(row, 'pattern') ?? '',
-    meaning: text(row, 'meaning', 'meaning_ko', 'ko') ?? '',
-    level: (text(row, 'level') ?? 'N3') as GrammarItem['level'],
-  };
-  const structure = text(row, 'structure', 'connection');
-  const notes = text(row, 'notes', 'error_note', 'contrast_ko');
-  const sourceId = numberValue(row, 'source_id');
-  if (structure !== undefined) item.structure = structure;
-  if (notes !== undefined) item.notes = notes;
-  if (example.jp !== undefined) item.example_jp = example.jp;
-  if (example.ko !== undefined) item.example_ko = example.ko;
-  if (sourceId !== undefined) item.source_id = sourceId;
-  return item;
-}
-
-function normalizeKanji(row: RawRecord): KanjiItem {
-  const id = Number(row.id);
-  const level = (text(row, 'level', 'jlpt_level') ?? 'N3') as KanjiItem['level'];
-  const item: KanjiItem = {
-    id,
-    character: text(row, 'character', 'char', 'kanji') ?? '',
-    reading_on: text(row, 'reading_on', 'on_yomi', 'onyomi') ?? '',
-    reading_kun: text(row, 'reading_kun', 'kun_yomi', 'kunyomi') ?? '',
-    meaning: text(row, 'meaning', 'meaning_ko', 'ko') ?? '',
-    level,
-  };
-  const strokeCount = numberValue(row, 'stroke_count');
-  const sourceId = numberValue(row, 'source_id');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
-  if (strokeCount !== undefined) item.stroke_count = strokeCount;
-  if (sourceId !== undefined) item.source_id = sourceId;
-  item.audio_path = audioPath ?? `audio/kanji/${level.toLowerCase()}/${id}.mp3`;
-  return item;
 }
 
 // 어휘
 export const vocabApi = {
   list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<RawRecord[]>('/vocab', p as Record<string, string>);
-    return res.ok ? { ...res, data: res.data.map(normalizeVocab) } : res;
+    const res = await api.get<ApiRawContentRecord[]>('/vocab', p as Record<string, string>);
+    return res.ok ? { ...res, data: res.data.map(normalizeVocabContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<RawRecord>(`/vocab/${id}`);
-    return res.ok ? { ...res, data: normalizeVocab(res.data) } : res;
+    const res = await api.get<ApiRawContentRecord>(`/vocab/${id}`);
+    return res.ok ? { ...res, data: normalizeVocabContentItem(res.data) } : res;
   },
   search: async (q: string, limit = 20) => {
-    const res = await api.get<RawRecord[]>('/vocab/search', { q, limit });
-    return res.ok ? { ...res, data: res.data.map(normalizeVocab) } : res;
+    const res = await api.get<ApiRawContentRecord[]>('/vocab/search', { q, limit });
+    return res.ok ? { ...res, data: res.data.map(normalizeVocabContentItem) } : res;
   },
 };
 
 // 문법
 export const grammarApi = {
   list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<RawRecord[]>('/grammar', p as Record<string, string>);
-    return res.ok ? { ...res, data: res.data.map(normalizeGrammar) } : res;
+    const res = await api.get<ApiRawContentRecord[]>('/grammar', p as Record<string, string>);
+    return res.ok ? { ...res, data: res.data.map(normalizeGrammarContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<RawRecord>(`/grammar/${id}`);
-    return res.ok ? { ...res, data: normalizeGrammar(res.data) } : res;
+    const res = await api.get<ApiRawContentRecord>(`/grammar/${id}`);
+    return res.ok ? { ...res, data: normalizeGrammarContentItem(res.data) } : res;
   },
 };
 
 // 한자
 export const kanjiApi = {
   list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<RawRecord[]>('/kanji', p as Record<string, string>);
-    return res.ok ? { ...res, data: res.data.map(normalizeKanji) } : res;
+    const res = await api.get<ApiRawContentRecord[]>('/kanji', p as Record<string, string>);
+    return res.ok ? { ...res, data: res.data.map(normalizeKanjiContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<RawRecord>(`/kanji/${id}`);
-    return res.ok ? { ...res, data: normalizeKanji(res.data) } : res;
+    const res = await api.get<ApiRawContentRecord>(`/kanji/${id}`);
+    return res.ok ? { ...res, data: normalizeKanjiContentItem(res.data) } : res;
   },
+};
+
+export const contentApi = {
+  version: () => api.get<ContentVersionDto>('/content/version'),
 };
 
 // SRS
@@ -275,16 +186,16 @@ export const srsApi = {
   init: (item_type: ItemType, item_ids: number[]) =>
     api.post<{ created: number }>('/srs/init', { item_type, item_ids }),
 
-  due: async (p?: { item_type?: ItemType; limit?: number }) => {
-    const res = await api.get<ApiList<SrsCard>>('/srs/due', p as Record<string, string>);
+  due: async (p?: { item_type?: ItemType; limit?: number }, init?: RequestInit) => {
+    const res = await api.get<ApiList<SrsCard>>('/srs/due', p as Record<string, string>, init);
     return res.ok ? { ...res, data: asItems(res.data) } : res;
   },
 
   review: (card_id: number, rating: Rating, response_ms?: number) =>
     api.post<SrsCard>('/srs/review', { card_id, rating, ...(response_ms !== undefined ? { response_ms } : {}) }),
 
-  stats: async () => {
-    const res = await api.get<{ new: number; learning: number; review: number; relearning?: number; total?: number; firstCardCreatedAt?: string | null }>('/srs/stats');
+  stats: async (init?: RequestInit) => {
+    const res = await api.get<{ new: number; learning: number; review: number; relearning?: number; total?: number; firstCardCreatedAt?: string | null }>('/srs/stats', undefined, init);
     if (!res.ok) return res;
     const total = res.data.total ?? res.data.new + res.data.learning + res.data.review + (res.data.relearning ?? 0);
     return { ...res, data: { ...res.data, total } };
@@ -293,9 +204,13 @@ export const srsApi = {
 
 // 동기화
 export const syncApi = {
-  push: (last_synced_at: string, operations: Array<{ op_id: string; type: string; payload: unknown; occurred_at: string }>) =>
+  push: (
+    last_synced_at: string,
+    operations: Array<{ op_id: string; type: string; payload: unknown; occurred_at: string }>,
+    userId = 'anonymous',
+  ) =>
     api.post<{ processed_op_ids: string[]; server_delta: unknown }>('/sync', {
-      client_id: 'web-pwa',
+      client_id: `web-pwa:${userId}`,
       last_synced_at,
       operations,
     }),
@@ -381,14 +296,14 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ user: AuthUser }>('/auth/login', { email, password }),
   logout: () => api.post<{ ok: boolean }>('/auth/logout'),
-  googleStartUrl: () => apiUrl('/auth/google/start'),
+  googleStartUrl: () => apiUrl(`/auth/google/start?source=web&ts=${Date.now()}`),
   adminUsers: () => api.get<AdminUsersOverview>('/auth/admin/users'),
 };
 
 export const __apiTestUtils = {
-  normalizeVocab,
-  normalizeGrammar,
-  normalizeKanji,
+  normalizeVocab: normalizeVocabContentItem,
+  normalizeGrammar: normalizeGrammarContentItem,
+  normalizeKanji: normalizeKanjiContentItem,
   asItems,
 };
 

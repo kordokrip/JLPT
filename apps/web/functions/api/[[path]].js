@@ -23,6 +23,9 @@ export async function onRequest({ request }) {
   responseHeaders.delete('access-control-allow-origin');
   responseHeaders.delete('access-control-allow-credentials');
   responseHeaders.delete('vary');
+  if (sourceUrl.pathname.startsWith('/api/v1/auth/')) {
+    responseHeaders.set('cache-control', 'no-store');
+  }
 
   return new Response(response.body, {
     status: response.status,

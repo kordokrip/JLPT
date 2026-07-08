@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery } from '@tanstack/react-query';
 import { db, type VocabItem } from '../lib/db';
 import { vocabApi } from '../lib/api';
+import { ensureContentFresh } from '../lib/content-cache';
 
 /** IDB first — 비어있으면 서버에서 로드해 IDB에 저장 */
 export function useVocabList(level?: string, limit = 50) {
@@ -22,6 +23,7 @@ export function useVocabList(level?: string, limit = 50) {
   const { isFetching } = useQuery({
     queryKey: ['vocab', 'list', level, limit],
     queryFn: async () => {
+      await ensureContentFresh();
       const count = level
         ? await db.vocab.where('level').equals(level).count()
         : await db.vocab.count();
@@ -32,7 +34,7 @@ export function useVocabList(level?: string, limit = 50) {
       await db.vocab.bulkPut(res.data);
       return res.data;
     },
-    staleTime: Infinity, // 한 번 로드하면 재요청 안 함
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 
@@ -45,14 +47,16 @@ export function useVocabItem(id: number) {
 
   const { isFetching } = useQuery({
     queryKey: ['vocab', 'item', id],
-    enabled: !local,
     queryFn: async () => {
+      await ensureContentFresh();
+      const current = await db.vocab.get(id);
+      if (current) return current;
       const res = await vocabApi.get(id);
       if (!res.ok) return null;
       await db.vocab.put(res.data);
       return res.data;
     },
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 

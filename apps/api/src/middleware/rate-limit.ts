@@ -84,3 +84,10 @@ export const syncRateLimit = rateLimitMiddleware(
   30,
   (c) => (c.get('userId') as string | undefined) ?? c.req.header('CF-Connecting-IP') ?? 'unknown',
 );
+
+/** Workers AI 라우트: 인증 사용자 기준, 30 req/60s */
+export const aiRateLimit = rateLimitMiddleware(
+  'RATE_LIMITER_SYNC',
+  30,
+  (c) => `ai:${(c.get('userId') as string | undefined) ?? c.req.header('CF-Connecting-IP') ?? 'unknown'}`,
+);

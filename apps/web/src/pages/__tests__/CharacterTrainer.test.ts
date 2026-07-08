@@ -6,9 +6,9 @@ import {
   getCardAudioPath,
   getCardAudioText,
   getKanaPronunciationExample,
-  kanaAudioPath,
-  type StudyCard,
-} from '../CharacterTrainer';
+} from '../../features/character-trainer/logic';
+import { kanaAudioPath } from '../../features/character-trainer/data';
+import type { StudyCard } from '../../features/character-trainer/types';
 
 describe('CharacterTrainer', () => {
   it('buildChoices keeps the target choice and removes duplicates', () => {

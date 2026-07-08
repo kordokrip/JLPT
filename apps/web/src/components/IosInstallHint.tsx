@@ -73,16 +73,22 @@ export function IosInstallHint() {
     <div
       role="dialog"
       aria-label={t('pwa.installDialogLabel')}
-      className="fixed bottom-20 inset-x-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="fixed z-50 min-w-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
+      style={{
+        left: 'max(0.75rem, env(safe-area-inset-left))',
+        right: 'max(0.75rem, env(safe-area-inset-right))',
+        bottom: 'calc(var(--nav-height, 4rem) + env(safe-area-inset-bottom) + 0.75rem)',
+        contain: 'layout paint',
+      }}
     >
       {/* 배너 카드 */}
       <div
-        className="card-hairline rounded-2xl bg-card px-5 py-4 shadow-lg"
+        className="card-hairline min-w-0 max-w-full overflow-hidden rounded-2xl bg-card px-4 py-4 shadow-lg sm:px-5"
         style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
       >
         {/* 헤더 */}
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {/* 앱 아이콘 대용 */}
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
@@ -90,11 +96,11 @@ export function IosInstallHint() {
             >
               🇯🇵
             </div>
-            <div>
-              <p className="font-sans-jp text-[13px] font-medium text-foreground leading-snug">
+            <div className="min-w-0">
+              <p className="break-words font-sans-jp text-[13px] font-medium text-foreground leading-snug">
                 {t('pwa.installTitle')}
               </p>
-              <p className="font-pretendard text-[12px] text-[var(--muted-foreground)] leading-snug mt-0.5">
+              <p className="mt-0.5 break-words font-pretendard text-[12px] leading-snug text-[var(--muted-foreground)]">
                 {t('pwa.installSubtitle')}
               </p>
             </div>
@@ -126,14 +132,14 @@ export function IosInstallHint() {
           style={{ background: 'var(--color-accent-soft)' }}
         >
           {/* Step 1 */}
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 font-pretendard text-[10px] font-bold text-white"
               style={{ background: 'var(--color-accent)' }}
             >
               1
             </span>
-            <span className="font-pretendard text-[12px] text-foreground">
+            <span className="min-w-0 break-words font-pretendard text-[12px] text-foreground">
               {t('pwa.installStep1')}
               <span className="inline-flex items-center gap-0.5 align-middle">
                 {/* Share 아이콘 */}
@@ -157,14 +163,14 @@ export function IosInstallHint() {
           </div>
 
           {/* Step 2 */}
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 font-pretendard text-[10px] font-bold text-white"
               style={{ background: 'var(--color-accent)' }}
             >
               2
             </span>
-            <span className="font-pretendard text-[12px] text-foreground">
+            <span className="min-w-0 break-words font-pretendard text-[12px] text-foreground">
               {t('pwa.installStep2')}
             </span>
           </div>

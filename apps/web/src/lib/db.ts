@@ -8,47 +8,18 @@
  *   3. 동기화 큐              — sync_queue
  */
 import Dexie, { type EntityTable } from 'dexie';
+import type {
+  GrammarContentItem,
+  KanjiContentItem,
+  VocabContentItem,
+} from '@nihongo-n3/shared';
 
 // ─────────────────────────────────────────────
 // 콘텐츠 타입 (서버 API 응답 미러)
 // ─────────────────────────────────────────────
-export interface VocabItem {
-  id: number;
-  word: string;
-  reading: string;
-  meaning: string;
-  level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
-  part_of_speech?: string;
-  example_jp?: string;
-  example_ko?: string;
-  audio_path?: string;
-  source_id?: number;
-  category_id?: number;
-}
-
-export interface GrammarItem {
-  id: number;
-  pattern: string;
-  meaning: string;
-  level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
-  structure?: string;
-  notes?: string;
-  example_jp?: string;
-  example_ko?: string;
-  source_id?: number;
-}
-
-export interface KanjiItem {
-  id: number;
-  character: string;
-  reading_on?: string;
-  reading_kun?: string;
-  meaning: string;
-  stroke_count?: number;
-  level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
-  audio_path?: string;
-  source_id?: number;
-}
+export type VocabItem = VocabContentItem;
+export type GrammarItem = GrammarContentItem;
+export type KanjiItem = KanjiContentItem;
 
 export interface SentenceItem {
   id: number;
@@ -159,6 +130,7 @@ export type SyncStatus = 'pending' | 'processing' | 'done' | 'failed';
 
 export interface SyncQueueItem {
   id?: number;
+  user_id: string;
   op_id: string;      // UUID — 서버 멱등성 키
   type: SyncOpType;
   payload: string;    // JSON
@@ -166,6 +138,32 @@ export interface SyncQueueItem {
   status: SyncStatus;
   retries: number;
   last_error?: string;
+}
+
+export interface LocalMeta {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────
+// 유틸 — 로컬 userId namespace
+// ─────────────────────────────────────────────
+export const LOCAL_USER = 'owner';
+export const ANONYMOUS_LOCAL_USER = 'anonymous';
+let activeLocalUserId = ANONYMOUS_LOCAL_USER;
+
+export function localUserIdFor(userId: string | null | undefined): string {
+  return userId ? `user:${userId}` : ANONYMOUS_LOCAL_USER;
+}
+
+export function setActiveLocalUserId(userId: string | null | undefined): string {
+  activeLocalUserId = localUserIdFor(userId);
+  return activeLocalUserId;
+}
+
+export function getActiveLocalUserId(): string {
+  return activeLocalUserId;
 }
 
 // ─────────────────────────────────────────────
@@ -190,6 +188,9 @@ class NihongoDb extends Dexie {
   // 동기화 큐
   sync_queue!: EntityTable<SyncQueueItem, 'id'>;
 
+  // 로컬 메타데이터
+  meta!: EntityTable<LocalMeta, 'key'>;
+
   constructor() {
     super('nihongo-n3');
     this.version(1).stores({
@@ -211,15 +212,35 @@ class NihongoDb extends Dexie {
       // ── 동기화 큐 ────────────────────────────
       sync_queue: '++id, op_id, status, occurred_at',
     });
+
+    this.version(2).stores({
+      // ── 콘텐츠 ──────────────────────────────
+      vocab:      '++id, level, source_id, category_id',
+      grammar:    '++id, level, source_id',
+      kanji:      '++id, level, source_id, character',
+      sentences:  '++id, [item_type+item_id]',
+      sysprog:    '++id, domain',
+      curriculum: '++id, week, day',
+
+      // ── 학습 데이터 ──────────────────────────
+      srs_cards:     '++id, [user_id+item_type+item_id], user_id, due_at, state',
+      review_logs:   '++id, [user_id+item_type+item_id], reviewed_at, synced',
+      daily_logs:    '++id, [user_id+log_date], synced',
+      quiz_attempts: '++id, [user_id+session_date], synced',
+      self_check:    '[user_id+week], synced',
+
+      // ── 동기화 큐 / 메타 ─────────────────────
+      sync_queue: '++id, user_id, [user_id+status], op_id, status, occurred_at',
+      meta: '&key',
+    }).upgrade(async (tx) => {
+      await tx.table<SyncQueueItem, number>('sync_queue').toCollection().modify((item) => {
+        item.user_id ??= LOCAL_USER;
+      });
+    });
   }
 }
 
 export const db = new NihongoDb();
-
-// ─────────────────────────────────────────────
-// 유틸 — 로컬 userId (단일 사용자)
-// ─────────────────────────────────────────────
-export const LOCAL_USER = 'owner';
 
 // ─────────────────────────────────────────────
 // 유틸 — 오늘 날짜 문자열

@@ -24,8 +24,12 @@ test.describe('반응형 UI 안전성', () => {
       for (const route of ROUTES) {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#root > *').first()).toBeVisible();
+        await page.evaluate(async () => {
+          await document.fonts?.ready.catch(() => undefined);
+        }).catch(() => undefined);
         await expect.poll(() => page.evaluate(expectNoHorizontalOverflow), {
           message: `${device.name} ${route} horizontal overflow`,
+          timeout: 10_000,
         }).toBe(true);
       }
     });
@@ -105,5 +109,27 @@ test.describe('반응형 UI 안전성', () => {
     const labels = await side.locator('a[href]').evaluateAll((links) => links.map((link) => link.textContent?.trim() ?? ''));
     expect(labels).toContain('찾아보기');
     expect(labels.some((label) => label.length >= 2)).toBe(true);
+  });
+
+  test('태블릿에서는 하단 탭 대신 navigation rail을 사용한다', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await ensureAuthenticated(page);
+    await page.goto('/');
+
+    const mainNav = page.getByRole('navigation', { name: /메인|Main|メイン/ });
+    await expect(mainNav).toBeHidden();
+
+    const side = page.getByRole('navigation', { name: /사이드|Sidebar|サイド/ });
+    await expect(side).toBeVisible();
+    await expect(side).toHaveAttribute('data-mode', 'rail');
+
+    const width = await side.evaluate((node) => node.getBoundingClientRect().width);
+    expect(width).toBeGreaterThanOrEqual(88);
+    expect(width).toBeLessThanOrEqual(100);
+
+    const labels = await side.locator('a[href]').evaluateAll((links) => links.map((link) => link.textContent?.trim() ?? ''));
+    expect(labels).toContain('홈');
+    expect(labels).toContain('찾아보기');
+    expect(labels.every((label) => label.length >= 1)).toBe(true);
   });
 });

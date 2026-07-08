@@ -8,7 +8,7 @@
  *   2. 온라인 상태 → flush()가 /api/v1/sync 를 호출해 큐 비움
  *   3. 성공한 항목은 status='done' → 주기적으로 purge
  */
-import { db, type SyncOpType, type SyncQueueItem } from './db';
+import { db, getActiveLocalUserId, type SyncOpType, type SyncQueueItem } from './db';
 import { syncApi } from './api';
 import { createClientId, isOnline } from './browser';
 
@@ -31,7 +31,9 @@ export async function enqueue(
   type: SyncOpType,
   payload: unknown,
 ): Promise<void> {
+  const userId = getActiveLocalUserId();
   const item: SyncQueueItem = {
+    user_id:      userId,
     op_id:       uuid(),
     type,
     payload:     JSON.stringify(payload),
@@ -50,10 +52,11 @@ let flushing = false;
 
 export async function flush(): Promise<void> {
   if (flushing || !isOnline()) return;
+  const userId = getActiveLocalUserId();
   flushing = true;
   try {
     const pending = await db.sync_queue
-      .where('status').equals('pending')
+      .where('[user_id+status]').equals([userId, 'pending'])
       .and((item) => item.retries < MAX_RETRIES)
       .toArray();
 
@@ -65,7 +68,7 @@ export async function flush(): Promise<void> {
 
     // last_synced_at: 가장 오래된 done 항목 이후
     const lastDone = await db.sync_queue
-      .where('status').equals('done')
+      .where('[user_id+status]').equals([userId, 'done'])
       .reverse()
       .first();
     const last_synced_at = lastDone?.occurred_at ?? new Date(0).toISOString();
@@ -77,7 +80,7 @@ export async function flush(): Promise<void> {
       occurred_at: item.occurred_at,
     }));
 
-    const result = await syncApi.push(last_synced_at, operations);
+    const result = await syncApi.push(last_synced_at, operations, userId);
 
     if (result.ok) {
       await db.sync_queue.where('id').anyOf(ids).modify({ status: 'done' });

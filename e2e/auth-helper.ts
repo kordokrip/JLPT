@@ -1,23 +1,11 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 export async function ensureAuthenticated(page: Page): Promise<void> {
-  const apiBase = process.env.E2E_AUTH_URL?.replace(/\/$/, '') ?? '';
-  const path = (value: string) => `${apiBase}${value}`;
-  const me = await page.request.get(path('/api/v1/auth/me'));
-  if (me.ok()) {
-    const body = await me.json().catch(() => null) as { data?: { authenticated?: boolean } } | null;
-    if (body?.data?.authenticated) return;
-  }
-
   const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const register = await page.request.post(path('/api/v1/auth/register'), {
-    data: {
-      email: `e2e-${unique}@example.com`,
-      password: 'Passw0rd1234',
-      display_name: 'E2E 사용자',
-    },
-  });
-  if (!register.ok()) {
-    throw new Error(`E2E auth register failed: ${register.status()} ${await register.text()}`);
-  }
+  await page.goto('/register', { waitUntil: 'domcontentloaded' });
+  await page.getByLabel('이름').fill('E2E 사용자');
+  await page.getByLabel('이메일').fill(`e2e-${unique}@example.com`);
+  await page.getByLabel('비밀번호').fill('Passw0rd1234');
+  await page.getByRole('button', { name: /계정 만들기|Create account|アカウント作成/ }).click();
+  await expect(page.getByText(/오늘 할 일|오늘도 천천히|Today/i).first()).toBeVisible({ timeout: 20_000 });
 }

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 /**
  * e2e/vocab-search.spec.ts
@@ -9,6 +10,10 @@ import { test, expect } from '@playwright/test';
  * - 결과 목록 표시 확인
  */
 test.describe('어휘 검색', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureAuthenticated(page);
+  });
+
   test('검색 페이지 또는 검색 입력란에 접근할 수 있다', async ({ page }) => {
     // /browse/vocab 또는 /search 경로 시도
     await page.goto('/browse/vocab');

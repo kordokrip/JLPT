@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '../lib/db';
 import { grammarApi, kanjiApi } from '../lib/api';
+import { ensureContentFresh } from '../lib/content-cache';
 
 // ─────────────────────────────────────────────
 // 문법
@@ -19,8 +20,9 @@ export function useGrammarList(level?: string, limit = 50) {
   );
 
   const { isFetching } = useQuery({
-    queryKey: ['grammar', 'list', level],
+    queryKey: ['grammar', 'list', level, limit],
     queryFn: async () => {
+      await ensureContentFresh();
       const count = level
         ? await db.grammar.where('level').equals(level).count()
         : await db.grammar.count();
@@ -30,7 +32,7 @@ export function useGrammarList(level?: string, limit = 50) {
       await db.grammar.bulkPut(res.data);
       return res.data;
     },
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 
@@ -41,14 +43,16 @@ export function useGrammarItem(id: number) {
   const local = useLiveQuery(() => db.grammar.get(id), [id]);
   const { isFetching } = useQuery({
     queryKey: ['grammar', 'item', id],
-    enabled:  !local,
     queryFn: async () => {
+      await ensureContentFresh();
+      const current = await db.grammar.get(id);
+      if (current) return current;
       const res = await grammarApi.get(id);
       if (!res.ok) return null;
       await db.grammar.put(res.data);
       return res.data;
     },
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
   return { item: local, loading: isFetching };
@@ -67,8 +71,9 @@ export function useKanjiList(level?: string, limit = 50) {
   );
 
   const { isFetching } = useQuery({
-    queryKey: ['kanji', 'list', level],
+    queryKey: ['kanji', 'list', level, limit],
     queryFn: async () => {
+      await ensureContentFresh();
       const count = level
         ? await db.kanji.where('level').equals(level).count()
         : await db.kanji.count();
@@ -78,7 +83,7 @@ export function useKanjiList(level?: string, limit = 50) {
       await db.kanji.bulkPut(res.data);
       return res.data;
     },
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
 
@@ -89,14 +94,16 @@ export function useKanjiItem(id: number) {
   const local = useLiveQuery(() => db.kanji.get(id), [id]);
   const { isFetching } = useQuery({
     queryKey: ['kanji', 'item', id],
-    enabled:  !local,
     queryFn: async () => {
+      await ensureContentFresh();
+      const current = await db.kanji.get(id);
+      if (current) return current;
       const res = await kanjiApi.get(id);
       if (!res.ok) return null;
       await db.kanji.put(res.data);
       return res.data;
     },
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
     retry: 1,
   });
   return { item: local, loading: isFetching };

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 /**
  * e2e/settings-theme.spec.ts
@@ -10,6 +11,7 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('테마 설정', () => {
   test.beforeEach(async ({ page }) => {
+    await ensureAuthenticated(page);
     await page.goto('/settings');
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
   });

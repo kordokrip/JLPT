@@ -4,7 +4,7 @@
  * Service Worker — injectManifest 모드 (vite-plugin-pwa)
  *
  * - Precache: self.__WB_MANIFEST (빌드 시 vite-plugin-pwa가 주입)
- * - Runtime caching: 오디오, 콘텐츠 API, 구글 폰트
+ * - Runtime caching: 오디오, 콘텐츠 API
  * - Push 알림: 아침/저녁 복습 알림
  * - notificationclick: 알림 클릭 → 앱 포커스 또는 새 창
  */
@@ -63,30 +63,6 @@ registerRoute(
     cacheName: 'nihongo-content',
     plugins: [
       new ExpirationPlugin({ maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 7 }),
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-    ],
-  }),
-);
-
-// 구글 폰트 stylesheets: CacheFirst 1년
-registerRoute(
-  ({ url }) => url.origin === 'https://fonts.googleapis.com',
-  new CacheFirst({
-    cacheName: 'google-fonts-stylesheets',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 }),
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-    ],
-  }),
-);
-
-// 구글 폰트 webfonts: CacheFirst 1년
-registerRoute(
-  ({ url }) => url.origin === 'https://fonts.gstatic.com',
-  new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),
     ],
   }),

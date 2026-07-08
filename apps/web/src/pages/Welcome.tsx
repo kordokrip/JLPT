@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-
 const POINTS = [
   ['01', '문자부터 N3까지', '히라가나, 가타카나, 한자, 어휘, 문법을 한 흐름으로 학습합니다.'],
   ['02', '매일 이어지는 복습', '퀴즈와 SRS 기록을 계정에 저장해 다음 학습으로 자연스럽게 연결합니다.'],
@@ -37,18 +35,18 @@ export default function Welcome() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/login"
+              <a
+                href="/login"
                 className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[#D82920] px-8 text-base font-black text-white shadow-[0_16px_34px_rgba(216,41,32,0.34)] transition-transform hover:-translate-y-0.5"
               >
                 로그인
-              </Link>
-              <Link
-                to="/register"
+              </a>
+              <a
+                href="/register"
                 className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-[#E9D7B3]/35 bg-[#FFF7E8]/10 px-8 text-base font-black text-[#FFF7E8] backdrop-blur transition-colors hover:bg-[#FFF7E8]/16"
               >
                 회원가입
-              </Link>
+              </a>
             </div>
 
             <div className="mt-9 overflow-hidden border border-[#E9D7B3]/18 bg-black/26 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.32)] lg:hidden">

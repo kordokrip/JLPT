@@ -2,7 +2,6 @@
  * RootLayout — 앱 공통 레이아웃 (Outlet)
  */
 import { Outlet } from 'react-router-dom';
-import type { CSSProperties } from 'react';
 import { SideNav }         from './SideNav';
 import { BottomTabBar }    from './BottomTabBar';
 import { useUiStore }      from '../../stores/ui-store';
@@ -13,12 +12,12 @@ export function RootLayout() {
   const isOnline = useUiStore((s) => s.isOnline);
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
   const { t } = useTranslation();
-  const layoutStyle = {
-    '--sidebar-width': sideNavCollapsed ? '6.25rem' : '15rem',
-  } as CSSProperties;
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-[var(--background)]" style={layoutStyle}>
+    <div
+      data-side-state={sideNavCollapsed ? 'collapsed' : 'expanded'}
+      className="app-shell relative min-h-dvh overflow-x-clip bg-[var(--background)]"
+    >
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 bg-no-repeat opacity-[0.055] dark:opacity-[0.13]"
@@ -54,7 +53,7 @@ export function RootLayout() {
         id="main-content"
         className={[
           'relative z-10',
-          'md:pl-[var(--sidebar-width)]',
+          'md:pl-[var(--active-sidebar-width)]',
           'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto md:h-auto md:min-h-dvh md:overflow-visible',
           'pb-0 md:pb-0',
           'min-w-0 pt-[env(safe-area-inset-top)]',

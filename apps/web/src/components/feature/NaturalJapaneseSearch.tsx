@@ -103,6 +103,7 @@ export function NaturalJapaneseSearch({ onUse }: NaturalJapaneseSearchProps) {
             <PronunciationButton
               compact
               text={result.translatedText}
+              surface="example"
               label={t('browse.playPronunciation')}
               className="h-9 w-9 flex-shrink-0"
             />

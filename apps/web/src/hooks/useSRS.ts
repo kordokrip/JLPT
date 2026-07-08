@@ -4,37 +4,41 @@
 import { useState, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, LOCAL_USER, type SrsCard, type ItemType, type Rating } from '../lib/db';
+import { db, localUserIdFor, type SrsCard, type ItemType, type Rating } from '../lib/db';
 import { srsApi } from '../lib/api';
 import { schedule, isDue } from '../lib/fsrs-client';
 import { enqueue } from '../lib/sync';
 import { isOnline } from '../lib/browser';
+import { useAuthStore } from '../stores/auth-store';
 
 /** 오늘 due 카드 목록 (IDB + 서버 병합) */
 export function useDueCards(itemType?: ItemType, limit = 20) {
-  const now = new Date();
+  const authUserId = useAuthStore((s) => s.user?.id ?? null);
+  const localUserId = localUserIdFor(authUserId);
 
   // IDB에서 즉시 반환 (reactive)
   const localCards = useLiveQuery(
-    () =>
-      db.srs_cards
+    () => {
+      const now = new Date();
+      return db.srs_cards
         .where('user_id')
-        .equals(LOCAL_USER)
+        .equals(localUserId)
         .and((c) => isDue(c.due_at, now) && (!itemType || c.item_type === itemType))
         .limit(limit)
-        .toArray(),
-    [itemType, limit],
+        .toArray();
+    },
+    [localUserId, itemType, limit],
   );
 
   // 서버 due 목록 주기적 동기화 (10분 stale)
   const { refetch, isLoading } = useQuery({
-    queryKey: ['srs', 'due', itemType],
+    queryKey: ['srs', 'due', localUserId, itemType],
     queryFn: async () => {
       const result = await srsApi.due({ ...(itemType !== undefined ? { item_type: itemType } : {}), limit: 100 });
       if (!result.ok) return [];
       // 서버 카드를 IDB에 upsert
       await db.srs_cards.bulkPut(
-        result.data.map((c) => ({ ...c, user_id: LOCAL_USER })),
+        result.data.map((c) => ({ ...c, user_id: localUserId })),
       );
       return result.data;
     },
@@ -47,8 +51,10 @@ export function useDueCards(itemType?: ItemType, limit = 20) {
 
 /** SRS 통계 */
 export function useSrsStats() {
+  const authUserId = useAuthStore((s) => s.user?.id ?? null);
+  const localUserId = localUserIdFor(authUserId);
   return useQuery({
-    queryKey: ['srs', 'stats'],
+    queryKey: ['srs', 'stats', localUserId],
     queryFn: async () => {
       const res = await srsApi.stats();
       return res.ok ? res.data : null;
@@ -62,6 +68,8 @@ export function useSrsStats() {
 export function useReviewCard() {
   const qc = useQueryClient();
   const [reviewing, setReviewing] = useState(false);
+  const authUserId = useAuthStore((s) => s.user?.id ?? null);
+  const localUserId = localUserIdFor(authUserId);
 
   const review = useCallback(
     async (card: SrsCard, rating: Rating) => {
@@ -90,7 +98,7 @@ export function useReviewCard() {
         };
         await db.srs_cards
           .where('[user_id+item_type+item_id]')
-          .equals([LOCAL_USER, card.item_type, card.item_id])
+          .equals([localUserId, card.item_type, card.item_id])
           .modify(updated);
 
         const syncPayload = {
@@ -113,7 +121,7 @@ export function useReviewCard() {
         setReviewing(false);
       }
     },
-    [qc],
+    [localUserId, qc],
   );
 
   return { review, reviewing };

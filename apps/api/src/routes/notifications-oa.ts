@@ -1,10 +1,9 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { notifications } from './notifications.js';
-import { createdResponseSchema, dataResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 
 const notificationsOA = new OpenAPIHono<AppEnv>();
-notificationsOA.route('/', notifications);
 
 const subscriptionBodySchema = z.object({
   endpoint: z.string().url(),
@@ -14,7 +13,7 @@ const subscriptionBodySchema = z.object({
   eveningOn: z.boolean().optional(),
 });
 
-registerDocsOnlyRoutes(notificationsOA, [
+mountLegacyRouteWithOpenApiDocs(notificationsOA, notifications, [
   {
     method: 'post',
     path: '/notifications/subscribe',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSelfCheckPayload, calcScore } from '../SelfCheck';
+import { buildSelfCheckPayload, calcScore } from '../../features/self-check/logic';
 
 describe('SelfCheck score helpers', () => {
   it('calculates a section score from checked Korean template codes', () => {

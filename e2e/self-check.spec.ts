@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 async function expectNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   const badResponses: string[] = [];
@@ -25,6 +26,7 @@ async function expectNoRuntimeFailures(page: Page, run: () => Promise<void>) {
 
 test.describe('자가진단 기능', () => {
   test('한국어 자기진단 문항과 추천 학습 방향을 렌더링하고 저장한다', async ({ page }) => {
+    await ensureAuthenticated(page);
     await expectNoRuntimeFailures(page, async () => {
       await page.addInitScript(() => {
         localStorage.setItem('nihongo-n3-settings', JSON.stringify({

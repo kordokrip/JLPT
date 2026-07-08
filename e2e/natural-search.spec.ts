@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 test.describe('자연 일본어 검색 UX', () => {
   test('데스크톱 사이드 메뉴를 접고 펼칠 수 있다', async ({ page }) => {
+    await ensureAuthenticated(page);
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
 
@@ -13,6 +15,7 @@ test.describe('자연 일본어 검색 UX', () => {
   });
 
   test('한국어 표현을 자연 일본어로 바꿔 어휘 검색에 사용한다', async ({ page }) => {
+    await ensureAuthenticated(page);
     await page.route('**/api/v1/ai/translate', async (route) => {
       await route.fulfill({
         status: 200,

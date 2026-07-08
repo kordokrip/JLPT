@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { audioPlayer } from '../../lib/audio';
-import { initialListeningAudioSource, toSubmittedAnswers } from '../QuizListening';
+import { initialListeningAudioSource, toSubmittedAnswers } from '../../features/quiz-listening/logic';
 
 describe('toSubmittedAnswers', () => {
   it('converts keyed answers to the API submit payload', () => {

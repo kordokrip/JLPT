@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 /**
  * e2e/home.spec.ts
@@ -10,6 +11,7 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('홈 화면', () => {
   test.beforeEach(async ({ page }) => {
+    await ensureAuthenticated(page);
     await page.goto('/');
   });
 
@@ -25,10 +27,10 @@ test.describe('홈 화면', () => {
   });
 
   test('복습 카드 카운트가 표시된다 (0 포함)', async ({ page }) => {
+    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 10_000 });
+
     // due count 배지 또는 숫자 — 0이라도 표시되어야 함
     // 공통적인 패턴: data-testid="due-count" 또는 텍스트로 숫자
-    await page.waitForLoadState('networkidle', { timeout: 15_000 });
-
     const dueCount = page.locator('[data-testid="due-count"], .due-count, [aria-label*="복습"]').first();
     // 있으면 숫자를 포함하고 있어야 함
     if (await dueCount.count() > 0) {
@@ -42,7 +44,7 @@ test.describe('홈 화면', () => {
   });
 
   test('복습 시작 버튼 또는 링크가 존재한다', async ({ page }) => {
-    await page.waitForLoadState('networkidle', { timeout: 15_000 });
+    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 10_000 });
 
     const reviewLink = page.locator(
       'a[href*="review"], button:has-text("복습"), a:has-text("복습"), [data-testid="start-review"]',

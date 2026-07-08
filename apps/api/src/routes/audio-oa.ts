@@ -1,11 +1,10 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { audio } from './audio.js';
-import { audioKeyParamSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { audioKeyParamSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 import { z } from '@hono/zod-openapi';
 const audioOA = new OpenAPIHono<AppEnv>();
-audioOA.route('/', audio);
-registerDocsOnlyRoutes(audioOA, [
+mountLegacyRouteWithOpenApiDocs(audioOA, audio, [
   {
     method: 'get',
     path: '/audio/qa/{provider}/{index}.wav',

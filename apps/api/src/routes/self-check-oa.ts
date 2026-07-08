@@ -2,10 +2,9 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { selfCheck } from './self-check.js';
 import { selfCheckBodySchema } from '@nihongo-n3/shared';
-import { createdResponseSchema, dataResponseSchema, listResponseSchema, problemSchema, registerDocsOnlyRoutes, weekParamSchema } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema, weekParamSchema } from './openapi-docs.js';
 const selfCheckOA = new OpenAPIHono<AppEnv>();
-selfCheckOA.route('/', selfCheck);
-registerDocsOnlyRoutes(selfCheckOA, [
+mountLegacyRouteWithOpenApiDocs(selfCheckOA, selfCheck, [
   {
     method: 'get',
     path: '/self-check/templates',

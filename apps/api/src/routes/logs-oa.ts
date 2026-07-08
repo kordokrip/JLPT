@@ -2,10 +2,9 @@ import { OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { logs } from './logs.js';
 import { dailyLogBodySchema, dailyLogQuerySchema, quizAttemptBodySchema } from '@nihongo-n3/shared';
-import { createdResponseSchema, dataResponseSchema, listResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { createdResponseSchema, dataResponseSchema, listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 const logsOA = new OpenAPIHono<AppEnv>();
-logsOA.route('/', logs);
-registerDocsOnlyRoutes(logsOA, [
+mountLegacyRouteWithOpenApiDocs(logsOA, logs, [
   {
     method: 'post',
     path: '/logs/daily',

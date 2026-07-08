@@ -1,0 +1,180 @@
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { PronunciationButton } from '../../components/feature/PronunciationButton';
+import { levelVariant } from '../../components/ui/Badge';
+import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
+import type { ContentType } from './types';
+
+export function BrowseList({
+  currentType,
+  items,
+}: {
+  currentType: ContentType;
+  items: Array<VocabItem | GrammarItem | KanjiItem>;
+}) {
+  const navigate = useNavigate();
+
+  if (currentType === 'vocab') {
+    return (
+      <ul role="list" className="space-y-3">
+        {(items as VocabItem[]).map((item) => (
+          <VocabListItem key={item.id} item={item} onOpen={() => navigate(`/browse/vocab/${item.id}`)} />
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <ul role="list" className="space-y-3">
+      {(items as Array<GrammarItem | KanjiItem>).map((item) => (
+        <li key={item.id} role="listitem">
+          <article className="surface-card p-4 shadow-none transition-all hover-lift sm:p-5">
+            {currentType === 'kanji'
+              ? <KanjiListItem item={item as KanjiItem} onOpen={() => navigate(`/browse/${currentType}/${item.id}`)} />
+              : <GrammarListItem item={item as GrammarItem} onOpen={() => navigate(`/browse/${currentType}/${item.id}`)} />}
+          </article>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function VocabListItem({ item, onOpen }: { item: VocabItem; onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <li role="listitem">
+      <article className="surface-card p-4 shadow-none transition-all hover-lift sm:p-5">
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            aria-label={`${item.word} — ${item.meaning}`}
+            onClick={onOpen}
+            className="min-h-11 min-w-0 flex-1 text-left"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+              <div className="min-w-0 flex-shrink-0 sm:w-44">
+                <div className="break-all font-serif-jp text-[var(--text-xl)] font-normal leading-tight text-foreground">
+                  {item.word}
+                </div>
+                <div className="mt-1 text-sm text-[var(--muted-foreground)]">
+                  {item.reading}
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="text-base font-semibold text-foreground">{item.meaning}</span>
+                  {item.part_of_speech && (
+                    <span className="rounded border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--muted-foreground)]">
+                      {item.part_of_speech}
+                    </span>
+                  )}
+                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${
+                    levelVariant(item.level ?? 'n3').includes('n3') ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                    : levelVariant(item.level ?? 'n3').includes('n4') ? 'bg-blue-50 text-blue-600'
+                    : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {(item.level ?? 'N3').toUpperCase()}
+                  </span>
+                </div>
+                {item.example_jp && (
+                  <p className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
+                    {t('browse.example')}: {item.example_jp}
+                  </p>
+                )}
+              </div>
+            </div>
+          </button>
+          <div className="shrink-0">
+            <PronunciationButton
+              compact
+              text={item.reading || item.word}
+              audioPath={item.audio_path}
+              surface="vocab"
+              label={`${item.word} ${t('browse.playPronunciation')}`}
+              className="border-0 bg-transparent p-0"
+            />
+          </div>
+        </div>
+      </article>
+    </li>
+  );
+}
+
+function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start gap-3">
+      <button
+        type="button"
+        aria-label={item.character}
+        onClick={onOpen}
+        className="flex min-h-11 min-w-0 flex-1 items-start gap-5 text-left"
+      >
+        <div className="flex-shrink-0 font-serif-jp text-[var(--text-2xl)] font-normal text-foreground">
+          {item.character}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-base font-semibold text-foreground">{item.meaning}</span>
+            <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
+              {(item.level ?? 'N3').toUpperCase()}
+            </span>
+          </div>
+          <div className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
+            {item.reading_on && <span>{t('browse.onyomi')}: {item.reading_on}　</span>}
+            {item.reading_kun && <span>{t('browse.kunyomi')}: {item.reading_kun}</span>}
+          </div>
+        </div>
+      </button>
+      <div className="shrink-0">
+        <PronunciationButton
+          compact
+          text={item.reading_on || item.reading_kun || item.character}
+          audioPath={item.audio_path}
+          surface="kanji"
+          label={`${item.character} ${t('browse.playPronunciation')}`}
+          className="text-[var(--muted-foreground)]"
+        />
+      </div>
+    </div>
+  );
+}
+
+function GrammarListItem({ item, onOpen }: { item: GrammarItem; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={item.pattern}
+      onClick={onOpen}
+      className="min-h-11 w-full text-left"
+    >
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="font-sans-jp text-base font-semibold text-foreground">{item.pattern}</span>
+        <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
+          {(item.level ?? 'N3').toUpperCase()}
+        </span>
+      </div>
+      <p className="text-sm leading-6 text-[var(--muted-foreground)]">
+        {item.meaning}
+      </p>
+    </button>
+  );
+}
+
+export function LoadingList() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="surface-card animate-pulse p-5 shadow-none">
+          <div className="flex items-start gap-5">
+            <div className="w-14 h-8 bg-[var(--border)] rounded" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-[var(--border)] rounded w-1/3" />
+              <div className="h-3 bg-[var(--border)] rounded w-2/3" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

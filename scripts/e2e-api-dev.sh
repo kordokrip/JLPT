@@ -21,4 +21,8 @@ if [[ "${E2E_SKIP_DB_BOOTSTRAP:-}" != "1" ]]; then
   pnpm -F @nihongo-n3/db seed:local
 fi
 
-pnpm -F @nihongo-n3/api dev
+pnpm -C apps/api exec wrangler dev \
+  --var ENVIRONMENT:test \
+  --var AUTH_MODE:app-session \
+  --var APP_ORIGIN:http://localhost:5173 \
+  --var GOOGLE_REDIRECT_URI:http://localhost:8787/api/v1/auth/google/callback

@@ -2,10 +2,9 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { homophones } from './homophones.js';
 import { homophonesQuerySchema } from '@nihongo-n3/shared';
-import { listResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 const homophonesOA = new OpenAPIHono<AppEnv>();
-homophonesOA.route('/', homophones);
-registerDocsOnlyRoutes(homophonesOA, [
+mountLegacyRouteWithOpenApiDocs(homophonesOA, homophones, [
   {
     method: 'get',
     path: '/homophones',

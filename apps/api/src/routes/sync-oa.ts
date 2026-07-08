@@ -2,10 +2,9 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { sync } from './sync.js';
 import { syncBodySchema } from '@nihongo-n3/shared';
-import { dataResponseSchema, problemSchema, registerDocsOnlyRoutes } from './openapi-docs.js';
+import { dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
 const syncOA = new OpenAPIHono<AppEnv>();
-syncOA.route('/', sync);
-registerDocsOnlyRoutes(syncOA, [
+mountLegacyRouteWithOpenApiDocs(syncOA, sync, [
   {
     method: 'post',
     path: '/sync',

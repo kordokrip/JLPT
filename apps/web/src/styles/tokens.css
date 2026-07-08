@@ -80,7 +80,7 @@
   --radius-lg:     1rem;
   --radius-xl:     1.25rem;
   --touch-target:  44px;
-  --content-max:   58rem;
+  --content-max:   50rem;
   --content-wide:  72rem;
 
   /* ── 타입 스케일 ─────────────────────────────── */
@@ -99,7 +99,7 @@
   --shadow-float: 0 18px 48px rgba(42, 30, 24, 0.14);
 
   /* ── 타이포그래피 ────────────────────────────── */
-  --font-sans:  'Noto Sans JP', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+  --font-sans:  'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'YuGothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
   --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
   --font-size-base: 16px;
 

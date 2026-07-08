@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 /**
  * e2e/srs-review.spec.ts
@@ -25,6 +26,10 @@ async function ensureReviewCard(page: import('@playwright/test').Page) {
 }
 
 test.describe('SRS 복습 플로우', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureAuthenticated(page);
+  });
+
   test('복습 화면에 진입할 수 있다', async ({ page }) => {
     await page.goto('/review');
     await page.waitForLoadState('networkidle', { timeout: 15_000 });

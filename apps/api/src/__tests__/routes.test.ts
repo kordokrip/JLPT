@@ -84,6 +84,14 @@ async function fetch(path: string, init?: RequestInit) {
   return res;
 }
 
+async function fetchWithEnv(path: string, testEnv: typeof env, init?: RequestInit) {
+  const request = new Request(`https://api.example.test${path}`, init);
+  const ctx = createExecutionContext();
+  const res = await app.fetch(request, testEnv, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
+}
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   return res.json<T>();
@@ -231,6 +239,15 @@ describe('GET /api/v1/sources', () => {
     const body = await res.json<{ data: unknown[] }>();
     expect(Array.isArray(body.data)).toBe(true);
   });
+
+  it('콘텐츠 버전 endpoint가 count/max timestamp 기반 버전을 반환한다', async () => {
+    const res = await fetch('/api/v1/content/version');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { version: string; tables: Record<string, { count: number; updatedAt: number | null }> } }>();
+    expect(body.data.version).toContain('vocab:');
+    expect(body.data.tables.vocab?.count).toBeTypeOf('number');
+    expect(body.data.tables.kanji?.count).toBeTypeOf('number');
+  });
 });
 
 // ─────────────────────────────────────────────
@@ -304,6 +321,18 @@ describe('POST /api/v1/ai/translate', () => {
     expect(body.data.model).toBe('@cf/meta/llama-3.3-70b-instruct-fp8-fast');
   });
 
+  it('운영 app-session 모드에서는 세션 없는 요청을 거부한다', async () => {
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const res = await fetchWithEnv('/api/v1/ai/translate', productionEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'https://nihongo-n3.pages.dev' },
+      body: JSON.stringify({ text: '오늘은 조금 피곤해요', target: 'ja', tone: 'polite' }),
+    });
+    expect(res.status).toBe(401);
+    const body = await res.json<{ detail: string }>();
+    expect(body.detail).toContain('로그인');
+  });
+
   it('빈 입력은 400', async () => {
     const res = await fetch('/api/v1/ai/translate', {
       method: 'POST',
@@ -311,6 +340,22 @@ describe('POST /api/v1/ai/translate', () => {
       body: JSON.stringify({ text: '', target: 'ja' }),
     });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('Auth mode guardrails', () => {
+  it('cf-access 모드에서는 Cloudflare Access JWT 없는 보호 라우트를 거부한다', async () => {
+    const cfAccessEnv = {
+      ...env,
+      ENVIRONMENT: 'production',
+      AUTH_MODE: 'cf-access',
+      CF_ACCESS_AUD: 'test-aud',
+      CF_TEAM_DOMAIN: 'test.cloudflareaccess.com',
+    };
+    const res = await fetchWithEnv('/api/v1/srs/due', cfAccessEnv);
+    expect(res.status).toBe(401);
+    const body = await res.json<{ detail: string }>();
+    expect(body.detail).toContain('Cf-Access-Jwt-Assertion');
   });
 });
 

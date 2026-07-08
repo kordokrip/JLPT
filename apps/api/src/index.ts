@@ -56,7 +56,7 @@ import { notificationsOA } from './routes/notifications-oa.js';
 import { aiOA } from './routes/ai-oa.js';
 import { auth } from './routes/auth.js';
 import { securityMiddleware } from './middleware/security.js';
-import { syncRateLimit, authRateLimit, publicRateLimit } from './middleware/rate-limit.js';
+import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
 import { sendPushToMany } from './lib/push.js';
 
 // ─────────────────────────────────────────────
@@ -132,6 +132,7 @@ v1.route('/', auth);
 
 // ── 공개 콘텐츠 라우트 (엣지 캐시 적용) ──────
 v1.use('/sources*', contentCacheMiddleware);
+v1.use('/content*', contentCacheMiddleware);
 v1.use('/curriculum*', contentCacheMiddleware);
 v1.use('/vocab*', contentCacheMiddleware);
 v1.use('/grammar*', contentCacheMiddleware);
@@ -162,7 +163,6 @@ v1.use('/sync*', syncRateLimit);
 v1.route('/', syncOA);
 v1.use('/quiz/generate*', authRateLimit);
 v1.route('/', quizOA);
-v1.use('/ai*', publicRateLimit);
 v1.route('/', aiOA);
 v1.use('/reading*', contentCacheMiddleware);
 v1.route('/', readingOA);

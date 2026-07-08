@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 test.describe('PWA install and share target', () => {
   test('manifest, declared assets, and shell metadata are valid', async ({ page, baseURL }) => {
     const index = await page.request.get('/');
     expect(index.ok()).toBe(true);
     const html = await index.text();
-    expect(html).toContain('name="theme-color" content="#B91C1C"');
+    expect(html).toContain('name="theme-color" content="#080A08"');
     expect(html).toContain('name="theme-color" content="#111110" media="(prefers-color-scheme: dark)"');
     expect(html).toContain('viewport-fit=cover');
     expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
@@ -23,8 +24,8 @@ test.describe('PWA install and share target', () => {
     expect(manifest.display_override).toEqual(expect.arrayContaining(['standalone']));
     expect(manifest.start_url).toBe('/');
     expect(manifest.scope).toBe('/');
-    expect(manifest.theme_color).toBe('#B91C1C');
-    expect(manifest.background_color).toBe('#FAFAF7');
+    expect(manifest.theme_color).toBe('#080A08');
+    expect(manifest.background_color).toBe('#080A08');
     expect(manifest.orientation).toBe('portrait-primary');
     expect(manifest.lang).toBe('ko');
     expect(manifest.categories).toEqual(expect.arrayContaining(['education']));
@@ -49,6 +50,7 @@ test.describe('PWA install and share target', () => {
   });
 
   test('Android share target opens a usable vocabulary search flow', async ({ page }) => {
+    await ensureAuthenticated(page);
     await page.goto('/add-word?text=%E7%B5%8C%E9%A8%93');
 
     await expect(page.getByRole('heading', { name: /어휘 검색으로 연결|Open in vocabulary search|語彙検索で開く/ })).toBeVisible();

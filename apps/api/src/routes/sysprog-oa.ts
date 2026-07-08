@@ -6,12 +6,11 @@ import {
   dataResponseSchema,
   idParamSchema,
   listResponseSchema,
+  mountLegacyRouteWithOpenApiDocs,
   problemSchema,
-  registerDocsOnlyRoutes,
 } from './openapi-docs.js';
 const sysprogOA = new OpenAPIHono<AppEnv>();
-sysprogOA.route('/', sysprog);
-registerDocsOnlyRoutes(sysprogOA, [
+mountLegacyRouteWithOpenApiDocs(sysprogOA, sysprog, [
   {
     method: 'get',
     path: '/sysprog',

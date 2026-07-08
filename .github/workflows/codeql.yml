@@ -51,8 +51,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build (type generation)
-        run: pnpm --filter @nihongo-n3/api build || true
+      - name: Typecheck before analysis
+        run: pnpm typecheck
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

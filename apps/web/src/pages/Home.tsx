@@ -63,7 +63,7 @@ export default function Home() {
       </header>
 
       <Card elevated className="mb-5 overflow-hidden border-[var(--accent-soft)]">
-        <div className="grid gap-0 md:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="p-5 sm:p-6">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
@@ -93,7 +93,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="border-t border-[var(--border)] bg-[var(--surface-alt)] p-5 sm:p-6 md:border-l md:border-t-0">
+          <section className="border-t border-[var(--border)] bg-[var(--surface-alt)] p-5 sm:p-6 lg:border-l lg:border-t-0">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">{t('home.thisWeek')}</p>
@@ -105,7 +105,7 @@ export default function Home() {
             </div>
             <Progress value={weekProgress} size="md" className="mb-5" />
 
-            <div data-visual-dynamic className="grid grid-cols-3 gap-2">
+            <div data-visual-dynamic className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
               <StatTile label={t('home.reviewWaiting')} value={`${reviewCards}`} suffix={t('common.cards')} />
               <StatTile label={t('home.newCards')} value={`${newCards}`} suffix={t('common.cards')} />
               <StatTile label={t('home.totalCards')} value={`${totalCards}`} suffix={t('common.cards')} />
@@ -138,7 +138,7 @@ export default function Home() {
 
       <section>
         <h2 className="mb-3 text-base font-semibold text-foreground">{t('home.quickAccess')}</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="adaptive-grid" data-cols="4">
           {QUICK_ITEMS.map(({ to, key }) => (
             <Link
               key={to}

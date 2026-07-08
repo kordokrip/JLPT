@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { authApi, type AuthConfig, type AuthUser } from '../lib/api';
+import { setActiveLocalUserId } from '../lib/db';
 
 type AuthStatus = 'checking' | 'authenticated' | 'anonymous';
 
@@ -24,10 +25,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refresh: async () => {
     const res = await authApi.me();
     if (res.ok && res.data.authenticated && res.data.user) {
+      setActiveLocalUserId(res.data.user.id);
       set({ status: 'authenticated', user: res.data.user, error: null });
     } else if (res.ok) {
+      setActiveLocalUserId(null);
       set({ status: 'anonymous', user: null });
     } else if (get().status !== 'authenticated') {
+      setActiveLocalUserId(null);
       set({ status: 'anonymous', user: null, error: res.message });
     }
   },
@@ -41,6 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ error: null });
     const res = await authApi.login(email, password);
     if (res.ok) {
+      setActiveLocalUserId(res.data.user.id);
       set({ status: 'authenticated', user: res.data.user, error: null });
       return true;
     }
@@ -52,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ error: null });
     const res = await authApi.register(email, password, displayName);
     if (res.ok) {
+      setActiveLocalUserId(res.data.user.id);
       set({ status: 'authenticated', user: res.data.user, error: null });
       return true;
     }
@@ -61,6 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     await authApi.logout().catch(() => undefined);
+    setActiveLocalUserId(null);
     set({ status: 'anonymous', user: null });
   },
 }));

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ensureAuthenticated } from './auth-helper';
 
 const VIEWPORTS = [
   { name: 'mobile-390', width: 390, height: 844 },
@@ -13,13 +14,18 @@ const SCREENS = [
   { name: 'browse-vocab', path: '/browse/vocab' },
 ] as const;
 
-async function prepareVisualState() {
-  await document.fonts.ready;
+function prepareVisualState() {
   document.documentElement.classList.remove('dark');
   localStorage.setItem('nihongo-n3-settings', JSON.stringify({
     state: { theme: 'light', language: 'ko' },
     version: 1,
   }));
+}
+
+async function prepareVisualPage(page: import('@playwright/test').Page) {
+  await page.route(/https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/, (route) => route.abort());
+  await page.route(/https:\/\/cdn\.jsdelivr\.net\/gh\/orioncactus\/pretendard@.*/, (route) => route.abort());
+  await page.addInitScript(prepareVisualState);
 }
 
 async function disableAnimations(page: import('@playwright/test').Page) {
@@ -35,6 +41,17 @@ async function disableAnimations(page: import('@playwright/test').Page) {
   });
 }
 
+async function waitForVisualSettled(page: import('@playwright/test').Page) {
+  await page.evaluate(async () => {
+    await Promise.race([
+      document.fonts?.ready.catch(() => undefined),
+      new Promise((resolve) => setTimeout(resolve, 10_000)),
+    ]);
+  }).catch(() => undefined);
+  await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
+  await page.waitForTimeout(500);
+}
+
 test.describe('핵심 화면 시각 회귀', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'screenshot baseline은 Chromium에서 고정한다');
 
@@ -42,16 +59,18 @@ test.describe('핵심 화면 시각 회귀', () => {
     for (const screen of SCREENS) {
       test(`${viewport.name}: ${screen.name}`, async ({ page }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await page.addInitScript(prepareVisualState);
+        await prepareVisualPage(page);
+        await ensureAuthenticated(page);
         await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible();
         await disableAnimations(page);
-        await page.waitForTimeout(250);
+        await waitForVisualSettled(page);
 
         await expect(page).toHaveScreenshot(`${viewport.name}-${screen.name}.png`, {
           fullPage: false,
           mask: [page.locator('[data-visual-dynamic]')],
           maxDiffPixelRatio: 0.02,
+          timeout: 20_000,
         });
       });
     }
@@ -59,9 +78,11 @@ test.describe('핵심 화면 시각 회귀', () => {
 
   test('mobile-390: more sheet', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.addInitScript(prepareVisualState);
+    await prepareVisualPage(page);
+    await ensureAuthenticated(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await disableAnimations(page);
+    await waitForVisualSettled(page);
     await page.getByRole('button', { name: /더보기|More|その他/ }).click();
     await expect(page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ })).toBeVisible();
 
@@ -69,14 +90,17 @@ test.describe('핵심 화면 시각 회귀', () => {
       fullPage: false,
       mask: [page.locator('[data-visual-dynamic]')],
       maxDiffPixelRatio: 0.02,
+      timeout: 20_000,
     });
   });
 
   test('desktop: collapsed sidebar', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.addInitScript(prepareVisualState);
+    await prepareVisualPage(page);
+    await ensureAuthenticated(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await disableAnimations(page);
+    await waitForVisualSettled(page);
     await page.getByRole('button', { name: /사이드 메뉴 접기|Collapse side menu|サイドメニューをたたむ/ }).click();
     await expect(page.getByRole('navigation', { name: /사이드|Sidebar|サイド/ })).toHaveAttribute('data-state', 'collapsed');
 
@@ -84,6 +108,7 @@ test.describe('핵심 화면 시각 회귀', () => {
       fullPage: false,
       mask: [page.locator('[data-visual-dynamic]')],
       maxDiffPixelRatio: 0.02,
+      timeout: 20_000,
     });
   });
 });

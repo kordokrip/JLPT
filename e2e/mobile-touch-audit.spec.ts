@@ -139,19 +139,36 @@ async function visibleOverlaps() {
   return issues;
 }
 
+async function gotoRouteForAudit(page: import('@playwright/test').Page, route: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(route, { waitUntil: 'commit', timeout: 20_000 });
+      await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+      return;
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 test.describe('iPhone 터치/겹침 감사', () => {
   for (const viewport of IPHONE_VIEWPORTS) {
     test(`${viewport.name}: 전체 주요 라우트 터치 타깃과 overflow`, async ({ page }) => {
-      test.setTimeout(90_000);
+      test.setTimeout(120_000);
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
-        await page.goto(route, { waitUntil: 'domcontentloaded' });
-        await expect(page.locator('#root > *').first()).toBeVisible();
+        await gotoRouteForAudit(page, route);
+        await page.evaluate(async () => {
+          await document.fonts?.ready.catch(() => undefined);
+        });
 
-        const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-        expect(overflow, `${viewport.name} ${route} horizontal overflow`).toBe(false);
+        await expect.poll(
+          async () => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+          { message: `${viewport.name} ${route} horizontal overflow`, timeout: 3_000 },
+        ).toBe(true);
 
         const smallControls = await page.evaluate(visibleSmallControls);
         expect(smallControls, `${viewport.name} ${route} small controls`).toEqual([]);

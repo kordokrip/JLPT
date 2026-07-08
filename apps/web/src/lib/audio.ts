@@ -8,6 +8,7 @@
  */
 
 import { apiUrl } from './api-base';
+import { getAudioPlaybackPolicy, type AudioSurface } from '@nihongo-n3/shared';
 
 export function buildAudioUrl(path: string): string {
   const encodedPath = path.split('/').map(encodeURIComponent).join('/');
@@ -43,6 +44,7 @@ interface SpeechOptions {
 interface PronunciationOptions {
   text?: string | undefined;
   audioPath?: string | undefined;
+  surface?: AudioSurface;
   prefer?: AudioSourcePreference;
   forceBrowser?: boolean;
   slow?: boolean;
@@ -237,6 +239,7 @@ class AudioPlayer {
   async playPronunciation({
     text,
     audioPath,
+    surface,
     prefer = this._sourcePreference,
     forceBrowser = false,
     slow = false,
@@ -244,19 +247,24 @@ class AudioPlayer {
     preferGoogleVoice = true,
   }: PronunciationOptions): Promise<void> {
     const normalized = text?.trim();
-    if ((forceBrowser || prefer === 'browser') && normalized) {
+    const policy = getAudioPlaybackPolicy(surface);
+    const preferBrowser = forceBrowser || prefer === 'browser' || (!audioPath && policy.primary === 'browser');
+    const useSlow = slow || policy.slow;
+    const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
+
+    if (preferBrowser && normalized) {
       const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
       await this.speakText(spokenText, {
-        ...(slow ? { rate: 0.5 } : {}),
-        preferGoogleVoice,
+        ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
+        preferGoogleVoice: useGoogleVoice,
       });
       return;
     }
     if (audioPath) {
-      await this.play(audioPath, normalized, slow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
+      await this.play(audioPath, normalized, useSlow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
       return;
     }
-    if (normalized) await this.speakText(normalized);
+    if (normalized) await this.speakText(normalized, { preferGoogleVoice: useGoogleVoice });
   }
 
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */

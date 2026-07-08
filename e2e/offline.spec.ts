@@ -14,9 +14,27 @@ import { test, expect } from '@playwright/test';
 test.describe('오프라인 모드', () => {
   test.describe.configure({ mode: 'serial' });
 
+  async function readNihongoStoreNames(page: import('@playwright/test').Page): Promise<string[]> {
+    return page.evaluate(async () => {
+      const request = indexedDB.open('nihongo-n3');
+      return await new Promise<string[]>((resolve) => {
+        request.onupgradeneeded = () => {
+          request.transaction?.abort();
+          resolve([]);
+        };
+        request.onerror = () => resolve([]);
+        request.onsuccess = () => {
+          const db = request.result;
+          const names = Array.from(db.objectStoreNames);
+          db.close();
+          resolve(names);
+        };
+      });
+    });
+  }
+
   test('온라인에서 홈 화면을 로드한다', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 15_000 });
+    await page.goto('/', { waitUntil: 'commit' });
     // 기본 렌더링 확인
     await expect(page.locator('body')).not.toBeEmpty();
   });
@@ -31,44 +49,16 @@ test.describe('오프라인 모드', () => {
     const appRoot = page.locator('#root, #app, [data-testid="app"]').first();
     await expect(appRoot.or(page.locator('body > *').first())).toBeVisible({ timeout: 5_000 });
 
-    const hasIndexedDb = await page.evaluate(async () => {
-      if (!('indexedDB' in window)) return false;
-      const listDatabases = indexedDB.databases?.bind(indexedDB);
-      const databases = listDatabases ? await listDatabases().catch(() => []) : [];
-      if (databases.some((db) => (db.name ?? '').toLowerCase().includes('nihongo'))) return true;
-
-      return await new Promise<boolean>((resolve) => {
-        const request = indexedDB.open('nihongo-n3');
-        request.onerror = () => resolve(false);
-        request.onsuccess = () => {
-          request.result.close();
-          resolve(true);
-        };
-      });
-    });
-    expect(hasIndexedDb).toBe(true);
+    await expect.poll(() => readNihongoStoreNames(page), { timeout: 10_000 }).toContain('srs_cards');
   });
 
   test('오프라인 상태에서 Dexie IDB에 캐시된 카드가 유지된다', async ({ page }) => {
     // 앱이 Dexie를 사용하는 경우, IndexedDB에 저장된 SRS 카드가 오프라인에서도 접근 가능
-    await page.goto('/review');
-    await page.waitForLoadState('networkidle', { timeout: 15_000 });
+    await page.goto('/review', { waitUntil: 'commit' });
 
     const cachedContent = page.locator('[data-testid="review-card"], .review-card, #root').first();
     await expect(cachedContent).toBeVisible({ timeout: 10_000 });
 
-    const stores = await page.evaluate(async () => {
-      const request = indexedDB.open('nihongo-n3');
-      return await new Promise<string[]>((resolve) => {
-        request.onerror = () => resolve([]);
-        request.onsuccess = () => {
-          const db = request.result;
-          const names = Array.from(db.objectStoreNames);
-          db.close();
-          resolve(names);
-        };
-      });
-    });
-    expect(stores).toContain('srs_cards');
+    await expect.poll(() => readNihongoStoreNames(page), { timeout: 10_000 }).toContain('srs_cards');
   });
 });

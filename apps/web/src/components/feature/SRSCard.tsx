@@ -65,6 +65,7 @@ export function SRSCard({
       audioPlayer.playPronunciation({
         text: reading || heading,
         audioPath,
+        surface: 'vocab',
         prefer: reading || heading ? 'browser' : 'server',
         preferGoogleVoice: true,
       }).catch(() => {/* ignore */});
@@ -167,6 +168,7 @@ export function SRSCard({
                   compact
                   text={reading || heading}
                   audioPath={audioPath}
+                  surface="vocab"
                   label={t('browse.playPronunciation')}
                   className="border-0 bg-transparent p-1"
                 />
@@ -182,7 +184,7 @@ export function SRSCard({
                 <div className="mb-1 text-xs uppercase text-[var(--muted-foreground)]">{t('review.example')}</div>
                 <div className="flex items-start justify-between gap-3">
                   <p className="mb-1 font-sans-jp text-sm text-[var(--text-secondary)] text-jp-body">{example}</p>
-                  <PronunciationButton compact text={example} label={t('browse.playExamplePronunciation')} />
+                  <PronunciationButton compact text={example} surface="example" label={t('browse.playExamplePronunciation')} />
                 </div>
                 {exampleKo && <p className="text-sm leading-6 text-[var(--muted-foreground)]">{exampleKo}</p>}
               </div>

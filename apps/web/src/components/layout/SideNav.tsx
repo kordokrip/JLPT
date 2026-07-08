@@ -4,6 +4,7 @@
  */
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useUiStore } from '../../stores/ui-store';
 import { useAuthStore } from '../../stores/auth-store';
@@ -28,28 +29,32 @@ export function SideNav() {
   const toggleCollapsed = useUiStore((s) => s.toggleSideNavCollapsed);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const railMode = useNavigationRailMode();
+  const compact = collapsed || railMode;
   const items = NAV_ITEMS.filter((item) => item.key !== 'adminUsers' || user?.role === 'admin');
 
   return (
     <nav
       aria-label={t('nav.sideLabel')}
-      data-state={collapsed ? 'collapsed' : 'expanded'}
+      data-state={compact ? 'collapsed' : 'expanded'}
+      data-mode={railMode ? 'rail' : 'sidebar'}
       className="fixed inset-y-0 left-0 z-40 hidden flex-col border-r-[0.5px] border-[var(--border)] bg-[var(--surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur transition-[width] duration-300 md:flex"
-      style={{ width: 'var(--sidebar-width, 220px)' }}
+      style={{ width: 'var(--active-sidebar-width)' }}
     >
       {/* 로고 */}
-      <div className={`flex h-[72px] items-center border-b-[0.5px] border-[var(--border)] ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+      <div className={`flex h-[72px] items-center border-b-[0.5px] border-[var(--border)] ${compact ? 'justify-center px-2' : 'justify-between px-4'}`}>
         <NavLink
           to="/"
           aria-label="Nihongo N3 홈"
-          className={`group flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}
+          className={`group flex min-w-0 items-center ${compact ? 'justify-center' : 'gap-3'}`}
         >
+          {compact && <span className="sr-only">Nihongo N3</span>}
           <img
             src="/brand-mark.png"
             alt=""
-            className={`${collapsed ? 'h-11 w-11' : 'h-12 w-12'} shrink-0 rounded-2xl border border-black/10 object-cover shadow-[0_10px_24px_rgba(42,30,24,0.14)] transition-transform group-hover:scale-[1.03]`}
+            className={`${compact ? 'h-11 w-11' : 'h-12 w-12'} shrink-0 rounded-2xl border border-black/10 object-cover shadow-[0_10px_24px_rgba(42,30,24,0.14)] transition-transform group-hover:scale-[1.03]`}
           />
-          {!collapsed && (
+          {!compact && (
             <span className="min-w-0">
               <span className="block font-serif-jp text-[17px] font-semibold leading-none tracking-[0.04em] text-[#1f1a17] dark:text-[#fff8ef]">
                 Nihongo N3
@@ -60,7 +65,7 @@ export function SideNav() {
             </span>
           )}
         </NavLink>
-        {!collapsed && (
+        {!compact && (
           <button
             type="button"
             onClick={toggleCollapsed}
@@ -74,7 +79,7 @@ export function SideNav() {
       </div>
 
       {/* 네비게이션 */}
-      <ul className={`flex-1 space-y-1 overflow-y-auto py-3 ${collapsed ? 'px-2' : 'px-3'}`}>
+      <ul className={`flex-1 space-y-1 overflow-y-auto py-3 ${compact ? 'px-2' : 'px-3'}`}>
         {items.map(({ to, key, icon: Icon }) => (
           <li key={to}>
             <NavLink
@@ -83,7 +88,7 @@ export function SideNav() {
               title={t(`nav.${key}`)}
               className={({ isActive }) =>
                 `relative flex min-h-11 items-center rounded-[var(--radius-md)] transition-colors ${
-                  collapsed ? 'flex-col justify-center gap-1 px-1 py-2 text-center' : 'gap-3 px-3 py-2.5'
+                  compact ? 'flex-col justify-center gap-1 px-1 py-2 text-center' : 'gap-3 px-3 py-2.5'
                 } ${
                   isActive
                     ? 'bg-[var(--accent-soft)] text-[var(--accent)] shadow-sm'
@@ -93,9 +98,9 @@ export function SideNav() {
             >
               {({ isActive }) => (
                 <>
-                  {isActive && !collapsed && <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[var(--accent)]" aria-hidden="true" />}
+                  {isActive && !compact && <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[var(--accent)]" aria-hidden="true" />}
               <Icon />
-                  <span className={`leading-tight ${collapsed ? 'max-w-[5.25rem] whitespace-normal break-keep text-[11px] font-semibold' : 'text-sm font-semibold'}`}>
+                  <span className={`leading-tight ${compact ? 'max-w-[5.25rem] whitespace-normal break-keep text-[11px] font-semibold' : 'text-sm font-semibold'}`}>
                     {t(`nav.${key}`)}
                   </span>
                 </>
@@ -106,8 +111,11 @@ export function SideNav() {
       </ul>
 
       {/* 하단 */}
-      <div className={`border-t-[0.5px] border-[var(--border)] ${collapsed ? 'px-2 py-3' : 'px-5 py-3'}`}>
-        {collapsed ? (
+      <div className={`border-t-[0.5px] border-[var(--border)] ${compact ? 'px-2 py-3' : 'px-5 py-3'}`}>
+        {compact ? (
+          railMode ? (
+            <div className="mx-auto h-2 w-8 rounded-full bg-[var(--border)]" aria-hidden="true" />
+          ) : (
           <button
             type="button"
             onClick={toggleCollapsed}
@@ -117,6 +125,7 @@ export function SideNav() {
           >
             <ChevronRightIcon />
           </button>
+          )
         ) : (
           <div className="space-y-2">
             <div className="truncate font-pretendard text-[10px] text-[var(--muted-foreground)]">{user?.email}</div>
@@ -128,6 +137,20 @@ export function SideNav() {
       </div>
     </nav>
   );
+}
+
+function useNavigationRailMode() {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px) and (max-width: 1023.98px)');
+    const update = () => setMatches(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+
+  return matches;
 }
 
 function ChevronLeftIcon() {

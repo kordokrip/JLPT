@@ -6,6 +6,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { initSync } from './lib/sync';
 import { initDeviceProfile } from './lib/device-profile';
 import { audioPlayer } from './lib/audio';
+import { db } from './lib/db';
 import { useUiStore } from './stores/ui-store';
 import { useSettingsStore } from './stores/settings-store';
 
@@ -76,6 +77,9 @@ window.addEventListener('offline', () => useUiStore.getState().setOnline(false))
 // ─────────────────────────────────────────────
 // Offline sync 초기화
 // ─────────────────────────────────────────────
+void db.open().catch((error) => {
+  console.warn('[IDB]', 'failed to open local database', error);
+});
 initSync();
 initDeviceProfile();
 

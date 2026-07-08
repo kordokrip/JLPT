@@ -1,4 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import type { OpenAPIHono } from '@hono/zod-openapi';
+import type { Hono } from 'hono';
 
 import type { AppEnv } from '../types.js';
 
@@ -55,6 +57,15 @@ export function registerDocsOnlyRoutes(app: App, routes: RouteConfig[]): void {
   for (const route of routes) {
     app.openapi(createRoute(route), docOnlyHandler);
   }
+}
+
+export function mountLegacyRouteWithOpenApiDocs(
+  app: Pick<OpenAPIHono<AppEnv>, 'openapi' | 'route'>,
+  legacyRoute: Hono<AppEnv>,
+  routes: RouteConfig[],
+): void {
+  app.route('/', legacyRoute);
+  registerDocsOnlyRoutes(app, routes);
 }
 
 export type { AppEnv };

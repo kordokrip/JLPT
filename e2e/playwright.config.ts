@@ -20,7 +20,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Local D1 seeding and WebKit auth flows are not stable under parallel workers.
+  // Keep E2E serialized so deploy gating reflects product behavior, not test infra races.
+  workers: 1,
   reporter: process.env.CI
     ? [['html', { outputFolder: 'playwright-report', open: 'never' }], ['github']]
     : [['html', { open: 'on-failure' }]],
