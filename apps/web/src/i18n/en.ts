@@ -272,8 +272,8 @@ const en = {
 
   curriculum: {
     title:      'Curriculum',
-    planTitle:  '16-Week Plan',
-    subtitle:   'A 16-week roadmap toward JLPT N3',
+    planTitle:  '12-Month Study Plan',
+    subtitle:   'A 52-week roadmap from kana and N5 foundations to JLPT N3 practice',
     week:       'Week',
     weekLabel:  'Week {{week}}',
     weekShort:  'W{{week}}',

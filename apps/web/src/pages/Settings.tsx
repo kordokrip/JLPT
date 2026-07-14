@@ -44,7 +44,9 @@ export default function Settings() {
     dailyNewLimit, setDailyNewLimit,
     lastSyncedAt,
     language, setLanguage,
+    learningTrack,
   } = useSettingsStore();
+  const switchTrack = useAuthStore((s) => s.switchTrack);
 
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
@@ -104,7 +106,7 @@ export default function Settings() {
 
   const handleTtsProvider = (provider: TtsProviderId) => {
     setTtsProvider('browser');
-    audioPlayer.sourcePreference = 'browser';
+    audioPlayer.sourcePreference = 'server';
     if (provider === 'browser') void audioPlayer.speakText(t('settings.voicePreviewText'));
   };
 
@@ -271,6 +273,20 @@ export default function Settings() {
       </SettingSection>
 
       <SettingSection title="계정" subtitle="">
+        <SettingRow label="학습 언어" sublabel="계정과 오프라인 학습 데이터가 트랙별로 분리됩니다.">
+          <SegmentControl
+            options={[
+              { value: 'jlpt-ja', label: '일본어 · JLPT' },
+              { value: 'topik-ko', label: '한국어 · TOPIK' },
+            ]}
+            value={learningTrack}
+            onChange={(track) => {
+              void switchTrack(track).then((ok) => {
+                if (ok) navigate(track === 'topik-ko' ? '/track/topik-ko' : '/', { replace: true });
+              });
+            }}
+          />
+        </SettingRow>
         <SettingRow label={authUser?.email ?? '로그인 계정'} sublabel={authUser?.role === 'admin' ? '관리자 계정' : '일반 사용자'}>
           <div className="flex flex-wrap gap-2">
             {authUser?.role === 'admin' && (

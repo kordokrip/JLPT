@@ -87,32 +87,26 @@ jobs:
             echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Export D1 to SQL file
-        run: |
-          pnpm exec wrangler d1 export "$D1_DATABASE_NAME" \
-            --remote \
-            --output=backup.sql \
-            --config=apps/api/wrangler.toml \
-            --skip-confirmation
+      - name: Export regular D1 tables
+        run: pnpm --filter @nihongo-n3/db exec tsx src/ops/d1-backup.ts --database="$D1_DATABASE_NAME" --out=.artifacts/d1-backup
 
-      - name: Verify export file size
-        run: |
-          SIZE=$(wc -c < backup.sql)
-          echo "백업 파일 크기: ${SIZE} bytes"
-          # 최소 1KB 이상이어야 정상 백업으로 간주
-          [ "$SIZE" -gt 1024 ] || (echo "백업 파일이 너무 작습니다 (${SIZE}B). 내용을 확인하세요." && exit 1)
+      - name: Restore drill on a fresh local D1
+        run: pnpm --filter @nihongo-n3/db exec tsx src/ops/d1-restore-drill.ts --input=.artifacts/d1-backup
+
+      - name: Archive verified backup
+        run: tar -C .artifacts -czf d1-backup.tar.gz d1-backup
 
       - name: Upload backup to R2
         run: |
           pnpm exec wrangler r2 object put \
-            "${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.sql" \
-            --file=backup.sql \
-            --content-type="application/sql" \
+            "${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.tar.gz" \
+            --file=d1-backup.tar.gz \
+            --content-type="application/gzip" \
             --remote
 
       - name: Confirm upload
         run: |
-          echo "백업 완료: ${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.sql → R2"
+          echo "백업 완료: ${{ steps.resources.outputs.reports_bucket }}/backups/${{ steps.date.outputs.date }}.tar.gz → R2"
 
   # ─────────────────────────────────────────────────────────────────
   # 2. R2 lifecycle rule 설정 (30일 자동 만료)

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { authApi, type AuthConfig, type AuthUser } from '../lib/api';
 import { setActiveLocalUserId } from '../lib/db';
+import { setActiveLearningTrack } from '../lib/db';
+import { useSettingsStore } from './settings-store';
+import type { LearningTrackId } from '@nihongo-n3/shared';
 
 type AuthStatus = 'checking' | 'authenticated' | 'anonymous';
 
@@ -14,6 +17,13 @@ interface AuthState {
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, displayName: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  switchTrack: (track: LearningTrackId) => Promise<boolean>;
+}
+
+function activateUser(user: AuthUser): void {
+  useSettingsStore.getState().setLearningTrack(user.learning_track);
+  setActiveLearningTrack(user.learning_track);
+  setActiveLocalUserId(user.id);
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -25,7 +35,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   refresh: async () => {
     const res = await authApi.me();
     if (res.ok && res.data.authenticated && res.data.user) {
-      setActiveLocalUserId(res.data.user.id);
+      activateUser(res.data.user);
       set({ status: 'authenticated', user: res.data.user, error: null });
     } else if (res.ok) {
       setActiveLocalUserId(null);
@@ -45,8 +55,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ error: null });
     const res = await authApi.login(email, password);
     if (res.ok) {
-      setActiveLocalUserId(res.data.user.id);
-      set({ status: 'authenticated', user: res.data.user, error: null });
+      const desiredTrack = useSettingsStore.getState().learningTrack;
+      const user = { ...res.data.user, learning_track: desiredTrack };
+      if (res.data.user.learning_track !== desiredTrack) await authApi.setTrack(desiredTrack);
+      activateUser(user);
+      set({ status: 'authenticated', user, error: null });
       return true;
     }
     set({ status: 'anonymous', user: null, error: res.message });
@@ -57,8 +70,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ error: null });
     const res = await authApi.register(email, password, displayName);
     if (res.ok) {
-      setActiveLocalUserId(res.data.user.id);
-      set({ status: 'authenticated', user: res.data.user, error: null });
+      const desiredTrack = useSettingsStore.getState().learningTrack;
+      const user = { ...res.data.user, learning_track: desiredTrack };
+      if (res.data.user.learning_track !== desiredTrack) await authApi.setTrack(desiredTrack);
+      activateUser(user);
+      set({ status: 'authenticated', user, error: null });
       return true;
     }
     set({ status: 'anonymous', user: null, error: res.message });
@@ -69,5 +85,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await authApi.logout().catch(() => undefined);
     setActiveLocalUserId(null);
     set({ status: 'anonymous', user: null });
+  },
+
+  switchTrack: async (track) => {
+    const res = await authApi.setTrack(track);
+    if (!res.ok) {
+      set({ error: res.message });
+      return false;
+    }
+    useSettingsStore.getState().setLearningTrack(track);
+    setActiveLearningTrack(track);
+    const user = get().user;
+    set({ user: user ? { ...user, learning_track: track } : null, error: null });
+    return true;
   },
 }));

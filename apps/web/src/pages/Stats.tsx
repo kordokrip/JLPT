@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Heatmap } from '../components/feature/Heatmap.js';
 import { logsApi } from '../lib/api';
+import { useDataScope } from '../hooks/useDataScope';
 
 interface StreakData {
   currentStreak: number;
@@ -36,8 +37,9 @@ function StatCard({ label, value, sub }: { label: string; value: number | string
 
 export default function Stats() {
   const { t } = useTranslation();
+  const dataScope = useDataScope();
   const { data, isError } = useQuery<StreakData>({
-    queryKey:  ['streak'],
+    queryKey:  ['streak', dataScope],
     queryFn:   fetchStreak,
     staleTime: 5 * 60 * 1000,
   });

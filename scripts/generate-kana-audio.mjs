@@ -29,6 +29,32 @@ const KATAKANA = [
   ['ワ', 'wa'], ['ヲ', 'wo'], ['ン', 'n'],
 ];
 
+const HIRAGANA_EXAMPLES = {
+  a: 'あいさつ', i: 'いぬ', u: 'うみ', e: 'えき', o: 'おちゃ',
+  ka: 'かさ', ki: 'きく', ku: 'くも', ke: 'けさ', ko: 'こえ',
+  sa: 'さくら', shi: 'しお', su: 'すし', se: 'せんせい', so: 'そら',
+  ta: 'たこ', chi: 'ちず', tsu: 'つき', te: 'て', to: 'とり',
+  na: 'なつ', ni: 'にほん', nu: 'ぬの', ne: 'ねこ', no: 'のり',
+  ha: 'はな', hi: 'ひと', fu: 'ふね', he: 'へや', ho: 'ほし',
+  ma: 'まち', mi: 'みみ', mu: 'むし', me: 'め', mo: 'もり',
+  ya: 'やま', yu: 'ゆき', yo: 'よる',
+  ra: 'らいねん', ri: 'りんご', ru: 'るす', re: 'れい', ro: 'ろく',
+  wa: 'わたし', wo: 'ほんをよむ', n: 'パン',
+};
+
+const KATAKANA_EXAMPLES = {
+  a: 'アイス', i: 'インク', u: 'ウイスキー', e: 'エアコン', o: 'オレンジ',
+  ka: 'カメラ', ki: 'キロ', ku: 'クラス', ke: 'ケーキ', ko: 'コーヒー',
+  sa: 'サラダ', shi: 'シャツ', su: 'スキー', se: 'セーター', so: 'ソファ',
+  ta: 'タクシー', chi: 'チーズ', tsu: 'ツアー', te: 'テレビ', to: 'トマト',
+  na: 'ナイフ', ni: 'ニュース', nu: 'ヌードル', ne: 'ネクタイ', no: 'ノート',
+  ha: 'ハンバーガー', hi: 'ヒーター', fu: 'フォーク', he: 'ヘルメット', ho: 'ホテル',
+  ma: 'マスク', mi: 'ミルク', mu: 'ムービー', me: 'メール', mo: 'モデル',
+  ya: 'ヤード', yu: 'ユニフォーム', yo: 'ヨガ',
+  ra: 'ラジオ', ri: 'リモコン', ru: 'ルール', re: 'レストラン', ro: 'ロボット',
+  wa: 'ワイン', wo: 'ヲタク', n: 'パン',
+};
+
 const args = new Set(process.argv.slice(2));
 const valueArg = (name, fallback) => {
   const prefix = `${name}=`;
@@ -54,8 +80,11 @@ function run(command, commandArgs, options = {}) {
   }
 }
 
-function elongateKana(char, _reading) {
-  return char;
+function pronunciationPrompt(item) {
+  const examples = item.mode === 'hiragana' ? HIRAGANA_EXAMPLES : KATAKANA_EXAMPLES;
+  const example = examples[item.reading];
+  if (!example) throw new Error(`Missing pronunciation example: ${item.mode}/${item.reading}`);
+  return `${item.char}。${example}`;
 }
 
 function kanaItems() {
@@ -78,12 +107,12 @@ function main() {
   console.log(`[kana-audio] generating ${items.length} files voice=${voice} rate=${rate}`);
 
   for (const item of items) {
-    const localPath = join(outDir, item.mode, `${item.reading}.m4a`);
-    const key = `audio/kana/${item.mode}/${item.reading}.m4a`;
+    const localPath = join(outDir, 'v2', item.mode, `${item.reading}.m4a`);
+    const key = `audio/kana/v2/${item.mode}/${item.reading}.m4a`;
     ensureDir(dirname(localPath));
 
     if (!existsSync(localPath) || force) {
-      run('say', ['-v', voice, '-r', rate, '-o', localPath, elongateKana(item.char, item.reading)]);
+      run('say', ['-v', voice, '-r', rate, '-o', localPath, pronunciationPrompt(item)]);
     }
 
     const size = statSync(localPath).size;

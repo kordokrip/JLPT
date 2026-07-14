@@ -12,6 +12,7 @@ import type {
   GrammarContentItem,
   KanjiContentItem,
   VocabContentItem,
+  LearningTrackId,
 } from '@nihongo-n3/shared';
 
 // ─────────────────────────────────────────────
@@ -152,14 +153,30 @@ export interface LocalMeta {
 export const LOCAL_USER = 'owner';
 export const ANONYMOUS_LOCAL_USER = 'anonymous';
 let activeLocalUserId = ANONYMOUS_LOCAL_USER;
+let activeAccountId: string | null = null;
+let activeLearningTrack: LearningTrackId = 'jlpt-ja';
 
-export function localUserIdFor(userId: string | null | undefined): string {
-  return userId ? `user:${userId}` : ANONYMOUS_LOCAL_USER;
+export function localUserIdFor(
+  userId: string | null | undefined,
+  track: LearningTrackId = activeLearningTrack,
+): string {
+  return `${userId ? `user:${userId}` : ANONYMOUS_LOCAL_USER}|track:${track}`;
 }
 
 export function setActiveLocalUserId(userId: string | null | undefined): string {
-  activeLocalUserId = localUserIdFor(userId);
+  activeAccountId = userId ?? null;
+  activeLocalUserId = localUserIdFor(activeAccountId);
   return activeLocalUserId;
+}
+
+export function setActiveLearningTrack(track: LearningTrackId): string {
+  activeLearningTrack = track;
+  activeLocalUserId = localUserIdFor(activeAccountId, track);
+  return activeLocalUserId;
+}
+
+export function getActiveLearningTrack(): LearningTrackId {
+  return activeLearningTrack;
 }
 
 export function getActiveLocalUserId(): string {
@@ -234,7 +251,7 @@ class NihongoDb extends Dexie {
       meta: '&key',
     }).upgrade(async (tx) => {
       await tx.table<SyncQueueItem, number>('sync_queue').toCollection().modify((item) => {
-        item.user_id ??= LOCAL_USER;
+        item.user_id ??= localUserIdFor(LOCAL_USER, 'jlpt-ja');
       });
     });
   }

@@ -1,126 +1,74 @@
-# nihongo-n3 프로젝트 현황 보고서
+# nihongo-n3 프로젝트 상태 보고서
 
-기준일: 2026-07-08 KST
+기준일: 2026-07-15 KST
+상태: R1 코드 구현·로컬 검증 통과, production 배포 보류
 
-## 1. 현재 결론
+## 현재 상태
 
-`nihongo-n3`는 Cloudflare 기반 일본어 학습 PWA로 운영 가능한 수준의 앱/API/DB/CI 구조를 갖췄다. 최근 작업의 핵심은 기능을 무작정 늘리는 것이 아니라, 운영 중 문제가 되었던 인증, API 명세, IndexedDB stale data, 사용자별 로컬 데이터 분리, 오디오 provider 혼선, 대형 페이지 유지보수 비용을 줄이는 방향이었다.
+| 릴리스 | 코드 | 로컬 검증 | 운영 |
+| --- | --- | --- | --- |
+| R1 기반 정상화 | 구현 완료 | API/Web/DB/Chromium/WebKit 관문 통과 | prod-v2 미전환 |
+| R2 N3 콘텐츠·오디오 | 정책/도구 구현 | 콘텐츠 검증 통과 | 오디오 4,954건 미생성 |
+| R3 LearningTrack/TOPIK 기반 | foundation 구현 | Chromium/WebKit 격리 E2E 통과 | TOPIK 콘텐츠 미출시 |
 
-현재 직접적인 코드 구조 기준:
+운영 중심은 JLPT N5~N3다. N2/N1은 `wip/n2-n1-content-2026-07-14`에 격리했고, TOPIK은 계정·라우팅·저장소 경계만 제공한다.
 
-- Web: `apps/web`
-- API: `apps/api`
-- DB/seed: `packages/db`
-- Shared contract: `packages/shared`
-- Content metadata: `packages/content`
-- Docs: `docs`
-- E2E: `e2e`
-- CI/CD: `.github/workflows`
+## 완료된 변경
 
-## 2. 최근 완료 작업
+- canonical D1 migration 7개와 fresh verification 도입
+- 일반 테이블 Blue/Green, backup, restore drill 도구 추가
+- runtime DDL 및 remote diff seed 제거
+- public/admin OpenAPI 분리와 generated types 추가
+- request/release JSON observability와 read-only maintenance 추가
+- Google OAuth cross-origin bridge 및 학습 트랙 유지 보강
+- account×track IndexedDB/React Query/localStorage namespace 도입
+- R2-first audio policy, immutable key, Google batch approval gate 추가
+- 52주 기본 과정과 16주 추천 조건 코드화
+- CI를 검증과 승인된 production change로 분리
 
-### P0
-
-| 항목 | 결과 |
-| --- | --- |
-| API 라우트 중복 정리 | OpenAPI wrapper route 문제를 실제 schema 누락 리스크로 보고 정리 |
-| AI 번역 API 보호 | 인증/rate limit/운영 보호 경로 강화 |
-| CI 신뢰도 | 로컬 dev env와 GitHub Actions 차이를 줄이는 테스트 경로 보강 |
-| 세션/Access 모드 | 앱 session auth와 Cloudflare Access 보호 모드 분리 |
-
-### P1
-
-| 항목 | 결과 |
-| --- | --- |
-| 프론트 API DTO | `packages/shared/src/content-dto.ts`로 normalizer 수렴 |
-| 콘텐츠 갱신 | `/api/v1/content/version`과 IDB invalidation 추가 |
-| 멀티 사용자 로컬 데이터 | userId namespace로 SRS/sync queue 분리 |
-| 오디오/TTS 정책 | `packages/shared/src/audio-policy.ts`로 surface별 재생 정책 코드화 |
-
-### P2
-
-| 항목 | 결과 |
-| --- | --- |
-| 대형 페이지 분리 | `CharacterTrainer`, `QuizListening`, `SelfCheck`, `Browse`를 feature module로 분리 |
-| 테스트 유지성 | 순수 함수 테스트 import를 page에서 feature logic으로 이동 |
-| 운영 문서 최신화 | `ROADMAP.md`, `PROJECT_ANALYSIS_2026.md`, 본 보고서를 현재 기준으로 재작성 |
-
-## 3. 현재 feature 구조
+## 최신 검증
 
 ```text
-apps/web/src/features/
-├── browse/
-│   ├── BrowseFilters.tsx
-│   ├── BrowseList.tsx
-│   ├── BrowseView.tsx
-│   ├── types.ts
-│   └── useBrowse.ts
-├── character-trainer/
-│   ├── CharacterTrainerView.tsx
-│   ├── data.ts
-│   ├── logic.ts
-│   ├── types.ts
-│   └── useCharacterTrainer.ts
-├── quiz-listening/
-│   ├── ListeningAudioPlayer.tsx
-│   ├── QuizListeningView.tsx
-│   ├── logic.ts
-│   ├── types.ts
-│   └── useListeningQuiz.ts
-└── self-check/
-    ├── RadarChart.tsx
-    ├── SelfCheckView.tsx
-    ├── data.ts
-    ├── logic.ts
-    ├── types.ts
-    └── useSelfCheck.ts
+pnpm typecheck                         PASS
+pnpm -F @nihongo-n3/api test          PASS (78)
+pnpm -F @nihongo-n3/web test:run      PASS (33)
+pnpm build                             PASS
+pnpm audit --audit-level high          PASS (0 known)
+pnpm -F @nihongo-n3/db verify:fresh   PASS
+pnpm -F @nihongo-n3/db verify:fresh:audio EXPECTED FAIL (4,954 missing)
+Playwright Chromium                    PASS (65)
+Playwright WebKit                      PASS (51, visual-only 14 skipped)
+pnpm verify:ci                         PASS
 ```
 
-페이지 파일은 라우트 컨테이너 역할만 수행한다. 기능별 데이터, 계산, 화면 패널이 분리되어 이후 UI 개선과 테스트 추가가 쉬워졌다.
+Fresh D1 주요 값:
 
-## 4. 품질 기준
+- migration: 7/7
+- vocab: 3,300
+- grammar: 316
+- kanji: 542
+- sentences: 1,112
+- sysprog: 82
+- curriculum: 52
+- FTS parity: vocab 3,300, sentences 1,112
+- required fields, duplicates, FK violations: 0
+- missing R2 audio keys: 4,954
 
-최종 배포 전 통과해야 하는 명령:
+## 배포 차단
 
-```bash
-pnpm typecheck
-pnpm -F @nihongo-n3/api test
-pnpm -F @nihongo-n3/web test:run
-pnpm -F @nihongo-n3/e2e test
-pnpm -F @nihongo-n3/api build
-pnpm -F @nihongo-n3/web build
-```
+1. GitHub Backup과 CodeQL은 step을 시작하기 전에 billing lock annotation으로 실패하며 Dependency Audit은 수동 비활성 상태다.
+2. `nihongo-n3-prod-v2`와 정상 `d1_migrations` ledger를 아직 만들지 않았다.
+3. Cloudflare preview 환경 smoke와 production binding 전환 검증이 남았다.
+4. R2 오디오 30표본 청감 승인 및 전체 key 생성이 끝나지 않았다.
 
-운영 smoke:
+따라서 이번 상태에서 Workers, Pages, D1 production 변경을 실행하지 않는다.
 
-```bash
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/health
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/api/v1/content/version
-curl -I -fsS https://nihongo-n3.pages.dev/
-```
+## 다음 승인 순서
 
-## 5. 남은 리스크
+1. 생성 타입 drift 0인 현재 변경을 검토 가능한 commit으로 고정
+2. GitHub billing 해제 후 필수 Actions 재실행
+3. production environment 승인으로 prod-v2 생성·이전
+4. preview 30분 smoke
+5. binding cutover 및 24시간 강화 모니터링
 
-| 리스크 | 설명 | 대응 |
-| --- | --- | --- |
-| GitHub billing/account lock | workflow 실패가 코드 실패가 아니라 account lock으로 발생할 수 있음 | CI 상태 해석 시 annotation 확인 |
-| OAuth redirect mismatch | Pages origin과 API callback URI가 Google console 설정과 다르면 SSO 실패 | 운영/로컬 OAuth client 분리 |
-| 오디오 품질 | provider fallback은 있지만 청감 품질은 R2 고정 오디오 검수에 좌우 | 문자/청해별 QA 승인 단계 추가 |
-| OpenAPI client drift | DTO normalizer는 개선됐지만 generated client는 아직 아님 | P3에서 OpenAPI client 도입 검토 |
-| 문서 과거본 | 오래된 보고서가 남으면 현재 판단과 충돌 가능 | `docs/archive` 또는 상단 과거 기준 표시 |
-
-## 6. 다음 작업
-
-1. P3: OpenAPI generated client 도입 여부 결정
-2. P3: 오디오 provider 실패율과 R2 fallback 현황을 admin dashboard에 노출
-3. P3: mobile visual regression 범위를 문자 암기, 청해, 자기진단까지 확대
-4. P4: N2 콘텐츠를 `docs/05_n2` 구조로 추가
-5. P4: 추천 기능을 자기진단, 오답, 복습 로그 기반으로 고도화
-
-## 7. 운영 원칙
-
-- 새 기능은 먼저 shared contract 또는 feature module 경계부터 정한다.
-- API 응답 형태를 프론트에서 임시 변환하지 않고 shared DTO 또는 OpenAPI client로 수렴한다.
-- IndexedDB에 저장되는 사용자 학습 데이터는 항상 userId 기준으로 격리한다.
-- 오디오 재생은 surface별 정책을 코드와 문서에 동시에 반영한다.
-- Cloudflare 배포 전에는 로컬 테스트와 production smoke를 분리해서 확인한다.
+세부 내용은 [통합 분석](../PROJECT_ANALYSIS_2026.md), [로드맵](../ROADMAP.md), [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)을 참조한다.

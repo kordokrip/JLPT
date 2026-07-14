@@ -38,7 +38,6 @@ export default function QuizQuestionMC({
         text: promptAudioText,
         audioPath: audioKey,
         surface: 'listening',
-        prefer: promptAudioText ? 'browser' : 'server',
         preferGoogleVoice: true,
       })
       .then(() => setUsingSpeechFallback(!audioKey))

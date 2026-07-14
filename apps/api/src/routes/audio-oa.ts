@@ -7,13 +7,13 @@ const audioOA = new OpenAPIHono<AppEnv>();
 mountLegacyRouteWithOpenApiDocs(audioOA, audio, [
   {
     method: 'get',
-    path: '/audio/qa/{provider}/{index}.wav',
+    path: '/audio/qa/{provider}/{file}',
     tags: ['Audio'],
     summary: '고정 샘플 TTS QA 오디오',
     request: {
       params: z.object({
-        provider: z.enum(['cloudflare', 'voicevox']),
-        index: z.string().regex(/^\d+$/).openapi({ example: '1' }),
+        provider: z.enum(['cloudflare', 'google', 'voicevox']),
+        file: z.string().regex(/^\d+\.wav$/).openapi({ example: '1.wav' }),
       }),
     },
     responses: {
@@ -24,7 +24,7 @@ mountLegacyRouteWithOpenApiDocs(audioOA, audio, [
         description: 'QA 샘플 오디오',
       },
       400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
-      404: { content: { 'application/json': { schema: problemSchema } }, description: 'provider 미연결 또는 생성 실패' },
+      404: { content: { 'application/json': { schema: problemSchema } }, description: '승인된 QA 배치가 아직 R2에 없음' },
     },
   },
   {

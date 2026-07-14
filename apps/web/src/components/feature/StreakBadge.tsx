@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { logsApi } from '../../lib/api';
+import { useDataScope } from '../../hooks/useDataScope';
 
 interface StreakData {
   currentStreak: number;
@@ -23,8 +24,9 @@ async function fetchStreak(): Promise<StreakData> {
 
 export function StreakBadge() {
   const { t } = useTranslation();
+  const dataScope = useDataScope();
   const { data, isLoading } = useQuery<StreakData>({
-    queryKey: ['streak'],
+    queryKey: ['streak', dataScope],
     queryFn:  fetchStreak,
     staleTime: 5 * 60 * 1000,
   });

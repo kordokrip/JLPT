@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { audioPlayer, buildAudioUrl, type TtsProviderId } from '../lib/audio';
 import { useSettingsStore } from '../stores/settings-store';
 
@@ -54,6 +54,12 @@ const PROVIDERS: Array<{
     description: '운영 R2 오디오 경로를 재생합니다. 임의 문장 합성 endpoint는 공개하지 않습니다.',
   },
   {
+    id: 'google',
+    label: 'Google Cloud TTS',
+    status: 'partial',
+    description: '승인 토큰으로 미리 생성한 30개 R2 표본만 재생합니다. 화면에서 즉석 합성하지 않습니다.',
+  },
+  {
     id: 'voicevox',
     label: 'VOICEVOX',
     status: 'partial',
@@ -71,28 +77,54 @@ export default function AudioQa() {
   const { selectedVoiceURI, setTtsProvider, ttsProvider, voiceGender } = useSettingsStore();
   const [sampleIndex, setSampleIndex] = useState(0);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [ratings, setRatings] = useState<Record<string, number>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      return JSON.parse(window.localStorage.getItem('nihongo-n3:audio-qa-ratings:v2') ?? '{}') as Record<string, number>;
+    } catch {
+      return {};
+    }
+  });
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const sample = SAMPLE_SENTENCES[sampleIndex]!;
   const bestProvider = useMemo(() => {
-    const entries = Object.entries(ratings);
-    if (entries.length === 0) return null;
-    return entries.sort((a, b) => b[1] - a[1])[0] ?? null;
+    const scored = ['browser', 'cloudflare', 'google', 'voicevox'].map((provider) => {
+      const values = SAMPLE_SENTENCES.map((_, index) => ratings[`${provider}:${index}`]).filter(
+        (value): value is number => typeof value === 'number',
+      );
+      return {
+        provider,
+        count: values.length,
+        average: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0,
+      };
+    });
+    return scored.sort((a, b) => b.average - a.average)[0] ?? null;
+  }, [ratings]);
+  const qaComplete = ['browser', 'cloudflare', 'google', 'voicevox'].every((provider) =>
+    SAMPLE_SENTENCES.every((_, index) => typeof ratings[`${provider}:${index}`] === 'number'),
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem('nihongo-n3:audio-qa-ratings:v2', JSON.stringify(ratings));
   }, [ratings]);
 
   const playProvider = async (provider: TtsProviderId) => {
     setPlaying(provider);
+    setPlaybackError(null);
     try {
       if (provider === 'browser') {
         await audioPlayer.speakText(sample, { voiceGender, voiceURI: selectedVoiceURI });
         return;
       }
-      if (provider === 'cloudflare' || provider === 'voicevox') {
+      if (provider === 'cloudflare' || provider === 'google' || provider === 'voicevox') {
         const key = `audio/qa/${provider}/${sampleIndex + 1}.wav`;
         const audio = new Audio(buildAudioUrl(key));
         audio.playbackRate = audioPlayer.rate;
         await audio.play();
         return;
       }
+    } catch {
+      setPlaybackError('승인된 R2 표본 오디오가 없습니다. 관리자 QA 배치 상태를 확인하세요.');
     } finally {
       window.setTimeout(() => setPlaying(null), 500);
     }
@@ -100,7 +132,6 @@ export default function AudioQa() {
 
   const chooseProvider = (provider: TtsProviderId) => {
     setTtsProvider(provider);
-    audioPlayer.sourcePreference = provider === 'browser' ? 'browser' : 'server';
   };
 
   return (
@@ -141,10 +172,16 @@ export default function AudioQa() {
         </div>
       </section>
 
+      {playbackError && (
+        <p className="mb-6 rounded-lg border border-[var(--destructive)]/35 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {playbackError}
+        </p>
+      )}
+
       <section className="grid gap-3 md:grid-cols-2">
         {PROVIDERS.map((provider) => {
           const ratingKey = `${provider.id}:${sampleIndex}`;
-          const canPlay = provider.id === 'browser' || provider.id === 'cloudflare' || provider.id === 'voicevox';
+          const canPlay = provider.id === 'browser' || provider.id === 'cloudflare' || provider.id === 'google' || provider.id === 'voicevox';
           return (
             <article key={provider.id} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -206,12 +243,14 @@ export default function AudioQa() {
       <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface-alt)] p-4">
         <h2 className="font-pretendard text-[15px] font-semibold text-foreground">판정 메모</h2>
         <p className="mt-2 font-pretendard text-[13px] leading-relaxed text-[var(--muted-foreground)]">
-          현재 최고 점수 후보:{' '}
+          {qaComplete ? '30개 표본 최종 후보' : '평가 중인 임시 후보'}:{' '}
           <span className="font-medium text-foreground">
-            {bestProvider ? `${bestProvider[0].split(':')[0]} (${bestProvider[1]}/5)` : '아직 평가 없음'}
+            {bestProvider && bestProvider.count > 0
+              ? `${bestProvider.provider} (${bestProvider.average.toFixed(2)}/5, ${bestProvider.count}/30)`
+              : '아직 평가 없음'}
           </span>
-          . 전체 배치 생성은 이 페이지에서 최소 30개 샘플을 비교한 뒤, 자체 호스팅 엔진 URL과 라이선스가
-          확정된 provider만 R2 생성 파이프라인에 연결하는 순서가 안전합니다.
+          . 네 후보 모두 30개를 평가하기 전에는 전체 배치를 승인하지 않습니다. 운영 전체 생성은 현재 정책상
+          Google Cloud TTS와 별도 승인 토큰을 사용한 관리자 배치에서만 실행됩니다.
         </p>
       </section>
     </div>

@@ -20,7 +20,7 @@ export const kanjiRules = [
 ];
 
 export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): string {
-  return `audio/kana/${mode}/${reading}.m4a`;
+  return `audio/kana/v2/${mode}/${reading}.m4a`;
 }
 
 export const HIRAGANA: KanaCard[] = [

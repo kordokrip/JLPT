@@ -18,7 +18,7 @@ export function buildAudioUrl(path: string): string {
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
 export type AudioSourcePreference = 'browser' | 'server';
-export type TtsProviderId = 'browser' | 'cloudflare' | 'voicevox' | 'style-bert-vits2';
+export type TtsProviderId = 'browser' | 'cloudflare' | 'google' | 'voicevox' | 'style-bert-vits2';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
@@ -240,7 +240,7 @@ class AudioPlayer {
     text,
     audioPath,
     surface,
-    prefer = this._sourcePreference,
+    prefer,
     forceBrowser = false,
     slow = false,
     repeat = 1,
@@ -248,7 +248,8 @@ class AudioPlayer {
   }: PronunciationOptions): Promise<void> {
     const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
-    const preferBrowser = forceBrowser || prefer === 'browser' || (!audioPath && policy.primary === 'browser');
+    const source = prefer ?? policy.primary;
+    const preferBrowser = forceBrowser || source === 'browser' || (!audioPath && policy.primary === 'browser');
     const useSlow = slow || policy.slow;
     const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
 

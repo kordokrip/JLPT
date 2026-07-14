@@ -61,7 +61,7 @@ describe('CharacterTrainer', () => {
     expect(elongateKanaForSpeech('日', 'nichi')).toBe('日');
   });
 
-  it('uses browser example pronunciation for kana and stable R2 object keys as fallback assets', () => {
+  it('uses versioned R2 example-word audio for kana before browser fallback', () => {
     const kana = {
       id: 'h-あ',
       mode: 'hiragana',
@@ -73,9 +73,9 @@ describe('CharacterTrainer', () => {
       audioPath: kanaAudioPath('hiragana', 'a'),
     } satisfies StudyCard;
 
-    expect(kanaAudioPath('hiragana', 'a')).toBe('audio/kana/hiragana/a.m4a');
-    expect(kanaAudioPath('katakana', 'shi')).toBe('audio/kana/katakana/shi.m4a');
-    expect(getCardAudioPath(kana)).toBeUndefined();
+    expect(kanaAudioPath('hiragana', 'a')).toBe('audio/kana/v2/hiragana/a.m4a');
+    expect(kanaAudioPath('katakana', 'shi')).toBe('audio/kana/v2/katakana/shi.m4a');
+    expect(getCardAudioPath(kana)).toBe('audio/kana/v2/hiragana/a.m4a');
     expect(getKanaPronunciationExample(kana)).toMatchObject({ word: 'あいさつ', meaning: '인사' });
   });
 

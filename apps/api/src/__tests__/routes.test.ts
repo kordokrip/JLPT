@@ -6,9 +6,15 @@
  * 모든 요청은 실제 Workers 런타임에서 실행된다.
  * 인증이 필요한 라우트는 ENVIRONMENT=test 에서 dev bypass를 사용한다.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import app from '../index.js';
+import app, {
+  app as honoApp,
+  getAdminOpenApiDocument,
+  getPublicOpenApiDocument,
+  INTERNAL_ROUTE_EXCEPTIONS,
+} from '../index.js';
+import { audioContentHash, buildImmutableAudioKey } from '../jobs/generate-audio.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -18,15 +24,19 @@ declare module '*.sql?raw' {
 }
 
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawMigration from '../../../../packages/db/drizzle/0000_init.sql?raw';
+import rawMigration from '../../../../packages/db/drizzle-v2/0000_schema_convergence.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawSelfCheckMigration from '../../../../packages/db/drizzle/0001_self_check_templates.sql?raw';
+import rawFtsMigration from '../../../../packages/db/drizzle-v2/0001_fts.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawPhase8Migration from '../../../../packages/db/src/migrate/phase8-audio-reading.sql?raw';
+import rawAppDefaultsMigration from '../../../../packages/db/drizzle-v2/0002_app_defaults.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawPracticeContentMigration from '../../../../packages/db/drizzle/0002_jlpt_n3_practice_content.sql?raw';
+import rawSelfCheckMigration from '../../../../packages/db/drizzle-v2/0003_self_check_templates.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawAuthMigration from '../../../../packages/db/drizzle/0003_app_auth.sql?raw';
+import rawPracticeContentMigration from '../../../../packages/db/drizzle-v2/0004_jlpt_n3_practice_content.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawLearningTrackMigration from '../../../../packages/db/drizzle-v2/0005_learning_track.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawOauthLearningTrackMigration from '../../../../packages/db/drizzle-v2/0006_oauth_learning_track.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -35,7 +45,8 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}\n${rawPhase8Migration}\n${rawPracticeContentMigration}\n${rawAuthMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}`
+    .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
       const t = line.trim();
@@ -65,9 +76,13 @@ beforeAll(async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (env as any).DB.prepare(stmt).run();
-    } catch (e) {
-      // FTS5 등 miniflare 미지원 DDL 오류는 무시 (경고만 출력)
-      console.warn('[setup] DDL skipped:', stmt.slice(0, 60).replace(/\n/g, ' '));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/fts5|virtual table/i.test(message)) {
+        console.warn('[setup] FTS DDL unavailable:', stmt.slice(0, 60).replace(/\n/g, ' '));
+        continue;
+      }
+      throw error;
     }
   }
 });
@@ -97,6 +112,59 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json<T>();
 }
 
+const OPENAPI_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'] as const;
+
+function documentRoutes(document: ReturnType<typeof getPublicOpenApiDocument>): Set<string> {
+  const routes = new Set<string>();
+  for (const [path, item] of Object.entries(document.paths ?? {})) {
+    for (const method of OPENAPI_METHODS) {
+      if (item?.[method]) routes.add(`${method.toUpperCase()} ${path}`);
+    }
+  }
+  return routes;
+}
+
+function normalizeRuntimePath(path: string): string {
+  return path.replace(/:([A-Za-z0-9_]+)(?:\{[^}]+\})?/g, '{$1}');
+}
+
+describe('OpenAPI route coverage', () => {
+  it('matches every registered HTTP route except approved internal endpoints', () => {
+    const runtime = new Set(
+      honoApp.routes
+        .filter((route) => route.method !== 'ALL')
+        .map((route) => `${route.method} ${normalizeRuntimePath(route.path)}`)
+        .filter((route) => !INTERNAL_ROUTE_EXCEPTIONS.has(route)),
+    );
+    const documented = new Set([
+      ...documentRoutes(getPublicOpenApiDocument()),
+      ...documentRoutes(getAdminOpenApiDocument()),
+    ]);
+
+    expect([...runtime].filter((route) => !documented.has(route))).toEqual([]);
+    expect([...documented].filter((route) => !runtime.has(route))).toEqual([]);
+  });
+
+  it('keeps admin paths out of the public specification', () => {
+    expect(Object.keys(getPublicOpenApiDocument().paths ?? {}).some((path) =>
+      path.startsWith('/admin') || path.startsWith('/api/v1/auth/admin/'),
+    )).toBe(false);
+    expect(Object.keys(getAdminOpenApiDocument().paths ?? {}).length).toBeGreaterThan(0);
+  });
+
+  it('protects the admin specification with an application session', async () => {
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const publicSpec = await fetchWithEnv('/openapi.json', productionEnv);
+    const adminSpec = await fetchWithEnv('/openapi/admin.json', productionEnv);
+    expect(publicSpec.status).toBe(200);
+    expect(adminSpec.status).toBe(401);
+  });
+
+  it('keeps unreviewed homophones out of the public contract', () => {
+    expect(getPublicOpenApiDocument().paths?.['/api/v1/homophones']).toBeUndefined();
+  });
+});
+
 // ─────────────────────────────────────────────
 // /
 // ─────────────────────────────────────────────
@@ -110,6 +178,35 @@ describe('GET /', () => {
   });
 });
 
+describe('request observability', () => {
+  it('logs the route template without a path parameter value', async () => {
+    const messages: string[] = [];
+    const log = vi.spyOn(console, 'log').mockImplementation((message) => {
+      if (typeof message === 'string') messages.push(message);
+    });
+
+    try {
+      await fetch('/api/v1/vocab/987654321');
+    } finally {
+      log.mockRestore();
+    }
+
+    const requestLog = messages
+      .map((message) => {
+        try {
+          return JSON.parse(message) as Record<string, unknown>;
+        } catch {
+          return null;
+        }
+      })
+      .find((message) => message?.['event'] === 'http_request');
+
+    expect(requestLog?.['route']).toBe('/api/v1/vocab/:id');
+    expect(JSON.stringify(requestLog)).not.toContain('987654321');
+    expect(requestLog).not.toHaveProperty('path');
+  });
+});
+
 // ─────────────────────────────────────────────
 // /health
 // ─────────────────────────────────────────────
@@ -119,6 +216,51 @@ describe('GET /health', () => {
     expect(res.status).toBe(200);
     const body = await res.json<{ status: string }>();
     expect(body.status).toBe('ok');
+  });
+
+  it('returns request and release correlation headers', async () => {
+    const res = await fetch('/health', { headers: { 'X-Request-ID': 'test-request-1234' } });
+    expect(res.headers.get('x-request-id')).toBe('test-request-1234');
+    expect(res.headers.get('x-release')).toBe('test');
+  });
+});
+
+describe('Read-only cutover mode', () => {
+  const readOnlyEnv = {
+    ...env,
+    ENVIRONMENT: 'production',
+    AUTH_MODE: 'app-session',
+    MAINTENANCE_MODE: 'read-only',
+  };
+
+  it('keeps read endpoints available', async () => {
+    const res = await fetchWithEnv('/api/v1/sources', readOnlyEnv);
+    expect(res.status).toBe(200);
+  });
+
+  it('blocks database-changing commands with retry metadata', async () => {
+    const res = await fetchWithEnv('/api/v1/auth/login', readOnlyEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com', password: 'Passw0rd1234' }),
+    });
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('900');
+  });
+
+  it('blocks OAuth GET routes that write state', async () => {
+    const res = await fetchWithEnv('/api/v1/auth/google/start', readOnlyEnv);
+    expect(res.status).toBe(503);
+  });
+
+  it('allows the explicitly side-effect-free translation command', async () => {
+    const testReadOnlyEnv = { ...readOnlyEnv, ENVIRONMENT: 'test', AUTH_MODE: 'public-owner' };
+    const res = await fetchWithEnv('/api/v1/ai/translate', testReadOnlyEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '오늘은 조금 피곤해요', target: 'ja', tone: 'polite' }),
+    });
+    expect(res.status).toBe(200);
   });
 });
 
@@ -147,9 +289,21 @@ describe('App auth', () => {
 
     const me = await fetch('/api/v1/auth/me', { headers: { Cookie: cookie } });
     expect(me.status).toBe(200);
-    const meBody = await me.json<{ data: { authenticated: boolean; user: { email: string } } }>();
+    const meBody = await me.json<{ data: { authenticated: boolean; user: { email: string; learning_track: string } } }>();
     expect(meBody.data.authenticated).toBe(true);
     expect(meBody.data.user.email).toBe(email);
+    expect(meBody.data.user.learning_track).toBe('jlpt-ja');
+
+    const switchTrack = await fetch('/api/v1/auth/track', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ track: 'topik-ko' }),
+    });
+    expect(switchTrack.status).toBe(200);
+
+    const switchedMe = await fetch('/api/v1/auth/me', { headers: { Cookie: cookie } });
+    const switchedBody = await switchedMe.json<{ data: { user: { learning_track: string } } }>();
+    expect(switchedBody.data.user.learning_track).toBe('topik-ko');
 
     const logout = await fetch('/api/v1/auth/logout', { method: 'POST', headers: { Cookie: cookie } });
     expect(logout.status).toBe(200);
@@ -197,7 +351,7 @@ describe('App auth', () => {
       GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
     };
     const res = await app.fetch(
-      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start', {
+      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko', {
         headers: { Origin: 'https://nihongo-n3.pages.dev' },
       }),
       productionEnv,
@@ -210,6 +364,83 @@ describe('App auth', () => {
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('https://accounts.google.com/o/oauth2/v2/auth');
     expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback');
+    const stateRow = await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `SELECT learning_track FROM oauth_states ORDER BY created_at DESC LIMIT 1`,
+    ).first<{ learning_track: string }>();
+    expect(stateRow?.learning_track).toBe('topik-ko');
+  });
+
+  it('completes Google OAuth through the cross-origin bridge and keeps the requested track', async () => {
+    const productionEnv = {
+      ...env,
+      ENVIRONMENT: 'production',
+      AUTH_MODE: 'app-session',
+      APP_ORIGIN: 'https://nihongo-n3.pages.dev',
+      GOOGLE_CLIENT_ID: 'google-client-id',
+      GOOGLE_CLIENT_SECRET: 'google-client-secret',
+      GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
+    };
+    const start = await app.fetch(
+      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko'),
+      productionEnv,
+      createExecutionContext(),
+    );
+    const oauthCookie = (start.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+    const googleLocation = new URL(start.headers.get('location') ?? 'https://invalid.test');
+    const state = googleLocation.searchParams.get('state') ?? '';
+
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url === 'https://oauth2.googleapis.com/token') {
+        return Response.json({ access_token: 'test-google-access-token' });
+      }
+      if (url === 'https://openidconnect.googleapis.com/v1/userinfo') {
+        return Response.json({
+          sub: `google-sub-${Date.now()}`,
+          email: `google-${Date.now()}@example.com`,
+          name: 'Google Test User',
+          email_verified: true,
+        });
+      }
+      throw new Error(`Unexpected OAuth test request: ${url}`);
+    });
+
+    try {
+      const callback = await app.fetch(
+        new Request(
+          `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
+          { headers: { Cookie: oauthCookie } },
+        ),
+        productionEnv,
+        createExecutionContext(),
+      );
+      expect(callback.status).toBe(302);
+      const bridgeLocation = new URL(callback.headers.get('location') ?? 'https://invalid.test');
+      expect(bridgeLocation.origin).toBe('https://nihongo-n3.pages.dev');
+      expect(bridgeLocation.pathname).toBe('/api/v1/auth/complete');
+
+      const complete = await app.fetch(
+        new Request(bridgeLocation),
+        productionEnv,
+        createExecutionContext(),
+      );
+      expect(complete.status).toBe(302);
+      const sessionCookie = complete.headers.get('set-cookie') ?? '';
+      expect(sessionCookie).toContain('__Host-n3_session=');
+
+      const me = await app.fetch(
+        new Request('https://nihongo-n3.pages.dev/api/v1/auth/me', {
+          headers: { Cookie: sessionCookie.split(';')[0] ?? '' },
+        }),
+        productionEnv,
+        createExecutionContext(),
+      );
+      const meBody = await me.json<{ data: { user: { learning_track: string } } }>();
+      expect(me.status).toBe(200);
+      expect(meBody.data.user.learning_track).toBe('topik-ko');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('rejects weak passwords and invalid login attempts', async () => {
@@ -226,6 +457,54 @@ describe('App auth', () => {
       body: JSON.stringify({ email: 'missing@example.com', password: 'Passw0rd1234' }),
     });
     expect(login.status).toBe(401);
+  });
+});
+
+describe('Learning tracks', () => {
+  it('reports JLPT as available and TOPIK as foundation-only', async () => {
+    const jlpt = await json<{ data: { available: boolean; content_release: string } }>(
+      '/api/v1/tracks/jlpt-ja/status',
+    );
+    const topik = await json<{ data: { available: boolean; content_release: string } }>(
+      '/api/v1/tracks/topik-ko/status',
+    );
+    expect(jlpt.data).toEqual(expect.objectContaining({ available: true, content_release: 'n5-n3' }));
+    expect(topik.data).toEqual(expect.objectContaining({ available: false, content_release: 'foundation-only' }));
+  });
+});
+
+describe('R2 audio policy', () => {
+  it('returns a visible 404 instead of generating missing audio on demand', async () => {
+    const res = await fetch('/api/v1/audio/audio/vocab/n3/not-generated.mp3');
+    expect(res.status).toBe(404);
+  });
+
+  it('uses stable provider and content version hashes in immutable keys', async () => {
+    const provider = { provider: 'google', model: 'ja-JP-Neural2-B', audioVersion: '2026-07-15' } as const;
+    const task = { id: 7, type: 'vocab' as const, level: 'N3', text: '勉強' };
+    const firstHash = await audioContentHash(task.text, provider);
+    const secondHash = await audioContentHash(task.text, provider);
+    const key = await buildImmutableAudioKey(task, provider);
+    expect(firstHash).toBe(secondHash);
+    expect(key).toMatch(/^audio\/vocab\/n3\/7-[a-f0-9]{16}\.mp3$/);
+    expect(await audioContentHash(task.text, { ...provider, audioVersion: 'next' })).not.toBe(firstHash);
+  });
+
+  it('keeps the production audio batch dry-run by default and rejects unapproved execution', async () => {
+    const dryRun = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(dryRun.status).toBe(200);
+    expect((await dryRun.json<{ data: { dry_run: boolean } }>()).data.dry_run).toBe(true);
+
+    const execute = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ execute: true, provider: 'google' }),
+    });
+    expect(execute.status).toBe(400);
   });
 });
 

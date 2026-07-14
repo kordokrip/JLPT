@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Navigate, Routes, Route, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Routes, Route, useLocation } from 'react-router-dom';
 import { RootLayout } from './components/layout/RootLayout';
 import { useAuthStore } from './stores/auth-store';
 import type { ReactNode } from 'react';
+import { useSettingsStore } from './stores/settings-store';
 
 // ─────────────────────────────────────────────
 // Lazy 페이지 로드
@@ -27,6 +28,7 @@ const Welcome        = lazy(() => import('./pages/Welcome'));
 const Login          = lazy(() => import('./pages/Login'));
 const Register       = lazy(() => import('./pages/Register'));
 const AdminUsers     = lazy(() => import('./pages/AdminUsers'));
+const TopikFoundation = lazy(() => import('./pages/TopikFoundation'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -51,6 +53,13 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireJlptTrack() {
+  const learningTrack = useSettingsStore((state) => state.learningTrack);
+  return learningTrack === 'jlpt-ja'
+    ? <Outlet />
+    : <Navigate to="/track/topik-ko" replace />;
+}
+
 // ─────────────────────────────────────────────
 // 루트 라우터
 // ─────────────────────────────────────────────
@@ -62,27 +71,30 @@ export default function App() {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
-          <Route index          element={<Home />} />
-          <Route path="review"  element={<Review />} />
-          <Route path="browse/:type"     element={<Browse />} />
-          <Route path="browse/:type/:id" element={<BrowseDetail />} />
-          <Route path="curriculum"       element={<Curriculum />} />
-          <Route path="curriculum/:week" element={<Curriculum />} />
-          <Route path="self-check"       element={<SelfCheck />} />
-          <Route path="self-check/:week" element={<SelfCheck />} />
           <Route path="settings"         element={<Settings />} />
-          <Route path="quiz"             element={<Quiz />} />
-          <Route path="quiz/:mode"       element={<Quiz />} />
-          <Route path="quiz/result/:attemptId" element={<QuizResult />} />
-          <Route path="quiz/listening/:quizId" element={<QuizListening />} />
-          <Route path="quiz/listening"         element={<QuizListening />} />
-          <Route path="characters"   element={<CharacterTrainer />} />
-          <Route path="reading"      element={<Reading />} />
-          <Route path="reading/:id"  element={<ReadingDetail />} />
-          <Route path="stats"        element={<Stats />} />
-          <Route path="add-word"     element={<AddWord />} />
-          <Route path="audio-qa"     element={<AudioQa />} />
           <Route path="admin/users"  element={<AdminUsers />} />
+          <Route path="track/topik-ko" element={<TopikFoundation />} />
+          <Route element={<RequireJlptTrack />}>
+            <Route index          element={<Home />} />
+            <Route path="review"  element={<Review />} />
+            <Route path="browse/:type"     element={<Browse />} />
+            <Route path="browse/:type/:id" element={<BrowseDetail />} />
+            <Route path="curriculum"       element={<Curriculum />} />
+            <Route path="curriculum/:week" element={<Curriculum />} />
+            <Route path="self-check"       element={<SelfCheck />} />
+            <Route path="self-check/:week" element={<SelfCheck />} />
+            <Route path="quiz"             element={<Quiz />} />
+            <Route path="quiz/:mode"       element={<Quiz />} />
+            <Route path="quiz/result/:attemptId" element={<QuizResult />} />
+            <Route path="quiz/listening/:quizId" element={<QuizListening />} />
+            <Route path="quiz/listening"         element={<QuizListening />} />
+            <Route path="characters"   element={<CharacterTrainer />} />
+            <Route path="reading"      element={<Reading />} />
+            <Route path="reading/:id"  element={<ReadingDetail />} />
+            <Route path="stats"        element={<Stats />} />
+            <Route path="add-word"     element={<AddWord />} />
+            <Route path="audio-qa"     element={<AudioQa />} />
+          </Route>
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

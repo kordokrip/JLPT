@@ -199,9 +199,8 @@ function CharacterPreview({
           surface={card.mode === 'kanji' ? 'kanji' : 'kana'}
           label={`${card.char} 발음 듣기`}
           className="bg-[var(--card)]"
-          prefer={card.mode === 'kanji' ? 'server' : 'browser'}
-          forceBrowser={card.mode !== 'kanji'}
-          slow={card.mode === 'kanji'}
+          prefer="server"
+          slow
           repeat={1}
         />
       </div>
@@ -424,9 +423,8 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
           audioPath={getCardAudioPath(card)}
           surface={card.mode === 'kanji' ? 'kanji' : 'kana'}
           label={`${card.char} 발음 듣기`}
-          prefer={card.mode === 'kanji' ? 'server' : 'browser'}
-          forceBrowser={card.mode !== 'kanji'}
-          slow={card.mode === 'kanji'}
+          prefer="server"
+          slow
           repeat={1}
         />
       </div>

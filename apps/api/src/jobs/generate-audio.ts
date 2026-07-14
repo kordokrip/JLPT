@@ -8,7 +8,7 @@
  * 처리 흐름:
  *   1. D1에서 audio_r2_key IS NULL 인 항목 최대 50개 조회 (우선순위 순)
  *   2. TTS 어댑터로 오디오 생성
- *   3. R2에 저장 (호환 키: audio/{type}/{level}/{id}.mp3)
+ *   3. R2에 저장 (불변 키: audio/{type}/{level}/{id}-{contentHash}.{ext})
  *   4. D1 audio_r2_key 업데이트
  *
  * 단가 보호:
@@ -42,10 +42,11 @@ interface AudioTask {
   text:     string;
   level:    string;
   attempts: number;
+  audio_r2_key: string | null;
 }
 
 export interface AudioGenerationOptions {
-  provider?: Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
+  provider?: Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'>;
   batchSize?: number;
   forceRegenerate?: boolean;
 }
@@ -69,14 +70,16 @@ async function logGeneration(
   task: AudioTask,
   success: boolean,
   r2Key: string | null,
+  provider: string,
+  contentHash: string,
 ): Promise<void> {
   await db
     .prepare(
       `INSERT OR IGNORE INTO audio_generation_log
-         (item_type, item_id, r2_key, success, created_at)
-       VALUES (?, ?, ?, ?, datetime('now'))`,
+         (item_type, item_id, r2_key, success, provider, content_hash, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
     )
-    .bind(task.type, task.id, r2Key, success ? 1 : 0)
+    .bind(task.type, task.id, r2Key, success ? 1 : 0, provider, contentHash)
     .run();
 }
 
@@ -105,7 +108,7 @@ export async function runAudioGeneration(
   // P1: sentences
   const sentenceRows = await db
     .prepare(
-      `SELECT id, 'sentence' AS type, ja AS text, level,
+      `SELECT id, 'sentence' AS type, ja AS text, level, audio_r2_key,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM sentences
        WHERE 1 = 1
@@ -120,7 +123,7 @@ export async function runAudioGeneration(
   // P2: vocab N3
   const vocabN3Rows = await db
     .prepare(
-      `SELECT id, 'vocab' AS type, ja AS text, level,
+      `SELECT id, 'vocab' AS type, ja AS text, level, audio_r2_key,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM vocab
        WHERE 1 = 1
@@ -136,7 +139,7 @@ export async function runAudioGeneration(
   // P3: vocab N4/N5
   const vocabRestRows = await db
     .prepare(
-      `SELECT id, 'vocab' AS type, ja AS text, level,
+      `SELECT id, 'vocab' AS type, ja AS text, level, audio_r2_key,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM vocab
        WHERE 1 = 1
@@ -152,7 +155,7 @@ export async function runAudioGeneration(
   // P4: kanji (音読み)
   const kanjiRows = await db
     .prepare(
-      `SELECT id, 'kanji' AS type, COALESCE(on_yomi, kun_yomi, char) AS text, jlpt_level AS level,
+      `SELECT id, 'kanji' AS type, COALESCE(on_yomi, kun_yomi, char) AS text, jlpt_level AS level, audio_r2_key,
               COALESCE(audio_generation_attempts, 0) AS attempts
        FROM kanji
        WHERE 1 = 1
@@ -179,7 +182,8 @@ export async function runAudioGeneration(
   for (const task of allTasks) {
     if (!task.text?.trim()) { skipped++; continue; }
 
-    const r2Key = `audio/${task.type}/${task.level.toLowerCase()}/${task.id}.mp3`;
+    const contentHash = await audioContentHash(task.text, providerInfo);
+    const r2Key = await buildImmutableAudioKey(task, providerInfo, contentHash);
 
     // 이미 R2에 있으면 DB만 업데이트
     const existing = await r2.head(r2Key).catch(() => null);
@@ -207,19 +211,20 @@ export async function runAudioGeneration(
           model:     providerInfo.model,
           lang:      'ja',
           audioVersion: providerInfo.audioVersion,
+          contentHash,
           contentType,
           createdAt: new Date().toISOString(),
         },
       });
 
       await updateR2Key(db, task, r2Key);
-      await logGeneration(db, task, true, r2Key);
+      await logGeneration(db, task, true, r2Key, providerInfo.provider, contentHash);
       processed++;
       console.log(`[audio-gen] ✓ ${task.type}#${task.id} → ${r2Key}`);
     } catch (err) {
       console.error(`[audio-gen] ✗ ${task.type}#${task.id}`, err);
       await incrementAttempts(db, task);
-      await logGeneration(db, task, false, null);
+      await logGeneration(db, task, false, null, providerInfo.provider, contentHash);
       skipped++;
     }
   }
@@ -230,6 +235,25 @@ export async function runAudioGeneration(
   return { processed, skipped };
 }
 
+export async function audioContentHash(
+  text: string,
+  providerInfo: ReturnType<typeof getTtsProviderInfo>,
+): Promise<string> {
+  const payload = `${text.normalize('NFC')}\n${providerInfo.provider}\n${providerInfo.model}\n${providerInfo.audioVersion}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
+  return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+export async function buildImmutableAudioKey(
+  task: Pick<AudioTask, 'id' | 'type' | 'level' | 'text'>,
+  providerInfo: ReturnType<typeof getTtsProviderInfo>,
+  knownHash?: string,
+): Promise<string> {
+  const contentHash = knownHash ?? await audioContentHash(task.text, providerInfo);
+  const extension = providerInfo.provider === 'voicevox' ? 'wav' : 'mp3';
+  return `audio/${task.type}/${task.level.toLowerCase()}/${task.id}-${contentHash.slice(0, 16)}.${extension}`;
+}
+
 function isCurrentAudio(
   object: Pick<R2Object, 'customMetadata'>,
   providerInfo: ReturnType<typeof getTtsProviderInfo>,
@@ -237,7 +261,8 @@ function isCurrentAudio(
   const meta = object.customMetadata;
   return meta?.provider === providerInfo.provider &&
     meta.model === providerInfo.model &&
-    meta.audioVersion === providerInfo.audioVersion;
+    meta.audioVersion === providerInfo.audioVersion &&
+    typeof meta.contentHash === 'string';
 }
 
 async function updateR2Key(db: D1Database, task: AudioTask, r2Key: string): Promise<void> {

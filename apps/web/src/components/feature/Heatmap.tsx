@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { logsApi } from '../../lib/api';
+import { useDataScope } from '../../hooks/useDataScope';
 
 interface DayData {
   count:     number;
@@ -65,13 +66,14 @@ async function fetchHeatmap(year: number): Promise<HeatmapData> {
 
 export function Heatmap({ year: initialYear }: { year?: number }) {
   const { t, i18n } = useTranslation();
+  const dataScope = useDataScope();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(initialYear ?? currentYear);
   const locale = i18n.language === 'ja' ? 'ja-JP' : i18n.language === 'en' ? 'en-US' : 'ko-KR';
   const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'short' });
 
   const { data = {}, isLoading } = useQuery<HeatmapData>({
-    queryKey:  ['heatmap', year],
+    queryKey:  ['heatmap', dataScope, year],
     queryFn:   () => fetchHeatmap(year),
     staleTime: 5 * 60 * 1000,
   });

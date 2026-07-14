@@ -80,6 +80,7 @@ export const vocab = sqliteTable(
     frequencyRank: integer('frequency_rank'),
     tags: text('tags').notNull().default('[]').$type<string>(),
     audioR2Key: text('audio_r2_key'),
+    audioGenerationAttempts: integer('audio_generation_attempts').notNull().default(0),
     ...timestamps,
   },
   (t) => ({
@@ -127,6 +128,7 @@ export const kanji = sqliteTable(
     koreanHanjaPronu: text('korean_hanja_pronunciation'),
     relatedVocabIds: text('related_vocab_ids').notNull().default('[]').$type<string>(),
     audioR2Key: text('audio_r2_key'),
+    audioGenerationAttempts: integer('audio_generation_attempts').notNull().default(0),
     ...timestamps,
   },
   (t) => ({
@@ -148,6 +150,7 @@ export const sentences = sqliteTable(
     kana: text('kana'),
     ko: text('ko').notNull(),
     audioR2Key: text('audio_r2_key'),
+    audioGenerationAttempts: integer('audio_generation_attempts').notNull().default(0),
     vocabIds: text('vocab_ids').notNull().default('[]').$type<string>(),
     grammarIds: text('grammar_ids').notNull().default('[]').$type<string>(),
     ...timestamps,
@@ -225,9 +228,12 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash'),
   role: text('role').notNull().default('user'),
   authProvider: text('auth_provider').notNull().default('password'),
+  learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
   googleSub: text('google_sub'),
   lastLoginAt: integer('last_login_at'),
   fsrsOptions: text('fsrs_options'), // JSON: FsrsOptions (nullable)
+  fsrsWeights: text('fsrs_weights'),
+  srsSettings: text('srs_settings'),
   ...timestamps,
 });
 
@@ -287,6 +293,8 @@ export const srsCards = sqliteTable(
     lastReviewedAt: integer('last_reviewed_at', { mode: 'timestamp' }),
     lapses: integer('lapses').notNull().default(0),
     reps: integer('reps').notNull().default(0),
+    learningStepsIdx: integer('learning_steps_idx').notNull().default(0),
+    desiredRetention: real('desired_retention').notNull().default(0.9),
     // ──────────────────────────────────────
     ...timestamps,
   },
@@ -342,11 +350,17 @@ export const quizAttempts = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     quizType: text('quiz_type').notNull(),
+    mode: text('mode'),
+    level: text('level'),
     weekNo: integer('week_no'),
     total: integer('total').notNull().default(0),
     correct: integer('correct').notNull().default(0),
+    score: integer('score'),
     durationSec: integer('duration_sec'),
     detailJson: text('detail_json'),
+    questionsJson: text('questions_json'),
+    startedAt: text('started_at'),
+    finishedAt: text('finished_at'),
     ...timestamps,
   },
   (t) => ({
@@ -400,6 +414,104 @@ export const selfCheckTemplates = sqliteTable(
 );
 
 // ═══════════════════════════════════════════════════════════════════
+// ── 운영 기능 계열
+// ═══════════════════════════════════════════════════════════════════
+
+export const oauthStates = sqliteTable('oauth_states', {
+  stateHash: text('state_hash').primaryKey(),
+  learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
+  expiresAt: integer('expires_at').notNull(),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+  consumedAt: integer('consumed_at'),
+}, (t) => ({
+  expiresIdx: index('oauth_states_expires_idx').on(t.expiresAt),
+}));
+
+export const oauthLoginTokens = sqliteTable('oauth_login_tokens', {
+  tokenHash: text('token_hash').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: integer('expires_at').notNull(),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+  consumedAt: integer('consumed_at'),
+}, (t) => ({
+  expiresIdx: index('oauth_login_tokens_expires_idx').on(t.expiresAt),
+}));
+
+export const quizQuestionBank = sqliteTable('quiz_question_bank', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  mode: text('mode').notNull(),
+  level: text('level').notNull(),
+  itemId: integer('item_id').notNull(),
+  itemType: text('item_type').notNull(),
+  prompt: text('prompt').notNull(),
+  correct: text('correct').notNull(),
+  distractors: text('distractors').notNull(),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+}, (t) => ({
+  modeLevelIdx: index('quiz_question_bank_mode_level_idx').on(t.mode, t.level),
+}));
+
+export const audioGenerationLog = sqliteTable('audio_generation_log', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  itemType: text('item_type', { enum: ['sentence', 'vocab', 'kanji'] }).notNull(),
+  itemId: integer('item_id').notNull(),
+  r2Key: text('r2_key'),
+  success: integer('success', { mode: 'boolean' }).notNull().default(false),
+  provider: text('provider'),
+  contentHash: text('content_hash'),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+}, (t) => ({
+  createdIdx: index('audio_generation_log_created_idx').on(t.createdAt),
+  itemIdx: index('audio_generation_log_item_idx').on(t.itemType, t.itemId),
+}));
+
+export const readingPassages = sqliteTable('reading_passages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  level: text('level', { enum: ['N5', 'N4', 'N3', 'N2', 'N1'] }).notNull(),
+  genre: text('genre', {
+    enum: ['email', 'ad', 'essay', 'news', 'instruction', 'conversation', 'notice'],
+  }).notNull(),
+  titleJa: text('title_ja').notNull(),
+  bodyJa: text('body_ja').notNull(),
+  bodyKo: text('body_ko').notNull(),
+  wordCount: integer('word_count').notNull().default(0),
+  vocabIds: text('vocab_ids').notNull().default('[]'),
+  grammarIds: text('grammar_ids').notNull().default('[]'),
+  audioR2Key: text('audio_r2_key'),
+  sourceAttribution: text('source_attribution'),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+}, (t) => ({
+  levelGenreIdx: index('reading_passages_level_genre_idx').on(t.level, t.genre),
+}));
+
+export const readingQuestions = sqliteTable('reading_questions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  passageId: integer('passage_id').notNull().references(() => readingPassages.id, { onDelete: 'cascade' }),
+  questionJa: text('question_ja').notNull(),
+  questionKo: text('question_ko').notNull(),
+  choicesJson: text('choices_json').notNull(),
+  answerIndex: integer('answer_index').notNull(),
+  explanationKo: text('explanation_ko'),
+}, (t) => ({
+  passageIdx: index('reading_questions_passage_idx').on(t.passageId),
+}));
+
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userAgent: text('user_agent'),
+  morningOn: integer('morning_on', { mode: 'boolean' }).notNull().default(true),
+  eveningOn: integer('evening_on', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
+  lastSeenAt: integer('last_seen_at'),
+}, (t) => ({
+  userIdx: index('push_subscriptions_user_idx').on(t.userId),
+}));
+
+// ═══════════════════════════════════════════════════════════════════
 // ── 타입 내보내기
 // ═══════════════════════════════════════════════════════════════════
 export type Source = typeof sources.$inferSelect;
@@ -434,3 +546,17 @@ export type SelfCheck = typeof selfCheck.$inferSelect;
 export type NewSelfCheck = typeof selfCheck.$inferInsert;
 export type SelfCheckTemplate = typeof selfCheckTemplates.$inferSelect;
 export type NewSelfCheckTemplate = typeof selfCheckTemplates.$inferInsert;
+export type OauthState = typeof oauthStates.$inferSelect;
+export type NewOauthState = typeof oauthStates.$inferInsert;
+export type OauthLoginToken = typeof oauthLoginTokens.$inferSelect;
+export type NewOauthLoginToken = typeof oauthLoginTokens.$inferInsert;
+export type QuizQuestion = typeof quizQuestionBank.$inferSelect;
+export type NewQuizQuestion = typeof quizQuestionBank.$inferInsert;
+export type AudioGenerationLog = typeof audioGenerationLog.$inferSelect;
+export type NewAudioGenerationLog = typeof audioGenerationLog.$inferInsert;
+export type ReadingPassage = typeof readingPassages.$inferSelect;
+export type NewReadingPassage = typeof readingPassages.$inferInsert;
+export type ReadingQuestion = typeof readingQuestions.$inferSelect;
+export type NewReadingQuestion = typeof readingQuestions.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;

@@ -4,15 +4,16 @@ import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
 import { BrowseSidebar, MobileBrowseTabs, MobileLevelFilters } from './BrowseFilters';
 import { BrowseList, LoadingList } from './BrowseList';
 import type { ContentType } from './types';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 type BrowseViewProps = {
   currentType: ContentType;
   query: string;
-  level: string | undefined;
+  level: JlptLevel | undefined;
   items: Array<VocabItem | GrammarItem | KanjiItem>;
   loading: boolean;
   onType: (type: ContentType) => void;
-  onLevel: (level: string | undefined) => void;
+  onLevel: (level: JlptLevel | undefined) => void;
   onQuery: (value: string) => void;
 };
 

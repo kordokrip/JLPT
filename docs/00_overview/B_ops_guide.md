@@ -1,95 +1,145 @@
-## 📗 부록 B — `B_ops_guide.md`
+# 운영 가이드
 
-### B.1 13개 소스 업로드 순서 (반드시 이 순서)
+기준일: 2026-07-15 KST
+범위: 콘텐츠 검증, D1 변경, 테스트, 오디오, 배포
 
-| # | 파일명 | 역할 | 업로드 시점 |
-|---|---|---|---|
-| 0 | `00_index.md` | 전체 인덱스·메타데이터 | Day 0 (최초) |
-| 1 | `01_learning_strategy.md` | 학습 전략·인지과학 원리 | Day 0 |
-| 2 | `02_curriculum_master.md` | 16주 마스터 커리큘럼 | Day 0 |
-| 3 | `03_jlpt_n5_vocab.md` | N5 어휘 800 | W1 시작일 |
-| 4 | `04_jlpt_n5_grammar.md` | N5 문법 80 | W1 |
-| 5 | `05_jlpt_n4_vocab.md` | N4 어휘 1,500 | W4 |
-| 6 | `06_jlpt_n4_grammar.md` | N4 문법 150 | W4 |
-| 7 | `07_kanji_500.md` | 상용한자 500자 | W2 (병행) |
-| 8 | `08_pronunciation_listening.md` | 발음·청해 가이드 | W1 (병행) |
-| 9 | `09_culture_business.md` | 문화·비즈니스 매너 | W8 |
-| 10A | `10A_jlpt_n3_vocab_part1.md` | N3 어휘 전반 1,850 | W9 |
-| 10B | `10B_jlpt_n3_vocab_part2.md` | N3 어휘 후반 1,850 | W12 |
-| 11 | `11_jlpt_n3_grammar.md` | N3 문법 200 | W9 |
-| 12 | `12_example_sentences.md` | 예문 1,100 | W1 (병행 누적) |
-| +A | `A_sysprog_vocab_500.md` | 직무 어휘 500 | W1 (병행) |
-| +B | `B_notebooklm_ops_guide.md` | 본 가이드 | Day 0 |
-| +C | `C_self_check_16weeks.md` | 자가 진단 | 매주 갱신 |
+## 1. 운영 source of truth
 
+| 목적 | 경로 |
+| --- | --- |
+| D1 schema | `packages/db/src/schema.ts` |
+| canonical migrations | `packages/db/drizzle-v2/*.sql` |
+| 콘텐츠 경로 | `packages/db/src/seed/constants.ts` |
+| seed manifest | `packages/db/src/seed/content-manifest.ts` |
+| DB verification | `packages/db/src/seed/verify.ts` |
+| OpenAPI types | `apps/web/src/types/api.d.ts`, `admin-api.d.ts` |
+| audio policy | `packages/shared/src/audio-policy.ts` |
+| release gates | `.github/workflows/verify.yml`, `e2e.yml` |
 
-### B.2 챗 프롬프트 30종 템플릿
+## 2. 현재 운영 콘텐츠
 
-**① 학습 계획·진단 (1~5)**
-1. `[Source: 02 + C] 오늘 날짜 기준 내 진척률을 분석하고, 지연 영역 3개와 회복 플랜을 제시해줘.`
-2. `[Source: 02] 이번 주차 학습 목표를 To-Do 리스트로 출력 (어휘·문법·예문·한자 분리).`
-3. `[Source: 01] 망각곡선에 따라 오늘 복습해야 할 항목을 1·3·7·21일 간격으로 추출.`
-4. `[Source: C] 자가 진단 결과 70% 미달 영역을 진단하고 보충 학습 카드를 생성.`
-5. `[Source: 02 + A] 직무 어휘 학습이 본 커리큘럼과 충돌하지 않도록 통합 일일 스케줄을 작성.`
+운영 seed는 `docs/01_n5`, `docs/02_n4`, `docs/03_n3`, `docs/04_supplement`의 실제 존재 파일 13개만 사용한다. 과거의 루트 파일명이나 16주 업로드 표는 사용하지 않는다.
 
-**② 어휘 학습 (6~12)**
-6. `[Source: 03] N5 어휘 A 카테고리 30개로 한일 페어 플래시카드를 만들어줘.`
-7. `[Source: 10A] N3 동음이의어 5쌍 인터리빙 퀴즈 10문항 생성.`
-8. `[Source: A] SP-D(OpenCV) 어휘 15개로 기술 회의 예문을 만들어줘.`
-9. `[Source: 10B + A] 반도체 카테고리 N3+직무 어휘 통합 매핑표 작성.`
-10. `[Source: 03+05+10A] 한자 1자에 N5/N4/N3 어휘를 묶은 한자 패밀리 카드 20세트.`
-11. `[Source: A] SP-E 노광·증착·식각 어휘로 공정 설명 스크립트 (3분) 작성.`
-12. `[Source: 12] 예문에서 직무 어휘(부록 A)가 등장한 문장만 추출.`
+| Code | 현재 파일 | parser 결과 |
+| --- | --- | ---: |
+| 04 | `docs/01_n5/04_vocab.md` | vocab 700 |
+| 05 | `docs/01_n5/05_grammar.md` | grammar 55 |
+| 03 | `docs/01_n5/03_kanji.md` | kanji 103 |
+| 07 | `docs/02_n4/07_vocab.md` | vocab 548 |
+| 08 | `docs/02_n4/08_grammar.md` | grammar 98 |
+| 06 | `docs/02_n4/06_kanji.md` | kanji 164 |
+| 10A | `docs/03_n3/10A_vocab_part1.md` | vocab 1,092 |
+| 10B | `docs/03_n3/10B_vocab_part2.md` | vocab 960 |
+| 11 | `docs/03_n3/11_grammar.md` | grammar 163 |
+| 09 | `docs/03_n3/09_kanji.md` | kanji 275 |
+| 12 | `docs/04_supplement/12_example_sentences.md` | sentences 1,100 |
+| A | `docs/04_supplement/A_sysprog_vocab_500.md` | sysprog 82 |
+| C | `docs/04_supplement/C_self_check_16weeks.md` | curriculum 52 |
 
-**③ 문법·예문 (13~18)**
-13. `[Source: 11] G5 조건표현 4종(と·ば·たら·なら) 비교표와 변별 퀴즈 15문항.`
-14. `[Source: 06+11] N4→N3 문법 진화 매핑 (8쌍) 표 형식.`
-15. `[Source: 11+A] G12 경어 + SP-J 메일 표현을 결합한 비즈니스 메일 5종 작성.`
-16. `[Source: 12] N3 신문체 예문 30개에서 N3 문법 패턴을 자동 태깅.`
-17. `[Source: 11] 인터리빙 변별 30쌍 (예: ～ば vs ～たら) 카드.`
-18. `[Source: 12 + A] 회의 시나리오 (납기 지연 사과) 롤플레이 대본 작성.`
+파일명 `C_self_check_16weeks.md`는 legacy지만 현재 parser는 52주 기본 계획을 생성한다.
 
-**④ 한자·발음 (19~22)**
-19. `[Source: 07] 부수별 한자 그룹핑 마인드맵 출력.`
-20. `[Source: 07+A] 직무 빈출 한자 50자만 추출하여 별도 카드.`
-21. `[Source: 08] 박자(モーラ) 발음 연습 — 長音·促音·撥音 각 10개씩 셋.`
-22. `[Source: 08+12] 청해용 1.0×/1.25× 트랙 스크립트 (10분).`
+## 3. 콘텐츠 변경 절차
 
-**⑤ 평가·모의고사 (23~26)**
-23. `[Source: 03~12] N5 모의시험 100문항 (어휘 35·문법 30·독해 20·청해 15).`
-24. `[Source: 10A+10B+11] N3 모의시험 250문항 (실전 비율).`
-25. `[Source: A] 직무 어휘 200문항 (반도체 60·이미지처리 40·회의 50·메일 50).`
-26. `[Source: C] 16주차 종합 평가표 — 영역별 정답률·시간·약점 분석 리포트.`
-
-**⑥ 운영·자동화 (27~30)**
-27. `[Source: B] 오늘 학습 로그를 JSON 형식으로 출력 (date, source, items, accuracy, time_sec).`
-28. `[Source: B+C] 주간 학습 로그를 요약하여 막대 그래프용 데이터 테이블 생성.`
-29. `[Source: B] 학습 정체 감지 — 3일 연속 정확도 <70%인 영역 자동 알림 룰 정의.`
-30. `[Source: 모든 소스] 학습 완료(W16) 후 N3 합격 가능성을 카테고리별 점수로 추정.`
-
-### B.3 학습 로그 자동화
-
-**로그 스키마 (JSON Lines, `learning_log.jsonl`)**
-```json
-{"date":"2026-05-24","week":1,"day":1,"source":"03_jlpt_n5_vocab",
- "category":"A-1","items_new":30,"items_review":0,
- "accuracy":0.83,"time_min":36,"audio_min":10,
- "flashcards_done":30,"quiz_score":null,"notes":"감정어휘 양호"}
+```bash
+pnpm -F @nihongo-n3/db seed:diff
+pnpm -F @nihongo-n3/db verify:fresh
+pnpm typecheck
+pnpm test
 ```
 
-**자동화 워크플로 (3단계)**
-1. **입력**: 매일 학습 후 NotebookLM 챗에 프롬프트 #27 실행 → JSON 출력 → 로컬 `learning_log.jsonl`에 append (사용자가 복사하거나 Python 스크립트로 자동 저장).
-2. **집계**: 주말마다 프롬프트 #28 실행 → 주간 요약. Python `pandas` 1줄 스크립트로 CSV 변환:
-   ```python
-   import pandas as pd; pd.read_json("learning_log.jsonl", lines=True).to_csv("weekly.csv")
-   ```
-3. **시각화·경보**: 프롬프트 #29로 약점 자동 감지 → 다음 주 스케줄에 보충 블록 자동 삽입 요청 (#1 재실행).
+`seed:diff`는 parser 검증만 하고 D1을 변경하지 않는다. production 변경은 `Content and D1 Change Control`의 수동 `migrate` 또는 `seed` operation만 사용한다.
 
-**권장 KPI**
-| KPI | 목표 | 경보 임계 |
-|---|---|---|
-| 일일 학습 시간 | 90~120분 | <60분 3일 연속 |
-| 어휘 정확도 | ≥80% | <70% 영역별 |
-| 문법 정확도 | ≥75% | <65% |
-| 청해 정확도 | ≥70% | <60% |
-| 주간 누적 카드 | ≥150 | <100 |
+N2/N1 파일이 없거나 provenance가 불완전하면 `CONTENT_PATHS`에 등록하지 않는다.
+
+## 4. D1 변경
+
+일반 table migration은 Drizzle schema에서 생성하고 reviewed SQL을 `drizzle-v2`의 다음 번호로 추가한다. FTS virtual table/trigger만 수동 SQL migration으로 관리한다. 기존 번호를 수정하지 않는다.
+
+로컬:
+
+```bash
+pnpm -F @nihongo-n3/db verify:fresh
+```
+
+Remote production은 GitHub Environment 승인 후에만 실행한다. prod-v2 전환은 [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)을 따른다.
+
+## 5. 인증 운영
+
+기본 운영 모드는 `app-session`이다.
+
+- password와 Google OAuth가 같은 D1 user/session 모델을 사용한다.
+- Google 승인 redirect URI는 `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback`이다.
+- Pages/Worker cross-origin callback은 `/api/v1/auth/complete` bridge token을 사용한다.
+- `cf-access`로 바꿀 때는 `CF_ACCESS_AUD`, `CF_TEAM_DOMAIN` secret과 실제 JWT test가 필요하다.
+- admin OpenAPI와 회원 관리 route는 admin app session으로 보호한다.
+
+Secret은 `.env`, `.dev.vars`, GitHub/Cloudflare secret에만 두고 commit하지 않는다.
+
+```bash
+wrangler secret put AUTH_SECRET
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put CF_ACCESS_AUD
+wrangler secret put CF_TEAM_DOMAIN
+```
+
+## 6. 오디오 운영
+
+공개 audio API는 R2 read-only다. 런타임 요청으로 유료 TTS를 호출하지 않는다.
+
+Google batch에 필요한 secret:
+
+```bash
+wrangler secret put GOOGLE_TTS_API_KEY
+wrangler secret put AUDIO_BATCH_APPROVAL_TOKEN
+```
+
+30문장 QA 승인 후 admin queue를 dry-run하고, 승인된 요청에서만 `execute:true`를 사용한다. 전체 생성 뒤 다음을 통과해야 한다.
+
+```bash
+pnpm -F @nihongo-n3/db verify:remote:audio
+```
+
+자세한 정책은 [오디오 정책](./audio-tts-provider-policy-2026-07-07.md)을 참조한다.
+
+## 7. 배포 전 로컬 관문
+
+```bash
+pnpm audit --audit-level high
+pnpm openapi:generate
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm -F @nihongo-n3/db verify:fresh
+pnpm -F @nihongo-n3/e2e test:chromium
+pnpm -F @nihongo-n3/e2e test:webkit
+```
+
+생성된 OpenAPI type을 commit한 뒤 `pnpm openapi:check`가 clean tree에서 통과해야 한다.
+
+## 8. CI와 배포
+
+필수 workflow:
+
+- Dependency Audit
+- CodeQL Security Analysis
+- Required Verification
+- E2E Tests (Chromium/WebKit)
+- Backup D1 Database -> R2
+
+GitHub billing annotation으로 job이 시작되지 않은 실패는 코드 실패와 구분하되, 성공으로 간주하지 않는다. billing을 해결한 뒤 같은 SHA에서 다시 실행한다.
+
+Workers/Pages production deploy는 workflow_dispatch와 `production` Environment approval로만 실행한다. push나 PR은 검증 또는 preview까지만 수행한다.
+
+## 9. 배포 후 관측
+
+최초 30분:
+
+- `/health`, `/openapi.json`, web shell
+- password login/logout/session refresh
+- Google OAuth start/callback/complete
+- content search, quiz, SRS review, sync queue
+- admin protection
+- 5xx < 1%/5분, D1 error 0
+
+이후 24시간 동안 auth failure, D1 error, latency, release SHA별 회귀를 강화 모니터링한다. 결과를 status report와 session changelog에 반영한다.

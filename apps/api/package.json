@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "openapi:export": "tsx scripts/export-openapi.ts"
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.18.0",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.16.18",
     "@cloudflare/workers-types": "^4.20260617.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.5",
     "vitest": "^4.1.7",
     "wrangler": "^4.103.0"

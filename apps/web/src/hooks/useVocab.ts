@@ -6,9 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { db, type VocabItem } from '../lib/db';
 import { vocabApi } from '../lib/api';
 import { ensureContentFresh } from '../lib/content-cache';
+import type { JlptLevel } from '@nihongo-n3/shared';
+import { useSettingsStore } from '../stores/settings-store';
 
 /** IDB first — 비어있으면 서버에서 로드해 IDB에 저장 */
-export function useVocabList(level?: string, limit = 50) {
+export function useVocabList(level?: JlptLevel, limit = 50) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(
     () => {
       let query = db.vocab.orderBy('id');
@@ -21,7 +24,7 @@ export function useVocabList(level?: string, limit = 50) {
   );
 
   const { isFetching } = useQuery({
-    queryKey: ['vocab', 'list', level, limit],
+    queryKey: ['vocab', track, 'list', level, limit],
     queryFn: async () => {
       await ensureContentFresh();
       const count = level
@@ -43,10 +46,11 @@ export function useVocabList(level?: string, limit = 50) {
 
 /** 어휘 단건 조회 */
 export function useVocabItem(id: number) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(() => db.vocab.get(id), [id]);
 
   const { isFetching } = useQuery({
-    queryKey: ['vocab', 'item', id],
+    queryKey: ['vocab', track, 'item', id],
     queryFn: async () => {
       await ensureContentFresh();
       const current = await db.vocab.get(id);
@@ -65,8 +69,9 @@ export function useVocabItem(id: number) {
 
 /** 어휘 검색 (항상 서버에서) */
 export function useVocabSearch(q: string) {
+  const track = useSettingsStore((state) => state.learningTrack);
   return useQuery<VocabItem[]>({
-    queryKey: ['vocab', 'search', q],
+    queryKey: ['vocab', track, 'search', q],
     enabled:  q.trim().length >= 1,
     queryFn: async () => {
       const res = await vocabApi.search(q);

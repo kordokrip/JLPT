@@ -15,7 +15,11 @@ export type Env = {
   /** Cloudflare Workers AI 바인딩 (TTS, 이미지 등) */
   AI:                  Ai;
   ENVIRONMENT:         string;
-  /** production auth mode: cf-access | public-owner */
+  /** Blue/green cutover guard: off | read-only */
+  MAINTENANCE_MODE?:   string;
+  /** Git commit or deployment identifier injected by CI. */
+  RELEASE_SHA?:        string;
+  /** production auth mode: app-session | cf-access | public-owner */
   AUTH_MODE:           string;
   /** App session HMAC/password hashing secret. Set with wrangler secret in production. */
   AUTH_SECRET?:        string;
@@ -37,8 +41,8 @@ export type Env = {
   NOTIFY_EMAIL:        string;
   /** TTS 공급자: cloudflare | google | azure | voicevox | style-bert-vits2 */
   TTS_PROVIDER:        string;
-  GOOGLE_TTS_API_KEY:  string;
-  AZURE_TTS_KEY:       string;
+  GOOGLE_TTS_API_KEY?: string;
+  AZURE_TTS_KEY?:      string;
   AZURE_TTS_REGION:    string;
   VOICEVOX_URL:        string;
   /** Optional secret override for VOICEVOX_URL. Prefer this for production URLs. */
@@ -48,13 +52,15 @@ export type Env = {
   VOICEVOX_PITCH_SCALE:string;
   VOICEVOX_INTONATION_SCALE:string;
   STYLE_BERT_VITS2_URL:string;
+  /** 관리자 승인 배치에서만 사용하는 오디오 생성 승인 토큰 */
+  AUDIO_BATCH_APPROVAL_TOKEN?: string;
   /** 외부 FSRS 옵티마이저 서비스 URL (Node 배치/별도 서비스) */
   FSRS_OPTIMIZER_URL:  string;
   /** 외부 FSRS 옵티마이저 인증 토큰 (Bearer) */
-  FSRS_OPTIMIZER_TOKEN:string;
+  FSRS_OPTIMIZER_TOKEN?:string;
   /** VAPID 키 (base64url) — Web Push */
   VAPID_PUBLIC_KEY:    string;
-  VAPID_PRIVATE_KEY:   string;
+  VAPID_PRIVATE_KEY?:  string;
 };
 
 // ─────────────────────────────────────────────
@@ -64,6 +70,8 @@ export type Variables = {
   userId: string;
   userEmail: string;
   userRole?: 'user' | 'admin';
+  requestId: string;
+  requestStartedAt: number;
 };
 
 // ─────────────────────────────────────────────

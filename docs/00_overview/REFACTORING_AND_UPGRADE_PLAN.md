@@ -1,5 +1,7 @@
 # nihongo-n3 리팩토링 & 업그레이드 A-Z 마스터 플랜
 
+> **역사 문서:** 이 문서는 2026년 6월 당시의 목표와 판단을 보존한다. 완료 여부와 현재 우선순위는 `docs/ROADMAP.md`, `docs/PROJECT_ANALYSIS_2026.md`, `docs/00_overview/TECH_DEBT_2026-07-14.md`를 기준으로 판단한다.
+
 > 기준일: 2026년 6월  
 > 목적: 전체 코드베이스 완성도 78% → 95%+ 달성을 위한 실행 가능한 A-Z 로드맵  
 > 방법론: 프론트엔드 → 백엔드 → 컴포넌트 → DB → 인프라 → 기타 기능 순서로 교차 검증까지 포함
@@ -127,7 +129,7 @@ app.use('*', secureHeaders({
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:'],
-    connectSrc: ["'self'", 'https://nihongo-n3-api.workers.dev'],
+    connectSrc: ["'self'", 'https://nihongo-n3-api.kordokrip.workers.dev'],
     mediaSrc: ["'self'", 'blob:'],
     workerSrc: ["'self'", 'blob:'],  // Service Worker
     frameAncestors: ["'none'"],

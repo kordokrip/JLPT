@@ -41,7 +41,7 @@ test.describe('퀴즈 기능 smoke', () => {
         expect(new Set(question.choices).size, `${mode} choices are unique`).toBe(question.choices.length);
         if (mode === 'listening') {
           expect(question.script_ja, 'listening script_ja').toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
-          expect(question.audio_key, 'listening audio key').toMatch(/^audio\/sentence\/n[1-5]\/\d+\.mp3$/);
+          expect(question.audio_key, 'fresh DB must not fabricate an unapproved R2 key').toBeUndefined();
         }
       }
     }
@@ -92,7 +92,7 @@ test.describe('퀴즈 기능 smoke', () => {
     });
   });
 
-  test('청해 전용 화면은 브라우저 일본어 음성을 기본 선택지로 제공한다', async ({ page }) => {
+  test('청해 전용 화면은 승인된 R2가 없으면 브라우저 fallback을 제공한다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.addInitScript(() => {
         localStorage.setItem('nihongo-n3-settings', JSON.stringify({
@@ -113,10 +113,9 @@ test.describe('퀴즈 기능 smoke', () => {
       });
       await page.goto('/quiz/listening');
       await expect(page.getByRole('heading', { name: /청해 퀴즈|Listening Quiz|聴解クイズ/ })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /브라우저 음성|Browser voice|ブラウザー音声/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /서버 오디오|Server audio|サーバー音声/ })).toBeVisible();
       await expect(page.getByText(/일본어 브라우저 음성으로 재생합니다|Japanese browser voice|日本語ブラウザー音声/)).toBeVisible();
+      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /재생|Play|再生/ })).toBeVisible();
       await expect(page.getByRole('radiogroup')).toBeVisible();
     });
   });

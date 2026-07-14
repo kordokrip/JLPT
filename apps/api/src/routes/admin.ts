@@ -397,11 +397,13 @@ export async function sendReportEmail(
 // dry_run=true 시 실제 생성 없이 대상 목록만 반환
 admin.post('/audio/queue', async (c) => {
   const body = (await c.req.json<{
+    execute?: boolean;
     dry_run?: boolean;
     batch?: number;
     provider?: string;
     force_regenerate?: boolean;
   }>().catch(() => ({}))) as {
+    execute?: boolean;
     dry_run?: boolean;
     batch?: number;
     provider?: string;
@@ -413,7 +415,7 @@ admin.post('/audio/queue', async (c) => {
     return badRequest(c, `지원하지 않는 TTS provider입니다: ${body.provider}`);
   }
 
-  if (body && 'dry_run' in body && body.dry_run) {
+  if (body.execute !== true || body.dry_run === true) {
     // 생성 대상 통계 조회만 반환
     const db = c.env.DB;
     type CountRow = { total: number; done: number };
@@ -424,7 +426,8 @@ admin.post('/audio/queue', async (c) => {
     ]);
     return ok(c, {
       dry_run: true,
-      provider: provider ?? getTtsProviderInfo(c.env).provider,
+      approval_required: true,
+      provider: provider ?? 'google',
       force_regenerate: body.force_regenerate === true,
       stats: {
         sentences: { total: sentences?.total ?? 0, done: sentences?.done ?? 0 },
@@ -434,15 +437,13 @@ admin.post('/audio/queue', async (c) => {
     });
   }
 
-  if (provider === 'voicevox') {
-    const voicevoxUrl = getVoicevoxUrl(c.env);
-    if (!voicevoxUrl) {
-      return badRequest(c, 'VOICEVOX_URL_SECRET 또는 VOICEVOX_URL 설정 후 R2 재생성을 실행하십시오');
-    }
-    const voicevox = await probeVoicevoxEngine(voicevoxUrl, { timeoutMs: 5000 });
-    if (!voicevox.ok) {
-      return badRequest(c, `VOICEVOX provider가 준비되지 않았습니다: ${voicevox.error}`);
-    }
+  if (provider !== 'google') {
+    return badRequest(c, '운영 전체 배치는 승인된 Google Cloud TTS provider만 사용할 수 있습니다');
+  }
+  const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
+  const suppliedApproval = c.req.header('x-audio-batch-approval')?.trim();
+  if (!configuredApproval || !suppliedApproval || suppliedApproval !== configuredApproval) {
+    return badRequest(c, '오디오 배치 승인 토큰이 없거나 일치하지 않습니다');
   }
 
   const result = await runAudioGeneration(c.env, {
@@ -465,6 +466,12 @@ admin.get('/audio/providers', async (c) => {
         ok: true,
         model: getTtsProviderInfo(c.env, 'cloudflare').model,
       },
+      google: {
+        configured: Boolean(c.env.GOOGLE_TTS_API_KEY),
+        ok: Boolean(c.env.GOOGLE_TTS_API_KEY),
+        model: getTtsProviderInfo(c.env, 'google').model,
+        use: 'approved-batch-only',
+      },
       voicevox: {
         ...voicevox,
         model: getTtsProviderInfo(c.env, 'voicevox').model,
@@ -480,8 +487,16 @@ admin.post('/audio/qa/warmup', async (c) => {
     force?: boolean;
   };
   const providers = parseQaWarmupProviders(body.provider);
+  if (providers.includes('google')) {
+    const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
+    const suppliedApproval = c.req.header('x-audio-batch-approval')?.trim();
+    if (!configuredApproval || !suppliedApproval || suppliedApproval !== configuredApproval) {
+      return badRequest(c, 'Google QA 오디오 생성에는 오디오 배치 승인 토큰이 필요합니다');
+    }
+  }
   const results: Record<AudioQaProvider, Awaited<ReturnType<typeof warmupAudioQa>>> = {
     cloudflare: [],
+    google: [],
     voicevox: [],
   };
 
@@ -506,8 +521,8 @@ admin.post('/audio/qa/warmup', async (c) => {
   });
 });
 
-function parseBatchProvider(value: string | undefined): Extract<TtsProviderId, 'cloudflare' | 'voicevox'> | undefined {
-  if (value === 'cloudflare' || value === 'voicevox') return value;
+function parseBatchProvider(value: string | undefined): Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'> | undefined {
+  if (value === 'cloudflare' || value === 'google' || value === 'voicevox') return value;
   return undefined;
 }
 

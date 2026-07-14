@@ -12,10 +12,8 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { AppEnv } from '../types.js';
 import { notFound, badRequest } from '../lib/response.js';
-import { createTtsAdapter, getTtsProviderInfo } from '../lib/tts/index.js';
 import {
-  detectAudioContentType,
-  getOrGenerateQaAudio,
+  buildAudioQaKey,
   isValidAudioQaIndex,
   parseAudioQaKey,
   parseAudioQaProvider,
@@ -40,150 +38,13 @@ function parseRange(header: string, totalSize: number): { start: number; end: nu
   return { start, end };
 }
 
-type AudioKind = 'sentence' | 'vocab' | 'kanji';
-
-function createSilentWav(durationMs = 250): ArrayBuffer {
-  const sampleRate = 8_000;
-  const channels = 1;
-  const bitsPerSample = 16;
-  const bytesPerSample = bitsPerSample / 8;
-  const sampleCount = Math.max(1, Math.floor(sampleRate * (durationMs / 1_000)));
-  const dataSize = sampleCount * channels * bytesPerSample;
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-  let offset = 0;
-  const writeString = (value: string) => {
-    for (let i = 0; i < value.length; i += 1) {
-      view.setUint8(offset, value.charCodeAt(i));
-      offset += 1;
-    }
-  };
-  const writeUint32 = (value: number) => {
-    view.setUint32(offset, value, true);
-    offset += 4;
-  };
-  const writeUint16 = (value: number) => {
-    view.setUint16(offset, value, true);
-    offset += 2;
-  };
-
-  writeString('RIFF');
-  writeUint32(36 + dataSize);
-  writeString('WAVE');
-  writeString('fmt ');
-  writeUint32(16);
-  writeUint16(1);
-  writeUint16(channels);
-  writeUint32(sampleRate);
-  writeUint32(sampleRate * channels * bytesPerSample);
-  writeUint16(channels * bytesPerSample);
-  writeUint16(bitsPerSample);
-  writeString('data');
-  writeUint32(dataSize);
-  return buffer;
-}
-
-function parseGeneratedAudioKey(key: string): { kind: AudioKind; level: string; id: number } | null {
-  const match = key.match(/^audio\/(sentence|vocab|kanji)\/(n[1-5])\/(\d+)\.mp3$/i);
-  if (!match) return null;
-  return {
-    kind: match[1] as AudioKind,
-    level: match[2]!.toUpperCase(),
-    id: Number(match[3]),
-  };
-}
-
-async function getSourceText(c: Context<AppEnv>, kind: AudioKind, id: number): Promise<string | null> {
-  if (kind === 'sentence') {
-    const row = await c.env.DB.prepare('SELECT ja AS text FROM sentences WHERE id = ?')
-      .bind(id)
-      .first<{ text: string | null }>();
-    return row?.text?.trim() || null;
-  }
-  if (kind === 'vocab') {
-    const row = await c.env.DB.prepare('SELECT ja AS text FROM vocab WHERE id = ?')
-      .bind(id)
-      .first<{ text: string | null }>();
-    return row?.text?.trim() || null;
-  }
-  const row = await c.env.DB.prepare(
-    "SELECT COALESCE(NULLIF(on_yomi, ''), NULLIF(kun_yomi, ''), char) AS text FROM kanji WHERE id = ?",
-  )
-    .bind(id)
-    .first<{ text: string | null }>();
-  return row?.text?.trim() || null;
-}
-
-async function updateAudioKey(c: Context<AppEnv>, kind: AudioKind, id: number, key: string): Promise<void> {
-  const table = kind === 'sentence' ? 'sentences' : kind === 'vocab' ? 'vocab' : 'kanji';
-  await c.env.DB.prepare(`UPDATE ${table} SET audio_r2_key = ? WHERE id = ?`)
-    .bind(key, id)
-    .run()
-    .catch(() => undefined);
-}
-
-async function generateAudioObject(
+async function serveQaAudio(
   c: Context<AppEnv>,
-  key: string,
-): Promise<R2ObjectBody | null> {
-  const parsed = parseGeneratedAudioKey(key);
-  if (!parsed) return null;
-
-  const text = await getSourceText(c, parsed.kind, parsed.id);
-  if (!text) return null;
-
-  const providerInfo = getTtsProviderInfo(c.env);
-  const audioBuffer = c.env.ENVIRONMENT === 'test'
-    ? createSilentWav()
-    : await createTtsAdapter(c.env).generateAudio({ text, lang: 'ja' });
-  const contentType = c.env.ENVIRONMENT === 'test'
-    ? 'audio/wav'
-    : detectAudioContentType(audioBuffer);
-  await c.env.ASSETS.put(key, audioBuffer, {
-    httpMetadata: {
-      contentType,
-      cacheControl: CACHE_CONTROL,
-    },
-    customMetadata: {
-      itemType: parsed.kind,
-      itemId: String(parsed.id),
-      level: parsed.level,
-      source: 'on-demand',
-      provider: c.env.ENVIRONMENT === 'test' ? 'test-silent' : providerInfo.provider,
-      model: c.env.ENVIRONMENT === 'test' ? 'test-silent-wav' : providerInfo.model,
-      lang: 'ja',
-      audioVersion: c.env.ENVIRONMENT === 'test' ? 'test' : providerInfo.audioVersion,
-      contentType,
-      createdAt: new Date().toISOString(),
-    },
-  });
-  await updateAudioKey(c, parsed.kind, parsed.id, key);
-  return c.env.ASSETS.get(key);
-}
-
-function shouldRegenerateGeneratedAudio(
-  key: string,
-  object: Pick<R2Object, 'customMetadata'> | null,
-  providerInfo: ReturnType<typeof getTtsProviderInfo>,
-): boolean {
-  if (!parseGeneratedAudioKey(key)) return false;
-  if (!object) return true;
-  const meta = object.customMetadata;
-  return meta?.source === 'on-demand' && (
-    meta.model !== providerInfo.model ||
-    meta.audioVersion !== providerInfo.audioVersion
-  );
-}
-
-async function serveQaAudio(c: Context<AppEnv>, provider: AudioQaProvider, index: number): Promise<Response> {
-  let r2obj: R2ObjectBody | null;
-  try {
-    r2obj = await getOrGenerateQaAudio(c.env, provider, index);
-  } catch (err) {
-    console.error('[audio/qa]', err);
-    return notFound(c, `QA 오디오를 아직 생성할 수 없습니다: ${provider}#${index}`);
-  }
-  const key = `audio/qa/${provider}/${index}.wav`;
+  provider: AudioQaProvider,
+  index: number,
+): Promise<Response> {
+  const key = buildAudioQaKey(provider, index);
+  const r2obj = await c.env.ASSETS.get(key);
   if (!r2obj) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
 
   return new Response(r2obj.body as ReadableStream, {
@@ -220,17 +81,11 @@ audio.get('/audio/:key{.+}', async (c) => {
   if (key.startsWith('audio/qa/')) return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
 
   const rangeHeader = c.req.header('range');
-  const providerInfo = getTtsProviderInfo(c.env);
-
   // Range 요청이면 R2 range 옵션 사용
   let r2obj: R2ObjectBody | null;
   if (rangeHeader) {
     // 먼저 HEAD로 크기 조회
-    let head = await c.env.ASSETS.head(key);
-    if (shouldRegenerateGeneratedAudio(key, head, providerInfo)) {
-      await generateAudioObject(c, key);
-      head = await c.env.ASSETS.head(key);
-    }
+    const head = await c.env.ASSETS.head(key);
     if (!head) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
 
     const totalSize = head.size;
@@ -266,14 +121,6 @@ audio.get('/audio/:key{.+}', async (c) => {
 
   // ── 일반 요청 (전체 파일) ─────────────────
   r2obj = await c.env.ASSETS.get(key);
-  if (!r2obj || shouldRegenerateGeneratedAudio(key, r2obj, providerInfo)) {
-    try {
-      r2obj = await generateAudioObject(c, key);
-    } catch (err) {
-      console.error('[audio/on-demand]', err);
-      return notFound(c, `오디오 파일을 아직 생성할 수 없습니다: ${key}`);
-    }
-  }
   if (!r2obj) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
 
   const etag = r2obj.httpEtag;

@@ -272,8 +272,8 @@ const ja = {
 
   curriculum: {
     title:      'カリキュラム',
-    planTitle:  '16週間の計画',
-    subtitle:   'JLPT N3合格に向けた16週間の学習ロードマップ',
+    planTitle:  '12か月の学習計画',
+    subtitle:   '文字とN5の基礎からJLPT N3の実戦まで進む52週間のロードマップ',
     week:       '週目',
     weekLabel:  '{{week}}週目',
     weekShort:  '{{week}}週',

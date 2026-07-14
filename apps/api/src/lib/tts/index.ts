@@ -17,8 +17,8 @@ export type { TtsAdapter, TtsOptions, TtsProviderId, TtsProviderInfo } from './t
 interface TtsEnv {
   AI:                { run: (model: string, input: Record<string, unknown>) => Promise<unknown> };
   TTS_PROVIDER:      string;
-  GOOGLE_TTS_API_KEY: string;
-  AZURE_TTS_KEY:     string;
+  GOOGLE_TTS_API_KEY?: string;
+  AZURE_TTS_KEY?:     string;
   AZURE_TTS_REGION:  string;
   VOICEVOX_URL?:      string;
   VOICEVOX_URL_SECRET?: string;

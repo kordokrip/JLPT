@@ -1,143 +1,148 @@
-# ROADMAP - nihongo-n3 운영 로드맵
+# nihongo-n3 릴리스 로드맵
 
-기준일: 2026-07-08 KST
-기준 구조: pnpm monorepo, React PWA, Cloudflare Workers API, D1, R2, Pages
+기준일: 2026-07-15 KST
+원칙: JLPT N3 운영 안정화가 우선이며 R1, R2, R3를 독립 릴리스한다.
 
-이 문서는 과거 루트 Markdown 중심 로드맵을 현재 운영 구조 기준으로 다시 정리한 것이다. 실행 우선순위는 코드 안정성, 데이터 최신성, 사용자 체감 학습 품질 순서로 둔다.
-
-## 1. 현재 운영 기준
-
-| 영역 | 현재 상태 | 기준 경로 |
-| --- | --- | --- |
-| Web | React/Vite PWA, i18n, IndexedDB, Playwright E2E | `apps/web` |
-| API | Hono + OpenAPIHono Workers API | `apps/api` |
-| DB | Drizzle schema, D1 migration, Markdown seed | `packages/db` |
-| Shared | FSRS, DTO, audio policy, API shared contract | `packages/shared` |
-| Content | 문서 메타데이터 보조 패키지 | `packages/content` |
-| Docs | 학습 콘텐츠와 운영 문서 | `docs` |
-| CI/CD | audit, CodeQL, deploy, backup, E2E | `.github/workflows` |
-
-## 2. 완료된 주요 정리
-
-### P0
-
-- API 라우트 중복 및 OpenAPI wrapper 리스크를 정리했다.
-- AI 번역 API 보호를 강화했다.
-- CI 신뢰도 개선 작업을 진행했다.
-- 앱 세션과 Cloudflare Access 모드가 섞이지 않도록 테스트 경로를 보강했다.
-
-### P1
-
-- 프론트 API DTO를 `packages/shared`의 normalizer 기준으로 수렴했다.
-- `/api/v1/content/version`과 IndexedDB invalidation을 추가했다.
-- 같은 기기에서 계정 전환 시 SRS/복습/sync queue가 섞이지 않도록 local user namespace를 적용했다.
-- 오디오/TTS provider 정책을 `packages/shared/src/audio-policy.ts`로 코드화했다.
-
-### P2
-
-- `CharacterTrainer`, `QuizListening`, `SelfCheck`, `Browse`를 page container, data hook, panel/list component로 분리했다.
-- 대형 페이지의 순수 계산 함수는 feature module로 이동해 단위 테스트가 page 구현에 덜 묶이도록 했다.
-- 운영 문서 3종을 현재 구조 기준으로 재작성했다.
-
-## 3. N2 콘텐츠 확장 계획
-
-N2 파일은 루트에 추가하지 않는다. 현재 `docs` 하위 구조에 맞춰 다음 경로를 사용한다.
+## 릴리스 순서
 
 ```text
-docs/05_n2/13_kanji.md
-docs/05_n2/14A_vocab_part1.md
-docs/05_n2/14B_vocab_part2.md
-docs/05_n2/15_grammar.md
-docs/05_n2/16_reading.md
-docs/05_n2/17_listening_scripts.md
+R1 기반 정상화
+  -> R2 N3 콘텐츠·오디오 품질
+    -> R3 LearningTrack/TOPIK 기반
+      -> TOPIK 검수 콘텐츠 별도 릴리스
 ```
 
-필요 작업:
+앞 단계의 운영 관문을 통과하지 못하면 다음 단계 코드를 production에 함께 싣지 않는다.
 
-1. `packages/db/src/seed/constants.ts`에 N2 경로를 추가한다.
-2. `packages/db/src/seed/seed.ts`와 `seed-diff.ts`에 N2 source mapping을 추가한다.
-3. `sources` 테이블에 N2 source row를 추가하는 migration을 만든다.
-4. `packages/content/src/index.ts`에 N2 문서 메타데이터를 추가한다.
-5. `apps/web` 필터와 진단 화면에서 N2 표시 정책을 결정한다.
+## R1 기반 정상화
 
-`vocab`, `grammar`, `kanji`의 `level` 컬럼은 `TEXT` 기반이므로 N2 값 자체를 위해 스키마 변경은 필요하지 않다. 다만 seed source와 UI 필터는 별도 반영이 필요하다.
+### 구현 완료
 
-## 4. 오디오/TTS 운영 계획
+- 현재 N2/N1 작업을 WIP branch에 격리
+- `drizzle-v2/0000`~`0006` canonical migration 구성
+- 일반 table은 Drizzle, FTS는 SQL migration으로 소유권 분리
+- runtime OAuth DDL 제거
+- seed manifest row/checksum과 FTS/FK/필수값 검증
+- 위험한 partial diff seed를 validation-only로 변경
+- regular table Blue/Green, backup, restore drill 도구 추가
+- read-only cutover route guard 추가
+- public/admin OpenAPI 및 generated client type 추가
+- route inventory와 OpenAPI coverage test 추가
+- request ID/release SHA/route/status/latency/auth mode JSON log 추가
+- fresh D1 기반 CI, manual production change workflow 추가
 
-현재 목표는 provider를 많이 늘리는 것이 아니라 표면별 재생 경로를 예측 가능하게 만드는 것이다.
+### 운영 전 남은 일
 
-| 표면 | 기본 정책 | 이유 |
-| --- | --- | --- |
-| 문자 암기 kana | 브라우저 일본어 음성 우선, R2 고정 오디오 fallback | 한 글자 TTS가 기계적으로 들리는 문제 완화 |
-| 단어/한자 | R2 고정 오디오 우선, 없으면 provider fallback | 반복 학습 품질 안정화 |
-| 예문/청해 | 브라우저 Google/iOS 음성 우선 또는 R2 pregen | 자연스러운 문장 억양 우선 |
-| QA | provider 비교 화면에서 수동 청감 비교 | 운영 provider 결정 근거 확보 |
+1. GitHub billing lock을 해제한다.
+2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다.
+3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
+4. 7개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
+5. content phase를 복사하고 검증한다.
+6. 10~15분 read-only에서 mutable phase와 유효 session을 최종 동기화한다.
+7. preview smoke 후 Worker DB binding을 전환한다.
+8. 30분 집중 smoke 후 쓰기를 재개하고 24시간 모니터링한다.
 
-정책 source of truth:
+### R1 완료 정의
 
-- `packages/shared/src/audio-policy.ts`
-- `docs/00_overview/audio-tts-provider-policy-2026-07-07.md`
+- blank DB와 prod-v2에 migration 7/7
+- source/target 일반 table count 및 checksum 일치
+- FTS rebuild와 parity 일치
+- password login, Google OAuth callback, session 유지, admin, sync queue 성공
+- 5xx, D1 error, auth failure 추세에 이상 없음
+- old DB는 read-only 상태로 30일 보존
 
-다음 단계:
+## R2 N3 콘텐츠와 오디오
 
-1. 문자 암기 100개 kana 고정 오디오의 R2 품질을 수동 검수한다.
-2. 청해 문제는 script 기반 browser voice와 R2 pregen 결과를 비교한다.
-3. VOICEVOX는 운영 가능한 HTTPS endpoint가 있을 때만 활성화한다.
-4. provider별 실패율과 fallback 로그를 admin 화면에 노출한다.
+### 구현 완료
 
-## 5. 인증과 사용자 관리
+- category를 vocab/grammar보다 먼저 seed
+- manifest의 source별 row/checksum 검증
+- 동음이의어 public route와 문서 노출 보류
+- 코드와 콘텐츠 라이선스 문서 분리
+- 공개 audio route를 R2 read-only로 고정
+- Google batch에 admin, execute flag, approval token 요구
+- content/provider/model/version hash 기반 immutable R2 key
+- kana v2는 문자와 대표 단어를 한 번만 읽도록 생성 스크립트 변경
+- 30문장 Audio QA에 Google 후보와 평가 기록 추가
+- 52주 기본 과정과 조건부 16주 집중 과정 정책 추가
 
-현재 구조는 앱 자체 세션을 기본으로 사용하고, Cloudflare Access는 운영 보호 모드로 분리한다.
+### 남은 일
 
-| 기능 | 방향 |
-| --- | --- |
-| 이메일/비밀번호 | 앱 세션 기반 로그인 유지 |
-| Google SSO | `/api/v1/auth/google/start`와 callback URI 정합성 유지 |
-| Admin | 관리자 대시보드에서 사용자/세션/이벤트 확인 |
-| Cloudflare Access | 운영 보호 route 또는 관리자 보호막으로 사용 |
-| 로컬 데이터 | userId namespace 기준으로 IndexedDB 격리 |
+1. Google TTS secret과 batch approval token을 승인된 환경에만 설정한다.
+2. Cloudflare/browser/Google/VOICEVOX 30표본을 동일 문장으로 평가한다.
+3. 청감표에 평가자, device, voice/model, 날짜를 기록한다.
+4. 승인된 provider로 N5~N3 vocab/kanji/sentences를 배치 생성한다.
+5. R2 object metadata와 D1 key를 검증한다.
+6. `verify:remote:audio`에서 누락 0을 확인한다.
+7. 승인 키가 없을 때 fabricated R2 경로를 만들지 않고 browser Japanese fallback을 사용하는지 Chromium/WebKit에서 확인한다.
 
-Google OAuth 설정 기준:
+현재 fresh DB의 누락은 4,954건이므로 R2 완료를 선언할 수 없다.
 
-- 승인된 JavaScript 원본: `https://nihongo-n3.pages.dev`
-- 승인된 리디렉션 URI: `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback`
+### 동음이의어 출시 조건
 
-로컬 개발 시에는 localhost 원본과 callback을 별도 OAuth client 또는 dev setting으로 분리한다.
+- 출처·악센트·예문을 검수한 최소 30쌍
+- 중복·FK 검증 0건
+- UI와 공개 OpenAPI 동시 활성화
+- attribution과 provenance 기록
 
-## 6. 테스트와 배포 기준
+## R3 LearningTrack와 TOPIK 기반
 
-최종 배포 전 최소 기준:
+### foundation 구현 완료
+
+- `LearningTrackId = 'jlpt-ja' | 'topik-ko'`
+- 사용자 DB의 `learning_track`
+- OAuth state의 선택 트랙 유지
+- `/api/v1/tracks/:track/status`
+- user×track IndexedDB/localStorage/React Query namespace
+- 첫 접속 일본어/TOPIK 선택
+- TOPIK foundation-only 화면
+- 기존 JLPT route의 compatibility façade
+
+### 현재 제한
+
+- TOPIK 문제은행, 채점, 레벨 진단, 추천 과정은 없다.
+- 서버 학습 table은 아직 JLPT compatibility route를 사용한다.
+- TOPIK 화면은 출시 약속이 아니라 저장소·라우팅 경계를 검증하는 foundation이다.
+
+### TOPIK 콘텐츠 릴리스 순서
+
+1. 영어 설명을 기본으로 할 대상 사용자와 UI 언어 정책 확정
+2. TOPIK level/section/content provenance 계약 설계
+3. 별도 migration과 manifest 작성
+4. 검수된 최소 문제은행으로 placement test 구현
+5. track-aware API `/api/v1/tracks/topik-ko/...` 구현
+6. 사용자×트랙 서버 데이터 격리 검증
+7. Chromium/WebKit account×track E2E 통과
+8. 별도 수동 승인으로 출시
+
+## N2/N1 정책
+
+N2/N1 타입 지원은 장래 계약을 위한 것이며 콘텐츠 출시 완료를 의미하지 않는다. 누락된 원본 7개, `AUTO`/`EN` 검수 상태, upstream commit과 라이선스를 해결하기 전 운영 seed에 넣지 않는다.
+
+예정 경로는 다음과 같지만 파일이 실제 존재하고 manifest를 통과할 때만 등록한다.
+
+```text
+docs/05_n2/
+docs/06_n1/
+```
+
+## 공통 릴리스 관문
 
 ```bash
+pnpm audit --audit-level high
+pnpm openapi:check
 pnpm typecheck
-pnpm -F @nihongo-n3/api test
-pnpm -F @nihongo-n3/web test:run
-pnpm -F @nihongo-n3/e2e test
-pnpm -F @nihongo-n3/api build
-pnpm -F @nihongo-n3/web build
+pnpm test
+pnpm build
+pnpm -F @nihongo-n3/db verify:fresh
+pnpm -F @nihongo-n3/e2e test:chromium
+pnpm -F @nihongo-n3/e2e test:webkit
 ```
 
-배포:
+R2에는 추가로 다음을 요구한다.
 
 ```bash
-pnpm -F @nihongo-n3/api run deploy
-pnpm exec wrangler pages deploy apps/web/dist --project-name=nihongo-n3 --branch=main
+pnpm -F @nihongo-n3/db verify:remote:audio
 ```
 
-운영 smoke:
-
-```bash
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/health
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/api/v1/content/version
-curl -I -fsS https://nihongo-n3.pages.dev/
-```
-
-## 7. 다음 우선순위
-
-| 우선순위 | 항목 | 목표 |
-| --- | --- | --- |
-| P3 | OpenAPI generated client 도입 검토 | 프론트/API contract drift 추가 감소 |
-| P3 | 콘텐츠 품질 QA | N5-N3 어휘/문법/한자 중복, 오탈자, 예문 품질 점검 |
-| P3 | 오디오 품질 대시보드 | provider, R2 hit, fallback, 실패 로그 시각화 |
-| P4 | N2 콘텐츠 확장 | 현재 `docs/05_n2` 구조로 확장 |
-| P4 | 학습 추천 고도화 | 자기진단, 오답, 복습 로그 기반 추천 |
+production 변경은 GitHub `production` Environment의 수동 승인과 workflow_dispatch로만 실행한다. 로컬 성공만으로 배포하지 않는다.

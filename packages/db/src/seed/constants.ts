@@ -31,6 +31,7 @@ export const CONTENT_PATHS = {
   n3Kanji:      path.join(REPO_ROOT, 'docs/03_n3/09_kanji.md'),
   sentences:    path.join(REPO_ROOT, 'docs/04_supplement/12_example_sentences.md'),
   sysprog:      path.join(REPO_ROOT, 'docs/04_supplement/A_sysprog_vocab_500.md'),
+  pronunciation:path.join(REPO_ROOT, 'docs/04_supplement/02_pronunciation_kana.md'),
   selfCheck:    path.join(REPO_ROOT, 'docs/04_supplement/C_self_check_16weeks.md'),
 } as const;
 

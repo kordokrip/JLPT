@@ -1,4 +1,4 @@
-import { OpenAPIHono } from '@hono/zod-openapi';
+import { OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { admin } from './admin.js';
 import { createdResponseSchema, dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
@@ -39,7 +39,25 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     method: 'post',
     path: '/audio/queue',
     tags: ['Admin', 'Audio'],
-    summary: '오디오 생성 큐 실행',
+    summary: '승인된 Google TTS 오디오 배치 실행',
+    request: {
+      headers: z.object({
+        'x-audio-batch-approval': z.string().optional(),
+      }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              execute: z.boolean().default(false),
+              dry_run: z.boolean().optional(),
+              batch: z.number().int().min(1).max(200).optional(),
+              provider: z.literal('google').optional(),
+              force_regenerate: z.boolean().optional(),
+            }),
+          },
+        },
+      },
+    },
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '큐 실행 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
@@ -60,6 +78,19 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     path: '/audio/qa/warmup',
     tags: ['Admin', 'Audio'],
     summary: '30개 QA 샘플 오디오 일괄 생성',
+    request: {
+      headers: z.object({ 'x-audio-batch-approval': z.string().optional() }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              provider: z.enum(['cloudflare', 'google', 'voicevox']).optional(),
+              force: z.boolean().optional(),
+            }),
+          },
+        },
+      },
+    },
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'QA 샘플 생성 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },

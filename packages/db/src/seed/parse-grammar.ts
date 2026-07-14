@@ -10,12 +10,20 @@
  *   예문:
  *   - 私は学生です。 → 저는 학생입니다.
  */
-import { parseSections, esc, escJson } from './utils.js';
+import {
+  categoryInsert,
+  parseCategoryHeading,
+  parseSections,
+  esc,
+  escJson,
+  type ParsedCategory,
+} from './utils.js';
 
 export interface GrammarSql {
   sourceCode: string;
   level: 'N5' | 'N4' | 'N3';
   filePath: string;
+  naturalKeys?: Set<string>;
 }
 
 interface GrammarEntry {
@@ -89,21 +97,35 @@ function parseGrammarEntry(heading: string, body: string): GrammarEntry | null {
 export function parseGrammar(opts: GrammarSql): string[] {
   const sections = parseSections(opts.filePath);
   const statements: string[] = [];
+  let category: ParsedCategory | null = null;
+  const naturalKeys = opts.naturalKeys ?? new Set<string>();
 
   for (const sec of sections) {
+    if (sec.depth === 2) {
+      category = parseCategoryHeading(sec.heading);
+      if (category) statements.push(categoryInsert(opts.sourceCode, category));
+      continue;
+    }
+
     if (sec.depth !== 3) continue;
+    if (!category) continue;
     // 문법 항목 섹션 판별: "G숫자" 또는 "N숫자" 패턴
     if (!/^[GgNn\d]+[-\d]*\.\s/.test(sec.heading)) continue;
 
     const entry = parseGrammarEntry(sec.heading, sec.body);
     if (!entry) continue;
 
+    const naturalKey = `${opts.level}\u0000${entry.pattern}`;
+    if (naturalKeys.has(naturalKey)) continue;
+    naturalKeys.add(naturalKey);
+
     statements.push(
       [
         `INSERT OR IGNORE INTO \`grammar\``,
-        `  (\`source_id\`, \`level\`, \`pattern\`, \`connection\`, \`meaning_ko\`, \`error_note\`, \`examples\`)`,
+        `  (\`source_id\`, \`category_id\`, \`level\`, \`pattern\`, \`connection\`, \`meaning_ko\`, \`error_note\`, \`examples\`)`,
         `VALUES (`,
         `  (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}),`,
+        `  (SELECT id FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}) AND code = ${esc(category.code)}),`,
         `  ${esc(opts.level)}, ${esc(entry.pattern)},`,
         `  ${entry.connection ? esc(entry.connection) : 'NULL'},`,
         `  ${esc(entry.meaningKo)},`,

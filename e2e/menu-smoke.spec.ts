@@ -8,7 +8,7 @@ const ROUTES = [
   { path: '/quiz', label: '퀴즈', text: /퀴즈|Quiz|クイズ/ },
   { path: '/characters', label: '문자암기', text: /문자 암기|Moji Trainer|Characters/ },
   { path: '/reading', label: '독해', text: /독해|Reading|読解/ },
-  { path: '/curriculum', label: '커리큘럼', text: /16주 학습 계획|16-Week|16週/ },
+  { path: '/curriculum', label: '커리큘럼', text: /12개월 학습 계획|12-Month Study Plan|12か月の学習計画/ },
   { path: '/self-check', label: '자가진단', text: /자가진단|Self-Check|自己診断/ },
   { path: '/stats', label: '통계', text: /학습 통계|Learning Stats|学習統計/ },
   { path: '/settings', label: '설정', text: /설정|Settings|設定/ },

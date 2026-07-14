@@ -12,6 +12,9 @@ import { z } from 'zod';
 export const jlptLevelSchema = z.enum(['N5', 'N4', 'N3', 'N2', 'N1']);
 export type JlptLevel = z.infer<typeof jlptLevelSchema>;
 
+export const learningTrackIdSchema = z.enum(['jlpt-ja', 'topik-ko']);
+export type LearningTrackId = z.infer<typeof learningTrackIdSchema>;
+
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 
 export const itemTypeSchema = z.enum([

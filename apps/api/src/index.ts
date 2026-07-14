@@ -13,7 +13,6 @@
  *   /api/v1/kanji       (공개, 엣지 캐시)
  *   /api/v1/sentences   (공개, 엣지 캐시)
  *   /api/v1/sysprog     (공개, 엣지 캐시)
- *   /api/v1/homophones  (공개, 엣지 캐시)
  *   /api/v1/audio       (공개, 엣지 캐시 30일)
  *   /api/v1/auth        (앱 로그인/회원가입/SSO)
  *   /api/v1/srs         (인증 필요)
@@ -25,7 +24,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { apiReference } from '@scalar/hono-api-reference';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 
 import type { AppEnv, Env } from './types.js';
@@ -40,7 +38,6 @@ import { sourcesOA } from './routes/sources-oa.js';
 
 // ── Phase B 완료: 나머지 8개 라우트 ─────────────────────────────────
 import { sysprogOA } from './routes/sysprog-oa.js';
-import { homophonesOA } from './routes/homophones-oa.js';
 import { audioOA } from './routes/audio-oa.js';
 import { srsOA } from './routes/srs-oa.js';
 import { logsOA } from './routes/logs-oa.js';
@@ -48,16 +45,19 @@ import { selfCheckOA } from './routes/self-check-oa.js';
 import { syncOA } from './routes/sync-oa.js';
 import { adminOA } from './routes/admin-oa.js';
 import { buildWeeklyReport, sendReportEmail } from './routes/admin.js';
-import { runAudioGeneration }                from './jobs/generate-audio.js';
 import { runFsrsOptimizer }                  from './jobs/optimize-fsrs.js';
 import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
 import { aiOA } from './routes/ai-oa.js';
-import { auth } from './routes/auth.js';
+import { authOA } from './routes/auth-oa.js';
+import { tracksOA } from './routes/tracks.js';
+import { adminSessionAuth } from './lib/auth-session.js';
 import { securityMiddleware } from './middleware/security.js';
 import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
 import { sendPushToMany } from './lib/push.js';
+import { maintenanceMiddleware, isReadOnlyMaintenance } from './middleware/maintenance.js';
+import { observabilityMiddleware } from './middleware/observability.js';
 
 // ─────────────────────────────────────────────
 // 앱 인스턴스 (OpenAPIHono — Hono 완전 호환 + OpenAPI 스펙 자동 생성)
@@ -67,7 +67,8 @@ const app = new OpenAPIHono<AppEnv>();
 // ─────────────────────────────────────────────
 // 글로벌 미들웨어
 // ─────────────────────────────────────────────
-app.use('*', logger());
+app.use('*', observabilityMiddleware);
+app.use('*', maintenanceMiddleware);
 app.use(
   '*',
   secureHeaders({
@@ -85,13 +86,14 @@ app.use(
       'https://nihongo-n3.pages.dev',
       'http://localhost:5173',
     ],
-    allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: [
       'Content-Type', 'Authorization',
       'Cf-Access-Jwt-Assertion', 'Range',
     ],
     exposeHeaders: [
       'Content-Range', 'Accept-Ranges', 'ETag', 'X-Cache',
+      'X-Request-ID', 'X-Release', 'Retry-After',
     ],
     credentials: true,
     maxAge: 86400,
@@ -118,6 +120,8 @@ app.get('/health', (c) =>
   c.json({
     status: 'ok',
     environment: c.env.ENVIRONMENT,
+    maintenanceMode: c.env.MAINTENANCE_MODE || 'off',
+    release: c.env.RELEASE_SHA || 'development',
     timestamp: new Date().toISOString(),
   }),
 );
@@ -128,7 +132,8 @@ app.get('/health', (c) =>
 const v1 = new OpenAPIHono<AppEnv>();
 
 v1.get('/ping', (c) => c.json({ data: { message: 'pong', version: '1.0.0' } }));
-v1.route('/', auth);
+v1.route('/', authOA);
+v1.route('/', tracksOA);
 
 // ── 공개 콘텐츠 라우트 (엣지 캐시 적용) ──────
 v1.use('/sources*', contentCacheMiddleware);
@@ -148,11 +153,9 @@ v1.route('/', sentencesOA); // /sentences, /sentences/search, /sentences/:id
 
 // ── Phase B: 공개 콘텐츠 (캐시 + OA 라우트) ─────────────────────────
 v1.use('/sysprog*', contentCacheMiddleware);
-v1.use('/homophones*', contentCacheMiddleware);
 v1.use('/audio*', audioCacheMiddleware);
 
 v1.route('/', sysprogOA);
-v1.route('/', homophonesOA);
 v1.route('/', audioOA);
 
 // ── Phase B: 인증 필요 학습 라우트 (OA 마이그레이션 완료) ────────────
@@ -184,7 +187,7 @@ app.openAPIRegistry.registerComponent('securitySchemes', 'cfAccess', {
   description: 'Cloudflare Access JWT (개발 환경에서는 자동 우회)',
 });
 
-app.doc('/openapi.json', {
+const openApiBase = {
   openapi: '3.1.0',
   info: {
     title: 'Nihongo N3 API',
@@ -194,14 +197,14 @@ app.doc('/openapi.json', {
   },
   servers: [
     { url: 'http://localhost:8787', description: '로컬 개발 (wrangler dev)' },
-    { url: 'https://nihongo-n3-api.workers.dev', description: '프로덕션' },
+    { url: 'https://nihongo-n3-api.kordokrip.workers.dev', description: '프로덕션' },
   ],
   tags: [
     { name: 'Vocab', description: '어휘 (N3 수준)' },
     { name: 'Grammar', description: '문법 패턴' },
     { name: 'Kanji', description: '한자' },
     { name: 'Sentences', description: '예문' },
-    { name: 'Content', description: '학습 콘텐츠 (sysprog, homophones, sources)' },
+    { name: 'Content', description: '검수 완료 학습 콘텐츠 (sysprog, sources)' },
     { name: 'Audio', description: 'R2 오디오 스트리밍' },
     { name: 'SRS', description: 'FSRS-6 간격반복학습' },
     { name: 'Logs', description: '학습 로그 및 퀴즈 기록' },
@@ -211,8 +214,47 @@ app.doc('/openapi.json', {
     { name: 'Reading', description: '독해 지문 + 퀘즈' },
     { name: 'Notifications', description: 'Web Push 구독 및 테스트 알림' },
     { name: 'AI', description: 'Workers AI 기반 자연어 학습 보조' },
+    { name: 'Auth', description: '앱 세션 및 Google OAuth' },
+    { name: 'Tracks', description: 'JLPT 일본어 및 TOPIK 한국어 학습 트랙' },
   ],
-});
+} satisfies Parameters<typeof app.getOpenAPI31Document>[0];
+
+const adminPathPrefixes = [
+  '/admin',
+  '/api/v1/auth/admin/',
+  '/api/v1/auth/bootstrap-admin',
+] as const;
+
+function isAdminPath(path: string): boolean {
+  return adminPathPrefixes.some((prefix) => path.startsWith(prefix));
+}
+
+type OpenApiDocument = ReturnType<typeof app.getOpenAPI31Document>;
+
+export function getPublicOpenApiDocument(): OpenApiDocument {
+  const document = app.getOpenAPI31Document(openApiBase);
+  return {
+    ...document,
+    paths: Object.fromEntries(
+      Object.entries(document.paths ?? {}).filter(([path]) => !isAdminPath(path)),
+    ),
+  };
+}
+
+export function getAdminOpenApiDocument(): OpenApiDocument {
+  const document = app.getOpenAPI31Document({
+    ...openApiBase,
+    info: { ...openApiBase.info, title: 'Nihongo N3 Admin API' },
+  });
+  return {
+    ...document,
+    paths: Object.fromEntries(
+      Object.entries(document.paths ?? {}).filter(([path]) => isAdminPath(path)),
+    ),
+  };
+}
+
+app.get('/openapi.json', (c) => c.json(getPublicOpenApiDocument()));
 
 app.get(
   '/api/docs',
@@ -223,8 +265,32 @@ app.get(
   }),
 );
 
+app.get('/openapi/admin.json', adminSessionAuth, (c) => c.json(getAdminOpenApiDocument()));
+
+app.get(
+  '/api/admin/docs',
+  adminSessionAuth,
+  apiReference({
+    spec: { url: '/openapi/admin.json' },
+    theme: 'default',
+    layout: 'modern',
+  }),
+);
+
 // ── 관리자 라우트 (/admin/*) — CF Access 보호 ──────────────────────
 app.route('/admin', adminOA);
+
+export const INTERNAL_ROUTE_EXCEPTIONS = new Set([
+  'GET /',
+  'GET /health',
+  'GET /api/v1/ping',
+  'GET /openapi.json',
+  'GET /api/docs',
+  'GET /openapi/admin.json',
+  'GET /api/admin/docs',
+]);
+
+export { app };
 
 // ─────────────────────────────────────────────
 // 404 / 에러 핸들러 (RFC 7807)
@@ -268,6 +334,10 @@ export default {
     env:        Env,
     ctx:        ExecutionContext,
   ): Promise<void> {
+    if (isReadOnlyMaintenance(env)) {
+      console.log(JSON.stringify({ event: 'cron_skipped', reason: 'maintenance_read_only', cron: controller.cron }));
+      return;
+    }
     const cron = controller.cron;
     ctx.waitUntil(
       (async () => {
@@ -285,17 +355,6 @@ export default {
             console.log(`[Cron] 주간 리포트 완료: ${key}`);
           } catch (err) {
             console.error('[Cron] 주간 리포트 오류', err);
-          }
-        }
-
-        // TTS 오디오 생성: 매일 03:00 UTC
-        if (cron === '0 3 * * *') {
-          try {
-            console.log('[Cron] TTS 오디오 생성 시작');
-            const result = await runAudioGeneration(env);
-            console.log(`[Cron] TTS 완료:`, result);
-          } catch (err) {
-            console.error('[Cron] TTS 오디오 생성 오류', err);
           }
         }
 

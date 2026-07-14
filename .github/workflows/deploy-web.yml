@@ -118,9 +118,10 @@ jobs:
   deploy:
     name: Production Deploy
     needs: build
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: production
 
     permissions:
       contents: read
@@ -149,6 +150,7 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: production
 
     steps:
       - name: Wait for CDN propagation

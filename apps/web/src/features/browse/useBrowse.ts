@@ -4,13 +4,14 @@ import { useGrammarList, useKanjiList } from '../../hooks/useContent';
 import { useVocabList, useVocabSearch } from '../../hooks/useVocab';
 import { normalizeContentType } from './types';
 import type { ContentType } from './types';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export function useBrowse() {
   const { type } = useParams<{ type: ContentType }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') ?? searchParams.get('text') ?? '');
-  const [level, setLevel] = useState<string | undefined>(undefined);
+  const [level, setLevel] = useState<JlptLevel | undefined>(undefined);
 
   const currentType = normalizeContentType(type);
   const vocabList = useVocabList(level, 200);

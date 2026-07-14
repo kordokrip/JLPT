@@ -11,33 +11,54 @@
  *
  *   '가나' 셀이 '-' → ja 값 그대로 사용
  */
-import { parseMarkdownTables, normalizeCell, stripBr, esc, escJson } from './utils.js';
+import {
+  categoryInsert,
+  parseCategoryHeading,
+  parseMarkdownTables,
+  normalizeCell,
+  stripBr,
+  esc,
+  escJson,
+} from './utils.js';
 
 export interface VocabSql {
   /** `sources.code` (예: '04') */
   sourceCode: string;
   level: 'N5' | 'N4' | 'N3';
   filePath: string;
+  naturalKeys?: Set<string>;
 }
 
 export function parseVocab(opts: VocabSql): string[] {
   const tables = parseMarkdownTables(opts.filePath);
   const statements: string[] = [];
+  const insertedCategories = new Set<string>();
+  const naturalKeys = opts.naturalKeys ?? new Set<string>();
 
   for (const table of tables) {
     const { headers, rows, nearestH2 } = table;
 
-    // 어휘 테이블 판별: '일본어' 컬럼 필수
+    const category = parseCategoryHeading(nearestH2);
+    if (!category) continue;
+
+    // 카테고리 안의 어휘 테이블만 허용한다. 학습표·동음이의어 표는 제외한다.
     const jaIdx = headers.findIndex((h) => h.includes('일본어'));
     if (jaIdx === -1) continue;
 
     const kanaIdx  = headers.findIndex((h) => h.includes('가나'));
-    const koIdx    = headers.findIndex((h) => h.includes('의미'));
-    const noteIdx  = headers.findIndex((h) => h.includes('주의'));
+    const koIdx = headers.findIndex((h) => /^(?:한국어\s*)?(?:의미|뜻)$/u.test(h.trim()));
+    const noteIdx = headers.findIndex((h) => /주의|함정/u.test(h));
 
-    // 카테고리 코드 파싱: "## 카테고리 A. 인사와..." → "A"
-    const catMatch = nearestH2.match(/카테고리\s+([A-Z0-9]+)\./i);
-    const catCode  = catMatch ? catMatch[1] : null;
+    if (koIdx === -1) {
+      throw new Error(
+        `[vocab:${opts.sourceCode}] 의미 헤더(의미/뜻/한국어 뜻)가 없습니다: ${nearestH2}`,
+      );
+    }
+
+    if (!insertedCategories.has(category.code)) {
+      statements.push(categoryInsert(opts.sourceCode, category));
+      insertedCategories.add(category.code);
+    }
 
     for (const row of rows) {
       const ja  = normalizeCell(stripBr(row[jaIdx] ?? ''));
@@ -48,13 +69,23 @@ export function parseVocab(opts: VocabSql): string[] {
       const ko      = normalizeCell(stripBr(row[koIdx ?? -1] ?? ''));
       const trap    = normalizeCell(stripBr(row[noteIdx ?? -1] ?? ''));
 
+      if (!ko) {
+        throw new Error(
+          `[vocab:${opts.sourceCode}] 한국어 뜻이 비어 있습니다: ${nearestH2} / ${ja}`,
+        );
+      }
+
+      const naturalKey = `${opts.level}\u0000${ja}\u0000${kana}`;
+      if (naturalKeys.has(naturalKey)) continue;
+      naturalKeys.add(naturalKey);
+
       statements.push(
         [
           `INSERT OR IGNORE INTO \`vocab\``,
           `  (\`source_id\`, \`category_id\`, \`level\`, \`ja\`, \`kana\`, \`ko\`, \`trap_note\`, \`tags\`)`,
           `VALUES (`,
           `  (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}),`,
-          `  ${catCode ? `(SELECT id FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}) AND code = ${esc(catCode)})` : 'NULL'},`,
+          `  (SELECT id FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}) AND code = ${esc(category.code)}),`,
           `  ${esc(opts.level)}, ${esc(ja)}, ${esc(kana)}, ${esc(ko)},`,
           `  ${trap ? esc(trap) : 'NULL'}, ${escJson([])}`,
           `);`,

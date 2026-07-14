@@ -4,7 +4,10 @@ import type { Config } from 'drizzle-kit';
 // 로컬에서는 apps/api/.dev.vars 에 정의된 값을 사용하세요.
 export default {
   schema: './src/schema.ts',
-  out: './drizzle',
+  // The original drizzle directory is retained as a historical record. It
+  // references runtime-created tables out of order and is not safe for a
+  // clean database. Blue/green databases use this canonical v2 ledger.
+  out: './drizzle-v2',
   dialect: 'sqlite',
   driver: 'd1-http',
   dbCredentials: {

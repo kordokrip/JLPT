@@ -6,7 +6,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { initSync } from './lib/sync';
 import { initDeviceProfile } from './lib/device-profile';
 import { audioPlayer } from './lib/audio';
-import { db } from './lib/db';
+import { db, setActiveLearningTrack } from './lib/db';
 import { useUiStore } from './stores/ui-store';
 import { useSettingsStore } from './stores/settings-store';
 
@@ -54,7 +54,8 @@ if (!rootEl) throw new Error('#root element not found');
 // 다크모드 초기화 (렌더 전 적용)
 // ─────────────────────────────────────────────
 (function applyTheme() {
-  const { theme, playbackRate, selectedVoiceURI, voiceGender } = useSettingsStore.getState();
+  const { theme, playbackRate, selectedVoiceURI, voiceGender, learningTrack } = useSettingsStore.getState();
+  setActiveLearningTrack(learningTrack);
   const isDark =
     theme === 'dark' ||
     (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -64,7 +65,7 @@ if (!rootEl) throw new Error('#root element not found');
     rate: playbackRate,
     voiceGender,
     voiceURI: selectedVoiceURI,
-    sourcePreference: 'browser',
+    sourcePreference: 'server',
   });
 })();
 

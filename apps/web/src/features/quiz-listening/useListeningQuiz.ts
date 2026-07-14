@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { toSubmittedAnswers } from './logic';
 import type { ListeningQuestion, ListeningQuizResponse, ListeningSubmitResponse, SubmittedAnswer } from './types';
+import { useSettingsStore } from '../../stores/settings-store';
 
 export function useListeningQuiz() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -13,9 +14,10 @@ export function useListeningQuiz() {
   const [revealed, setRevealed] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [playsOut, setPlaysOut] = useState(false);
+  const track = useSettingsStore((state) => state.learningTrack);
 
   const query = useQuery({
-    queryKey: ['quiz-listening', quizId],
+    queryKey: ['quiz-listening', track, quizId],
     queryFn: async () => {
       const res = await api.post<ListeningQuizResponse>('/quiz/generate', {
         mode: 'listening',

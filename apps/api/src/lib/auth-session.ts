@@ -1,6 +1,7 @@
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import type { Context, Next } from 'hono';
 import type { AppEnv } from '../types.js';
+import { isReadOnlyMaintenance } from '../middleware/maintenance.js';
 
 export const SESSION_COOKIE = '__Host-n3_session';
 export const OAUTH_STATE_COOKIE = '__Host-n3_oauth_state';
@@ -15,6 +16,7 @@ export type AuthUser = {
   display_name: string;
   role: 'user' | 'admin';
   auth_provider?: string;
+  learning_track: 'jlpt-ja' | 'topik-ko';
 };
 
 function b64url(bytes: Uint8Array): string {
@@ -184,7 +186,8 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<AuthUser | nul
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
   const row = await c.env.DB.prepare(
-    `SELECT u.id, u.email, u.display_name, COALESCE(u.role, 'user') AS role, u.auth_provider, s.id AS session_id
+    `SELECT u.id, u.email, u.display_name, COALESCE(u.role, 'user') AS role, u.auth_provider,
+            COALESCE(u.learning_track, 'jlpt-ja') AS learning_track, s.id AS session_id
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ?
@@ -196,15 +199,18 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<AuthUser | nul
     .first<AuthUser & { session_id: string }>();
 
   if (!row) return null;
-  await c.env.DB.prepare('UPDATE auth_sessions SET last_seen_at = ? WHERE id = ?')
-    .bind(now, row.session_id)
-    .run()
-    .catch(() => undefined);
+  if (!isReadOnlyMaintenance(c.env)) {
+    await c.env.DB.prepare('UPDATE auth_sessions SET last_seen_at = ? WHERE id = ?')
+      .bind(now, row.session_id)
+      .run()
+      .catch(() => undefined);
+  }
   const user: AuthUser = {
     id: row.id,
     email: row.email,
     display_name: row.display_name,
     role: row.role === 'admin' ? 'admin' : 'user',
+    learning_track: row.learning_track === 'topik-ko' ? 'topik-ko' : 'jlpt-ja',
   };
   if (row.auth_provider) user.auth_provider = row.auth_provider;
   return user;

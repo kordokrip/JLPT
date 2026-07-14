@@ -10,11 +10,13 @@ import { schedule, isDue } from '../lib/fsrs-client';
 import { enqueue } from '../lib/sync';
 import { isOnline } from '../lib/browser';
 import { useAuthStore } from '../stores/auth-store';
+import { useSettingsStore } from '../stores/settings-store';
 
 /** 오늘 due 카드 목록 (IDB + 서버 병합) */
 export function useDueCards(itemType?: ItemType, limit = 20) {
   const authUserId = useAuthStore((s) => s.user?.id ?? null);
-  const localUserId = localUserIdFor(authUserId);
+  const track = useSettingsStore((s) => s.learningTrack);
+  const localUserId = localUserIdFor(authUserId, track);
 
   // IDB에서 즉시 반환 (reactive)
   const localCards = useLiveQuery(
@@ -52,7 +54,8 @@ export function useDueCards(itemType?: ItemType, limit = 20) {
 /** SRS 통계 */
 export function useSrsStats() {
   const authUserId = useAuthStore((s) => s.user?.id ?? null);
-  const localUserId = localUserIdFor(authUserId);
+  const track = useSettingsStore((s) => s.learningTrack);
+  const localUserId = localUserIdFor(authUserId, track);
   return useQuery({
     queryKey: ['srs', 'stats', localUserId],
     queryFn: async () => {
@@ -69,7 +72,8 @@ export function useReviewCard() {
   const qc = useQueryClient();
   const [reviewing, setReviewing] = useState(false);
   const authUserId = useAuthStore((s) => s.user?.id ?? null);
-  const localUserId = localUserIdFor(authUserId);
+  const track = useSettingsStore((s) => s.learningTrack);
+  const localUserId = localUserIdFor(authUserId, track);
 
   const review = useCallback(
     async (card: SrsCard, rating: Rating) => {

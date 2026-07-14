@@ -39,22 +39,6 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm --filter @nihongo-n3/e2e exec playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Create local D1 database
-        working-directory: apps/api
-        run: |
-          pnpm exec wrangler d1 execute nihongo-n3-prod --local \
-            --command "SELECT 1"
-
-      - name: Run migrations (local D1)
-        working-directory: apps/api
-        run: |
-          pnpm exec wrangler d1 migrations apply nihongo-n3-prod --local \
-            --config wrangler.toml
-
-      - name: Run seed data (local D1)
-        working-directory: packages/db
-        run: pnpm seed:local
-
       - name: Run E2E tests (${{ matrix.browser }})
         run: pnpm --filter @nihongo-n3/e2e test:${{ matrix.browser }}
         env:

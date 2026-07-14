@@ -1,4 +1,5 @@
 import type { KanjiItem } from '../../lib/db';
+import { getActiveLocalUserId } from '../../lib/db';
 import { HIRAGANA_EXAMPLES, KATAKANA_EXAMPLES } from './data';
 import type { CharacterMode, DrawingEvaluation, DrawingStats, JlptLevel, KanaPronunciationExample, StudyCard } from './types';
 
@@ -31,7 +32,6 @@ export function getCardAudioText(card: StudyCard): string {
 }
 
 export function getCardAudioPath(card: StudyCard): string | undefined {
-  if (card.mode === 'hiragana' || card.mode === 'katakana') return undefined;
   return card.audioPath;
 }
 
@@ -100,7 +100,7 @@ export function buildChoices(card: StudyCard, deck: StudyCard[]): string[] {
 
 export function readProgress(id: string): number {
   if (typeof window === 'undefined') return 0;
-  const raw = window.localStorage.getItem(`nihongo-n3:char-trainer:${id}`);
+  const raw = window.localStorage.getItem(`nihongo-n3:char-trainer:${getActiveLocalUserId()}:${id}`);
   const parsed = raw ? Number(raw) : 0;
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -108,7 +108,7 @@ export function readProgress(id: string): number {
 export function writeProgress(id: string, delta: number) {
   if (typeof window === 'undefined') return;
   const next = Math.max(0, Math.min(5, readProgress(id) + delta));
-  window.localStorage.setItem(`nihongo-n3:char-trainer:${id}`, String(next));
+  window.localStorage.setItem(`nihongo-n3:char-trainer:${getActiveLocalUserId()}:${id}`, String(next));
 }
 
 export function getExpectedAnswer(card: StudyCard | undefined): string | undefined {

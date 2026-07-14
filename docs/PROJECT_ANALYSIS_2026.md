@@ -1,158 +1,142 @@
 # JLPT 워크스페이스 통합 분석 보고서
 
-기준일: 2026-07-08 KST
-대상 경로: `/Users/sungho-kang/Desktop/JLPT`
+기준일: 2026-07-15 KST
+기준 브랜치: `refactor/tech-debt-r1`
+기준 HEAD: `d88cb88`에서 시작한 미배포 작업 트리
 
-이 문서는 현재 워크스페이스의 실제 구조와 최근 P0/P1/P2 작업 결과를 기준으로 한다. 과거 보고서의 루트 Markdown 전제, Figma Make 산출물 혼재 판단, `packages/content` 설정 부재, FSRS 구현 위치 오인, OpenAPI wrapper 과소평가를 현재 상태 기준으로 정정한다.
+## 1. 결론
 
-## 1. Executive Summary
+이 저장소는 React/Vite PWA, Cloudflare Workers API, D1, R2, 공유 계약, Markdown 콘텐츠, Playwright, GitHub Actions를 포함하는 pnpm 모노레포다. 운영 중심은 계속 JLPT N5~N3이며 N2/N1 자료와 TOPIK 문제은행은 운영 콘텐츠가 아니다.
 
-현재 `JLPT`는 학습용 Markdown 폴더가 아니라 운영 가능한 pnpm 모노레포다.
+2026-07-15 리팩토링은 기능 추가보다 다음 기반을 먼저 정상화했다.
 
-| 영역 | 실제 기준 |
-| --- | --- |
-| 프론트엔드 | `apps/web` React/Vite PWA |
-| 백엔드 | `apps/api` Cloudflare Workers + Hono + OpenAPIHono |
-| DB | `packages/db` Drizzle schema, D1 migration, seed parser |
-| 공유 계약 | `packages/shared` FSRS, DTO, audio policy |
-| 콘텐츠 메타 | `packages/content` 문서 경로/메타데이터 |
-| 문서 | `docs` 학습 콘텐츠, 운영 문서, 분석 보고서 |
-| CI/CD | `.github/workflows` audit, CodeQL, deploy, backup, E2E |
+1. D1 스키마를 `packages/db/drizzle-v2`의 7개 migration ledger로 수렴했다.
+2. 런타임 DDL과 위험한 diff seed를 제거하고 fresh migrate/seed/verify를 CI 관문으로 만들었다.
+3. 공개 52 paths/56 operations, 관리자 7 paths/8 operations의 OpenAPI 명세와 생성 타입을 만들었다.
+4. 앱 세션, Google OAuth bridge, Cloudflare Access 모드, read-only cutover를 독립 테스트했다.
+5. R2 고정 오디오 우선 정책과 승인된 Google 배치 경로를 코드화했다.
+6. `LearningTrackId`와 사용자×트랙 로컬 namespace를 도입하고 TOPIK foundation 화면만 열었다.
 
-최근 개선으로 P1의 DTO drift, IndexedDB stale content, multi-user local data mixing, TTS provider 혼선을 코드 차원에서 줄였다. P2에서는 대형 페이지 컴포넌트 4개를 feature module로 분리해 테스트와 UI 변경 비용을 낮췄다.
+현재 production 배포 판정은 **HOLD**다. 이유는 GitHub billing lock 해제와 필수 Actions 성공이 확인되지 않았고, 새 `nihongo-n3-prod-v2` 생성·이전·승인 절차를 실행하지 않았으며, R2 오디오 키 4,954건이 비어 있기 때문이다.
 
-## 2. Evidence Snapshot
+## 2. 검증 스냅샷
 
-최근 검증 기준:
+| 항목 | 2026-07-15 결과 | 판정 |
+| --- | ---: | --- |
+| 패키지 타입 검사 | web/api/db/shared/content 통과 | 정적 관문 통과 |
+| API 통합 테스트 | 3 files, 78 tests 통과 | 실행 관문 통과 |
+| Web 단위 테스트 | 11 files, 33 tests 통과 | 실행 관문 통과 |
+| Web/API build | Vite PWA, Wrangler dry-run 통과 | 빌드 관문 통과 |
+| Dependency audit | 알려진 high 이상 취약점 0 | 감사 통과 |
+| fresh D1 migrations | 7/7 적용 | ledger 검증 통과 |
+| seed manifest | 13 sources, checksum·row count 일치 | 데이터 관문 통과 |
+| 적재량 | vocab 3,300 / grammar 316 / kanji 542 / sentences 1,112 / sysprog 82 / curriculum 52 | N5~N3 기준 |
+| FTS | vocab 3,300 / sentences 1,112 parity | 검색 인덱스 통과 |
+| OpenAPI | public 52 paths, admin 7 paths | route coverage 통과 |
+| 브라우저 회귀 | Chromium 65/65, WebKit 51/51 통과(시각 회귀 14건은 Chromium 전용으로 skip) | 로컬 browser matrix 통과 |
+| R2 audio | `audio_r2_key` 4,954건 누락 | R2 릴리스 차단 |
+| GitHub required checks | billing lock 해제·원격 성공 미확인 | production 차단 |
 
-- `pnpm -F @nihongo-n3/web typecheck` 통과
-- P1 검증 당시 `pnpm typecheck`, API unit, Web unit, E2E, API build, Web build 통과
-- API production smoke: `/health`, `/api/v1/content/version`, `/` 정상 응답 확인
-- Web production smoke: `https://nihongo-n3.pages.dev/` HTTP 200 확인
-
-현재 구조상 중요한 source of truth:
-
-| 목적 | 파일 |
-| --- | --- |
-| 콘텐츠 경로 | `packages/db/src/seed/constants.ts` |
-| diff seed | `packages/db/src/seed/seed-diff.ts` |
-| 프론트 DTO 정규화 | `packages/shared/src/content-dto.ts` |
-| 오디오 정책 | `packages/shared/src/audio-policy.ts` |
-| 로컬 DB/session 분리 | `apps/web/src/lib/db.ts`, `apps/web/src/stores/auth-store.ts` |
-| 콘텐츠 cache invalidation | `apps/web/src/lib/content-cache.ts`, `apps/api/src/routes/sources-oa.ts` |
-| 대형 페이지 feature 분리 | `apps/web/src/features/*` |
-
-## 3. A-Z Progress Matrix
-
-| 영역 | 상태 | 근거 | 다음 액션 |
-| --- | --- | --- | --- |
-| Architecture | 완료 | apps/packages/docs/CI가 분리된 pnpm workspace | 기능별 ownership 문서화 |
-| Backend API | 부분완료 | OpenAPIHono 적용, wrapper 리스크 정리 진행 | generated client 도입 검토 |
-| Content | 완료 | N5-N3 콘텐츠와 보조 문서가 `docs` 하위에 있음 | 품질 QA 자동화 |
-| Database | 완료 | Drizzle schema, D1 migration, seed parser 존재 | N2 확장 시 source row 추가 |
-| Edge Infra | 완료 | Workers, Pages, D1, R2 운영 구조 | secret rotation 절차 문서화 |
-| Frontend | 완료 | React PWA, i18n, IDB, E2E 존재 | 핵심 화면 UX polish 지속 |
-| Governance Docs | 부분완료 | 본 문서, ROADMAP, status report 갱신 | archive 정책 추가 |
-| Hooks/State | 완료 | content cache, SRS, auth namespace 적용 | generated API hook 검토 |
-| i18n | 부분완료 | ko/ja/en 리소스 존재 | 신규 feature 문자열 점검 |
-| Jobs | 부분완료 | TTS/FSRS/push/report cron 존재 | provider 실패율 관측 |
-| Knowledge Assets | 완료 | docs 학습/운영 문서 유지 | 중복 문서 archive |
-| Logging | 부분완료 | admin/log routes 존재 | 운영 로그 dashboard 개선 |
-| Migration/Seed | 완료 | full seed/diff seed 존재 | `selfCheck` seed 정책 유지 명시 |
-| Notifications | 부분완료 | push route와 cron 존재 | 실제 VAPID 운영 검증 |
-| Offline/PWA | 완료 | Dexie, SW, sync queue 존재 | mobile WebKit 회귀 유지 |
-| Parser | 완료 | vocab/grammar/kanji/sentences parser 분리 | parser fixtures 추가 |
-| Quality | 완료 | type/unit/e2e 기준 존재 | CI billing/account 상태 분리 감시 |
-| Release | 부분완료 | deploy workflows 존재 | dirty deploy 방지 정책 |
-| Security | 부분완료 | app session, Access mode, rate limit | OAuth redirect env 검증 자동화 |
-| TTS | 부분완료 | audio policy와 provider fallback 존재 | R2 고정 오디오 품질 확정 |
-| UX | 부분완료 | Home/Review/Browse 개선, P2 컴포넌트 분리 | 시각 regression 기준 확대 |
-| Versioning | 완료 | root manifest와 package boundaries 정리 | release note 자동화 |
-| Workflow | 부분완료 | GitHub Actions 7개 | billing lock과 workflow failure를 코드 실패와 분리 |
-| Experimental | 부분완료 | FSRS optimizer 외부 URL 의존 | optimizer 운영 여부 결정 |
-| Yet-to-fix | 부분완료 | legacy 문서/스크린샷/임시 산출물 존재 | archive/cleanup pass |
-| Zenith | 진행중 | N2, 추천, 오디오 QA 로드맵 존재 | P3/P4 단계화 |
-
-## 4. Current Workspace Analysis
-
-### 4-1. 프론트엔드
-
-`apps/web`은 단순 페이지 모음이 아니라 인증, i18n, PWA, IndexedDB, sync, 오디오, 학습 기능을 포함한 앱이다.
-
-최근 P2 구조:
+## 3. 실제 아키텍처
 
 ```text
-apps/web/src/features/
-├── browse/
-├── character-trainer/
-├── quiz-listening/
-└── self-check/
+apps/web        React 18 + Vite + PWA + Dexie + TanStack Query
+apps/api        Hono/OpenAPIHono Cloudflare Worker
+packages/db     Drizzle schema + D1 migrations + seed/verify/transfer tools
+packages/shared API schema, DTO normalizer, FSRS, audio/study policy
+packages/content docs metadata
+docs            N5~N3 콘텐츠와 운영 문서
+e2e             Chromium/WebKit Playwright 회귀
+.github         검증, 보안 감사, 백업, 수동 배포 workflow
 ```
 
-각 feature는 page container, hook, UI component, logic/type/data 파일로 나뉜다. 기존 테스트가 page 내부 구현에 묶이지 않도록 순수 함수 import를 feature logic으로 이동했다.
+데이터 변경 흐름은 `docs -> parser -> content manifest -> canonical migrations -> D1 -> API -> generated contract -> Web/IDB` 순서다. production D1을 문서 변경만으로 자동 수정하는 경로는 제거했다.
 
-### 4-2. 백엔드 API
+## 4. A-Z 상태표
 
-`apps/api`는 Workers API이며 `/api/docs`와 `/openapi.json`을 제공한다. P0에서 wrapper route 명세화와 AI API 보호를 개선했다. 앞으로는 OpenAPI generated client를 도입해 프론트 DTO 수동 drift를 더 줄이는 것이 적절하다.
+| 영역 | 상태 | 근거 | 남은 조치 |
+| --- | --- | --- | --- |
+| Architecture | 검증 | 모노레포 경계와 소유권 분리 | ADR 인덱스 추가 |
+| Backend | 검증 | 78 API tests, Wrangler dry-run | preview smoke 전체 실행 |
+| Content | 부분 | N5~N3 13 source manifest | provenance/오디오 완성 |
+| D1 | 구현 | 7개 canonical migration | prod-v2 Blue/Green 미실행 |
+| Edge | 부분 | Workers/Pages/D1/R2 설정 | Logpush/alerts 운영 확인 |
+| Frontend | 검증 | build + 33 unit + Chromium/WebKit E2E | preview smoke |
+| Governance | 개선 | 변경 제어 workflow, runbook | branch protection 확인 |
+| Hooks/Cache | 검증 | content version + scope query key | TOPIK 콘텐츠 도입 시 재검증 |
+| i18n | 부분 | ko/ja/en UI pack | TOPIK 영어 설명 검수 |
+| Jobs | 부분 | weekly/push/FSRS jobs | optimizer 연결 여부 결정 |
+| Knowledge | 부분 | 문서와 코드 연결 | 오래된 16주 파일명 정리 |
+| Logging | 구현 | request/release/route/status/latency JSON | 알림·보존 정책 운영 설정 |
+| Migration | 검증 | fresh 7/7, FK/FTS parity | prod-v2 ledger 생성 |
+| Notifications | 부분 | Push API 존재 | 실제 VAPID smoke |
+| Offline | 검증 | IDB account×track namespace, Chromium/WebKit E2E | production cache 모니터링 |
+| Parser | 검증 | 의미 헤더·빈 뜻·중복 검사 | fixture 확대 |
+| Quality | 부분 | local gates 통과 | GitHub required checks 필요 |
+| Release | 차단 | workflow_dispatch + environment | billing/prod-v2/audio gates |
+| Security | 부분 | session/OAuth/Access/read-only tests | secret rotation·Access 운영 결정 |
+| TTS | 부분 | R2 first, approved Google batch | 30표본 QA와 4,954건 생성 |
+| UX | 부분 | 핵심 feature module 분리 | TOPIK 실제 콘텐츠 미제공 |
+| Versioning | 구현 | root pnpm manifest, release SHA log | release note 자동화 |
+| Workflow | 부분 | 8 workflows | 원격 실행 성공 증명 |
+| eXperimental | 격리 | VOICEVOX/FSRS URL 미설정 시 비활성 | 운영 연결 전 기능 취급 금지 |
+| Yet-to-release | 차단 | N2/N1 WIP branch 격리 | 라이선스·원본 7개 확보 |
+| Zenith | 계획 | JLPT 안정화 후 LearningTrack 확장 | R1 -> R2 -> R3 순서 유지 |
 
-### 4-3. DB와 콘텐츠
+## 5. 핵심 구현 판정
 
-`packages/db`가 D1 schema와 seed의 source of truth다. `packages/content`는 UI/문서 도구용 메타 패키지로 유지한다. 콘텐츠 버전 endpoint와 IDB invalidation이 들어가면서, 기존 사용자가 오래된 IndexedDB 데이터를 계속 보는 위험을 줄였다.
+### 5.1 D1과 콘텐츠
 
-### 4-4. 인증과 로컬 데이터
+- 모든 일반 테이블은 `packages/db/src/schema.ts`와 `packages/db/drizzle-v2`가 소유한다.
+- FTS virtual table과 trigger는 `0001_fts.sql`이 소유한다.
+- OAuth table을 런타임에 생성하던 코드는 제거했다.
+- `seed-diff.ts`는 변경 감지와 전체 parser 검증만 수행하며 D1을 쓰지 않는다.
+- Blue/Green 도구는 allowlist 일반 테이블만 이전하고 OAuth state/token과 FTS row를 복사하지 않는다.
+- 운영 binding은 아직 `nihongo-n3-prod`다. `prod-v2` 전환 전까지 canonical ledger의 운영 완료를 선언하면 안 된다.
 
-현재 앱은 자체 session auth를 중심으로 하고 Cloudflare Access는 보호 모드로 분리한다. 프론트 IndexedDB는 userId 기반 namespace를 사용해 같은 기기에서 계정 전환 시 학습 데이터가 섞이는 리스크를 줄였다.
+### 5.2 API와 인증
 
-### 4-5. 오디오/TTS
+- 모든 runtime route는 OpenAPI 문서 또는 승인된 internal 예외와 1:1로 비교된다.
+- 공개 명세와 관리자 명세는 분리되고 관리자 명세는 app admin session으로 보호된다.
+- Google OAuth는 Pages와 Worker origin이 다를 때 1회용 bridge token으로 세션을 생성한다.
+- read-only cutover에서는 로그인, 회원가입, OAuth state/callback, sync 등 DB 변경 route가 503과 `Retry-After`를 반환한다.
+- request log에는 PII 대신 request ID, release SHA, route, status, latency, auth mode만 기록한다.
 
-오디오 provider가 많아진 상태에서 중요한 것은 확장성보다 운영 정책이다. 현재는 `packages/shared/src/audio-policy.ts`에서 surface별 우선순위를 정하고, 문자/단어/한자/예문/청해가 같은 정책을 참조한다.
+### 5.3 Web과 LearningTrack
 
-## 5. Mismatch Register
+- 콘텐츠 API의 vocab/grammar/kanji 영역은 generated OpenAPI path/parameter 타입을 사용한다.
+- 콘텐츠 버전이 바뀌면 IndexedDB mirror를 무효화한다.
+- SRS, review, quiz, self-check, sync queue의 로컬 식별자는 `user:{id}|track:{track}`이다.
+- TOPIK은 foundation-only다. 기존 JLPT route는 `jlpt-ja` compatibility façade이며 TOPIK 문제은행·채점은 아직 없다.
 
-| 이전 불일치 | 현재 처리 |
+### 5.4 오디오
+
+- 사용자 재생은 승인된 R2 object가 있으면 이를 먼저 사용하고, 없으면 명시적인 일본어 browser voice로 fallback한다.
+- Worker의 공개 audio route는 R2 read-only이며 요청 시 유료 TTS를 생성하지 않는다.
+- Google TTS 전체 배치는 `execute:true`, provider `google`, 관리자 인증, approval token을 모두 요구한다.
+- R2 key는 콘텐츠·provider·model·audio version hash를 포함해 불변으로 생성한다.
+- 현재 30표본 청감 QA와 전체 배치는 실행되지 않았다.
+
+## 6. 이전 분석과의 정정
+
+| 과거 결론 | 현재 사실 |
 | --- | --- |
-| 루트 Markdown 파일 기준 설명 | `docs/...` 하위 구조 기준으로 문서 교체 |
-| `content-update.yml`이 루트 md만 감시한다는 판단 | 현재 `docs/**/*.md` 기준으로 정정 |
-| `packages/content/tsconfig.json` 부재 판단 | 존재 및 typecheck 통과 기준으로 정정 |
-| FSRS 구현이 API/Web 내부에 있다는 판단 | `packages/shared/src/fsrs.ts` 재수출 구조로 정정 |
-| FSRS weight 길이 `>=19` 허용 약점 | 19 legacy 또는 21 FSRS-6 기준으로 보정/검증 |
-| Hono wrapper route가 문서상 문제만이라는 판단 | OpenAPI schema 누락 리스크로 분류 |
-| `.git` 부재를 단순 복원 문제로 취급 | seed-diff fallback과 GitHub/local 검증 차이로 분리 |
-| 루트 `package.json` Figma 산출물 혼재 | 운영 monorepo manifest 기준으로 정리 |
+| OpenAPI generated client는 미래 작업 | 생성 타입과 일부 openapi-fetch façade 구현 완료 |
+| userId만으로 로컬 데이터 격리 | userId와 LearningTrack 조합으로 격리 |
+| 브라우저 TTS가 문자/청해 기본 | 승인된 R2 우선, browser Japanese voice는 명시적 fallback |
+| 16주가 기본 과정 | 52주가 기본, 엄격한 4조건 통과 시에만 16주 추천 |
+| diff seed가 변경 문서를 운영 반영 | diff seed는 검증 전용, production write 금지 |
+| D1 migration 완료 | 로컬 canonical ledger는 완료, prod-v2 전환은 미완 |
+| N2/N1 타입 지원이면 출시 가능 | 원본 7개·라이선스·검수 부재로 WIP 격리 |
 
-## 6. Priority Action List
+## 7. 릴리스 결정
 
-### P3
+다음 조건이 모두 참이 되기 전 production 배포를 실행하지 않는다.
 
-1. OpenAPI generated client 도입 여부 결정
-2. API schema와 프론트 DTO의 중복 타입 추가 제거
-3. 오디오 품질 dashboard와 provider 실패율 로그 추가
-4. PWA mobile visual regression 범위 확대
+1. GitHub billing lock 해제와 Audit, CodeQL, Required Verification, E2E, Backup 성공.
+2. `nihongo-n3-prod-v2` 생성, migration 7개 적용, 일반 테이블 이전과 restore drill 성공.
+3. preview에서 password, OAuth callback, session 유지, admin, sync queue smoke 성공.
+4. R2 릴리스이면 30표본 청감 승인과 `verify:remote:audio` 통과.
+5. production environment 수동 승인.
 
-### P4
-
-1. N2 콘텐츠를 `docs/05_n2` 기준으로 추가
-2. 자기진단과 학습 추천을 실제 오답/복습 로그 기반으로 고도화
-3. R2 고정 오디오 생성 파이프라인의 QA 승인 단계 추가
-4. 오래된 운영 보고서를 `docs/archive`로 이동하거나 상단에 과거 기준 표시
-
-## 7. 배포 전 검증 기준
-
-최종 배포 전에는 아래 명령이 통과해야 한다.
-
-```bash
-pnpm typecheck
-pnpm -F @nihongo-n3/api test
-pnpm -F @nihongo-n3/web test:run
-pnpm -F @nihongo-n3/e2e test
-pnpm -F @nihongo-n3/api build
-pnpm -F @nihongo-n3/web build
-```
-
-운영 smoke는 최소 다음 endpoint를 확인한다.
-
-```bash
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/health
-curl -fsS https://nihongo-n3-api.kordokrip.workers.dev/api/v1/content/version
-curl -I -fsS https://nihongo-n3.pages.dev/
-```
+관련 실행 문서는 [R1 Blue/Green Runbook](00_overview/R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)과 [기술부채 대장](00_overview/TECH_DEBT_2026-07-14.md)을 따른다.

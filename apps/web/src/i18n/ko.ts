@@ -281,8 +281,8 @@ const ko = {
   // ── 커리큘럼 ──
   curriculum: {
     title:      '커리큘럼',
-    planTitle:  '16주 학습 계획',
-    subtitle:   'JLPT N3 목표 달성을 위한 16주 학습 로드맵',
+    planTitle:  '12개월 학습 계획',
+    subtitle:   '문자와 N5 기반부터 JLPT N3 실전까지 이어지는 52주 로드맵',
     week:       '주차',
     weekLabel:  '{{week}}주차',
     weekShort:  '{{week}}주',

@@ -245,7 +245,7 @@ quiz.post('/quiz/generate', async (c) => {
           choices:  buildChoices(ans.sentence_ko, distractorCandidates),
           answer:   ans.sentence_ko,
           item_id:  ans.id,
-          audio_key: ans.audio_r2_key ?? `audio/sentence/${ans.level.toLowerCase()}/${ans.id}.mp3`,
+          ...(ans.audio_r2_key ? { audio_key: ans.audio_r2_key } : {}),
           script_ja: ans.sentence_ja,
           script_ko: ans.sentence_ko,
         });

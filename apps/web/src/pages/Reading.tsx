@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useSettingsStore } from '../stores/settings-store';
 
 type Level = 'N5' | 'N4' | 'N3' | 'N2';
 type Genre = 'email' | 'ad' | 'essay' | 'news' | 'instruction' | 'conversation' | 'notice' | '';
@@ -62,6 +63,7 @@ export default function Reading() {
   const { t } = useTranslation();
   const [level, setLevel] = useState<Level | ''>('');
   const [genre, setGenre] = useState<Genre | ''>('');
+  const track = useSettingsStore((state) => state.learningTrack);
 
   const fetchPage = useCallback(
     async ({ pageParam }: { pageParam: string | null }): Promise<PassageListRes> => {
@@ -87,7 +89,7 @@ export default function Reading() {
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey:          ['reading-list', level, genre],
+    queryKey:          ['reading-list', track, level, genre],
     queryFn:           fetchPage,
     initialPageParam:  null as string | null,
     getNextPageParam:  (last: PassageListRes) => last.cursor ?? undefined,

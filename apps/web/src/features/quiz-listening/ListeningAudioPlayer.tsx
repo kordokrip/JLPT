@@ -66,7 +66,7 @@ export function ListeningAudioPlayer({
         <audio
           ref={audioRef}
           src={src}
-          preload="auto"
+          preload="none"
           onPlay={() => {
             setPlaying(true);
             setPlayCount((n) => n + 1);
@@ -85,6 +85,7 @@ export function ListeningAudioPlayer({
             <button
               key={option}
               type="button"
+              aria-pressed={source === option}
               onClick={() => {
                 audioRef.current?.pause();
                 audioPlayer.stop();

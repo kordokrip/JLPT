@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { BROWSE_LEVELS, BROWSE_TABS } from './types';
 import type { ContentType } from './types';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export function BrowseSidebar({
   currentType,
@@ -9,9 +10,9 @@ export function BrowseSidebar({
   onLevel,
 }: {
   currentType: ContentType;
-  level: string | undefined;
+  level: JlptLevel | undefined;
   onType: (type: ContentType) => void;
-  onLevel: (level: string | undefined) => void;
+  onLevel: (level: JlptLevel | undefined) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -84,8 +85,8 @@ export function MobileLevelFilters({
   level,
   onLevel,
 }: {
-  level: string | undefined;
-  onLevel: (level: string | undefined) => void;
+  level: JlptLevel | undefined;
+  onLevel: (level: JlptLevel | undefined) => void;
 }) {
   const { t } = useTranslation();
   return (

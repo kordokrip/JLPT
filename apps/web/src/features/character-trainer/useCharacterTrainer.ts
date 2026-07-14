@@ -4,6 +4,7 @@ import { kanjiApi } from '../../lib/api';
 import { HIRAGANA, KATAKANA } from './data';
 import { buildChoices, getExpectedAnswer, makeKanjiCard, readProgress, writeProgress } from './logic';
 import type { CharacterMode, CharacterStage, JlptLevel, StudyCard } from './types';
+import { useSettingsStore } from '../../stores/settings-store';
 
 export function useCharacterTrainer() {
   const [mode, setMode] = useState<CharacterMode>('hiragana');
@@ -13,9 +14,10 @@ export function useCharacterTrainer() {
   const [revealed, setRevealed] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [, forceTick] = useState(0);
+  const track = useSettingsStore((state) => state.learningTrack);
 
   const kanjiQuery = useQuery({
-    queryKey: ['character-trainer-kanji', level],
+    queryKey: ['character-trainer-kanji', track, level],
     queryFn: async () => {
       const res = await kanjiApi.list({ level, limit: 200 });
       return res.ok ? res.data.map(makeKanjiCard) : [];
