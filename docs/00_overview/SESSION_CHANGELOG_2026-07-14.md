@@ -214,3 +214,20 @@ R2 read-only 원칙을 유지하면서 QA·batch·검증 경로를 교차검증�
 API와 웹 QA 표본을 `audio-qa-30-v1`로 통합하고, 네 provider 120개 평가와 평가자/device/browser/날짜/candidate metadata가 모두 있어야 승인되는 scorecard를 추가했다. admin queue는 N5→N4→N3 level을 강제하고, Google batch secret과 timing-safe approval token 없이 실행되지 않는다. 기존 immutable object 덮어쓰기를 금지하고 provider별 성공 이력과 R2 metadata가 완전히 일치할 때만 D1 key를 채택한다.
 
 `verify:remote:audio`는 NULL만 세던 방식에서 D1 불변 key와 R2 S3 HEAD metadata를 함께 대조하는 방식으로 강화했다. verifier 최소값은 낮추지 않았다. 사람 QA, `--execute`, production secret 설정, D1/R2 쓰기, 배포는 수행하지 않았다. R1 prod-v2 migration 7/7과 네 후보 준비가 선행되지 않아 TD-08은 `진행 중`을 유지한다.
+
+## 14. R1 draft PR과 GitHub billing lock 재확인 (2026-07-15 KST)
+
+커밋 `3e1bd9d10d80412cb858639d30c8f2a0cea8d905`를 원격 `refactor/tech-debt-r1`에 push하고 [draft PR #31](https://github.com/kordokrip/JLPT/pull/31)을 생성했다. PR 생성으로 시작된 모든 job은 checkout 전에 2~3초 안에 종료됐고 step 목록이 비어 있었다.
+
+| Workflow | Run | 결론 | SHA | 분류 |
+| --- | --- | --- | --- | --- |
+| Dependency Audit | [29424755756](https://github.com/kordokrip/JLPT/actions/runs/29424755756) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| CodeQL Security Analysis | [29424755869](https://github.com/kordokrip/JLPT/actions/runs/29424755869) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| Required Verification | [29424755793](https://github.com/kordokrip/JLPT/actions/runs/29424755793) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| E2E Tests | [29424755770](https://github.com/kordokrip/JLPT/actions/runs/29424755770) | failure | `3e1bd9d10d80` | Chromium/WebKit 모두 runner 미시작 |
+| Content and D1 Change Control | [29424755973](https://github.com/kordokrip/JLPT/actions/runs/29424755973) | failure | `3e1bd9d10d80` | fresh verification runner 미시작, production job skip |
+| Deploy Web | [29424755843](https://github.com/kordokrip/JLPT/actions/runs/29424755843) | failure | `3e1bd9d10d80` | build runner 미시작, deploy jobs skip |
+
+각 실패 check annotation을 GitHub API로 다시 조회했으며 모두 `The job was not started because your account is locked due to a billing issue.`였다. 이는 audit, CodeQL, 테스트, 빌드 명령의 코드 실패가 아니라 GitHub 계정 수준의 외부 차단이다. billing lock이 해제됐다고 가정해 workflow 파일이나 required check를 우회하지 않았고, 불필요한 재실행도 중단했다.
+
+Backup workflow는 검증 과정에서도 R2 object를 쓰므로 이 PR 생성 단계에서 수동 실행하지 않았다. production 배포, D1/R2 변경, secret 등록, 오디오 batch는 수행하지 않았다. 따라서 TD-10은 `외부 차단`, TD-14는 `구현 완료`, TD-08은 `진행 중`을 유지한다.
