@@ -252,3 +252,22 @@ pnpm ops:observe -- \
 ```
 
 24시간 report에서 release SHA별 5xx·latency, auth failure, D1 error를 직전 안정 release와 비교한다. 결과와 Logpush object 증거는 원시 PII 없이 status report와 SESSION_CHANGELOG에 반영한다.
+
+## 10. 회원 데이터 정리
+
+Production 회원 삭제는 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)을 따른다. 관리자 UI나 ad-hoc SQL에서 `DELETE FROM users`를 직접 실행하지 않는다.
+
+필수 순서:
+
+1. 24시간 이내 production backup과 local restore drill 성공
+2. 이메일을 마스킹한 remote inventory 생성
+3. 실제 회원 user ID 정확히 2개를 allowlist로 사람 확인
+4. 비인식 도메인 삭제 후보 0 확인
+5. `d1:users:cleanup` remote dry-run report와 plan hash 보존
+6. GitHub `production` Environment 승인
+7. 동적 확인문과 `--execute`로 정확한 후보 ID만 삭제
+8. 보존 회원 2명, 잔여 test reference 0, FK 0 검증
+
+`login_events`는 `users` 삭제 시 `SET NULL`이므로 별도 정책이 필요하다. 후보 user ID에 연결된 이벤트와 user ID가 없는 승인 test-domain 이벤트만 삭제한다. 보존 회원과 연결된 이벤트, user ID가 없는 Google OAuth 시작과 미분류 보안 이벤트는 보존한다.
+
+실행용 token은 D1 Edit 최소권한으로 승인 runner에만 둔다. 로컬 token으로는 remote dry-run까지만 수행하며 token 값, 원문 이메일, IP, user agent를 artifact나 CI log에 남기지 않는다.

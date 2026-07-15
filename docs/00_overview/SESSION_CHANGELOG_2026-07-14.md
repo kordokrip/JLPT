@@ -231,3 +231,11 @@ API와 웹 QA 표본을 `audio-qa-30-v1`로 통합하고, 네 provider 120개 �
 각 실패 check annotation을 GitHub API로 다시 조회했으며 모두 `The job was not started because your account is locked due to a billing issue.`였다. 이는 audit, CodeQL, 테스트, 빌드 명령의 코드 실패가 아니라 GitHub 계정 수준의 외부 차단이다. billing lock이 해제됐다고 가정해 workflow 파일이나 required check를 우회하지 않았고, 불필요한 재실행도 중단했다.
 
 Backup workflow는 검증 과정에서도 R2 object를 쓰므로 이 PR 생성 단계에서 수동 실행하지 않았다. production 배포, D1/R2 변경, secret 등록, 오디오 batch는 수행하지 않았다. 따라서 TD-10은 `외부 차단`, TD-14는 `구현 완료`, TD-08은 `진행 중`을 유지한다.
+
+## 15. Production 회원 cleanup dry-run (2026-07-16 KST)
+
+2026-07-15 production backup을 독립 SQL과 신규 cleanup planner로 두 번 집계했다. 전체 67명 중 실제 계정 후보는 마스킹 기준 2명이고, `example.com` 64명과 `nihongo-n3.local` 1명 등 65명이 명시적인 테스트 계정이다. 테스트 계정 연관 삭제 후보는 session 75, login event 95, SRS card 10, review log 8, quiz attempt 73, self check 1건이다.
+
+`d1:users:cleanup`은 2명 allowlist, test-domain 제한, PII 마스킹 fingerprint, plan hash, 60분 remote plan 만료, 24시간 backup, 동적 확인문, Environment 승인, post-delete FK 검사를 강제한다. backup plan은 실행 입력으로 사용할 수 없다. 회원 cleanup 단위 테스트 7개, DB test 10개, 전체 `pnpm verify`, backup dry-run `67 / 2 / 65`가 통과했다. 같은 백업의 local restore drill도 migration 7개와 일반 테이블 23개의 row count, SHA-256, FTS parity, FK 검사를 통과했다.
+
+루트 `.env.local`의 두 Cloudflare API token 이름은 값이 비어 있지 않지만 verify endpoint에서 모두 `Invalid API Token`이었다. 최신 remote inventory를 만들 수 없어 production 삭제는 수행하지 않았다. 다음 단계는 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)의 token 복구와 remote dry-run이다.

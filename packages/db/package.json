@@ -16,6 +16,7 @@
     "d1:transfer": "tsx src/ops/d1-blue-green.ts",
     "d1:backup": "tsx src/ops/d1-backup.ts",
     "d1:restore-drill": "tsx src/ops/d1-restore-drill.ts",
+    "d1:users:cleanup": "tsx src/ops/d1-user-cleanup.ts",
     "seed:local": "tsx src/seed/seed.ts --local",
     "seed:remote": "tsx src/seed/seed.ts --remote",
     "seed:diff": "tsx src/seed/seed-diff.ts",
