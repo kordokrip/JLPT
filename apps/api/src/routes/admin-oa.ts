@@ -12,6 +12,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       200: { content: { 'text/html': { schema: { type: 'string' } } }, description: '대시보드 HTML' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
     },
   },
   {
@@ -22,6 +23,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '주간 리포트' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
       404: { content: { 'application/json': { schema: problemSchema } }, description: '리포트 없음' },
     },
   },
@@ -33,6 +35,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       201: { content: { 'application/json': { schema: createdResponseSchema } }, description: '생성 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
     },
   },
   {
@@ -62,6 +65,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '큐 실행 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
     },
   },
   {
@@ -72,6 +76,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'provider 상태' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
     },
   },
   {
@@ -95,6 +100,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     responses: {
       200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'QA 샘플 생성 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
     },
   },
 ]);

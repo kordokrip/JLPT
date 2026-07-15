@@ -147,6 +147,15 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetail"];
                     };
                 };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
             };
         };
         put?: never;
@@ -192,6 +201,15 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetail"];
                     };
                 };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
                 /** @description 리포트 없음 */
                 404: {
                     headers: {
@@ -225,6 +243,15 @@ export interface paths {
                 };
                 /** @description 인증 필요 */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -293,6 +320,15 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetail"];
                     };
                 };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -329,6 +365,15 @@ export interface paths {
                 };
                 /** @description 인증 필요 */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -386,6 +431,15 @@ export interface paths {
                 };
                 /** @description 인증 필요 */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };

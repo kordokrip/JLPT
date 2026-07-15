@@ -297,7 +297,7 @@ app.get(
   }),
 );
 
-// ── 관리자 라우트 (/admin/*) — CF Access 보호 ──────────────────────
+// ── 관리자 라우트 (/admin/*) — application admin session 보호 ─────
 app.route('/admin', adminOA);
 
 export const INTERNAL_ROUTE_EXCEPTIONS = new Set([

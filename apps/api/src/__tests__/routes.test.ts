@@ -121,6 +121,24 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json<T>();
 }
 
+async function registerTestSession(role: 'user' | 'admin' = 'user'): Promise<string> {
+  const email = `admin-route-${role}-${Date.now()}-${crypto.randomUUID()}@example.com`;
+  const register = await fetch('/api/v1/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: 'Passw0rd1234', display_name: `${role} route test` }),
+  });
+  expect(register.status).toBe(201);
+
+  if (role === 'admin') {
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `UPDATE users SET role = 'admin' WHERE email = ?`,
+    ).bind(email).run();
+  }
+
+  return register.headers.get('set-cookie') ?? '';
+}
+
 const OPENAPI_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'] as const;
 
 function documentRoutes(document: ReturnType<typeof getPublicOpenApiDocument>): Set<string> {
@@ -630,9 +648,25 @@ describe('R2 audio policy', () => {
   });
 
   it('keeps the production audio batch dry-run by default and rejects unapproved execution', async () => {
-    const dryRun = await fetch('/admin/audio/queue', {
+    const unauthenticated = await fetch('/admin/audio/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(unauthenticated.status).toBe(401);
+
+    const userCookie = await registerTestSession('user');
+    const forbidden = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: userCookie },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(forbidden.status).toBe(403);
+
+    const adminCookie = await registerTestSession('admin');
+    const dryRun = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
       body: JSON.stringify({ provider: 'google' }),
     });
     expect(dryRun.status).toBe(200);
@@ -649,14 +683,14 @@ describe('R2 audio policy', () => {
 
     const execute = await fetch('/admin/audio/queue', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
       body: JSON.stringify({ execute: true, provider: 'google', level: 'N5' }),
     });
     expect(execute.status).toBe(400);
 
     const force = await fetch('/admin/audio/queue', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
       body: JSON.stringify({ execute: true, provider: 'google', level: 'N5', force_regenerate: true }),
     });
     expect(force.status).toBe(400);

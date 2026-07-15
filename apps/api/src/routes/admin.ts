@@ -4,7 +4,7 @@
  * GET  /weekly-report — 최신 주간 학습 리포트 조회 (R2에서 읽기)
  * POST /weekly-report — 수동 리포트 생성 (즉시 생성 후 R2 저장)
  *
- * 보호: Cloudflare Access JWT (cfAccessAuth)
+ * 보호: application admin session
  * Cron: 매주 일요일 23:00 KST (14:00 UTC) scheduled handler에서 자동 생성
  *
  * 리포트 항목:
@@ -15,7 +15,7 @@
  */
 import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
-import { cfAccessAuth } from '../middleware/auth.js';
+import { adminSessionAuth } from '../lib/auth-session.js';
 import { badRequest, ok, problem } from '../lib/response.js';
 import { AUDIO_BATCH_LEVELS, runAudioGeneration, type AudioBatchLevel } from '../jobs/generate-audio.js';
 import { getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from '../lib/tts/index.js';
@@ -24,7 +24,7 @@ import { parseAudioQaProvider, warmupAudioQa, type AudioQaProvider } from '../li
 import { equalSecret } from '../lib/secret.js';
 
 const admin = new Hono<AppEnv>();
-admin.use('*', cfAccessAuth);
+admin.use('*', adminSessionAuth);
 
 // ── GET /dashboard ──────────────────────────────────────────
 admin.get('/dashboard', async (c) => {
