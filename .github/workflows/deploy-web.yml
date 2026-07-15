@@ -78,7 +78,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-pages
-          path: .
+          path: apps/web
 
       - name: Deploy Preview to Cloudflare Pages
         id: preview
@@ -130,7 +130,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-pages
-          path: .
+          path: apps/web
 
       - name: Deploy to Cloudflare Pages (Production)
         uses: cloudflare/wrangler-action@v3
