@@ -2,8 +2,6 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { REPO_ROOT } from './constants.js';
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_CONFIG = path.resolve(__dirname, '../../../../apps/api/wrangler.toml');
 
@@ -65,7 +63,7 @@ function targetArgs(options: D1TargetOptions): string[] {
 
 export function executeSqlFile(options: D1TargetOptions, filePath: string): void {
   execFileSync('pnpm', [...targetArgs(options), '--file', filePath], {
-    cwd: REPO_ROOT,
+    cwd: path.dirname(options.config),
     stdio: 'pipe',
   });
 }
@@ -77,7 +75,12 @@ export function querySql<T extends Record<string, unknown>>(
   const raw = execFileSync(
     'pnpm',
     [...targetArgs(options), '--command', sql, '--json'],
-    { cwd: REPO_ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+    {
+      cwd: path.dirname(options.config),
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
   );
   const parsed = JSON.parse(raw) as Array<{ results?: T[]; success?: boolean }>;
   if (!parsed[0]?.success && !parsed[0]?.results) {

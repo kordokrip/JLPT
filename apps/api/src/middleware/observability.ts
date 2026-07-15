@@ -3,10 +3,25 @@ import { matchedRoutes } from 'hono/route';
 import type { AppEnv } from '../types.js';
 
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9._:-]{8,128}$/;
+const D1_ERROR_PATTERN = /(?:\bD1\b|D1_ERROR|SQLITE_|database|prepared statement)/i;
 
 function requestId(c: Context<AppEnv>): string {
   const incoming = c.req.header('x-request-id');
   return incoming && REQUEST_ID_PATTERN.test(incoming) ? incoming : crypto.randomUUID();
+}
+
+export function routeTemplate(c: Context<AppEnv>): string {
+  return matchedRoutes(c)[c.req.routeIndex]?.path ?? '<unmatched>';
+}
+
+export function isD1Error(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return D1_ERROR_PATTERN.test(`${error.name} ${error.message}`);
+}
+
+function isAuthFailure(route: string, status: number): boolean {
+  if (status !== 401 && status !== 403) return false;
+  return route.startsWith('/api/v1/auth/') || route.startsWith('/admin');
 }
 
 export async function observabilityMiddleware(c: Context<AppEnv>, next: Next): Promise<void> {
@@ -21,8 +36,8 @@ export async function observabilityMiddleware(c: Context<AppEnv>, next: Next): P
   try {
     await next();
   } finally {
-    const route = matchedRoutes(c)[c.req.routeIndex]?.path ?? '<unmatched>';
-    console.log(JSON.stringify({
+    const route = routeTemplate(c);
+    const requestLog = {
       event: 'http_request',
       request_id: id,
       cf_ray: c.req.header('cf-ray') ?? null,
@@ -33,6 +48,14 @@ export async function observabilityMiddleware(c: Context<AppEnv>, next: Next): P
       route,
       status: c.res.status,
       duration_ms: Date.now() - startedAt,
-    }));
+    };
+    console.log(requestLog);
+
+    if (isAuthFailure(route, c.res.status)) {
+      console.warn({
+        ...requestLog,
+        event: 'auth_failure',
+      });
+    }
   }
 }

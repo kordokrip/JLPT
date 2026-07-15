@@ -1297,7 +1297,46 @@ export interface paths {
         post?: never;
         delete?: never;
         options?: never;
-        head?: never;
+        /** 고정 샘플 TTS QA 메타데이터 */
+        head: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    provider: "cloudflare" | "google" | "voicevox";
+                    file: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description QA 샘플 provider/model/version 메타데이터 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description 잘못된 요청 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 승인된 QA 배치가 아직 R2에 없음 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
         patch?: never;
         trace?: never;
     };

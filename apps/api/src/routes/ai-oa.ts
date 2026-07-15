@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { aiRateLimit } from '../middleware/rate-limit.js';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const BASE = 'https://nihongo-n3.example.com/errors/';
@@ -193,7 +194,7 @@ aiOA.openapi(naturalTranslateRoute, async (c) => {
       },
     }, 200);
   } catch (err) {
-    console.error('[ai.translate]', err);
+    console.error({ event: 'ai_translation_error', error_name: safeErrorName(err) });
     return c.json(
       {
         type: `${BASE}ai-translation-failed`,

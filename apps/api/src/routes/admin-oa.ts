@@ -52,6 +52,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
               dry_run: z.boolean().optional(),
               batch: z.number().int().min(1).max(200).optional(),
               provider: z.literal('google').optional(),
+              level: z.enum(['N5', 'N4', 'N3']).optional(),
               force_regenerate: z.boolean().optional(),
             }),
           },

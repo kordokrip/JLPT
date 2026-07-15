@@ -133,11 +133,33 @@ for (const [name, sql] of requiredFieldChecks) {
 const fkViolations = querySql<Record<string, unknown>>(target, 'PRAGMA foreign_key_check');
 addCheck('foreign_key_check', 0, fkViolations.length);
 
+function invalidImmutableAudioKey(itemType: string, levelColumn: string): string {
+  const prefix = `'audio/${itemType}/' || lower(${levelColumn}) || '/' || id || '-'`;
+  return `(
+    audio_r2_key IS NULL
+    OR audio_r2_key NOT LIKE ${prefix} || '%.mp3'
+    OR length(audio_r2_key) <> length(${prefix}) + 20
+    OR substr(audio_r2_key, length(${prefix}) + 1, 16) GLOB '*[^0-9a-f]*'
+  )`;
+}
+
 const audioMissing = countSql(
   target,
-  'SELECT (SELECT count(*) FROM vocab WHERE audio_r2_key IS NULL) + (SELECT count(*) FROM kanji WHERE audio_r2_key IS NULL) + (SELECT count(*) FROM sentences WHERE audio_r2_key IS NULL) AS count',
+  `SELECT
+     (SELECT count(*) FROM vocab
+      WHERE level IN ('N5', 'N4', 'N3')
+        AND ${invalidImmutableAudioKey('vocab', 'level')})
+     +
+     (SELECT count(*) FROM kanji
+      WHERE jlpt_level IN ('N5', 'N4', 'N3')
+        AND ${invalidImmutableAudioKey('kanji', 'jlpt_level')})
+     +
+     (SELECT count(*) FROM sentences
+      WHERE level IN ('N5', 'N4', 'N3')
+        AND ${invalidImmutableAudioKey('sentence', 'level')})
+     AS count`,
 );
-addCheck('audio_r2_key missing (R2 gate)', 0, audioMissing, requireAudio);
+addCheck('audio_r2_key missing/non-immutable (R2 gate)', 0, audioMissing, requireAudio);
 
 for (const check of checks) {
   const icon = check.passed ? 'OK' : check.blocking ? 'FAIL' : 'WARN';

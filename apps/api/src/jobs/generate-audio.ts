@@ -6,7 +6,7 @@
  * Cron: 매일 03:00 UTC ("0 3 * * *" in wrangler.toml)
  *
  * 처리 흐름:
- *   1. D1에서 audio_r2_key IS NULL 인 항목 최대 50개 조회 (우선순위 순)
+ *   1. D1에서 승인 provider 성공 로그와 현재 key가 일치하지 않는 항목을 조회
  *   2. TTS 어댑터로 오디오 생성
  *   3. R2에 저장 (불변 키: audio/{type}/{level}/{id}-{contentHash}.{ext})
  *   4. D1 audio_r2_key 업데이트
@@ -14,16 +14,15 @@
  * 단가 보호:
  *   - 1회 실행: 최대 50개 (BATCH_SIZE)
  *   - 일일 한도: 500개 (DAILY_LIMIT)
- *   - 3회 실패 카드는 audio_generation_attempts = 99로 스킵 처리
+ *   - 같은 provider에서 3회 실패한 항목은 별도 검토 전까지 스킵
  *
- * 우선순위:
- *   P1 sentences (1,100개)
- *   P2 vocab N3 (1,500개)
- *   P3 vocab N4/N5
- *   P4 kanji 音読み
+ * 실행 순서:
+ *   N5 -> N4 -> N3 level을 관리자 승인 단위로 분리
+ *   각 level 안에서는 sentence -> vocab -> kanji
  */
 import type { Env } from '../types.js';
 import { createTtsAdapter, getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const BATCH_SIZE  = 50;
 const DAILY_LIMIT = 500;
@@ -49,7 +48,11 @@ export interface AudioGenerationOptions {
   provider?: Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'>;
   batchSize?: number;
   forceRegenerate?: boolean;
+  level?: AudioBatchLevel;
 }
+
+export const AUDIO_BATCH_LEVELS = ['N5', 'N4', 'N3'] as const;
+export type AudioBatchLevel = (typeof AUDIO_BATCH_LEVELS)[number];
 
 /** 일일 생성 건수 조회 (R2 기반 카운터 대신 D1 review_logs 테이블 활용) */
 async function getDailyCount(db: D1Database): Promise<number> {
@@ -93,86 +96,50 @@ export async function runAudioGeneration(
   const tts = createTtsAdapter(env, options.provider);
   const providerInfo = getTtsProviderInfo(env, options.provider);
   const batchSize = clampInt(options.batchSize ?? BATCH_SIZE, 1, 200);
+  if (options.forceRegenerate) {
+    throw new Error('immutable 오디오는 덮어쓸 수 없습니다. 재생성하려면 audioVersion을 올리십시오.');
+  }
 
   // 일일 한도 체크
   const dailyCount = await getDailyCount(db).catch(() => 0);
   if (dailyCount >= DAILY_LIMIT) {
-    console.log(`[audio-gen] 일일 한도 초과 (${dailyCount}/${DAILY_LIMIT}) → 종료`);
+    console.log({ event: 'audio_generation_limit_reached', generated_today: dailyCount, daily_limit: DAILY_LIMIT });
     return { processed: 0, skipped: 0 };
   }
 
   const remaining = Math.min(batchSize, DAILY_LIMIT - dailyCount);
-  const missingOnly = options.forceRegenerate ? '' : 'AND audio_r2_key IS NULL';
+  const levels = options.level ? [options.level] : [...AUDIO_BATCH_LEVELS];
+  const sentenceRows = await loadAudioTasks(db, {
+    table: 'sentences',
+    type: 'sentence',
+    textExpression: 'item.ja',
+    levelColumn: 'item.level',
+    levels,
+    provider: providerInfo.provider,
+    limit: remaining,
+  });
+  const vocabRows = await loadAudioTasks(db, {
+    table: 'vocab',
+    type: 'vocab',
+    textExpression: 'item.ja',
+    levelColumn: 'item.level',
+    levels,
+    provider: providerInfo.provider,
+    limit: remaining,
+  });
+  const kanjiRows = await loadAudioTasks(db, {
+    table: 'kanji',
+    type: 'kanji',
+    textExpression: 'COALESCE(item.on_yomi, item.kun_yomi, item.char)',
+    levelColumn: 'item.jlpt_level',
+    levels,
+    provider: providerInfo.provider,
+    limit: remaining,
+  });
 
-  // ── 우선순위별 미생성 항목 조회 ─────────────────────────────────
-  // P1: sentences
-  const sentenceRows = await db
-    .prepare(
-      `SELECT id, 'sentence' AS type, ja AS text, level, audio_r2_key,
-              COALESCE(audio_generation_attempts, 0) AS attempts
-       FROM sentences
-       WHERE 1 = 1
-         ${missingOnly}
-         AND COALESCE(audio_generation_attempts, 0) < ?
-       ORDER BY id
-       LIMIT ?`,
-    )
-    .bind(MAX_RETRIES, remaining)
-    .all<AudioTask>();
-
-  // P2: vocab N3
-  const vocabN3Rows = await db
-    .prepare(
-      `SELECT id, 'vocab' AS type, ja AS text, level, audio_r2_key,
-              COALESCE(audio_generation_attempts, 0) AS attempts
-       FROM vocab
-       WHERE 1 = 1
-         ${missingOnly}
-         AND level = 'N3'
-         AND COALESCE(audio_generation_attempts, 0) < ?
-       ORDER BY id
-       LIMIT ?`,
-    )
-    .bind(MAX_RETRIES, remaining)
-    .all<AudioTask>();
-
-  // P3: vocab N4/N5
-  const vocabRestRows = await db
-    .prepare(
-      `SELECT id, 'vocab' AS type, ja AS text, level, audio_r2_key,
-              COALESCE(audio_generation_attempts, 0) AS attempts
-       FROM vocab
-       WHERE 1 = 1
-         ${missingOnly}
-         AND level IN ('N4', 'N5')
-         AND COALESCE(audio_generation_attempts, 0) < ?
-       ORDER BY id
-       LIMIT ?`,
-    )
-    .bind(MAX_RETRIES, remaining)
-    .all<AudioTask>();
-
-  // P4: kanji (音読み)
-  const kanjiRows = await db
-    .prepare(
-      `SELECT id, 'kanji' AS type, COALESCE(on_yomi, kun_yomi, char) AS text, jlpt_level AS level, audio_r2_key,
-              COALESCE(audio_generation_attempts, 0) AS attempts
-       FROM kanji
-       WHERE 1 = 1
-         ${missingOnly}
-         AND COALESCE(on_yomi, kun_yomi, char) IS NOT NULL
-         AND COALESCE(audio_generation_attempts, 0) < ?
-       ORDER BY id
-       LIMIT ?`,
-    )
-    .bind(MAX_RETRIES, remaining)
-    .all<AudioTask>();
-
-  // 우선순위 병합 (총 remaining 개 이내)
   const allTasks: AudioTask[] = [
     ...(sentenceRows.results ?? []),
-    ...(vocabN3Rows.results ?? []),
-    ...(vocabRestRows.results ?? []),
+    ...(vocabRows.results ?? []),
     ...(kanjiRows.results ?? []),
   ].slice(0, remaining);
 
@@ -187,9 +154,20 @@ export async function runAudioGeneration(
 
     // 이미 R2에 있으면 DB만 업데이트
     const existing = await r2.head(r2Key).catch(() => null);
-    if (existing && !options.forceRegenerate && isCurrentAudio(existing, providerInfo)) {
+    if (existing && isCurrentAudio(existing, providerInfo, task, contentHash)) {
       await updateR2Key(db, task, r2Key);
+      await logGeneration(db, task, true, r2Key, providerInfo.provider, contentHash);
       processed++;
+      continue;
+    }
+    if (existing) {
+      console.error({
+        event: 'audio_generation_immutable_collision',
+        item_type: task.type,
+        item_id: task.id,
+      });
+      await logGeneration(db, task, false, null, providerInfo.provider, contentHash);
+      skipped++;
       continue;
     }
 
@@ -197,7 +175,8 @@ export async function runAudioGeneration(
       const audioBuffer = await tts.generateAudio({ text: task.text, lang: 'ja' });
       const contentType = detectAudioContentType(audioBuffer);
 
-      await r2.put(r2Key, audioBuffer, {
+      const stored = await r2.put(r2Key, audioBuffer, {
+        onlyIf: new Headers({ 'If-None-Match': '*' }),
         httpMetadata: {
           contentType,
           cacheControl: 'public, max-age=2592000, immutable',
@@ -216,22 +195,33 @@ export async function runAudioGeneration(
           createdAt: new Date().toISOString(),
         },
       });
+      if (!stored) throw new Error('immutable R2 key가 동시에 생성되어 쓰기를 중단했습니다');
 
       await updateR2Key(db, task, r2Key);
       await logGeneration(db, task, true, r2Key, providerInfo.provider, contentHash);
       processed++;
-      console.log(`[audio-gen] ✓ ${task.type}#${task.id} → ${r2Key}`);
+      console.log({ event: 'audio_generation_succeeded', item_type: task.type, item_id: task.id });
     } catch (err) {
-      console.error(`[audio-gen] ✗ ${task.type}#${task.id}`, err);
+      console.error({
+        event: 'audio_generation_failed',
+        item_type: task.type,
+        item_id: task.id,
+        error_name: safeErrorName(err),
+      });
       await incrementAttempts(db, task);
       await logGeneration(db, task, false, null, providerInfo.provider, contentHash);
       skipped++;
     }
   }
 
-  console.log(
-    `[audio-gen] 완료: provider=${providerInfo.provider} force=${options.forceRegenerate === true} 생성=${processed} 스킵=${skipped}`,
-  );
+  console.log({
+    event: 'audio_generation_completed',
+    provider: providerInfo.provider,
+    force_regenerate: false,
+    level: options.level ?? 'all',
+    processed,
+    skipped,
+  });
   return { processed, skipped };
 }
 
@@ -257,12 +247,69 @@ export async function buildImmutableAudioKey(
 function isCurrentAudio(
   object: Pick<R2Object, 'customMetadata'>,
   providerInfo: ReturnType<typeof getTtsProviderInfo>,
+  task: AudioTask,
+  contentHash: string,
 ): boolean {
   const meta = object.customMetadata;
   return meta?.provider === providerInfo.provider &&
     meta.model === providerInfo.model &&
     meta.audioVersion === providerInfo.audioVersion &&
-    typeof meta.contentHash === 'string';
+    meta.contentHash === contentHash &&
+    meta.itemType === task.type &&
+    meta.itemId === String(task.id) &&
+    meta.level === task.level;
+}
+
+async function loadAudioTasks(
+  db: D1Database,
+  options: {
+    table: 'sentences' | 'vocab' | 'kanji';
+    type: AudioTask['type'];
+    textExpression: string;
+    levelColumn: string;
+    levels: AudioBatchLevel[];
+    provider: string;
+    limit: number;
+  },
+): Promise<D1Result<AudioTask>> {
+  const placeholders = options.levels.map(() => '?').join(', ');
+  const sql = `
+    SELECT item.id, '${options.type}' AS type, ${options.textExpression} AS text,
+           ${options.levelColumn} AS level, item.audio_r2_key,
+           COALESCE(item.audio_generation_attempts, 0) AS attempts
+    FROM ${options.table} AS item
+    WHERE ${options.levelColumn} IN (${placeholders})
+      AND ${options.textExpression} IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM audio_generation_log AS success_log
+        WHERE success_log.item_type = ?
+          AND success_log.item_id = item.id
+          AND success_log.provider = ?
+          AND success_log.success = 1
+          AND success_log.r2_key = item.audio_r2_key
+      )
+      AND (
+        SELECT COUNT(*)
+        FROM audio_generation_log AS failure_log
+        WHERE failure_log.item_type = ?
+          AND failure_log.item_id = item.id
+          AND failure_log.provider = ?
+          AND failure_log.success = 0
+      ) < ?
+    ORDER BY CASE ${options.levelColumn} WHEN 'N5' THEN 1 WHEN 'N4' THEN 2 ELSE 3 END, item.id
+    LIMIT ?`;
+  return db.prepare(sql)
+    .bind(
+      ...options.levels,
+      options.type,
+      options.provider,
+      options.type,
+      options.provider,
+      MAX_RETRIES,
+      options.limit,
+    )
+    .all<AudioTask>();
 }
 
 async function updateR2Key(db: D1Database, task: AudioTask, r2Key: string): Promise<void> {

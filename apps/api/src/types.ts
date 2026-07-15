@@ -19,6 +19,16 @@ export type Env = {
   MAINTENANCE_MODE?:   string;
   /** Git commit or deployment identifier injected by CI. */
   RELEASE_SHA?:        string;
+  /** Preview-only 5xx observability canary secret. Never configure in production. */
+  OBSERVABILITY_CANARY_TOKEN?: string;
+  /** Account-scoped Workers Observability query configuration. */
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  OBSERVABILITY_API_TOKEN?: string;
+  OBSERVABILITY_ALERT_WEBHOOK_URL?: string;
+  OBSERVABILITY_ALERT_WEBHOOK_TOKEN?: string;
+  /** Internal Worker-to-Worker alert delivery; avoids workers.dev self-fetch loops. */
+  OBSERVABILITY_ALERT_RECEIVER?: Fetcher;
+  OBSERVABILITY_WORKER_NAME?: string;
   /** production auth mode: app-session | cf-access | public-owner */
   AUTH_MODE:           string;
   /** App session HMAC/password hashing secret. Set with wrangler secret in production. */

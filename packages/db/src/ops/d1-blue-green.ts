@@ -24,11 +24,49 @@ type Options = {
 type TableResult = {
   table: string;
   sourceCount: number;
-  targetCount: number | null;
+  targetCount: number;
+  countDelta: number;
   sourceChecksum: string | null;
   targetChecksum: string | null;
+  checksumMatches: boolean | null;
   verified: boolean;
 };
+
+type FtsParityResult = {
+  sourceTable: 'vocab' | 'sentences';
+  ftsTable: 'vocab_fts' | 'sentences_fts';
+  expectedCount: number;
+  actualCount: number;
+  baselineCount: number;
+  parityMatches: boolean;
+  baselineMatches: boolean;
+  verified: boolean;
+};
+
+type ReportMode = 'dry-run' | 'before' | 'after';
+
+type VerificationReport = {
+  generatedAt: string;
+  mode: ReportMode;
+  source: string;
+  target: string;
+  phase: Phase;
+  results: TableResult[];
+  ftsParity: FtsParityResult[];
+  summary: {
+    tableCount: number;
+    verifiedTables: number;
+    mismatchedTables: number;
+    verifiedFtsPairs: number;
+    mismatchedFtsPairs: number;
+    verified: boolean;
+  };
+};
+
+const FTS_BASELINES = {
+  vocab: 3_300,
+  sentences: 1_112,
+} as const;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -103,7 +141,11 @@ function firstResult(value: unknown): Record<string, unknown> {
 
 function count(database: string, table: D1TableSpec, config: string): number {
   const where = table.verifyWhere ? ` WHERE ${table.verifyWhere}` : '';
-  const row = firstResult(queryJson(database, `SELECT COUNT(*) AS row_count FROM ${table.name}${where}`, config));
+  return countTable(database, table.name, config, where);
+}
+
+function countTable(database: string, table: string, config: string, where = ''): number {
+  const row = firstResult(queryJson(database, `SELECT COUNT(*) AS row_count FROM ${table}${where}`, config));
   return Number(row['row_count'] ?? 0);
 }
 
@@ -138,11 +180,86 @@ function rebuildFts(options: Options): void {
   ]);
 }
 
-function verifyChecksum(options: Options, table: D1TableSpec, sourceFile: string): string | null {
-  if (!table.checksum) return null;
-  const targetFile = path.join(options.outputDir, `${table.name}.target.sql`);
-  exportTable(options.target, table.name, targetFile, options.config);
-  return normalizedChecksum(targetFile);
+function collectFtsParity(options: Options): FtsParityResult[] {
+  if (options.phase === 'mutable') return [];
+
+  return ([
+    ['vocab', 'vocab_fts'],
+    ['sentences', 'sentences_fts'],
+  ] as const).map(([sourceTable, ftsTable]) => {
+    const expectedCount = countTable(options.target, sourceTable, options.config);
+    const actualCount = countTable(options.target, ftsTable, options.config);
+    const baselineCount = FTS_BASELINES[sourceTable];
+    const parityMatches = expectedCount === actualCount;
+    const baselineMatches = expectedCount === baselineCount;
+    return {
+      sourceTable,
+      ftsTable,
+      expectedCount,
+      actualCount,
+      baselineCount,
+      parityMatches,
+      baselineMatches,
+      verified: parityMatches && baselineMatches,
+    };
+  });
+}
+
+function collectVerification(
+  options: Options,
+  tables: D1TableSpec[],
+  mode: ReportMode,
+): { report: VerificationReport; sourceFiles: Map<string, string> } {
+  const sourceFiles = new Map<string, string>();
+  const results = tables.map((table) => {
+    const sourceFile = path.join(options.outputDir, `${table.name}.source.${mode}.sql`);
+    const targetFile = path.join(options.outputDir, `${table.name}.target.${mode}.sql`);
+    exportTable(options.source, table.name, sourceFile, options.config);
+    exportTable(options.target, table.name, targetFile, options.config);
+    sourceFiles.set(table.name, sourceFile);
+
+    const sourceCount = count(options.source, table, options.config);
+    const targetCount = count(options.target, table, options.config);
+    const sourceChecksum = table.checksum ? normalizedChecksum(sourceFile) : null;
+    const targetChecksum = table.checksum ? normalizedChecksum(targetFile) : null;
+    const checksumMatches = table.checksum ? sourceChecksum === targetChecksum : null;
+    return {
+      table: table.name,
+      sourceCount,
+      targetCount,
+      countDelta: targetCount - sourceCount,
+      sourceChecksum,
+      targetChecksum,
+      checksumMatches,
+      verified: sourceCount === targetCount && checksumMatches !== false,
+    };
+  });
+  const ftsParity = collectFtsParity(options);
+  const mismatchedTables = results.filter((result) => !result.verified).length;
+  const mismatchedFtsPairs = ftsParity.filter((result) => !result.verified).length;
+  const report: VerificationReport = {
+    generatedAt: new Date().toISOString(),
+    mode,
+    source: options.source,
+    target: options.target,
+    phase: options.phase,
+    results,
+    ftsParity,
+    summary: {
+      tableCount: results.length,
+      verifiedTables: results.length - mismatchedTables,
+      mismatchedTables,
+      verifiedFtsPairs: ftsParity.length - mismatchedFtsPairs,
+      mismatchedFtsPairs,
+      verified: mismatchedTables === 0 && mismatchedFtsPairs === 0,
+    },
+  };
+  return { report, sourceFiles };
+}
+
+function writeReport(options: Options, report: VerificationReport, fileName: string): void {
+  fs.writeFileSync(path.join(options.outputDir, fileName), `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify(report, null, 2));
 }
 
 function main(): void {
@@ -151,55 +268,32 @@ function main(): void {
   fs.mkdirSync(options.outputDir, { recursive: true });
 
   if (!options.execute) {
+    const { report } = collectVerification(options, tables, 'dry-run');
+    writeReport(options, report, 'verification-before.json');
     console.log(JSON.stringify({
-      mode: 'dry-run',
-      ...options,
-      tables: tables.map((table) => table.name),
       excludedTransientTables: EXCLUDED_TRANSIENT_TABLES,
       rebuiltVirtualTables: REBUILT_VIRTUAL_TABLES,
+      note: 'Dry-run is read-only. Mismatches are reported but do not change either database.',
     }, null, 2));
     return;
   }
   if (!options.replaceTarget) throw new Error('--replace-target is required for deterministic transfer');
 
-  const sourceFiles = new Map<string, string>();
-  for (const table of tables) {
-    const file = path.join(options.outputDir, `${table.name}.source.sql`);
-    exportTable(options.source, table.name, file, options.config);
-    sourceFiles.set(table.name, file);
-  }
+  const before = collectVerification(options, tables, 'before');
+  writeReport(options, before.report, 'verification-before.json');
 
   deleteTargetRows(options, tables);
-  for (const table of tables) importTable(options, sourceFiles.get(table.name)!);
+  for (const table of tables) importTable(options, before.sourceFiles.get(table.name)!);
   if (tables.some((table) => table.name === 'auth_sessions')) pruneSessions(options);
   if (options.phase === 'content' || options.phase === 'all') rebuildFts(options);
 
-  const results: TableResult[] = tables.map((table) => {
-    const sourceFile = sourceFiles.get(table.name)!;
-    const sourceCount = count(options.source, table, options.config);
-    const targetCount = count(options.target, table, options.config);
-    const sourceChecksum = table.checksum ? normalizedChecksum(sourceFile) : null;
-    const targetChecksum = verifyChecksum(options, table, sourceFile);
-    return {
-      table: table.name,
-      sourceCount,
-      targetCount,
-      sourceChecksum,
-      targetChecksum,
-      verified: sourceCount === targetCount && (!table.checksum || sourceChecksum === targetChecksum),
-    };
-  });
-
-  const report = {
-    generatedAt: new Date().toISOString(),
-    source: options.source,
-    target: options.target,
-    phase: options.phase,
-    results,
-  };
-  fs.writeFileSync(path.join(options.outputDir, 'verification.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log(JSON.stringify(report, null, 2));
-  if (results.some((result) => !result.verified)) process.exitCode = 1;
+  const after = collectVerification(options, tables, 'after');
+  writeReport(options, after.report, 'verification-after.json');
+  fs.copyFileSync(
+    path.join(options.outputDir, 'verification-after.json'),
+    path.join(options.outputDir, 'verification.json'),
+  );
+  if (!after.report.summary.verified) process.exitCode = 1;
 }
 
 main();

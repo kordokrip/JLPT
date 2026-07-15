@@ -268,6 +268,8 @@ export interface paths {
                         batch?: number;
                         /** @enum {string} */
                         provider?: "google";
+                        /** @enum {string} */
+                        level?: "N5" | "N4" | "N3";
                         force_regenerate?: boolean;
                     };
                 };

@@ -12,7 +12,8 @@
   "scripts": {
     "typecheck": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api --filter @nihongo-n3/db --filter @nihongo-n3/shared --filter @nihongo-n3/content -r typecheck",
     "build": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r build",
-    "test": "pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
+    "test": "pnpm test:ops && pnpm -F @nihongo-n3/db test && pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
+    "test:ops": "node --test scripts/__tests__/*.test.mjs",
     "test:e2e": "pnpm -F @nihongo-n3/e2e test",
     "lint": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r lint",
     "verify": "pnpm typecheck && pnpm test && pnpm build",
@@ -23,6 +24,10 @@
     "dev:web": "pnpm -F @nihongo-n3/web dev",
     "db:seed": "pnpm -F @nihongo-n3/db seed:local",
     "db:verify": "pnpm -F @nihongo-n3/db verify",
+    "r1:preview-smoke": "node scripts/r1-preview-smoke.mjs",
+    "ops:logpush": "node scripts/setup-logpush.mjs",
+    "ops:alerts": "node scripts/setup-alerts.mjs",
+    "ops:observe": "node scripts/post-deploy-observe.mjs",
     "audio:kana": "node scripts/generate-kana-audio.mjs",
     "audio:kana:upload": "node scripts/generate-kana-audio.mjs --upload"
   },

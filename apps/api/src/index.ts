@@ -57,7 +57,10 @@ import { securityMiddleware } from './middleware/security.js';
 import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
 import { sendPushToMany } from './lib/push.js';
 import { maintenanceMiddleware, isReadOnlyMaintenance } from './middleware/maintenance.js';
-import { observabilityMiddleware } from './middleware/observability.js';
+import { isD1Error, observabilityMiddleware, routeTemplate } from './middleware/observability.js';
+import { safeErrorName } from './lib/safe-log.js';
+import { runObservabilityAlerts } from './jobs/observability-alerts.js';
+import { equalSecret } from './lib/secret.js';
 
 // ─────────────────────────────────────────────
 // 앱 인스턴스 (OpenAPIHono — Hono 완전 호환 + OpenAPI 스펙 자동 생성)
@@ -125,6 +128,23 @@ app.get('/health', (c) =>
     timestamp: new Date().toISOString(),
   }),
 );
+
+app.get('/__ops/canary/5xx', async (c) => {
+  const configuredToken = c.env.OBSERVABILITY_CANARY_TOKEN?.trim();
+  const suppliedToken = c.req.header('x-observability-canary')?.trim();
+  if (
+    c.env.ENVIRONMENT !== 'preview'
+    || !configuredToken
+    || !suppliedToken
+    || !(await equalSecret(configuredToken, suppliedToken))
+  ) {
+    return c.notFound();
+  }
+
+  const error = new Error('Preview observability canary');
+  error.name = 'ObservabilityCanaryError';
+  throw error;
+});
 
 // ─────────────────────────────────────────────
 // API v1 라우터
@@ -283,6 +303,7 @@ app.route('/admin', adminOA);
 export const INTERNAL_ROUTE_EXCEPTIONS = new Set([
   'GET /',
   'GET /health',
+  'GET /__ops/canary/5xx',
   'GET /api/v1/ping',
   'GET /openapi.json',
   'GET /api/docs',
@@ -309,7 +330,16 @@ app.notFound((c) => {
 });
 
 app.onError((err, c) => {
-  console.error('[Error]', err.message, err.stack);
+  console.error({
+    event: isD1Error(err) ? 'd1_error' : 'application_error',
+    request_id: c.get('requestId') ?? null,
+    release: c.env.RELEASE_SHA?.trim() || 'development',
+    environment: c.env.ENVIRONMENT,
+    auth_mode: c.env.AUTH_MODE,
+    method: c.req.method,
+    route: routeTemplate(c),
+    error_name: safeErrorName(err),
+  });
   c.header('Content-Type', 'application/problem+json');
   return c.json(
     {
@@ -334,17 +364,28 @@ export default {
     env:        Env,
     ctx:        ExecutionContext,
   ): Promise<void> {
-    if (isReadOnlyMaintenance(env)) {
-      console.log(JSON.stringify({ event: 'cron_skipped', reason: 'maintenance_read_only', cron: controller.cron }));
+    const cron = controller.cron;
+    const isObservabilityCheck = cron === '*/5 * * * *';
+    if (isReadOnlyMaintenance(env) && !isObservabilityCheck) {
+      console.log({ event: 'cron_skipped', reason: 'maintenance_read_only', cron: controller.cron });
       return;
     }
-    const cron = controller.cron;
     ctx.waitUntil(
       (async () => {
+        if (isObservabilityCheck) {
+          try {
+            await runObservabilityAlerts(env);
+          } catch (err) {
+            console.error({ event: 'observability_alert_check_error', error_name: safeErrorName(err) });
+            throw err;
+          }
+          return;
+        }
+
         // 주간 리포트: 일요일 14:00 UTC
         if (cron === '0 14 * * 0') {
           try {
-            console.log('[Cron] 주간 리포트 생성 시작');
+            console.log({ event: 'weekly_report_started' });
             const { markdown, weekLabel } = await buildWeeklyReport(env.DB);
             const key = `reports/weekly/${weekLabel}.md`;
             await env.REPORTS.put(key, markdown, {
@@ -352,20 +393,20 @@ export default {
               customMetadata: { generatedAt: new Date().toISOString() },
             });
             await sendReportEmail(env.NOTIFY_EMAIL, weekLabel, markdown);
-            console.log(`[Cron] 주간 리포트 완료: ${key}`);
+            console.log({ event: 'weekly_report_completed', report_key: key });
           } catch (err) {
-            console.error('[Cron] 주간 리포트 오류', err);
+            console.error({ event: 'weekly_report_error', error_name: safeErrorName(err) });
           }
         }
 
         // FSRS W 옵티마이저: 일요일 15:00 UTC
         if (cron === '0 15 * * 0') {
           try {
-            console.log('[Cron] FSRS 옵티마이저 시작');
+            console.log({ event: 'fsrs_optimizer_started' });
             await runFsrsOptimizer(env);
-            console.log('[Cron] FSRS 옵티마이저 완료');
+            console.log({ event: 'fsrs_optimizer_completed' });
           } catch (err) {
-            console.error('[Cron] FSRS 옵티마이저 오류', err);
+            console.error({ event: 'fsrs_optimizer_cron_error', error_name: safeErrorName(err) });
           }
         }
 
@@ -373,7 +414,7 @@ export default {
         if (cron === '0 22 * * *' || cron === '0 13 * * *') {
           try {
             if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-              console.log('[Cron] VAPID 키 미설정 → Push 알림 스킵');
+              console.log({ event: 'push_notification_skipped', reason: 'vapid_not_configured' });
             } else {
               const isMorning = cron === '0 22 * * *';
               const col       = isMorning ? 'morning_on' : 'evening_on';
@@ -398,10 +439,16 @@ export default {
                 await env.DB.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?`).bind(ep).run();
               }
 
-              console.log(`[Cron] Push ${isMorning ? '아침' : '저녁'} 완료: sent=${sent}, failed=${failed}, expired=${expired.length}`);
+              console.log({
+                event: 'push_notification_completed',
+                schedule: isMorning ? 'morning' : 'evening',
+                sent,
+                failed,
+                expired: expired.length,
+              });
             }
           } catch (err) {
-            console.error('[Cron] Push 알림 오류', err);
+            console.error({ event: 'push_notification_error', error_name: safeErrorName(err) });
           }
         }
       })(),

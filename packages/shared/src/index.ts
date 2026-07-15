@@ -12,6 +12,7 @@ export * from './types';
 export * from './api-schemas';
 export * from './content-dto';
 export * from './audio-policy';
+export * from './audio-qa';
 export * from './study-plan-policy';
 export type { QuizMode, QuizGenerateBody, QuizSubmitBody } from './api-schemas';
 export * from './fsrs';

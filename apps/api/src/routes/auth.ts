@@ -16,6 +16,7 @@ import {
   sha256Hex,
   verifyPassword,
 } from '../lib/auth-session.js';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const auth = new Hono<AppEnv>();
 
@@ -362,7 +363,7 @@ auth.get('/auth/google/callback', async (c) => {
     await createSession(c, user.id);
     return c.redirect(origin, 302);
   } catch (err) {
-    console.error('[auth/google]', err);
+    console.error({ event: 'google_oauth_callback_error', error_name: safeErrorName(err) });
     return c.redirect(`${origin}/login?error=google_callback`, 302);
   }
 });

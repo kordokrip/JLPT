@@ -107,7 +107,15 @@ TOPIK 문제은행·채점·추천은 구현하지 않았다.
 
 production 배포를 수행하지 않았다. 로컬 Chromium/WebKit matrix는 통과했지만 GitHub billing lock, 원격 required Actions, prod-v2, R2 audio gate가 충족되지 않았기 때문이다. 다음 세션은 [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)의 승인 조건에서 재개한다.
 
-## 9. GitHub 필수 workflow 재검증 (2026-07-15 KST)
+## 9. 후속 계획 문서 갱신 (2026-07-15, R1 분석 후속)
+
+R1 구현 내역을 runbook·ROADMAP·ops guide·코드(ops 스크립트, content-manifest, tracks API)와 교차검증한 뒤 계획 문서를 재작성했다.
+
+- [CODEX_NEXT_PROMPTS_2026-07-15.md](./CODEX_NEXT_PROMPTS_2026-07-15.md) 신규 — 구 W1~W6 완료 판정 표와 N0~N9 시계열 프롬프트. 상환 우선순위(TD-10→01→14→13→08→07→12)와 릴리스 순서(R1→R2→R3)에 정렬. `--execute`·Environment 승인은 사람 게이트로 명시.
+- [N2_N1_REINTEGRATION_PLAN_2026-07-15.md](./N2_N1_REINTEGRATION_PLAN_2026-07-15.md) 신규 — wip 브랜치 격리 콘텐츠의 재통합 전제 조건(rebase·provenance·검수 태그 0)과 R1 이후 무효가 된 구 가이드 커맨드 대비표.
+- 구 `CODEX_REFACTORING_PROMPTS_2026-07-14.md`, `N2_N1_CONTENT_UPDATE_GUIDE.md`는 wip 브랜치 보존본을 역사 문서로 취급하고 현행 브랜치에 복원하지 않는다.
+
+## 10. GitHub 필수 workflow 재검증 (2026-07-15 KST)
 
 `refactor/tech-debt-r1`의 HEAD와 원격 branch가 모두 `5c25e9f959228b48e007a2a4d8c24d809bbf661c`임을 확인했다. `Dependency Audit`은 실행 전에 `disabled_manually`였으며 `gh workflow enable` 후 `active`로 전환했다.
 
@@ -122,3 +130,87 @@ production 배포를 수행하지 않았다. 로컬 Chromium/WebKit matrix는 �
 네 개의 생성된 run은 모두 `The job was not started because your account is locked due to a billing issue.` annotation으로 종료됐다. 이는 기존 run `29348512843`, `29226573527`과 같은 외부 계정 차단 유형이며 checkout이나 프로젝트 명령이 실행되지 않았으므로 코드 실패로 분류할 수 없다. 잠금 해제 전파 가능성을 확인하려고 60초 후 Audit run을 한 번 재실행했으나 같은 annotation이 재현됐다.
 
 Required Verification은 workflow를 수정해서 우회하지 않았다. GitHub의 수동 dispatch는 workflow가 기본 branch에 등록돼 있어야 하므로, 현재 branch에만 존재하는 `verify.yml`은 `gh workflow run verify.yml --ref refactor/tech-debt-r1`로 실행할 수 없었다. TD-10은 `외부 차단`, TD-14는 `구현 완료`를 유지하며 production 배포와 D1/R2 변경은 수행하지 않았다.
+
+## 11. prod-v2 Blue/Green 사전 점검과 자동화 보강 (2026-07-15 KST)
+
+`R1_BLUE_GREEN_RUNBOOK_2026-07-15.md`만을 절차 기준으로 원격 상태를 읽기 전용 확인했다.
+
+| 점검 | 결과 |
+| --- | --- |
+| `nihongo-n3-prod-v2` | BLOCKED, D1 목록에 없음 |
+| migration workflow | BLOCKED, default branch는 구 자동 변경 workflow이며 승인형 workflow는 R1 branch에만 존재 |
+| GitHub `production` Environment | BLOCKED, Environment와 Cloudflare Environment secret 이름 없음 |
+| 같은 SHA required Actions | BLOCKED, current-SHA Audit `29383879798`도 runner 시작 전 billing annotation |
+| Worker Google secret 이름 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 확인, 값 미출력 |
+| report 보존 | `.artifacts/r1-blue-green`, `.artifacts/r1-preview-smoke` 준비 |
+
+기존 production을 변경 없이 조회한 content/FTS 수량은 다음과 같다.
+
+| 항목 | production | fresh 기준 | 판정 |
+| --- | ---: | ---: | --- |
+| vocab / vocab_fts | 3,427 / 3,427 | 3,300 / 3,300 | 127건 drift, 이전 승인 전 조사 필요 |
+| sentences / sentences_fts | 1,112 / 1,112 | 1,112 / 1,112 | 일치 |
+| categories | 0 | seed category 생성 | drift |
+| curriculum_weeks | 16 | 52 | drift |
+
+구현·검증 변경:
+
+- D1 transfer dry-run도 table별 count/checksum을 계산하고 `verification-before.json`을 남긴다.
+- 사람 승인 실행 후 `verification-after.json`, FTS 원본 parity와 3,300/1,112 기준을 함께 판정한다.
+- `migrate:verify`가 remote `d1_migrations`를 7개 migration 파일과 순서까지 읽기 전용 비교한다.
+- preview smoke가 공개 조회, password session, admin 보호, SRS, sync, OAuth 오류 경로, read-only 503/`Retry-After: 900`을 JSON으로 보존한다.
+- smoke 중 FTS `MATCH`에 문장 부호가 들어오면 500이 발생하는 결함을 발견해 literal query helper와 회귀 테스트를 추가했다.
+
+검증 결과는 API 80 tests, `pnpm verify:ci`, 로컬 preview off 21/21, read-only 17/17 PASS다. 실제 Google consent callback/complete, 인증된 admin 성공, prod-v2 migration/transfer, binding 전환, 30분 관측은 사람 실행과 원격 인프라가 없어 미수행이다. `--execute`, Environment 승인, production 배포·D1/R2 변경은 수행하지 않았다.
+
+## 12. TD-13 관측성 preview 운영 연결 검증 (2026-07-15 KST)
+
+PII 없는 Workers JSON log를 Logpush/R2와 운영 알림에 연결하기 위한 코드·문서·로컬 검증을 완료하고 Cloudflare 원격 상태를 교차 확인했다.
+
+| 점검 | 결과 | 증거/판정 |
+| --- | --- | --- |
+| R2 보존 정책 | PASS | `nihongo-n3-worker-logs-30d`, `logs/workers/`, 30일 원격 재조회 |
+| route template·canary secret 비노출 | PASS | API 90 tests, PII/path parameter 회귀와 receiver payload 거부 테스트 |
+| 3종 threshold 판정 | PASS | ops 8 tests, saved query 3개와 공통 판정 코어 |
+| 5분 alert runner | **preview 원격 PASS** | `*/5 * * * *`, 08:00 UTC 자동 Cron delivery |
+| 전체 로컬 verify | PASS | OpenAPI 52/7, package typecheck, ops 8/Web 33/API 90 tests, Worker/PWA build |
+| OpenAPI drift | PASS | public 52 paths, admin 7 paths |
+| production 공개 smoke | PASS | `/health` 등 7/7; 현재 배포본은 `X-Release` 미설정 |
+| dependency audit high | BLOCKED | npm legacy audit endpoint HTTP 410; 취약점 판정이 아니며 ignore하지 않음 |
+| account-level Logpush job | PASS | 새 job 생성, enabled, `error_message=null`, R2 destination 비밀값 redacted 검증 |
+| Observability saved query | PASS | 5xx/auth failure/D1 error 3개 원격 생성 |
+| preview Worker Logpush | PASS | `nihongo-n3-api-observability-preview`, job `1790981`, `error_message=null` |
+| preview alert Cron/secrets | PASS | runtime secret 이름, `*/5` Cron, receiver service binding 원격 확인 |
+| production 연결 | GATED | 기존 Worker 미변경; required checks와 Environment 승인 후 별도 적용 |
+| Logpush/Observability/Notifications API | PASS | account-owned token active, 관련 4개 API HTTP 200 |
+| R2 Logpush object | PASS | `logs/workers/observability-preview/` `.log.gz` 20개 metadata 확인 |
+| preview 5xx alert canary | PASS | 25/25 HTTP 500, detector fired, direct delivery 202 |
+| Cron webhook/R2 evidence | PASS | generated `08:00:33.615Z`, received `08:00:34.272Z`, alert object 4개 확인 |
+
+직접 운영 HTTPS 수신 endpoint는 별도 receiver Worker로 분리했다. 외부 호출은 bearer 인증을 사용하고 sender Worker는 내부 service binding을 우선한다. 수신 데이터는 PII가 없는 집계로 제한하고 R2에는 content hash 기반 불변 object로 남긴다. 초기 same-Worker public fetch 실패와 Observability API envelope 오판을 발견했으며 각각 receiver/service binding 분리, top-level `view`와 `result.events.events` 정규화로 수정했다.
+
+preview end-to-end 증거가 확보되어 TD-13을 `검증 완료 (preview E2E)`로 변경했다. production release gate와 Environment 승인을 건너뛰지 않았고 production Worker와 D1은 변경하지 않았다. preview에는 전용 token 자동 발급 권한 부족으로 기존 account control token을 임시 사용했으며 production 전 최소권한 토큰 교체가 필수다.
+
+## 13. TD-08 오디오 상환 사전 구현과 원격 차단 확인 (2026-07-15 KST)
+
+R2 read-only 원칙을 유지하면서 QA·batch·검증 경로를 교차검증했다.
+
+| 점검 | 결과 |
+| --- | --- |
+| production batch secret 이름 | `GOOGLE_TTS_API_KEY`, `AUDIO_BATCH_APPROVAL_TOKEN` 모두 없음, 값 미출력 |
+| preview batch secret 이름 | 두 preview Worker 모두 없음 |
+| QA 후보 | Cloudflare 30/30, Google 0/30(400), VOICEVOX 0/30(404), browser는 평가 device 의존 |
+| production D1 batch schema | `audio_generation_log.provider`, `content_hash` 없음 |
+| production 오디오 대상 | N5~N3 vocab 3,427 + kanji 546 + sentences 1,112 = 5,085 |
+| 새 불변 key 일치 | 0/5,085 |
+| strict remote gate | EXPECTED FAIL, 오디오 5,085건과 기존 production content drift 14개 blocking |
+| API tests | 91 PASS |
+| DB verifier tests | 3 PASS |
+| fresh D1 gate | PASS, migrations 7/7·manifest/FTS/FK/필수 필드 정상; audio 4,954 WARN |
+| fresh D1 strict audio gate | EXPECTED FAIL, audio 4,954건만 blocking |
+| Chromium quiz/fallback E2E | 7/7 PASS, `ja-JP` 1회·서버 audio 요청 0 |
+| WebKit quiz/fallback E2E | 7/7 PASS, `ja-JP` 1회·서버 audio 요청 0 |
+
+API와 웹 QA 표본을 `audio-qa-30-v1`로 통합하고, 네 provider 120개 평가와 평가자/device/browser/날짜/candidate metadata가 모두 있어야 승인되는 scorecard를 추가했다. admin queue는 N5→N4→N3 level을 강제하고, Google batch secret과 timing-safe approval token 없이 실행되지 않는다. 기존 immutable object 덮어쓰기를 금지하고 provider별 성공 이력과 R2 metadata가 완전히 일치할 때만 D1 key를 채택한다.
+
+`verify:remote:audio`는 NULL만 세던 방식에서 D1 불변 key와 R2 S3 HEAD metadata를 함께 대조하는 방식으로 강화했다. verifier 최소값은 낮추지 않았다. 사람 QA, `--execute`, production secret 설정, D1/R2 쓰기, 배포는 수행하지 않았다. R1 prod-v2 migration 7/7과 네 후보 준비가 선행되지 않아 TD-08은 `진행 중`을 유지한다.

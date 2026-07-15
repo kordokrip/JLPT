@@ -7,6 +7,7 @@
     "dev": "wrangler dev",
     "build": "wrangler deploy --dry-run --env=\"\"",
     "deploy": "wrangler deploy --env=\"\"",
+    "deploy:observability-receiver": "wrangler deploy --config wrangler.observability-receiver.toml",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",

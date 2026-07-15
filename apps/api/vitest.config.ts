@@ -17,7 +17,7 @@ export default defineConfig({
       wrangler: { configPath: './wrangler.test.toml' },
       miniflare: {
         d1Databases: ['DB'],
-        r2Buckets: ['ASSETS'],
+        r2Buckets: ['ASSETS', 'REPORTS'],
       },
     }),
   ],

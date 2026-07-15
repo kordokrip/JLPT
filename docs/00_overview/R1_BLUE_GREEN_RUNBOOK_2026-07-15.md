@@ -45,6 +45,16 @@ pnpm -F @nihongo-n3/db exec tsx src/ops/apply-migrations.ts \
 
 `d1_migrations`에 7개가 순서대로 기록됐는지 확인한다.
 
+승인 실행이 끝난 뒤 CODEX는 다음 읽기 전용 명령으로 ledger를 검증하고 JSON을 보존한다.
+
+```bash
+pnpm -F @nihongo-n3/db migrate:verify -- \
+  --database=nihongo-n3-prod-v2 \
+  --out=.artifacts/r1-blue-green/migration-ledger.json
+```
+
+`0000_schema_convergence.sql`부터 `0006_oauth_learning_track.sql`까지 7개가 누락·추가·순서 차이 없이 일치해야 한다.
+
 ## 3. 변경되지 않는 콘텐츠 이전
 
 먼저 dry-run report를 확인한다.
@@ -53,8 +63,11 @@ pnpm -F @nihongo-n3/db exec tsx src/ops/apply-migrations.ts \
 pnpm -F @nihongo-n3/db d1:transfer -- \
   --source=nihongo-n3-prod \
   --target=nihongo-n3-prod-v2 \
-  --phase=content
+  --phase=content \
+  --out=.artifacts/r1-blue-green/content
 ```
+
+dry-run은 양쪽 DB를 읽기만 하고 `verification-before.json`과 table별 export를 남긴다. count/checksum 차이는 실패 우회 대상이 아니라 승인 전 검토 항목이다.
 
 승인 뒤 실행한다.
 
@@ -65,10 +78,11 @@ pnpm -F @nihongo-n3/db d1:transfer -- \
   --target=nihongo-n3-prod-v2 \
   --phase=content \
   --replace-target \
+  --out=.artifacts/r1-blue-green/content \
   --execute
 ```
 
-각 일반 table의 source/target row count와 normalized checksum이 일치해야 한다. FTS row는 복사하지 않고 target에서 rebuild한다.
+각 일반 table의 source/target row count와 normalized checksum이 일치해야 한다. 실행 전후는 각각 `verification-before.json`, `verification-after.json`에 보존한다. FTS row는 복사하지 않고 target에서 rebuild하며 vocab 3,300, sentences 1,112 기준 수량과 원본 table parity가 모두 일치해야 한다.
 
 ## 4. Preview 검증
 
@@ -81,6 +95,22 @@ prod-v2 binding을 사용하는 preview Worker를 배포하고 다음을 확인�
 - admin spec/users 보호
 - SRS init/review/sync queue
 - read-only 503와 `Retry-After`
+
+자동화 가능한 항목은 prod-v2 preview URL에서 두 모드로 실행한다.
+
+```bash
+pnpm r1:preview-smoke -- \
+  --base-url=https://<prod-v2-preview-worker> \
+  --mode=off \
+  --report=.artifacts/r1-preview-smoke/prod-v2-off.json
+
+pnpm r1:preview-smoke -- \
+  --base-url=https://<prod-v2-preview-worker> \
+  --mode=read-only \
+  --report=.artifacts/r1-preview-smoke/prod-v2-read-only.json
+```
+
+실제 Google 계정 동의 후 callback/complete와 인증된 admin 성공은 사람이 수행하고 증거 URL·시각을 별도 기록한다. cookie와 secret 값은 report에 넣지 않는다.
 
 ## 5. Read-only와 최종 mutable sync
 
@@ -95,6 +125,7 @@ pnpm -F @nihongo-n3/db d1:transfer -- \
   --target=nihongo-n3-prod-v2 \
   --phase=mutable \
   --replace-target \
+  --out=.artifacts/r1-blue-green/mutable \
   --execute
 ```
 

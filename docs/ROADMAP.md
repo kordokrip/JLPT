@@ -68,15 +68,15 @@ R1 기반 정상화
 
 ### 남은 일
 
-1. Google TTS secret과 batch approval token을 승인된 환경에만 설정한다.
-2. Cloudflare/browser/Google/VOICEVOX 30표본을 동일 문장으로 평가한다.
-3. 청감표에 평가자, device, voice/model, 날짜를 기록한다.
-4. 승인된 provider로 N5~N3 vocab/kanji/sentences를 배치 생성한다.
-5. R2 object metadata와 D1 key를 검증한다.
-6. `verify:remote:audio`에서 누락 0을 확인한다.
-7. 승인 키가 없을 때 fabricated R2 경로를 만들지 않고 browser Japanese fallback을 사용하는지 Chromium/WebKit에서 확인한다.
+1. Google TTS secret과 batch approval token을 승인된 production Worker version에만 설정한다. 현재 두 이름은 production·preview 모두 미설정이다.
+2. Cloudflare/browser/Google/VOICEVOX 30표본을 동일한 `audio-qa-30-v1` 문장으로 평가한다. 현재 원격 후보는 Cloudflare 30/30, Google 0/30, VOICEVOX 0/30이다.
+3. 청감표에 평가자, device, browser/OS, voice/model/version, 날짜와 120개 평가를 기록한다. 현재 사람 평가는 미수행이다.
+4. R1 prod-v2 전환 후 승인된 Google provider로 N5→N4→N3 vocab/kanji/sentences를 level별 배치 생성한다. 구 production log table에는 필수 컬럼이 없어 실행 차단 상태다.
+5. R2 object metadata와 D1 key를 검증한다. strict HEAD verifier 구현은 완료했고 실제 object 정합은 배치 후 확인한다.
+6. `verify:remote:audio`에서 누락/비불변 key 0을 확인한다. 현재 production 결과는 5,085건으로 EXPECTED FAIL이다.
+7. 승인 키가 없을 때 fabricated R2 경로를 만들지 않고 browser Japanese fallback을 사용하는지 Chromium/WebKit에서 확인한다. **완료**: 두 엔진 모두 quiz smoke 7/7, `ja-JP` utterance 1회, 서버 audio 요청 0회.
 
-현재 fresh DB의 누락은 4,954건이므로 R2 완료를 선언할 수 없다.
+현재 fresh DB 공백은 4,954건이고 기존 production의 새 불변 규칙 불일치는 5,085건이다. 네 후보 청감 승인, prod-v2, level별 batch, strict 원격 게이트가 모두 끝나기 전에는 R2 완료를 선언할 수 없다.
 
 ### 동음이의어 출시 조건
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isGoogleJapaneseVoice, voiceSortScore, type JapaneseVoiceOption } from '../audio';
+import { isGoogleJapaneseVoice, selectJapaneseVoice, voiceSortScore, type JapaneseVoiceOption } from '../audio';
 
 describe('audio voice selection', () => {
   it('prioritizes Google Japanese voices over other Japanese voices', () => {
@@ -28,5 +28,30 @@ describe('audio voice selection', () => {
       name: 'Google US English',
       lang: 'en-US',
     })).toBe(false);
+  });
+
+  it('honors an explicitly selected Japanese voice before the Google preference', () => {
+    const voices: JapaneseVoiceOption[] = [
+      {
+        voiceURI: 'Google 日本語',
+        name: 'Google 日本語',
+        lang: 'ja-JP',
+        localService: false,
+        default: false,
+      },
+      {
+        voiceURI: 'com.apple.voice.premium.ja-JP.Kyoko',
+        name: 'Kyoko Premium',
+        lang: 'ja-JP',
+        localService: true,
+        default: false,
+      },
+    ];
+
+    expect(selectJapaneseVoice(voices, {
+      gender: 'female',
+      voiceURI: 'com.apple.voice.premium.ja-JP.Kyoko',
+      preferGoogleVoice: true,
+    })?.name).toBe('Kyoko Premium');
   });
 });

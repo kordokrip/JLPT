@@ -15,6 +15,7 @@ import app, {
   INTERNAL_ROUTE_EXCEPTIONS,
 } from '../index.js';
 import { audioContentHash, buildImmutableAudioKey } from '../jobs/generate-audio.js';
+import { receiver as observabilityReceiver } from '../observability-receiver.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -107,6 +108,14 @@ async function fetchWithEnv(path: string, testEnv: typeof env, init?: RequestIni
   return res;
 }
 
+async function fetchReceiver(path: string, testEnv: typeof env, init?: RequestInit) {
+  const request = new Request(`https://alerts.example.test${path}`, init);
+  const ctx = createExecutionContext();
+  const res = await observabilityReceiver.fetch(request, testEnv, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
+}
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   return res.json<T>();
@@ -179,31 +188,161 @@ describe('GET /', () => {
 });
 
 describe('request observability', () => {
-  it('logs the route template without a path parameter value', async () => {
-    const messages: string[] = [];
+  it.each([
+    ['/api/v1/vocab/987654321?token=private-query-value', '/api/v1/vocab/:id', ['987654321', 'private-query-value']],
+    ['/api/v1/reading/444444', '/api/v1/reading/:id', ['444444']],
+    ['/not-a-real-route/private-segment?email=private@example.com', '/*', ['private-segment', 'private@example.com']],
+  ])('logs a route template without request path values: %s', async (path, expectedRoute, forbiddenValues) => {
+    const messages: Record<string, unknown>[] = [];
     const log = vi.spyOn(console, 'log').mockImplementation((message) => {
-      if (typeof message === 'string') messages.push(message);
+      if (message && typeof message === 'object') {
+        messages.push(message as Record<string, unknown>);
+      }
     });
 
     try {
-      await fetch('/api/v1/vocab/987654321');
+      await fetch(path);
     } finally {
       log.mockRestore();
     }
 
-    const requestLog = messages
-      .map((message) => {
-        try {
-          return JSON.parse(message) as Record<string, unknown>;
-        } catch {
-          return null;
-        }
-      })
-      .find((message) => message?.['event'] === 'http_request');
+    const requestLog = messages.find((message) => message['event'] === 'http_request');
 
-    expect(requestLog?.['route']).toBe('/api/v1/vocab/:id');
-    expect(JSON.stringify(requestLog)).not.toContain('987654321');
+    expect(requestLog?.['route']).toBe(expectedRoute);
+    for (const forbidden of forbiddenValues) {
+      expect(JSON.stringify(requestLog)).not.toContain(forbidden);
+    }
     expect(requestLog).not.toHaveProperty('path');
+    expect(requestLog).not.toHaveProperty('url');
+    expect(requestLog).not.toHaveProperty('query');
+  });
+
+  it('keeps the 5xx canary unavailable outside an authenticated preview', async () => {
+    const productionEnv = {
+      ...env,
+      ENVIRONMENT: 'production',
+      OBSERVABILITY_CANARY_TOKEN: 'preview-secret-value',
+    };
+    const previewEnv = {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_CANARY_TOKEN: 'preview-secret-value',
+    };
+
+    expect((await fetchWithEnv('/__ops/canary/5xx', productionEnv, {
+      headers: { 'X-Observability-Canary': 'preview-secret-value' },
+    })).status).toBe(404);
+    expect((await fetchWithEnv('/__ops/canary/5xx', previewEnv, {
+      headers: { 'X-Observability-Canary': 'wrong-secret-value' },
+    })).status).toBe(404);
+  });
+
+  it('fires a PII-free 5xx event for an authenticated preview canary', async () => {
+    const secret = 'preview-secret-value';
+    const messages: Record<string, unknown>[] = [];
+    const log = vi.spyOn(console, 'log').mockImplementation((message) => {
+      if (message && typeof message === 'object') messages.push(message as Record<string, unknown>);
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation((message) => {
+      if (message && typeof message === 'object') messages.push(message as Record<string, unknown>);
+    });
+
+    try {
+      const response = await fetchWithEnv(
+        '/__ops/canary/5xx',
+        { ...env, ENVIRONMENT: 'preview', OBSERVABILITY_CANARY_TOKEN: secret },
+        { headers: { 'X-Observability-Canary': secret } },
+      );
+      expect(response.status).toBe(500);
+    } finally {
+      log.mockRestore();
+      error.mockRestore();
+    }
+
+    const requestLog = messages.find((message) => message['event'] === 'http_request');
+    const errorLog = messages.find((message) => message['event'] === 'application_error');
+    expect(requestLog).toMatchObject({ route: '/__ops/canary/5xx', status: 500 });
+    expect(errorLog).toMatchObject({
+      route: '/__ops/canary/5xx',
+      error_name: 'ObservabilityCanaryError',
+    });
+    expect(JSON.stringify(messages)).not.toContain(secret);
+    expect(JSON.stringify(messages)).not.toContain('x-observability-canary');
+  });
+
+  it('authenticates the direct alert receiver and stores PII-free R2 evidence', async () => {
+    const webhookToken = 'preview-webhook-secret';
+    const canaryToken = 'preview-canary-secret';
+    const workerName = 'nihongo-n3-api-observability-preview';
+    const previewEnv = {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_ALERT_WEBHOOK_TOKEN: webhookToken,
+      OBSERVABILITY_CANARY_TOKEN: canaryToken,
+      OBSERVABILITY_WORKER_NAME: workerName,
+    };
+    const generatedAt = new Date().toISOString();
+    const payload = {
+      source: 'post-deploy-observe',
+      service: workerName,
+      generated_at: generatedAt,
+      release: 'test-release',
+      dedupe_key: `${workerName}:test:${generatedAt}`,
+      event_rows_received: 25,
+      telemetry_truncated: false,
+      alerts: { five_xx: { fired: true, requests: 25, errors: 25, rate: 1 } },
+      requests: { requests: 25, five_xx: 25, five_xx_rate: 1 },
+      releases: [{ release: 'test-release', requests: 25, five_xx: 25 }],
+      routes: [{ route: '/__ops/canary/5xx', requests: 25, five_xx: 25 }],
+    };
+
+    expect((await fetchReceiver('/__ops/alerts/cloudflare', previewEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer wrong-token' },
+      body: JSON.stringify(payload),
+    })).status).toBe(404);
+
+    const accepted = await fetchReceiver('/__ops/alerts/cloudflare', previewEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webhookToken}` },
+      body: JSON.stringify(payload),
+    });
+    expect(accepted.status).toBe(202);
+    const receipt = await accepted.json<{ received: boolean; object_key: string; sha256: string }>();
+    expect(receipt.received).toBe(true);
+    expect(receipt.object_key).toMatch(/^alerts\/observability\/\d{4}\/\d{2}\/\d{2}\/[a-f0-9]{64}\.json$/);
+    expect(receipt.sha256).toHaveLength(64);
+    const evidence = await fetchReceiver('/__ops/evidence/r2?kind=alerts', previewEnv, {
+      headers: { 'X-Observability-Canary': canaryToken },
+    });
+    expect(evidence.status).toBe(200);
+    const evidenceBody = await evidence.json<{ count: number; objects: Array<{ key: string }> }>();
+    expect(evidenceBody.count).toBeGreaterThan(0);
+    expect(evidenceBody.objects.some((object) => object.key === receipt.object_key)).toBe(true);
+  });
+
+  it('rejects alert evidence containing PII-shaped fields', async () => {
+    const token = 'preview-webhook-secret';
+    const workerName = 'nihongo-n3-api-observability-preview';
+    const response = await fetchReceiver('/__ops/alerts/cloudflare', {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_ALERT_WEBHOOK_TOKEN: token,
+      OBSERVABILITY_WORKER_NAME: workerName,
+    }, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        source: 'test',
+        service: workerName,
+        generated_at: new Date().toISOString(),
+        release: 'test',
+        dedupe_key: 'test',
+        event_rows_received: 1,
+        user_email: 'private@example.com',
+      }),
+    });
+    expect(response.status).toBe(400);
   });
 });
 
@@ -497,14 +636,48 @@ describe('R2 audio policy', () => {
       body: JSON.stringify({ provider: 'google' }),
     });
     expect(dryRun.status).toBe(200);
-    expect((await dryRun.json<{ data: { dry_run: boolean } }>()).data.dry_run).toBe(true);
+    const dryRunBody = await dryRun.json<{ data: {
+      dry_run: boolean;
+      execution_order: string[];
+      immutable_overwrite_allowed: boolean;
+      stats: { vocab: { pending: number } };
+    } }>();
+    expect(dryRunBody.data.dry_run).toBe(true);
+    expect(dryRunBody.data.execution_order).toEqual(['N5', 'N4', 'N3']);
+    expect(dryRunBody.data.immutable_overwrite_allowed).toBe(false);
+    expect(dryRunBody.data.stats.vocab.pending).toBeGreaterThanOrEqual(0);
 
     const execute = await fetch('/admin/audio/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ execute: true, provider: 'google' }),
+      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5' }),
     });
     expect(execute.status).toBe(400);
+
+    const force = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5', force_regenerate: true }),
+    });
+    expect(force.status).toBe(400);
+  });
+
+  it('exposes only safe provider metadata for fixed QA candidates', async () => {
+    const assets = (env as unknown as { ASSETS: R2Bucket }).ASSETS;
+    await assets.put('audio/qa/google/1.wav', new Uint8Array([82, 73, 70, 70]), {
+      httpMetadata: { contentType: 'audio/wav' },
+      customMetadata: {
+        provider: 'google',
+        model: 'ja-JP-Neural2-B',
+        audioVersion: 'google-neural2-v1',
+      },
+    });
+
+    const response = await fetch('/api/v1/audio/audio/qa/google/1.wav', { method: 'HEAD' });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-audio-provider')).toBe('google');
+    expect(response.headers.get('x-audio-model')).toBe('ja-JP-Neural2-B');
+    expect(response.headers.get('x-audio-version')).toBe('google-neural2-v1');
   });
 });
 
@@ -565,6 +738,18 @@ describe('GET /api/v1/vocab/search', () => {
 
   it('정상 검색 → 200', async () => {
     const res = await fetch('/api/v1/vocab/search?q=test');
+    expect(res.status).toBe(200);
+  });
+
+  it('FTS 연산 문자가 포함된 입력을 literal로 처리한다', async () => {
+    const res = await fetch(`/api/v1/vocab/search?q=${encodeURIComponent('A: "test"')}`);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('GET /api/v1/sentences/search', () => {
+  it('문장 부호가 포함된 입력을 FTS literal로 처리한다', async () => {
+    const res = await fetch(`/api/v1/sentences/search?q=${encodeURIComponent('A: 予約した時間を変更したいんですが、今日の午後は空いていますか。')}`);
     expect(res.status).toBe(200);
   });
 });

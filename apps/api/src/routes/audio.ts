@@ -23,6 +23,19 @@ const audio = new Hono<AppEnv>();
 
 const CACHE_CONTROL = 'public, max-age=2592000, immutable';
 
+function audioMetadataHeaders(object: Pick<R2Object, 'customMetadata'>): Record<string, string> {
+  const metadata = object.customMetadata ?? {};
+  const headers: Record<string, string> = {};
+  if (metadata.provider) headers['X-Audio-Provider'] = safeHeaderValue(metadata.provider);
+  if (metadata.model) headers['X-Audio-Model'] = safeHeaderValue(metadata.model);
+  if (metadata.audioVersion) headers['X-Audio-Version'] = safeHeaderValue(metadata.audioVersion);
+  return headers;
+}
+
+function safeHeaderValue(value: string): string {
+  return value.replace(/[\r\n]/g, ' ').slice(0, 256);
+}
+
 /** Range 헤더 파싱: "bytes=start-end?" → {start, end?} */
 function parseRange(header: string, totalSize: number): { start: number; end: number } | null {
   const m = header.match(/^bytes=(\d*)-(\d*)$/);
@@ -56,9 +69,42 @@ async function serveQaAudio(
       'Cache-Control': CACHE_CONTROL,
       'ETag': r2obj.httpEtag,
       'Last-Modified': r2obj.uploaded.toUTCString(),
+      ...audioMetadataHeaders(r2obj),
     },
   });
 }
+
+async function serveQaAudioHead(
+  c: Context<AppEnv>,
+  provider: AudioQaProvider,
+  index: number,
+): Promise<Response> {
+  const key = buildAudioQaKey(provider, index);
+  const object = await c.env.ASSETS.head(key);
+  if (!object) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
+
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Content-Type': object.httpMetadata?.contentType ?? 'audio/wav',
+      'Content-Length': String(object.size),
+      'Cache-Control': CACHE_CONTROL,
+      'ETag': object.httpEtag,
+      ...audioMetadataHeaders(object),
+    },
+  });
+}
+
+audio.on('HEAD', '/audio/qa/:provider/:file', async (c) => {
+  const provider = parseAudioQaProvider(c.req.param('provider'));
+  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
+  const index = fileMatch ? Number(fileMatch[1]) : NaN;
+  if (!provider || !isValidAudioQaIndex(index)) {
+    return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
+  }
+
+  return serveQaAudioHead(c, provider, index);
+});
 
 // ── GET /audio/qa/:provider/:file ───────
 audio.get('/audio/qa/:provider/:file', async (c) => {
@@ -168,6 +214,7 @@ audio.on('HEAD', '/audio/:key{.+}', async (c) => {
       'Cache-Control': CACHE_CONTROL,
       'ETag': head.httpEtag,
       'Last-Modified': head.uploaded.toUTCString(),
+      ...audioMetadataHeaders(head),
     },
   });
 });

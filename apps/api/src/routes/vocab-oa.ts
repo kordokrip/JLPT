@@ -9,6 +9,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { paginate, decodeCursor } from '../lib/cursor.js';
+import { ftsLiteralQuery } from '../lib/fts.js';
 import { vocabQuerySchema, vocabSearchQuerySchema } from '@nihongo-n3/shared';
 
 // ── 공통 응답 스키마 ──────────────────────────
@@ -118,7 +119,7 @@ vocabOA.openapi(searchRoute, async (c) => {
          WHERE vocab_fts MATCH ?
          ORDER BY rank
          LIMIT ?`,
-      ).bind(q, limit).all()
+      ).bind(ftsLiteralQuery(q), limit).all()
     : await c.env.DB.prepare(
         `SELECT *
          FROM vocab

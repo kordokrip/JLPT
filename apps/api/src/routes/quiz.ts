@@ -14,6 +14,7 @@ import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, notFound, badRequest, internalError } from '../lib/response.js';
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const quiz = new Hono<AppEnv>();
 quiz.use('*', cfAccessAuth);
@@ -252,7 +253,7 @@ quiz.post('/quiz/generate', async (c) => {
       }
     }
   } catch (err) {
-    console.error('[quiz/generate]', err);
+    console.error({ event: 'quiz_generation_error', error_name: safeErrorName(err) });
     return internalError(c, '문제 생성 중 오류가 발생했습니다');
   }
 

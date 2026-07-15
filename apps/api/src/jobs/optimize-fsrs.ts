@@ -23,6 +23,7 @@
 
 import type { AppEnv } from '../types.js';
 import { FSRS6_DEFAULT_W } from '@nihongo-n3/shared/fsrs';
+import { safeErrorName } from '../lib/safe-log.js';
 
 type Env = AppEnv['Bindings'];
 
@@ -68,7 +69,7 @@ async function computeOptimalWeights(
 ): Promise<number[] | null> {
   const endpoint = (env.FSRS_OPTIMIZER_URL ?? '').trim();
   if (!endpoint) {
-    console.log('[optimize-fsrs] FSRS_OPTIMIZER_URL 미설정 → 최적화 스킵');
+    console.log({ event: 'fsrs_optimizer_skipped', reason: 'url_not_configured' });
     return null;
   }
 
@@ -85,7 +86,7 @@ async function computeOptimalWeights(
     });
 
     if (!res.ok) {
-      console.error(`[optimize-fsrs] 외부 최적화 호출 실패 user=${userId} status=${res.status}`);
+      console.error({ event: 'fsrs_optimizer_http_error', status: res.status });
       return null;
     }
 
@@ -93,15 +94,16 @@ async function computeOptimalWeights(
     const rawWeights: unknown = json.weights;
     if (!isValidWeights(rawWeights)) {
       const length = Array.isArray(rawWeights) ? rawWeights.length : 'undefined';
-      console.error(
-        `[optimize-fsrs] 유효하지 않은 weights 응답 user=${userId} ` +
-        `length=${length}; expected 19(FSRS-5) or 21(FSRS-6)`,
-      );
+      console.error({
+        event: 'fsrs_optimizer_invalid_weights',
+        received_length: length,
+        accepted_lengths: [19, 21],
+      });
       return null;
     }
     return normalizeWeights(rawWeights);
   } catch (err) {
-    console.error(`[optimize-fsrs] 외부 최적화 호출 예외 user=${userId}`, err);
+    console.error({ event: 'fsrs_optimizer_request_error', error_name: safeErrorName(err) });
     return null;
   }
 }
@@ -120,9 +122,9 @@ export async function runFsrsOptimizer(env: Env): Promise<void> {
     )
     .all<UserRow>();
 
-  console.log(`[optimize-fsrs] ${candidates.results?.length ?? 0}명 최적화 대상`);
+  console.log({ event: 'fsrs_optimizer_candidates', count: candidates.results?.length ?? 0 });
   if (!(env.FSRS_OPTIMIZER_URL ?? '').trim()) {
-    console.warn('[optimize-fsrs] 외부 옵티마이저 URL이 없어 전체 스킵됩니다. (FSRS_OPTIMIZER_URL)');
+    console.warn({ event: 'fsrs_optimizer_skipped', reason: 'url_not_configured' });
     return;
   }
 
@@ -145,7 +147,7 @@ export async function runFsrsOptimizer(env: Env): Promise<void> {
 
       const weights = await computeOptimalWeights(env, user_id, rows);
       if (!weights) {
-        console.warn(`[optimize-fsrs] user=${user_id} 최적화 결과 없음 → 업데이트 스킵`);
+        console.warn({ event: 'fsrs_optimizer_user_skipped', reason: 'no_valid_result' });
         continue;
       }
 
@@ -154,9 +156,9 @@ export async function runFsrsOptimizer(env: Env): Promise<void> {
         .bind(JSON.stringify(weights), user_id)
         .run();
 
-      console.log(`[optimize-fsrs] ✓ user=${user_id} w=[${weights.slice(0, 3).join(',')}...]`);
+      console.log({ event: 'fsrs_optimizer_user_updated', weight_count: weights.length });
     } catch (err) {
-      console.error(`[optimize-fsrs] ✗ user=${user_id}`, err);
+      console.error({ event: 'fsrs_optimizer_user_error', error_name: safeErrorName(err) });
     }
   }
 }

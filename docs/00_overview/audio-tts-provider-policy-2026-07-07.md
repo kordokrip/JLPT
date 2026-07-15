@@ -48,6 +48,8 @@
 
 모든 후보 30개가 준비되지 않으면 우승 provider를 확정하지 않는다.
 
+청감 기록의 canonical 표본은 `packages/shared/src/audio-qa.ts`의 `audio-qa-30-v1`이다. API와 웹은 이 상수를 함께 사용한다. `/audio-qa`에서 각 후보를 실제 재생한 뒤에만 점수를 입력할 수 있으며 평가자, device, browser/OS, 평가일, provider/model/voice/version, 5개 항목 120개 평가가 모두 있어야 완료로 판정한다.
+
 ## Batch 승인
 
 Admin queue는 기본 dry-run이다. 실제 전체 생성은 다음을 모두 요구한다.
@@ -67,10 +69,14 @@ audio/vocab/n3/7-<content-provider-model-version-hash>.mp3
 
 콘텐츠 또는 provider version이 달라지면 새 key를 만들고 기존 object를 덮어쓰지 않는다.
 
+실제 batch는 level을 생략할 수 없으며 N5, N4, N3 순으로 별도 승인한다. dry-run은 승인 provider의 성공 로그와 현재 D1 key가 일치하는 항목만 완료로 센다. 과거 provider의 실패 횟수나 legacy key 때문에 새 승인 provider 작업을 건너뛰지 않는다.
+
 ## 릴리스 관문
 
 ```bash
 pnpm -F @nihongo-n3/db verify:remote:audio
 ```
 
-목표는 N5~N3 vocab, kanji, sentences의 `audio_r2_key` 누락 0이다. 2026-07-15 fresh DB 기준 누락은 4,954건이므로 R2 오디오 릴리스는 미완이다.
+목표는 N5~N3 vocab, kanji, sentences의 `audio_r2_key` 누락과 비불변 key가 모두 0이고, 같은 key의 R2 HEAD metadata가 100% 일치하는 것이다. 2026-07-15 fresh DB 기준 공백은 4,954건이다. 기존 production은 콘텐츠 drift를 포함해 대상 5,085건 모두 새 Google 불변 key 규칙과 불일치하므로 R2 오디오 릴리스는 미완이다.
+
+2026-07-15 원격 후보 점검은 Cloudflare 30/30, Google 0/30, VOICEVOX 0/30이었다. browser 후보는 평가 device에서만 확정할 수 있다. production의 두 batch secret도 미설정이고 구 D1에는 `audio_generation_log.provider`, `content_hash` 컬럼이 없으므로 prod-v2 전환과 네 후보 준비 전에는 청감 승인이나 전체 batch를 실행하지 않는다.

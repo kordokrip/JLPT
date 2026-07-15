@@ -1,0 +1,19 @@
+name = "nihongo-n3-observability-receiver-preview"
+main = "src/observability-receiver.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+logpush = true
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1.0
+
+[vars]
+ENVIRONMENT = "preview"
+RELEASE_SHA = "unversioned-preview"
+OBSERVABILITY_WORKER_NAME = "nihongo-n3-api-observability-preview"
+
+[[r2_buckets]]
+binding = "REPORTS"
+bucket_name = "nihongo-n3-reports"
