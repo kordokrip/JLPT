@@ -81,7 +81,7 @@ allowlist 파일은 `.artifacts/user-cleanup/`에 두며 commit하지 않는다.
 pnpm -F @nihongo-n3/db d1:users:cleanup -- \
   --database=nihongo-n3-prod \
   --keep-file=.artifacts/user-cleanup/keep-users.remote.json \
-  --env-file=.env.local \
+  --credentials-file=.env.local \
   --out=.artifacts/user-cleanup/remote-dry-run.json
 ```
 

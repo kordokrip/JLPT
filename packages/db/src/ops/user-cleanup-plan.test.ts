@@ -7,6 +7,11 @@ import {
   verifyUserCleanupPlanHash,
   type CleanupUserRow,
 } from "./user-cleanup-plan.js";
+import {
+  collectRelatedCounts,
+  safeWranglerFailure,
+  type QuerySource,
+} from "./d1-user-cleanup.js";
 
 function user(id: string, email: string): CleanupUserRow {
   return {
@@ -149,4 +154,40 @@ test("verifies the signed plan independently from operational evidence", () => {
 test("masks short and malformed email addresses", () => {
   assert.equal(maskEmail("a@example.com"), "a***@example.com");
   assert.equal(maskEmail("invalid"), "***");
+});
+
+test("queries related user data one table at a time for remote D1", () => {
+  const queries: string[] = [];
+  const source: QuerySource = {
+    query(sql) {
+      queries.push(sql);
+      const table = sql.match(/SELECT '([^']+)' AS table_name/)?.[1];
+      return [{ table_name: table, total: 0, keep_rows: 0, delete_rows: 0 }];
+    },
+    close() {},
+  };
+
+  const counts = collectRelatedCounts(source, ["real-1", "real-2"], ["test-1"]);
+
+  assert.equal(counts.length, 10);
+  assert.equal(queries.length, 10);
+  assert.equal(queries.every((query) => !query.includes("UNION ALL")), true);
+  assert.equal(queries.every((query) => query.includes("AS keep_rows")), true);
+  assert.equal(queries.every((query) => query.includes("AS delete_rows")), true);
+});
+
+test("redacts Wrangler command details from operational failures", () => {
+  const error = safeWranglerFailure({
+    stdout: JSON.stringify({
+      error: {
+        code: 7500,
+        text: "request includes account and SQL identifiers",
+      },
+    }),
+    message: "raw SQL and user IDs",
+  });
+
+  assert.equal(error.message, "Remote D1 operation failed (Cloudflare code 7500)");
+  assert.equal(error.message.includes("raw SQL"), false);
+  assert.equal(error.message.includes("user IDs"), false);
 });

@@ -1,6 +1,6 @@
 # 운영 가이드
 
-기준일: 2026-07-15 KST
+기준일: 2026-07-16 KST
 범위: 콘텐츠 검증, D1 변경, 테스트, 오디오, 배포
 
 ## 1. 운영 source of truth
@@ -141,6 +141,12 @@ pnpm -F @nihongo-n3/db verify:remote:audio
 
 ## 7. 배포 전 로컬 관문
 
+도구 기준은 `.node-version`과 루트 `packageManager`가 소유한다.
+
+- Node.js `22.17.0` 이상 (`engines` 최소 `22.13.0`)
+- pnpm `11.4.0` 이상
+- pnpm 11 build script allowlist는 `pnpm-workspace.yaml`의 `allowBuilds`만 사용한다.
+
 ```bash
 pnpm audit --audit-level high
 pnpm openapi:generate
@@ -154,7 +160,7 @@ pnpm -F @nihongo-n3/e2e test:webkit
 
 생성된 OpenAPI type을 commit한 뒤 `pnpm openapi:check`가 clean tree에서 통과해야 한다.
 
-2026-07-15 현재 npm registry가 pnpm이 사용하는 legacy audit endpoint에 HTTP 410을 반환할 수 있다. 이는 “취약점 없음”이 아니므로 `--ignore-registry-errors`로 녹색 처리하지 않는다. bulk advisory endpoint를 사용하는 검증 경로가 필수 CI에서 통과하기 전에는 Dependency Audit 실패로 취급하고 production 배포를 중단한다. 추적 근거는 [pnpm issue #11265](https://github.com/pnpm/pnpm/issues/11265)다.
+pnpm 9/10은 종료된 npm legacy audit endpoint 때문에 HTTP 410으로 실패한다. 이를 무시하지 않고 bulk advisory endpoint를 사용하는 pnpm 11.4.0으로 고정한다. `--ignore-registry-errors`나 audit 생략은 허용하지 않는다. 전환 근거는 [pnpm issue #11265](https://github.com/pnpm/pnpm/issues/11265)와 [pnpm 11 변경 사항](https://github.com/orgs/pnpm/discussions/11377)이다.
 
 ## 8. CI와 배포
 

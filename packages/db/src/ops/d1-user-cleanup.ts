@@ -41,7 +41,7 @@ type Options = {
   execute: boolean;
 };
 
-type QuerySource = {
+export type QuerySource = {
   query(sql: string): Record<string, unknown>[];
   close(): void;
 };
@@ -80,9 +80,12 @@ function parseOptions(): Options {
   if (!/^[a-z0-9][a-z0-9_-]{0,62}$/i.test(database))
     throw new Error("invalid D1 database name");
 
-  const envFile = argument("env-file");
-  if (envFile) {
-    const loaded = loadEnv({ path: resolveFromRoot(envFile), override: false });
+  const credentialsFile = argument("credentials-file");
+  if (credentialsFile) {
+    const loaded = loadEnv({
+      path: resolveFromRoot(credentialsFile),
+      override: false,
+    });
     if (loaded.error) throw loaded.error;
   }
 
@@ -125,6 +128,23 @@ function parseWranglerResults(raw: string): Record<string, unknown>[] {
   return parsed[0]?.results ?? [];
 }
 
+export function safeWranglerFailure(error: unknown): Error {
+  const stdout =
+    typeof error === "object" && error !== null && "stdout" in error
+      ? String(error.stdout ?? "")
+      : "";
+  let code = "unknown";
+  try {
+    const parsed = JSON.parse(stdout.trim()) as {
+      error?: { code?: string | number };
+    };
+    if (parsed.error?.code != null) code = String(parsed.error.code);
+  } catch {
+    // Wrangler may fail before Cloudflare returns a JSON response.
+  }
+  return new Error(`Remote D1 operation failed (Cloudflare code ${code})`);
+}
+
 function wranglerRaw(
   database: string,
   sql: string,
@@ -134,22 +154,26 @@ function wranglerRaw(
   if (!process.env["CLOUDFLARE_API_TOKEN"]) {
     throw new Error("CLOUDFLARE_API_TOKEN is required for remote D1 access");
   }
-  return execFileSync(
-    "pnpm",
-    [
-      "exec",
-      "wrangler",
-      "d1",
-      "execute",
-      database,
-      "--remote",
-      "--json",
-      `--command=${sql}`,
-      `--config=${config}`,
-      ...(yes ? ["--yes"] : []),
-    ],
-    { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-  );
+  try {
+    return execFileSync(
+      "pnpm",
+      [
+        "exec",
+        "wrangler",
+        "d1",
+        "execute",
+        database,
+        "--remote",
+        "--json",
+        `--command=${sql}`,
+        `--config=${config}`,
+        ...(yes ? ["--yes"] : []),
+      ],
+      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+  } catch (error) {
+    throw safeWranglerFailure(error);
+  }
 }
 
 function remoteSource(database: string, config: string): QuerySource {
@@ -286,64 +310,56 @@ function readUsers(source: QuerySource): CleanupUserRow[] {
     }));
 }
 
-function collectRelatedCounts(
+export function collectRelatedCounts(
   source: QuerySource,
   keepUserIds: string[],
   candidateUserIds: string[],
 ): UserCleanupCount[] {
   const keep = sqlList(keepUserIds);
   const remove = sqlList(candidateUserIds);
-  const rows = source.query(`
-    SELECT 'users' AS table_name, COUNT(*) AS total,
+  const queries = [
+    `SELECT 'users' AS table_name, COUNT(*) AS total,
            SUM(CASE WHEN id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
            SUM(CASE WHEN id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
-      FROM users
-    UNION ALL
-    SELECT 'auth_sessions', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM auth_sessions
-    UNION ALL
-    SELECT 'login_events', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) OR (user_id IS NULL AND ${testDomainPredicate("email")}) THEN 1 ELSE 0 END)
-      FROM login_events
-    UNION ALL
-    SELECT 'srs_cards', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM srs_cards
-    UNION ALL
-    SELECT 'review_logs', COUNT(*),
-           SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${keep})) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${remove})) THEN 1 ELSE 0 END)
-      FROM review_logs
-    UNION ALL
-    SELECT 'daily_logs', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM daily_logs
-    UNION ALL
-    SELECT 'quiz_attempts', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM quiz_attempts
-    UNION ALL
-    SELECT 'self_check', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM self_check
-    UNION ALL
-    SELECT 'push_subscriptions', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM push_subscriptions
-    UNION ALL
-    SELECT 'oauth_login_tokens', COUNT(*),
-           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END),
-           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END)
-      FROM oauth_login_tokens
-  `);
+      FROM users`,
+    `SELECT 'auth_sessions' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM auth_sessions`,
+    `SELECT 'login_events' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) OR (user_id IS NULL AND ${testDomainPredicate("email")}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM login_events`,
+    `SELECT 'srs_cards' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM srs_cards`,
+    `SELECT 'review_logs' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${keep})) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${remove})) THEN 1 ELSE 0 END) AS delete_rows
+      FROM review_logs`,
+    `SELECT 'daily_logs' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM daily_logs`,
+    `SELECT 'quiz_attempts' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM quiz_attempts`,
+    `SELECT 'self_check' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM self_check`,
+    `SELECT 'push_subscriptions' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM push_subscriptions`,
+    `SELECT 'oauth_login_tokens' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM oauth_login_tokens`,
+  ];
+  const rows = queries.flatMap((query) => source.query(query));
 
   return rows.map((row) => {
     const total = Number(row["total"] ?? 0);
@@ -632,6 +648,9 @@ function dryRun(options: Options): void {
   }
 }
 
-const options = parseOptions();
-if (options.execute) executePlan(options);
-else dryRun(options);
+const entry = process.argv[1];
+if (entry && path.resolve(entry) === fileURLToPath(import.meta.url)) {
+  const options = parseOptions();
+  if (options.execute) executePlan(options);
+  else dryRun(options);
+}
