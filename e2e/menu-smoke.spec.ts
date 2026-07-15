@@ -14,6 +14,12 @@ const ROUTES = [
   { path: '/settings', label: '설정', text: /설정|Settings|設定/ },
 ] as const;
 
+const EXPECTED_NAVIGATION_CANCELLATIONS = new Set([
+  'net::ERR_ABORTED',
+  'cancelled',
+  'Load request cancelled',
+]);
+
 async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   const failures: string[] = [];
   const badResponses: string[] = [];
@@ -23,7 +29,7 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   page.on('requestfailed', (request) => {
     const failure = request.failure();
     const errorText = failure?.errorText ?? 'failed';
-    if (errorText !== 'net::ERR_ABORTED' && errorText !== 'cancelled') {
+    if (!EXPECTED_NAVIGATION_CANCELLATIONS.has(errorText)) {
       failures.push(`${request.method()} ${request.url()} ${errorText}`);
     }
   });
@@ -39,6 +45,11 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   page.on('pageerror', (err) => pageErrors.push(err.message));
 
   await run();
+  await page.waitForTimeout(250);
+
+  const apiBaseUrl = process.env.E2E_API_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8787';
+  const health = await page.request.get(`${apiBaseUrl.replace(/\/$/, '')}/health`, { timeout: 10_000 });
+  expect(health.ok(), 'API must remain healthy after navigation cancellations').toBe(true);
 
   expect(failures, 'network request failures').toEqual([]);
   expect(badResponses, 'bad API responses').toEqual([]);

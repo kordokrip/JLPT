@@ -18,11 +18,12 @@ function prepareVisualState() {
   document.documentElement.classList.remove('dark');
   localStorage.setItem('nihongo-n3-settings', JSON.stringify({
     state: { theme: 'light', language: 'ko' },
-    version: 1,
+    version: 3,
   }));
 }
 
 async function prepareVisualPage(page: import('@playwright/test').Page) {
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
   await page.route(/https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\/.*/, (route) => route.abort());
   await page.route(/https:\/\/cdn\.jsdelivr\.net\/gh\/orioncactus\/pretendard@.*/, (route) => route.abort());
   await page.addInitScript(prepareVisualState);
@@ -32,11 +33,13 @@ async function disableAnimations(page: import('@playwright/test').Page) {
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-delay: 0ms !important;
-        transition-duration: 0.01ms !important;
+        animation: none !important;
+        transition: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         scroll-behavior: auto !important;
       }
+      html { color-scheme: light !important; }
     `,
   });
 }
@@ -49,7 +52,49 @@ async function waitForVisualSettled(page: import('@playwright/test').Page) {
     ]);
   }).catch(() => undefined);
   await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
-  await page.waitForTimeout(500);
+
+  const layoutStable = await page.evaluate(async () => {
+    const signature = () => JSON.stringify(
+      Array.from(document.querySelectorAll('html, body, #root, .app-shell, main, nav')).map((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return [
+          element.tagName,
+          element.getAttribute('data-state'),
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          style.fontFamily,
+          style.fontSize,
+        ];
+      }),
+    );
+
+    const deadline = Date.now() + 5_000;
+    let previous = '';
+    let stableFrames = 0;
+
+    while (Date.now() < deadline && stableFrames < 3) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const current = signature();
+      stableFrames = current === previous ? stableFrames + 1 : 0;
+      previous = current;
+    }
+
+    return stableFrames >= 3;
+  });
+
+  expect(layoutStable, 'visual layout should settle before screenshot').toBe(true);
+  await expect.poll(
+    () => page.evaluate(() => document.documentElement.classList.contains('dark')),
+    { message: 'visual regression must use the light theme' },
+  ).toBe(false);
+
+  const horizontalOverflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(horizontalOverflow, 'visual viewport must not overflow horizontally').toBeLessThanOrEqual(1);
 }
 
 test.describe('핵심 화면 시각 회귀', () => {
