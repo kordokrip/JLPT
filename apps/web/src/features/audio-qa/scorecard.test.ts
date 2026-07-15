@@ -42,4 +42,15 @@ describe('audio QA scorecard', () => {
     expect(markdown).toContain('| google | 30/30 | 4.00 |');
     expect(markdown).toContain('배치 승인: 승인 (google)');
   });
+
+  it('escapes existing backslashes before Markdown table separators', () => {
+    const scorecard = createAudioQaScorecard();
+    scorecard.evaluator = String.raw`QA\Lead | reviewer`;
+    scorecard.device = 'desktop\nWebKit';
+
+    const markdown = audioQaScorecardMarkdown(scorecard);
+
+    expect(markdown).toContain(String.raw`QA\\Lead \| reviewer`);
+    expect(markdown).toContain('desktop<br>WebKit');
+  });
 });
