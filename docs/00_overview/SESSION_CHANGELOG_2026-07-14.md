@@ -106,3 +106,19 @@ TOPIK 문제은행·채점·추천은 구현하지 않았다.
 ## 8. 배포 결정
 
 production 배포를 수행하지 않았다. 로컬 Chromium/WebKit matrix는 통과했지만 GitHub billing lock, 원격 required Actions, prod-v2, R2 audio gate가 충족되지 않았기 때문이다. 다음 세션은 [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)의 승인 조건에서 재개한다.
+
+## 9. GitHub 필수 workflow 재검증 (2026-07-15 KST)
+
+`refactor/tech-debt-r1`의 HEAD와 원격 branch가 모두 `5c25e9f959228b48e007a2a4d8c24d809bbf661c`임을 확인했다. `Dependency Audit`은 실행 전에 `disabled_manually`였으며 `gh workflow enable` 후 `active`로 전환했다.
+
+| Workflow | Run | 결론 | SHA | 분류 |
+| --- | --- | --- | --- | --- |
+| Dependency Audit | [29383425422](https://github.com/kordokrip/JLPT/actions/runs/29383425422) | failure, canary 재실행도 동일 | `5c25e9f9592` | runner step 미시작, billing annotation |
+| CodeQL Security Analysis | [29383426508](https://github.com/kordokrip/JLPT/actions/runs/29383426508) | failure | `5c25e9f9592` | runner step 미시작, billing annotation |
+| E2E Tests (Chromium/WebKit) | [29383428226](https://github.com/kordokrip/JLPT/actions/runs/29383428226) | failure | `5c25e9f9592` | 두 matrix job 모두 미시작, billing annotation |
+| Backup D1 Database -> R2 | [29383429640](https://github.com/kordokrip/JLPT/actions/runs/29383429640) | failure | `5c25e9f9592` | export job 미시작, billing annotation; R2 변경 없음 |
+| Required Verification | run 미생성 | dispatch 거부 | `5c25e9f9592` | `verify.yml`이 기본 branch에 없어 GitHub API가 HTTP 404 반환 |
+
+네 개의 생성된 run은 모두 `The job was not started because your account is locked due to a billing issue.` annotation으로 종료됐다. 이는 기존 run `29348512843`, `29226573527`과 같은 외부 계정 차단 유형이며 checkout이나 프로젝트 명령이 실행되지 않았으므로 코드 실패로 분류할 수 없다. 잠금 해제 전파 가능성을 확인하려고 60초 후 Audit run을 한 번 재실행했으나 같은 annotation이 재현됐다.
+
+Required Verification은 workflow를 수정해서 우회하지 않았다. GitHub의 수동 dispatch는 workflow가 기본 branch에 등록돼 있어야 하므로, 현재 branch에만 존재하는 `verify.yml`은 `gh workflow run verify.yml --ref refactor/tech-debt-r1`로 실행할 수 없었다. TD-10은 `외부 차단`, TD-14는 `구현 완료`를 유지하며 production 배포와 D1/R2 변경은 수행하지 않았다.
