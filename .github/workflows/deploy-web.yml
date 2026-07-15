@@ -86,12 +86,9 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.103.0"
           workingDirectory: apps/web
-          command: |
-            pages deploy dist \
-              --project-name=nihongo-n3 \
-              --branch=${{ github.head_ref }} \
-              --commit-dirty=true
+          command: pages deploy dist --project-name=nihongo-n3 --branch=${{ github.head_ref }} --commit-dirty=true
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v7
@@ -137,6 +134,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.103.0"
           workingDirectory: apps/web
           # pages deploy <출력디렉터리> --project-name=<Pages 프로젝트명>
           # Pages 프로젝트가 없으면 CF Dashboard에서 먼저 생성하거나
