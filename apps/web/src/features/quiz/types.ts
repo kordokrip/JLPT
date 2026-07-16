@@ -1,6 +1,8 @@
+import type { JlptLevel as SharedJlptLevel } from '@nihongo-n3/shared';
+
 export type QuizMode = 'vocab_mc' | 'grammar_fill' | 'kanji_reading' | 'listening';
 
-export type JlptLevel = 'N5' | 'N4' | 'N3';
+export type JlptLevel = SharedJlptLevel;
 
 export interface QuizQuestion {
   id: string;

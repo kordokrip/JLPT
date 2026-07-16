@@ -61,6 +61,14 @@ const ko = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   // ── 홈 ──
   home: {
     greeting:      '오늘도 천천히. 꾸준함이 실력이 됩니다.',
@@ -80,6 +88,9 @@ const ko = {
     newWordsCount: '새 단어 {{count}}개',
     selfCheckLink: '자가진단 체크',
     abilityCheck:  '실력 체크',
+    courseScopeTitle: '학습 범위',
+    courseScopeBase: '현재 52주 기본 과정은 N5부터 N3까지의 누적 진도를 보여줍니다.',
+    courseScopeExpanded: 'N5부터 N1까지의 콘텐츠가 준비되었습니다. 기본 52주 과정과 상위 레벨 학습은 별도로 관리됩니다.',
   },
 
   // ── 복습 ──
@@ -139,6 +150,8 @@ const ko = {
     search:   '검색',
     searchPlaceholder: '검색...',
     noResult: '검색 결과가 없습니다',
+    contentPendingTitle: '콘텐츠 준비 중',
+    contentPendingDescription: '{{level}} {{type}} 콘텐츠를 검수하고 있습니다. 다른 공개 레벨을 먼저 학습해 보세요.',
     meaning:  '의미',
     example:  '예문',
     reading:  '읽기',
@@ -258,6 +271,8 @@ const ko = {
     tryQuiz:  '퀴즈 풀기',
     loadError: '지문을 불러올 수 없습니다',
     emptyFiltered: '조건에 맞는 지문이 없습니다',
+    contentPendingTitle: '콘텐츠 준비 중',
+    contentPendingDescription: '{{level}} 독해 콘텐츠를 준비하고 있습니다. 다른 공개 레벨을 먼저 학습해 보세요.',
     loadingMore: '불러오는 중...',
     wordCount: '{{count}}자',
     source: '출처: {{source}}',

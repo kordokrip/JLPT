@@ -1,3 +1,5 @@
+import type { JlptLevel } from '@nihongo-n3/shared';
+
 export const MAX_LISTENING_PLAYS = 3;
 export const LISTENING_SKIP_BACK_SECONDS = 5;
 
@@ -16,7 +18,7 @@ export interface ListeningQuestion {
 export interface ListeningQuizResponse {
   quiz_id: number;
   mode: 'listening';
-  level: string;
+  level: JlptLevel;
   questions: ListeningQuestion[];
 }
 

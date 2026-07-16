@@ -59,6 +59,14 @@ const en = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   home: {
     greeting:      'Keep going. Consistency builds mastery.',
     thisWeek:      'This Week',
@@ -77,6 +85,9 @@ const en = {
     newWordsCount: '{{count}} new words',
     selfCheckLink: 'Self-Check',
     abilityCheck:  'Ability test',
+    courseScopeTitle: 'Course scope',
+    courseScopeBase: 'The 52-week core course shows cumulative progress from N5 through N3.',
+    courseScopeExpanded: 'Content from N5 through N1 is available. Higher-level study is managed separately from the core 52-week course.',
   },
 
   review: {
@@ -134,6 +145,8 @@ const en = {
     search:   'Search',
     searchPlaceholder: 'Search...',
     noResult: 'No results found',
+    contentPendingTitle: 'Content in preparation',
+    contentPendingDescription: '{{level}} {{type}} content is under review. Start with another released level in the meantime.',
     meaning:  'Meaning',
     example:  'Example',
     reading:  'Reading',
@@ -250,6 +263,8 @@ const en = {
     tryQuiz:  'Take Quiz',
     loadError: 'Could not load the passage',
     emptyFiltered: 'No passages match the current filters',
+    contentPendingTitle: 'Content in preparation',
+    contentPendingDescription: '{{level}} reading content is under review. Start with another released level in the meantime.',
     loadingMore: 'Loading...',
     wordCount: '{{count}} characters',
     source: 'Source: {{source}}',

@@ -447,7 +447,8 @@ export interface paths {
                                 track: "jlpt-ja" | "topik-ko";
                                 available: boolean;
                                 /** @enum {string} */
-                                content_release: "n5-n3" | "foundation-only";
+                                content_release: "foundation-only" | "n5-n3" | "n5-n1";
+                                available_levels: ("N5" | "N4" | "N3" | "N2" | "N1")[];
                                 write_enabled: boolean;
                             };
                         };

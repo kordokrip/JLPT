@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
+import { JLPT_LEVELS, type JlptLevel } from '@nihongo-n3/shared';
 import app, {
   app as honoApp,
   getAdminOpenApiDocument,
@@ -709,15 +710,78 @@ describe('App auth', () => {
 });
 
 describe('Learning tracks', () => {
-  it('reports JLPT as available and TOPIK as foundation-only', async () => {
-    const jlpt = await json<{ data: { available: boolean; content_release: string } }>(
+  async function seedCompleteTrackLevels(levels: readonly JlptLevel[]) {
+    const sourceCode = 'N7-TRACK-STATUS';
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES (?, ?, ?, 'test')`,
+    ).bind(sourceCode, 'N7 track status fixture', 'test/n7-track-status').run();
+    const source = await (env as typeof env & { DB: D1Database }).DB.prepare(
+      'SELECT id FROM sources WHERE code = ?',
+    ).bind(sourceCode).first<{ id: number }>();
+    expect(source?.id).toBeTypeOf('number');
+
+    const characters = ['㐀', '㐁', '㐂', '㐃', '㐄'];
+    for (const level of levels) {
+      const index = JLPT_LEVELS.indexOf(level);
+      await (env as typeof env & { DB: D1Database }).DB.batch([
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, pos)
+           VALUES (?, ?, ?, ?, ?, 'test')`,
+        ).bind(source!.id, level, `track-${level}`, `とらっく-${level.toLowerCase()}`, `${level} 뜻`),
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO grammar (source_id, level, pattern, meaning_ko, examples)
+           VALUES (?, ?, ?, ?, '[]')`,
+        ).bind(source!.id, level, `〜${level}`, `${level} 문법`),
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO kanji (char, on_yomi, meaning_ko, jlpt_level)
+           VALUES (?, 'テスト', ?, ?)`,
+        ).bind(characters[index]!, `${level} 한자`, level),
+      ]);
+    }
+  }
+
+  it('derives JLPT release stages from complete DB level coverage and keeps TOPIK foundation-only', async () => {
+    await seedCompleteTrackLevels(['N5', 'N4', 'N3']);
+    const jlpt = await json<{ data: { available: boolean; content_release: string; available_levels: string[] } }>(
       '/api/v1/tracks/jlpt-ja/status',
     );
     const topik = await json<{ data: { available: boolean; content_release: string } }>(
       '/api/v1/tracks/topik-ko/status',
     );
     expect(jlpt.data).toEqual(expect.objectContaining({ available: true, content_release: 'n5-n3' }));
+    expect(jlpt.data.available_levels).toEqual(['N5', 'N4', 'N3']);
     expect(topik.data).toEqual(expect.objectContaining({ available: false, content_release: 'foundation-only' }));
+
+    await seedCompleteTrackLevels(['N2', 'N1']);
+    const expanded = await json<{ data: { content_release: string; available_levels: string[] } }>(
+      '/api/v1/tracks/jlpt-ja/status',
+    );
+    expect(expanded.data).toMatchObject({
+      content_release: 'n5-n1',
+      available_levels: ['N5', 'N4', 'N3', 'N2', 'N1'],
+    });
+  });
+
+  it.each(['N2', 'N1'] as const)('generates a level-matched %s vocabulary quiz', async (level) => {
+    await seedCompleteTrackLevels([level]);
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner')`,
+    ).run();
+
+    const response = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level, count: 1 }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      data: { level: string; questions: Array<{ prompt: string }> };
+    }>();
+    expect(body.data.level).toBe(level);
+    expect(body.data.questions).toHaveLength(1);
+    expect(body.data.questions[0]?.prompt).toBe(`track-${level}`);
   });
 });
 

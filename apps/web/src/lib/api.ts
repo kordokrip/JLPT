@@ -14,7 +14,9 @@ import {
   normalizeVocabContentItem,
   type ApiRawContentRecord,
   type ContentVersionDto,
+  type JlptLevel,
   type LearningTrackId,
+  type TrackStatusDto,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
 import type { components, paths } from '../types/api.js';
@@ -166,7 +168,7 @@ function asItems<T>(value: ApiList<T>): T[] {
 
 // 어휘
 export const vocabApi = {
-  list: async (p?: { level?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; limit?: number; cursor?: string }) => {
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
     const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/vocab', {
       params: { query: p ?? {} },
     }));
@@ -188,7 +190,7 @@ export const vocabApi = {
 
 // 문법
 export const grammarApi = {
-  list: async (p?: { level?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; limit?: number; cursor?: string }) => {
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
     const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/grammar', {
       params: { query: p ?? {} },
     }));
@@ -204,7 +206,7 @@ export const grammarApi = {
 
 // 한자
 export const kanjiApi = {
-  list: async (p?: { level?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; limit?: number; cursor?: string }) => {
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
     const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/kanji', {
       params: { query: p ?? {} },
     }));
@@ -229,6 +231,10 @@ export const homophonesApi = {
 
 export const contentApi = {
   version: () => api.get<ContentVersionDto>('/content/version'),
+};
+
+export const tracksApi = {
+  status: (track: LearningTrackId) => api.get<TrackStatusDto>(`/tracks/${track}/status`),
 };
 
 // SRS

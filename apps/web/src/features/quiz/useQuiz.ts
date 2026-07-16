@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { useTrackStatus } from '../../hooks/useTrackStatus';
 import { isQuizMode, toQuizAnswers } from './logic';
 import type { JlptLevel, QuizGenerateResponse, QuizMode, QuizQuestion, QuizSubmitResponse } from './types';
+import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
 
 export function useQuizRoute() {
   const { mode: rawMode } = useParams<{ mode?: string }>();
@@ -25,7 +27,9 @@ export function useQuizRoute() {
  */
 export function useQuizSession(mode: QuizMode) {
   const navigate = useNavigate();
-  const [level, setLevel] = useState<JlptLevel>('N3');
+  const { levels } = useTrackStatus();
+  const highestLevel = levels.at(-1) ?? DEFAULT_JLPT_LEVEL;
+  const [level, setLevel] = useState<JlptLevel>(highestLevel);
   const [count, setCount] = useState(5);
   const [quizId, setQuizId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -33,6 +37,10 @@ export function useQuizSession(mode: QuizMode) {
   const [current, setCurrent] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!levels.includes(level)) setLevel(highestLevel);
+  }, [highestLevel, level, levels]);
 
   const generateMut = useMutation({
     mutationFn: async () => {
@@ -83,6 +91,7 @@ export function useQuizSession(mode: QuizMode) {
 
   return {
     level,
+    levels,
     count,
     questions,
     answers,

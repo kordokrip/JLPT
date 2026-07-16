@@ -59,6 +59,14 @@ const ja = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   home: {
     greeting:      'ゆっくりでも続けることが実力になります。',
     thisWeek:      '今週',
@@ -77,6 +85,9 @@ const ja = {
     newWordsCount: '新しい単語 {{count}}個',
     selfCheckLink: '自己診断チェック',
     abilityCheck:  '実力チェック',
+    courseScopeTitle: '学習範囲',
+    courseScopeBase: '現在の52週間基本コースは、N5からN3までの累積進捗を表示します。',
+    courseScopeExpanded: 'N5からN1までのコンテンツが準備されました。上位レベルの学習は基本52週間コースとは別に管理します。',
   },
 
   review: {
@@ -134,6 +145,8 @@ const ja = {
     search:   '検索',
     searchPlaceholder: '検索...',
     noResult: '検索結果がありません',
+    contentPendingTitle: 'コンテンツ準備中',
+    contentPendingDescription: '{{level}}の{{type}}コンテンツを確認中です。先に公開済みの別レベルを学習してください。',
     meaning:  '意味',
     example:  '例文',
     reading:  '読み',
@@ -250,6 +263,8 @@ const ja = {
     tryQuiz:  'クイズを解く',
     loadError: '読解文を読み込めません',
     emptyFiltered: '条件に合う読解文がありません',
+    contentPendingTitle: 'コンテンツ準備中',
+    contentPendingDescription: '{{level}}の読解コンテンツを準備しています。先に公開済みの別レベルを学習してください。',
     loadingMore: '読み込み中...',
     wordCount: '{{count}}字',
     source: '出典: {{source}}',

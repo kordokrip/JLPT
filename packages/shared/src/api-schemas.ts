@@ -5,15 +5,34 @@
  * apps/api (서버 검증) 과 apps/web (클라이언트 타입) 양쪽에서 공유.
  */
 import { z } from 'zod';
+import {
+  CONTENT_RELEASES,
+  JLPT_LEVELS,
+  type ContentRelease,
+  type JlptLevel,
+} from './jlpt-levels';
 
 // ─────────────────────────────────────────────
 // 공통
 // ─────────────────────────────────────────────
-export const jlptLevelSchema = z.enum(['N5', 'N4', 'N3', 'N2', 'N1']);
-export type JlptLevel = z.infer<typeof jlptLevelSchema>;
+export const jlptLevelSchema = z.enum([...JLPT_LEVELS] as [JlptLevel, ...JlptLevel[]]);
+export type { JlptLevel } from './jlpt-levels';
+
+export const contentReleaseSchema = z.enum(
+  [...CONTENT_RELEASES] as [ContentRelease, ...ContentRelease[]],
+);
+export type { ContentRelease } from './jlpt-levels';
 
 export const learningTrackIdSchema = z.enum(['jlpt-ja', 'topik-ko']);
 export type LearningTrackId = z.infer<typeof learningTrackIdSchema>;
+
+export interface TrackStatusDto {
+  track: LearningTrackId;
+  available: boolean;
+  content_release: ContentRelease;
+  available_levels: JlptLevel[];
+  write_enabled: boolean;
+}
 
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 

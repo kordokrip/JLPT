@@ -1,16 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import { BROWSE_LEVELS, BROWSE_TABS } from './types';
+import { BROWSE_TABS } from './types';
 import type { ContentType } from './types';
 import type { JlptLevel } from '@nihongo-n3/shared';
 
 export function BrowseSidebar({
   currentType,
   level,
+  levels,
   onType,
   onLevel,
 }: {
   currentType: ContentType;
   level: JlptLevel | undefined;
+  levels: readonly JlptLevel[];
   onType: (type: ContentType) => void;
   onLevel: (level: JlptLevel | undefined) => void;
 }) {
@@ -45,7 +47,7 @@ export function BrowseSidebar({
           >
             {t('common.all')}
           </button>
-          {BROWSE_LEVELS.map((l) => (
+          {levels.map((l) => (
             <button
               key={l}
               onClick={() => onLevel(level === l ? undefined : l)}
@@ -53,7 +55,7 @@ export function BrowseSidebar({
                 level === l ? 'text-[var(--accent)] bg-[var(--accent-soft)]' : 'text-[var(--muted-foreground)] hover:text-foreground hover:bg-accent-soft-30'
               }`}
             >
-              <span>{l}</span>
+              <span>{t(`levels.${l}`)}</span>
             </button>
           ))}
         </div>
@@ -83,17 +85,19 @@ export function MobileBrowseTabs({ currentType, onType }: { currentType: Content
 
 export function MobileLevelFilters({
   level,
+  levels,
   onLevel,
 }: {
   level: JlptLevel | undefined;
+  levels: readonly JlptLevel[];
   onLevel: (level: JlptLevel | undefined) => void;
 }) {
   const { t } = useTranslation();
   return (
     <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
       <FilterChip active={!level} onClick={() => onLevel(undefined)} label={t('common.all')} />
-      {BROWSE_LEVELS.map((l) => (
-        <FilterChip key={l} active={level === l} onClick={() => onLevel(level === l ? undefined : l)} label={l} />
+      {levels.map((l) => (
+        <FilterChip key={l} active={level === l} onClick={() => onLevel(level === l ? undefined : l)} label={t(`levels.${l}`)} />
       ))}
     </div>
   );

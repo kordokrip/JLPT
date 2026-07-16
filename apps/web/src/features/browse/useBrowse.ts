@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGrammarList, useKanjiList } from '../../hooks/useContent';
+import { useTrackStatus } from '../../hooks/useTrackStatus';
 import { useVocabList, useVocabSearch } from '../../hooks/useVocab';
 import { homophonesApi, type HomophonePairItem } from '../../lib/api';
 import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
@@ -17,6 +18,7 @@ export function useBrowse() {
   const [query, setQuery] = useState(() => searchParams.get('q') ?? searchParams.get('text') ?? '');
   const [level, setLevel] = useState<JlptLevel | undefined>(undefined);
   const track = useSettingsStore((state) => state.learningTrack);
+  const { levels } = useTrackStatus();
 
   const currentType = normalizeContentType(type);
   const vocabList = useVocabList(level, 200);
@@ -40,6 +42,10 @@ export function useBrowse() {
   useEffect(() => {
     setQuery(searchParams.get('q') ?? searchParams.get('text') ?? '');
   }, [searchParams]);
+
+  useEffect(() => {
+    if (level && !levels.includes(level)) setLevel(undefined);
+  }, [level, levels]);
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -79,6 +85,7 @@ export function useBrowse() {
     currentType,
     query,
     level,
+    levels,
     items,
     loading,
     setLevel,

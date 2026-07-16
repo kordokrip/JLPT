@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import QuizQuestionMC from '../../components/feature/QuizQuestionMC';
 import QuizTimer from '../../components/feature/QuizTimer';
-import { QUIZ_MODE_ICONS, QUIZ_MODES, QUIZ_LEVELS } from './logic';
+import { QUIZ_MODE_ICONS, QUIZ_MODES } from './logic';
 import { useQuizSession } from './useQuiz';
 import type { QuizMode } from './types';
 
@@ -88,7 +88,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
             {t('quiz.jlptLevel')}
           </p>
           <div className="flex gap-2 flex-wrap">
-            {QUIZ_LEVELS.map((level) => (
+            {quiz.levels.map((level) => (
               <button
                 key={level}
                 type="button"
@@ -100,7 +100,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
                     : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]',
                 ].join(' ')}
               >
-                {level}
+                {t(`levels.${level}`)}
               </button>
             ))}
           </div>

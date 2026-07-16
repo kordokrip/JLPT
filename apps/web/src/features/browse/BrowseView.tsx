@@ -11,6 +11,7 @@ type BrowseViewProps = {
   currentType: ContentType;
   query: string;
   level: JlptLevel | undefined;
+  levels: readonly JlptLevel[];
   items: Array<VocabItem | GrammarItem | KanjiItem | HomophonePairItem>;
   loading: boolean;
   onType: (type: ContentType) => void;
@@ -22,6 +23,7 @@ export function BrowseView({
   currentType,
   query,
   level,
+  levels,
   items,
   loading,
   onType,
@@ -32,7 +34,7 @@ export function BrowseView({
 
   return (
     <div className="flex h-full min-h-[calc(100dvh-var(--nav-height))]">
-      <BrowseSidebar currentType={currentType} level={level} onType={onType} onLevel={onLevel} />
+      <BrowseSidebar currentType={currentType} level={level} levels={levels} onType={onType} onLevel={onLevel} />
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[900px] px-4 py-5 pb-28 sm:px-6 lg:px-10 lg:py-8">
           <div className="mb-5">
@@ -52,7 +54,7 @@ export function BrowseView({
               <p className="text-sm leading-6 text-[var(--muted-foreground)]">
                 {t('browse.homophoneIntro')}
               </p>
-              <MobileLevelFilters level={level} onLevel={onLevel} />
+              <MobileLevelFilters level={level} levels={levels} onLevel={onLevel} />
             </div>
           ) : (
             <div className="surface-card mb-4 p-3 shadow-none">
@@ -64,7 +66,7 @@ export function BrowseView({
                 aria-label={t('browse.ariaSearch', { type: t(`browse.${currentType}`) })}
                 className="h-12 w-full rounded-[var(--radius-md)] border-[0.5px] border-[var(--border)] bg-[var(--input-bg)] px-4 text-base text-foreground outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]"
               />
-              <MobileLevelFilters level={level} onLevel={onLevel} />
+              <MobileLevelFilters level={level} levels={levels} onLevel={onLevel} />
             </div>
           )}
 
@@ -73,9 +75,21 @@ export function BrowseView({
           {loading ? (
             <LoadingList />
           ) : items.length === 0 ? (
-            <div className="surface-panel py-16 text-center text-sm text-[var(--muted-foreground)]">
-              {t('browse.noResult')}
-            </div>
+            !query.trim() && level && levels.includes(level) ? (
+              <div className="surface-panel py-16 text-center">
+                <p className="text-sm font-semibold text-foreground">{t('browse.contentPendingTitle')}</p>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--muted-foreground)]">
+                  {t('browse.contentPendingDescription', {
+                    level: t(`levels.${level}`),
+                    type: t(`browse.${currentType}`),
+                  })}
+                </p>
+              </div>
+            ) : (
+              <div className="surface-panel py-16 text-center text-sm text-[var(--muted-foreground)]">
+                {t('browse.noResult')}
+              </div>
+            )
           ) : (
             <BrowseList currentType={currentType} items={items} />
           )}

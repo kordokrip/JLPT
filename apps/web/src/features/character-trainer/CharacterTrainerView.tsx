@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PronunciationButton } from '../../components/feature/PronunciationButton';
-import { CHARACTER_STAGES, JLPT_LEVELS, kanjiRules, stageText } from './data';
+import { CHARACTER_STAGES, kanjiRules, stageText } from './data';
 import { evaluateDrawing, getCardAudioPath, getCardAudioText, getKanaPronunciationExample } from './logic';
 import type { CharacterMode, CharacterStage, DrawingEvaluation, DrawingStats, JlptLevel, StudyCard } from './types';
 import type { PointerEvent } from 'react';
@@ -8,6 +9,7 @@ import type { PointerEvent } from 'react';
 type CharacterTrainerViewProps = {
   mode: CharacterMode;
   level: JlptLevel;
+  levels: readonly JlptLevel[];
   index: number;
   stage: CharacterStage;
   revealed: boolean;
@@ -31,6 +33,7 @@ export function CharacterTrainerView(props: CharacterTrainerViewProps) {
   const {
     mode,
     level,
+    levels,
     index,
     stage,
     revealed,
@@ -54,7 +57,7 @@ export function CharacterTrainerView(props: CharacterTrainerViewProps) {
     return (
       <div className="mx-auto max-w-[920px] px-5 py-8 pb-28">
         <CharacterTrainerHeader />
-        <ModeControls mode={mode} level={level} onMode={onMode} onLevel={onLevel} />
+        <ModeControls mode={mode} level={level} levels={levels} onMode={onMode} onLevel={onLevel} />
         <div className="surface-panel mt-6 p-8 text-center text-sm text-[var(--muted-foreground)]">
           한자 데이터를 불러오는 중입니다.
         </div>
@@ -65,7 +68,7 @@ export function CharacterTrainerView(props: CharacterTrainerViewProps) {
   return (
     <div className="mx-auto max-w-[1040px] px-4 py-6 pb-28 sm:px-6 lg:px-10">
       <CharacterTrainerHeader />
-      <ModeControls mode={mode} level={level} onMode={onMode} onLevel={onLevel} />
+      <ModeControls mode={mode} level={level} levels={levels} onMode={onMode} onLevel={onLevel} />
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="surface-card p-4 sm:p-6">
@@ -121,7 +124,7 @@ function CharacterTrainerHeader() {
         문자 암기
       </h1>
       <p className="mt-2 max-w-[720px] text-sm leading-6 text-[var(--muted-foreground)]">
-        히라가나, 가타카나, N5-N3 한자를 한 글자씩 보고, 가리고, 쓰고, 테스트하는 장기기억 루프입니다.
+        히라가나, 가타카나, 공개된 JLPT 한자를 한 글자씩 보고, 가리고, 쓰고, 테스트하는 장기기억 루프입니다.
       </p>
     </header>
   );
@@ -130,14 +133,17 @@ function CharacterTrainerHeader() {
 function ModeControls({
   mode,
   level,
+  levels,
   onMode,
   onLevel,
 }: {
   mode: CharacterMode;
   level: JlptLevel;
+  levels: readonly JlptLevel[];
   onMode: (mode: CharacterMode) => void;
   onLevel: (level: JlptLevel) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="surface-card flex flex-col gap-3 p-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
       <div className="flex gap-2 overflow-x-auto">
@@ -156,7 +162,7 @@ function ModeControls({
       </div>
       {mode === 'kanji' && (
         <div className="flex gap-2">
-          {JLPT_LEVELS.map((item) => (
+          {levels.map((item) => (
             <button
               key={item}
               type="button"
@@ -165,7 +171,7 @@ function ModeControls({
                 level === item ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'border border-[var(--border)] text-[var(--muted-foreground)]'
               }`}
             >
-              {item}
+              {t(`levels.${item}`)}
             </button>
           ))}
         </div>

@@ -1,6 +1,8 @@
+import type { JlptLevel } from '@nihongo-n3/shared';
+
 export type CharacterMode = 'hiragana' | 'katakana' | 'kanji';
 export type CharacterStage = 'observe' | 'recall' | 'write' | 'writeQuiz' | 'quiz';
-export type JlptLevel = 'N5' | 'N4' | 'N3';
+export type { JlptLevel } from '@nihongo-n3/shared';
 
 export type KanaCard = {
   id: string;

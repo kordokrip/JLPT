@@ -4,6 +4,7 @@ import { useVocabList } from '../../hooks/useVocab';
 import { reviewScreen, reviewTotal, starterVocabIds } from './logic';
 import type { ReviewViewProps } from './types';
 import type { Rating } from '../../lib/fsrs-client';
+import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
 
 /**
  * Composes review data without moving the SRS user x track namespace out of
@@ -12,7 +13,7 @@ import type { Rating } from '../../lib/fsrs-client';
 export function useReview(): ReviewViewProps {
   const { cards, refetch } = useDueCards(undefined, 50);
   const { review, reviewing } = useReviewCard();
-  const starter = useVocabList('N3', 10);
+  const starter = useVocabList(DEFAULT_JLPT_LEVEL, 10);
   const initCards = useInitCards();
   const [reviewed, setReviewed] = useState(0);
 

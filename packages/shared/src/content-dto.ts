@@ -1,4 +1,6 @@
-export type ContentLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1';
+import { DEFAULT_JLPT_LEVEL, isJlptLevel, type JlptLevel } from './jlpt-levels';
+
+export type ContentLevel = JlptLevel;
 
 export interface VocabContentItem {
   id: number;
@@ -68,9 +70,7 @@ function numberValue(row: ApiRawContentRecord, ...keys: string[]): number | unde
 }
 
 function contentLevel(value: string | undefined): ContentLevel {
-  return value === 'N5' || value === 'N4' || value === 'N3' || value === 'N2' || value === 'N1'
-    ? value
-    : 'N3';
+  return isJlptLevel(value) ? value : DEFAULT_JLPT_LEVEL;
 }
 
 function firstExample(row: ApiRawContentRecord): { jp?: string; ko?: string } {

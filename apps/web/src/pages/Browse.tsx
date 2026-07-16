@@ -9,6 +9,7 @@ export default function Browse() {
       currentType={browse.currentType}
       query={browse.query}
       level={browse.level}
+      levels={browse.levels}
       items={browse.items}
       loading={browse.loading}
       onType={browse.switchType}

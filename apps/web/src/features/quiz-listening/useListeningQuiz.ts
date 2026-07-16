@@ -1,12 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { toSubmittedAnswers } from './logic';
 import type { ListeningQuestion, ListeningQuizResponse, ListeningSubmitResponse, SubmittedAnswer } from './types';
 import { useSettingsStore } from '../../stores/settings-store';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
-export function useListeningQuiz() {
+export function useListeningQuiz(level: JlptLevel) {
   const { quizId } = useParams<{ quizId: string }>();
   const navigate = useNavigate();
   const [idx, setIdx] = useState(0);
@@ -17,11 +18,11 @@ export function useListeningQuiz() {
   const track = useSettingsStore((state) => state.learningTrack);
 
   const query = useQuery({
-    queryKey: ['quiz-listening', track, quizId],
+    queryKey: ['quiz-listening', track, level, quizId],
     queryFn: async () => {
       const res = await api.post<ListeningQuizResponse>('/quiz/generate', {
         mode: 'listening',
-        level: 'N3',
+        level,
         count: 5,
       });
       if (!res.ok) throw new Error(res.message);
@@ -47,6 +48,14 @@ export function useListeningQuiz() {
 
   const questions = query.data?.questions ?? [];
   const current = questions[idx] as ListeningQuestion | undefined;
+
+  useEffect(() => {
+    setIdx(0);
+    setSelected(null);
+    setRevealed(false);
+    setAnswers({});
+    setPlaysOut(false);
+  }, [level, quizId]);
 
   const selectChoice = (choice: string) => {
     if (revealed) return;

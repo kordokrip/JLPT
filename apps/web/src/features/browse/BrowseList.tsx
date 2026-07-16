@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PronunciationButton } from '../../components/feature/PronunciationButton';
-import { levelVariant } from '../../components/ui/Badge';
+import { Badge, levelVariant } from '../../components/ui/Badge';
 import type { HomophonePairItem } from '../../lib/api';
 import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
 import type { ContentType } from './types';
+import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
 
 export function BrowseList({
   currentType,
@@ -152,13 +153,9 @@ function VocabListItem({ item, onOpen }: { item: VocabItem; onOpen: () => void }
                       {item.part_of_speech}
                     </span>
                   )}
-                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${
-                    levelVariant(item.level ?? 'n3').includes('n3') ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                    : levelVariant(item.level ?? 'n3').includes('n4') ? 'bg-blue-50 text-blue-600'
-                    : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {(item.level ?? 'N3').toUpperCase()}
-                  </span>
+                  <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+                    {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+                  </Badge>
                 </div>
                 {item.example_jp && (
                   <p className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
@@ -200,9 +197,9 @@ function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base font-semibold text-foreground">{item.meaning}</span>
-            <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
-              {(item.level ?? 'N3').toUpperCase()}
-            </span>
+            <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+              {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+            </Badge>
           </div>
           <div className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
             {item.reading_on && <span>{t('browse.onyomi')}: {item.reading_on}　</span>}
@@ -234,9 +231,9 @@ function GrammarListItem({ item, onOpen }: { item: GrammarItem; onOpen: () => vo
     >
       <div className="mb-1.5 flex items-center gap-2">
         <span className="font-sans-jp text-base font-semibold text-foreground">{item.pattern}</span>
-        <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
-          {(item.level ?? 'N3').toUpperCase()}
-        </span>
+        <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+          {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+        </Badge>
       </div>
       <p className="text-sm leading-6 text-[var(--muted-foreground)]">
         {item.meaning}

@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useCurrentWeek } from '../hooks/useCurrentWeek';
 import { useSettingsStore } from '../stores/settings-store';
-import { recommendStudyPlan } from '@nihongo-n3/shared';
+import { DEFAULT_JLPT_LEVEL, recommendStudyPlan } from '@nihongo-n3/shared';
 
 interface Week {
   week:     number;
@@ -45,7 +45,7 @@ export function normalizeCurriculumWeek(row: CurriculumApiWeek): Week {
   return {
     week,
     theme: row.theme ?? `Week ${week}`,
-    level: 'N3',
+    level: DEFAULT_JLPT_LEVEL,
     progress: 0,
     vocab_count: row.vocab_target ?? 0,
     grammar_count: row.grammar_target ?? 0,
@@ -269,7 +269,7 @@ function LoadingTimeline() {
 const FALLBACK_WEEKS: Week[] = Array.from({ length: 52 }, (_, i) => ({
   week: i + 1,
   theme: `Week ${i + 1} — 학습 주제`,
-  level: 'N3',
+  level: DEFAULT_JLPT_LEVEL,
   progress: 0,
   vocab_count: 30,
   grammar_count: 5,

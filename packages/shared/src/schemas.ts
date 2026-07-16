@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { JLPT_LEVELS, type JlptLevel } from './jlpt-levels';
 
 // ─────────────────────────────────────────────
 // JLPT 레벨
 // ─────────────────────────────────────────────
-export const jlptLevelSchema = z.enum(['N5', 'N4', 'N3', 'N2', 'N1']);
-export type JlptLevel = z.infer<typeof jlptLevelSchema>;
+export const jlptLevelSchema = z.enum([...JLPT_LEVELS] as [JlptLevel, ...JlptLevel[]]);
+export type { JlptLevel } from './jlpt-levels';
 
 // ─────────────────────────────────────────────
 // 단어 DTO

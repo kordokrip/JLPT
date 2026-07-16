@@ -7,8 +7,10 @@ import { BottomTabBar }    from './BottomTabBar';
 import { useUiStore }      from '../../stores/ui-store';
 import { IosInstallHint }  from '../IosInstallHint';
 import { useTranslation }  from 'react-i18next';
+import { useContentVersionInvalidation } from '../../hooks/useContentVersionInvalidation';
 
 export function RootLayout() {
+  useContentVersionInvalidation();
   const isOnline = useUiStore((s) => s.isOnline);
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
   const { t } = useTranslation();
