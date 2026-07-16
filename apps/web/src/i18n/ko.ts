@@ -89,7 +89,6 @@ const ko = {
     selfCheckLink: '자가진단 체크',
     abilityCheck:  '실력 체크',
     courseScopeTitle: '학습 범위',
-    courseScopeBase: '현재 52주 기본 과정은 N5부터 N3까지의 누적 진도를 보여줍니다.',
     courseScopeExpanded: 'N5부터 N1까지의 콘텐츠가 준비되었습니다. 기본 52주 과정과 상위 레벨 학습은 별도로 관리됩니다.',
   },
 

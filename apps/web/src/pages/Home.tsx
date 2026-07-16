@@ -26,6 +26,7 @@ export default function Home() {
   const { cards: dueCards, isLoading } = useDueCards();
   const { data: stats } = useSrsStats();
   const { status: trackStatus, levels: releasedLevels } = useTrackStatus();
+  const hasExpandedRelease = trackStatus?.content_release === 'n5-n1';
 
   const dueCount  = dueCards.length;
   const totalCards = stats?.total  ?? 0;
@@ -107,24 +108,24 @@ export default function Home() {
             </div>
             <Progress value={weekProgress} size="md" className="mb-5" />
 
-            <div className="mb-5 border-t border-[var(--border)] pt-4">
-              <p className="text-xs font-semibold text-foreground">{t('home.courseScopeTitle')}</p>
-              <p className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">
-                {trackStatus?.content_release === 'n5-n1'
-                  ? t('home.courseScopeExpanded')
-                  : t('home.courseScopeBase')}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t('home.courseScopeTitle')}>
-                {releasedLevels.map((level) => (
-                  <span
-                    key={level}
-                    className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted-foreground)]"
-                  >
-                    {t(`levels.${level}`)}
-                  </span>
-                ))}
+            {hasExpandedRelease && (
+              <div className="mb-5 border-t border-[var(--border)] pt-4">
+                <p className="text-xs font-semibold text-foreground">{t('home.courseScopeTitle')}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">
+                  {t('home.courseScopeExpanded')}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t('home.courseScopeTitle')}>
+                  {releasedLevels.map((level) => (
+                    <span
+                      key={level}
+                      className="rounded-full border border-[var(--border)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted-foreground)]"
+                    >
+                      {t(`levels.${level}`)}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div data-visual-dynamic className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
               <StatTile label={t('home.reviewWaiting')} value={`${reviewCards}`} suffix={t('common.cards')} />

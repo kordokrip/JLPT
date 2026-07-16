@@ -21,8 +21,12 @@
  *   각 level 안에서는 sentence -> vocab -> kanji
  */
 import type { Env } from '../types.js';
+import { AUDIO_BATCH_LEVELS, type AudioBatchLevel } from '@nihongo-n3/shared';
 import { createTtsAdapter, getTtsProviderInfo, type TtsProviderId } from '../lib/tts/index.js';
 import { safeErrorName } from '../lib/safe-log.js';
+
+export { AUDIO_BATCH_LEVELS } from '@nihongo-n3/shared';
+export type { AudioBatchLevel } from '@nihongo-n3/shared';
 
 const BATCH_SIZE  = 50;
 const DAILY_LIMIT = 500;
@@ -50,9 +54,6 @@ export interface AudioGenerationOptions {
   forceRegenerate?: boolean;
   level?: AudioBatchLevel;
 }
-
-export const AUDIO_BATCH_LEVELS = ['N5', 'N4', 'N3'] as const;
-export type AudioBatchLevel = (typeof AUDIO_BATCH_LEVELS)[number];
 
 /** 일일 생성 건수 조회 (R2 기반 카운터 대신 D1 review_logs 테이블 활용) */
 async function getDailyCount(db: D1Database): Promise<number> {
@@ -273,6 +274,9 @@ async function loadAudioTasks(
   },
 ): Promise<D1Result<AudioTask>> {
   const placeholders = options.levels.map(() => '?').join(', ');
+  const levelOrder = AUDIO_BATCH_LEVELS
+    .map((level, index) => `WHEN '${level}' THEN ${index + 1}`)
+    .join(' ');
   const sql = `
     SELECT item.id, '${options.type}' AS type, ${options.textExpression} AS text,
            ${options.levelColumn} AS level, item.audio_r2_key,
@@ -297,7 +301,7 @@ async function loadAudioTasks(
           AND failure_log.provider = ?
           AND failure_log.success = 0
       ) < ?
-    ORDER BY CASE ${options.levelColumn} WHEN 'N5' THEN 1 WHEN 'N4' THEN 2 ELSE 3 END, item.id
+    ORDER BY CASE ${options.levelColumn} ${levelOrder} ELSE ${AUDIO_BATCH_LEVELS.length + 1} END, item.id
     LIMIT ?`;
   return db.prepare(sql)
     .bind(

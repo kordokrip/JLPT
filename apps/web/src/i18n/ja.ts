@@ -86,7 +86,6 @@ const ja = {
     selfCheckLink: '自己診断チェック',
     abilityCheck:  '実力チェック',
     courseScopeTitle: '学習範囲',
-    courseScopeBase: '現在の52週間基本コースは、N5からN3までの累積進捗を表示します。',
     courseScopeExpanded: 'N5からN1までのコンテンツが準備されました。上位レベルの学習は基本52週間コースとは別に管理します。',
   },
 

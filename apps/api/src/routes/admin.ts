@@ -440,7 +440,7 @@ admin.post('/audio/queue', async (c) => {
     return badRequest(c, '운영 전체 배치는 승인된 Google Cloud TTS provider만 사용할 수 있습니다');
   }
   if (!level) {
-    return badRequest(c, '실제 오디오 배치는 level을 N5, N4, N3 중 하나로 지정해야 합니다');
+    return badRequest(c, `실제 오디오 배치는 level을 ${AUDIO_BATCH_LEVELS.join(', ')} 중 하나로 지정해야 합니다`);
   }
   if (body.force_regenerate === true) {
     return badRequest(c, 'immutable key는 덮어쓸 수 없습니다. provider model/version을 올려 새 key를 생성하세요');

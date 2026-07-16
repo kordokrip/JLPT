@@ -69,10 +69,15 @@ test.describe('N2/N1 release gating', () => {
     await expect(page.getByRole('button', { name: 'N1', exact: true })).toHaveCount(0);
   });
 
-  test('released N2 content becomes selectable and renders in Browse', async ({ page }) => {
+  test('released N2 content becomes selectable and keeps higher-level progress separate on Home', async ({ page }) => {
     // Browser UI contract fixture: API tests independently prove the DB release calculation.
     await mockReleasedN5ToN1Content(page);
     await ensureAuthenticated(page);
+
+    await page.goto('/');
+    await expect(page.getByText(/기본 52주 과정과 상위 레벨 학습은 별도로 관리됩니다/)).toBeVisible();
+    await expect(page.getByLabel('학습 범위').getByText('N1', { exact: true })).toBeVisible();
+
     await page.goto('/browse/vocab');
 
     const n2 = page.getByRole('button', { name: 'N2', exact: true });

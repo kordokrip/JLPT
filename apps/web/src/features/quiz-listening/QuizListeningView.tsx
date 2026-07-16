@@ -77,7 +77,7 @@ export function QuizListeningView({
                 key={candidate}
                 type="button"
                 onClick={() => onLevel(candidate)}
-                className={`min-h-9 rounded-full border px-3 text-xs font-semibold transition-colors ${
+                className={`min-h-11 rounded-full border px-3 text-xs font-semibold transition-colors ${
                   level === candidate
                     ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
                     : 'border-[var(--border)] text-[var(--muted-foreground)]'

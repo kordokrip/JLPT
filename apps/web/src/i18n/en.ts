@@ -86,7 +86,6 @@ const en = {
     selfCheckLink: 'Self-Check',
     abilityCheck:  'Ability test',
     courseScopeTitle: 'Course scope',
-    courseScopeBase: 'The 52-week core course shows cumulative progress from N5 through N3.',
     courseScopeExpanded: 'Content from N5 through N1 is available. Higher-level study is managed separately from the core 52-week course.',
   },
 

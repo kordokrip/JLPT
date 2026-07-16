@@ -1,5 +1,5 @@
 /**
- * BottomTabBar — 모바일 하단 탭 바 (md 이상에서 숨김)
+ * BottomTabBar — 모바일 하단 탭 바 (760px 이상에서 숨김)
  * Figma Make 디자인 적용
  */
 import { NavLink } from 'react-router-dom';
@@ -37,7 +37,7 @@ export function BottomTabBar() {
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px] md:hidden" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px] min-[760px]:hidden" onClick={() => setOpen(false)}>
           <div
             role="dialog"
             aria-label={t('nav.moreMenu')}
@@ -68,7 +68,7 @@ export function BottomTabBar() {
       )}
       <nav
         aria-label={t('nav.mainLabel')}
-        className="fixed bottom-0 inset-x-0 z-50 border-t-[0.5px] border-[var(--border)] bg-[var(--surface-glass)] shadow-[0_-8px_28px_rgba(42,30,24,0.08)] backdrop-blur md:hidden"
+        className="fixed bottom-0 inset-x-0 z-50 border-t-[0.5px] border-[var(--border)] bg-[var(--surface-glass)] shadow-[0_-8px_28px_rgba(42,30,24,0.08)] backdrop-blur min-[760px]:hidden"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
           paddingLeft: 'max(env(safe-area-inset-left), 0px)',

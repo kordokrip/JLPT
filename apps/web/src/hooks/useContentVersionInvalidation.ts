@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query';
-import { subscribeToContentVersionChanges } from '../lib/content-cache';
+import { ensureContentFresh, subscribeToContentVersionChanges } from '../lib/content-cache';
 
 const CONTENT_QUERY_PREFIXES = new Set([
   'vocab',
@@ -26,7 +26,15 @@ export async function invalidateTrackContentQueries(queryClient: QueryClient, tr
 export function useContentVersionInvalidation(): void {
   const queryClient = useQueryClient();
 
-  useEffect(() => subscribeToContentVersionChanges((track) => {
-    void invalidateTrackContentQueries(queryClient, track);
-  }), [queryClient]);
+  useEffect(() => {
+    const unsubscribe = subscribeToContentVersionChanges((track) => {
+      void invalidateTrackContentQueries(queryClient, track);
+    });
+
+    // Content freshness must not delay an independent track-status request.
+    // A changed version notifies the subscriber above and refetches the status.
+    void ensureContentFresh().catch(() => undefined);
+
+    return unsubscribe;
+  }, [queryClient]);
 }

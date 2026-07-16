@@ -1,4 +1,5 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
+import { AUDIO_BATCH_LEVELS, type AudioBatchLevel } from '@nihongo-n3/shared';
 import type { AppEnv } from '../types.js';
 import { admin } from './admin.js';
 import { createdResponseSchema, dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
@@ -55,7 +56,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
               dry_run: z.boolean().optional(),
               batch: z.number().int().min(1).max(200).optional(),
               provider: z.literal('google').optional(),
-              level: z.enum(['N5', 'N4', 'N3']).optional(),
+              level: z.enum([...AUDIO_BATCH_LEVELS] as [AudioBatchLevel, ...AudioBatchLevel[]]).optional(),
               force_regenerate: z.boolean().optional(),
             }),
           },

@@ -28,9 +28,11 @@ N2/N1 후보 콘텐츠는 provenance·검수·manifest 게이트가 별도로 �
 | `pages/QuizListening.tsx`, `useListeningQuiz.ts` | N3 고정 청해 요청 | query-string level + track status | 공개된 레벨만 청해 요청 가능 |
 | `features/character-trainer/*` | N5/N4/N3 고정 한자 레벨 | shared type + track status | 레벨 라벨은 `levels.*` i18n 키 사용 |
 | `pages/Reading.tsx` | N5~N2의 고정 filter | track status levels | N1까지 지원하며 0건은 준비 중 상태로 표시 |
+| `routes/reading-oa.ts` | OpenAPI의 수동 레벨 enum | shared `jlptLevelSchema` | 공개 명세도 N5→N1 단일 계약을 사용 |
 | `features/browse/BrowseList.tsx` | N3 fallback 문자열과 N3/N4만 색상 분기 | `DEFAULT_JLPT_LEVEL`, `Badge.levelVariant()` | N2/N1 배지 색상도 기존 공통 Badge 정책 사용 |
 | `content-dto.ts`, `Review.tsx`, `Curriculum.tsx` | N3 기본값 문자열 | `DEFAULT_JLPT_LEVEL` | N3 기본 과정 의도는 유지, 소스는 단일화 |
 | `i18n/{ko,ja,en}.ts` | 레벨용 공통 키 없음 | `levels.N5`~`levels.N1` | selector/filter/범위 표기에 공통 사용 |
+| `jobs/generate-audio.ts`, `routes/admin-oa.ts` | N5/N4/N3 배치 배열과 OpenAPI enum 중복 | shared `AUDIO_BATCH_LEVELS` | N2/N1 오디오는 별도 QA 승인 전까지 명시적으로 제외 |
 | `Stats.tsx` | 레벨별 통계 축 없음 | 변경 없음 | 레벨 축이 생길 때만 shared `JLPT_LEVELS`로 파생한다 |
 
 다음 항목은 출시에 따라 바꾸는 selector가 아니므로 의도적으로 유지한다.
@@ -52,17 +54,27 @@ N2/N1 후보 콘텐츠는 provenance·검수·manifest 게이트가 별도로 �
 
 Home의 주간 %는 기존 SRS 카드 기반의 52주 기본 과정 지표다. N2/N1 출시 후에도 이 값을 N5~N1 전체 과정의 완성률처럼 표시하지 않는다.
 
-- `n5-n3`: “52주 기본 과정은 N5~N3 누적 진도”로 명시한다.
-- `n5-n1`: 공개 범위는 N5~N1로 보이되, 상위 레벨의 목표·주차·진단은 별도 curriculum 출시 전까지 기본 52주 %에 합산하지 않는다.
+- `n5-n3`: 기존 N5~N3 기본 과정 화면과 주간 %를 유지한다. 아직 공개되지 않은 상위 레벨을 암시하는 범위 패널은 표시하지 않는다.
+- `n5-n1`: Home에 공개 범위와 분리 정책을 표시한다. 상위 레벨의 목표·주차·진단은 별도 curriculum 출시 전까지 기본 52주 %에 합산하지 않는다.
 
 ## 5. 검증 관문
 
 | 검사 | 목적 | 상태 |
 | --- | --- | --- |
-| API route test | DB 분포별 `n5-n3`/`n5-n1`, N2/N1 vocab quiz | 실행 예정 |
-| Web unit test | shared release 순서와 track cache meta key | 실행 예정 |
-| N2 Browse E2E | 기본 DB 숨김 + released-status UI/IDB cache 계약 | 실행 예정 |
-| `pnpm verify:ci` | OpenAPI drift, type, unit, build, fresh seed verifier | 실행 예정 |
-| Chromium/WebKit | 실제 메뉴/브라우저 회귀 | 실행 예정 |
+| API route test | DB 분포별 `n5-n3`/`n5-n1`, N2/N1 vocab quiz | PASS - API 93 tests |
+| Web unit test | shared release 순서, 오디오 범위, track cache meta key | PASS - Web 41 tests |
+| N2 Browse E2E | 기본 DB 숨김 + released-status UI/IDB cache 계약 | PASS - Chromium 2, WebKit 2 |
+| `pnpm verify:ci` | OpenAPI drift, type, unit, build, fresh seed verifier | PASS - public 52 / admin 7 paths, 7 migrations, manifest·FTS·FK PASS |
+| Chromium | 실제 메뉴, 시각 스냅샷, N2/N1 공개, 모바일 터치 회귀 | PASS - 67 tests |
+| WebKit | Safari 레이아웃·터치·N2/N1 공개 회귀 | PASS - 53 tests, Chromium 전용 시각 14 skipped |
 
 E2E의 released N5~N1 case는 production seed가 아니라 API contract fixture를 사용한다. 서버 DB 분포 계산은 API integration test가 별도로 증명하며, 이 분리는 미검수 N2/N1 파일을 E2E용 DB seed로 우회 등록하지 않기 위한 것이다.
+
+`verify:fresh`의 `audio_r2_key` 4,954건 누락 경고는 이번 범위 밖의 R2 오디오 승인 부채다. verifier 최소값을 낮추거나 경고를 성공으로 바꾸지 않았다.
+
+## 6. 브라우저 안정화 보정
+
+- 콘텐츠 version 갱신은 RootLayout에서 독립적으로 시작하고, track status 요청은 이를 기다리지 않는다. WebKit에서 화면 종료 시 status 요청이 늦게 시작되는 레이스를 제거하면서 version 변경 시 `track-status` 무효화는 유지했다.
+- 768px WebKit viewport에서 스크롤바 폭 때문에 모바일과 rail 규칙이 동시에 보이는 문제를 피하기 위해 전환점은 `760px`로 통일했다. 768px 태블릿은 rail, 그 미만은 bottom tab bar를 사용한다.
+- 청해 레벨 selector의 최소 높이는 44px로 올려 iPhone 터치 감사 기준을 충족한다.
+- Home의 상위 레벨 안내는 실제 `n5-n1` 상태에서만 렌더링한다. 기본 `n5-n3` 운영 화면과 플랫폼별 시각 기준선에는 미공개 레벨 UI가 추가되지 않는다.

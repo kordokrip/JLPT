@@ -55,9 +55,9 @@ export function RootLayout() {
         id="main-content"
         className={[
           'relative z-10',
-          'md:pl-[var(--active-sidebar-width)]',
-          'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto md:h-auto md:min-h-dvh md:overflow-visible',
-          'pb-0 md:pb-0',
+          'min-[760px]:pl-[var(--active-sidebar-width)]',
+          'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto min-[760px]:h-auto min-[760px]:min-h-dvh min-[760px]:overflow-visible',
+          'pb-0 min-[760px]:pb-0',
           'min-w-0 pt-[env(safe-area-inset-top)]',
           !isOnline ? 'mt-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
         ].join(' ')}

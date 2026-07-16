@@ -47,3 +47,12 @@ export function highestReleasedJlptLevel(release: ContentRelease): JlptLevel {
   const levels = RELEASE_LEVELS[release];
   return levels.at(-1) ?? DEFAULT_JLPT_LEVEL;
 }
+
+/**
+ * 승인된 R2 오디오 생성 범위. N2/N1은 별도 청감 QA와 R2 승인 전까지 배치에 포함하지 않는다.
+ * `JLPT_LEVELS`의 순서를 보존해 파생하므로 실행 순서와 공개 레벨 정책이 분리되지 않는다.
+ */
+export type AudioBatchLevel = Exclude<JlptLevel, 'N2' | 'N1'>;
+export const AUDIO_BATCH_LEVELS = JLPT_LEVELS.filter(
+  (level): level is AudioBatchLevel => level !== 'N2' && level !== 'N1',
+);

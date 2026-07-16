@@ -4,7 +4,6 @@ import {
   levelsForContentRelease,
   type TrackStatusDto,
 } from '@nihongo-n3/shared';
-import { ensureContentFresh } from '../lib/content-cache';
 import { tracksApi } from '../lib/api';
 import { useSettingsStore } from '../stores/settings-store';
 
@@ -21,8 +20,6 @@ export function useTrackStatus() {
   const query = useQuery({
     queryKey: ['track-status', track],
     queryFn: async () => {
-      // New level rows change the content version first, then invalidate this status.
-      await ensureContentFresh();
       const result = await tracksApi.status(track);
       if (!result.ok) throw new Error(result.message);
       return result.data;
