@@ -72,9 +72,9 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
       <p
         class="font-pretendard text-[12px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] mb-2"
       >
-        문제 수 
+        문제 수
         <span
-          class="normal-case"
+          class="normal-case ml-1"
         >
           5문제
         </span>

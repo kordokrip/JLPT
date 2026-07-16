@@ -108,7 +108,8 @@ function QuizSession({ mode }: { mode: QuizMode }) {
 
         <div className="mb-8">
           <p className="font-pretendard text-[12px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] mb-2">
-            {t('quiz.questionCount')} <span className="normal-case">{quiz.count}{t('quiz.questionUnit')}</span>
+            {t('quiz.questionCount')}
+            <span className="normal-case ml-1">{quiz.count}{t('quiz.questionUnit')}</span>
           </p>
           <input
             type="range"
