@@ -183,10 +183,10 @@ Cloudflare token은 용도별로 분리한다. D1 Read token을 범용 `CLOUDFLA
 | 용도 | 최소 권한 | 현재 상태 |
 | --- | --- | --- |
 | D1 inventory/cleanup dry-run | 대상 account D1 Read | 로컬 active·검증 완료 |
-| D1 migration/user cleanup execute | 대상 account D1 Write | `production` Environment 등록 대기 |
+| D1 migration/user cleanup execute `CLOUDFLARE_D1_WRITE_API_TOKEN` | 대상 account D1 Write | `production` Environment 등록 대기 |
 | Backup `CLOUDFLARE_BACKUP_API_TOKEN` | D1 export/read + reports bucket R2 Object Write/lifecycle | `production` Environment 등록 대기 |
-| Pages preview/production | Cloudflare Pages Edit | 등록 대기 |
-| Workers production | Workers Scripts Edit와 필요한 binding read | 등록 대기 |
+| Pages preview/production `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare Pages Edit | repository/`production` Environment 등록 대기 |
+| Workers production `CLOUDFLARE_WORKERS_API_TOKEN` | Workers Scripts Edit와 필요한 binding read | `production` Environment 등록 대기 |
 
 비밀이 아닌 repository variables `VITE_API_URL`, `API_BASE_URL`, `WEB_BASE_URL`과 account ID 이름은 등록돼 있다. token 값은 문서·artifact·로그에 출력하지 않는다.
 

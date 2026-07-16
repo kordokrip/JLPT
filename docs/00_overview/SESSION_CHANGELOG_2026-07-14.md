@@ -238,4 +238,25 @@ Backup workflow는 검증 과정에서도 R2 object를 쓰므로 이 PR 생성 �
 
 `d1:users:cleanup`은 2명 allowlist, test-domain 제한, PII 마스킹 fingerprint, plan hash, 60분 remote plan 만료, 24시간 backup, 동적 확인문, Environment 승인, post-delete FK 검사를 강제한다. backup plan은 실행 입력으로 사용할 수 없다. 회원 cleanup 단위 테스트 7개, DB test 10개, 전체 `pnpm verify`, backup dry-run `67 / 2 / 65`가 통과했다. 같은 백업의 local restore drill도 migration 7개와 일반 테이블 23개의 row count, SHA-256, FTS parity, FK 검사를 통과했다.
 
-루트 `.env.local`의 두 Cloudflare API token 이름은 값이 비어 있지 않지만 verify endpoint에서 모두 `Invalid API Token`이었다. 최신 remote inventory를 만들 수 없어 production 삭제는 수행하지 않았다. 다음 단계는 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)의 token 복구와 remote dry-run이다.
+이 시점의 루트 `.env.local` Cloudflare API token은 verify endpoint에서 `Invalid API Token`이었다. 따라서 당시에는 최신 remote inventory와 production 삭제를 수행하지 않았다. 토큰 복구와 remote dry-run 결과는 아래 16절과 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)에 갱신했다.
+
+## 16. Billing 해제, 회원 remote 재검증, R1 관문 정상화 (2026-07-16 KST)
+
+Cloudflare D1 Read token을 account token verify와 remote D1 query로 재검증했다. PII를 출력하지 않는 remote cleanup plan은 전체 67명, 보존 2명, 명시적 test domain 삭제 후보 65명, 연관 row 327건으로 이전 backup 집계와 일치했다. `ko***@gmail.com`은 `admin`, `no***@icloud.com`은 `user`로 확인했다. 관리자 route는 일반 app session이 아니라 `admin` role을 필수로 하도록 수정했고 401/403/200 회귀 테스를 통과했다.
+
+로컬 최종 관문은 `pnpm audit --audit-level high`, OpenAPI drift, typecheck, 단위 147건, build, fresh D1 migration 7/7·manifest·FTS 3,300/1,112·FK, Chromium 65건, WebKit 51건을 통과했다. fresh 오디오 4,954건은 계획된 TD-08 warning으로 남겨 검증 기준을 낮추지 않았다.
+
+GitHub billing lock 해제 후 같은 SHA `8047e57d9c9f` 원격 결과는 다음과 같다.
+
+| Workflow | Run | 결론 | 분류 |
+| --- | --- | --- | --- |
+| Dependency Audit | [29467627640](https://github.com/kordokrip/JLPT/actions/runs/29467627640) | success | advisory 0, runner 정상 |
+| CodeQL Security Analysis | [29467627702](https://github.com/kordokrip/JLPT/actions/runs/29467627702) | success | 보안 분석 정상 |
+| Required Verification | [29467627775](https://github.com/kordokrip/JLPT/actions/runs/29467627775) | success | type·unit·build·D1 정상 |
+| Content and D1 Change Control | [29467627639](https://github.com/kordokrip/JLPT/actions/runs/29467627639) | success | fresh D1 validate만 실행, production change skip |
+| E2E Tests | [29467627631](https://github.com/kordokrip/JLPT/actions/runs/29467627631) | success | Chromium 65, WebKit 51 pass |
+| Deploy Web preview | [29467627706](https://github.com/kordokrip/JLPT/actions/runs/29467627706) | failure | build success, Pages 전용 token 미등록 |
+
+Pages 실패는 billing annotation이나 코드 빌드 실패가 아니다. D1 Read token을 범용으로 재사용하지 않고 `CLOUDFLARE_PAGES_API_TOKEN`, `CLOUDFLARE_WORKERS_API_TOKEN`, `CLOUDFLARE_D1_WRITE_API_TOKEN`, `CLOUDFLARE_BACKUP_API_TOKEN`으로 workflow 권한을 분리했다.
+
+Backup은 D1 export가 query를 차단할 수 있으므로 `production` Environment 사람 승인과 maintenance/read-only window를 강제했다. 전용 backup token이 아직 등록되지 않아 원격 export·R2 object 쓰기는 실행하지 않았다. 회원 65명 삭제도 신규 24시간 backup, 60분 remote plan, D1 Write token, 사람 승인이 모두 없으면 실행하지 않는다. production D1/R2/Workers/Pages는 변경하지 않았다.

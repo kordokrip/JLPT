@@ -76,7 +76,7 @@
 2. 실제 2명의 마스킹 계정과 `admin`/`user` role을 확인한다. **완료**
 3. 24시간 이내 production backup과 restore drill을 확인한다. **현재 backup 기준 완료, 실행 시각에 재검사 필요**
 4. production Environment의 필수 검토자와 `main` branch policy를 확인한다. **완료**
-5. 실행 전용 D1 Write token을 `production` Environment secret으로 등록한다. **미완료**
+5. 실행 전용 D1 Write token을 `CLOUDFLARE_D1_WRITE_API_TOKEN` `production` Environment secret으로 등록한다. **미완료**
 
 ### B. Remote dry-run
 
