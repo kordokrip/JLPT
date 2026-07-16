@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 import {
   buildContentSeedPlan,
@@ -8,9 +8,15 @@ import {
   SEEDED_SOURCE_COUNT,
   type ContentManifest,
   type ContentManifestEntry,
-} from './content-manifest.js';
-import { argValue, countSql, parseD1Target, querySql } from './d1-cli.js';
-import { REPO_ROOT } from './constants.js';
+} from "./content-manifest.js";
+import {
+  argValue,
+  countSql,
+  countSqlBatch,
+  parseD1Target,
+  querySql,
+} from "./d1-cli.js";
+import { REPO_ROOT } from "./constants.js";
 
 interface VerificationCheck {
   name: string;
@@ -41,42 +47,69 @@ interface SourceVersionRow extends Record<string, unknown> {
   version: string;
 }
 
+interface NumericSqlCheck {
+  name: string;
+  expected: number;
+  sql: string;
+  blocking: boolean;
+}
+
 const target = parseD1Target();
 const manifestPath = path.resolve(
-  argValue('--manifest') ?? path.join(REPO_ROOT, '.artifacts/db/content-manifest.json'),
+  argValue("--manifest") ??
+    path.join(REPO_ROOT, ".artifacts/db/content-manifest.json"),
 );
 const reportPath = path.resolve(
-  argValue('--report') ?? path.join(REPO_ROOT, '.artifacts/db/verification-report.json'),
+  argValue("--report") ??
+    path.join(REPO_ROOT, ".artifacts/db/verification-report.json"),
 );
 const currentManifest = buildContentSeedPlan().manifest;
 const seededManifest = readManifest(manifestPath);
 const checks: VerificationCheck[] = [];
-const requireAudio = process.argv.includes('--require-audio');
+const numericSqlChecks: NumericSqlCheck[] = [];
+const requireAudio = process.argv.includes("--require-audio");
 
 function readManifest(filePath: string): ContentManifest {
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Seed manifest is missing: ${filePath}. Run seed before verify.`);
+    throw new Error(
+      `Seed manifest is missing: ${filePath}. Run seed before verify.`,
+    );
   }
-  const manifest = JSON.parse(fs.readFileSync(filePath, 'utf8')) as ContentManifest;
+  const manifest = JSON.parse(
+    fs.readFileSync(filePath, "utf8"),
+  ) as ContentManifest;
   assertManifest(manifest, filePath);
   return manifest;
 }
 
 function assertManifest(manifest: ContentManifest, label: string): void {
   if (manifest.schemaVersion !== CONTENT_MANIFEST_SCHEMA_VERSION) {
-    throw new Error(`Unsupported content manifest schema in ${label}: ${String(manifest.schemaVersion)}`);
+    throw new Error(
+      `Unsupported content manifest schema in ${label}: ${String(manifest.schemaVersion)}`,
+    );
   }
   if (manifest.entries.length !== SEEDED_SOURCE_COUNT) {
-    throw new Error(`Content manifest source count mismatch in ${label}: ${manifest.entries.length}`);
+    throw new Error(
+      `Content manifest source count mismatch in ${label}: ${manifest.entries.length}`,
+    );
   }
-  if (!manifest.contentVersion || !manifest.parserVersion || !manifest.manifestSha256 || !manifest.seedRunId) {
+  if (
+    !manifest.contentVersion ||
+    !manifest.parserVersion ||
+    !manifest.manifestSha256 ||
+    !manifest.seedRunId
+  ) {
     throw new Error(`Content manifest identity is incomplete in ${label}`);
   }
-  if (manifest.entries.some((entry) => !hasCompleteProvenance(entry.provenance))) {
+  if (
+    manifest.entries.some((entry) => !hasCompleteProvenance(entry.provenance))
+  ) {
     throw new Error(`Content manifest provenance is incomplete in ${label}`);
   }
   if (manifest.derivedContent?.homophonePairs.expectedRows < 30) {
-    throw new Error(`Content manifest homophone release set is incomplete in ${label}`);
+    throw new Error(
+      `Content manifest homophone release set is incomplete in ${label}`,
+    );
   }
 }
 
@@ -86,11 +119,37 @@ function addCheck(
   actual: number | string,
   blocking = true,
 ): void {
-  checks.push({ name, expected, actual, passed: expected === actual, blocking });
+  checks.push({
+    name,
+    expected,
+    actual,
+    passed: expected === actual,
+    blocking,
+  });
 }
 
-function addMinimumCheck(name: string, minimum: number, actual: number, blocking = true): void {
-  checks.push({ name, expected: `>=${minimum}`, actual, passed: actual >= minimum, blocking });
+function addMinimumCheck(
+  name: string,
+  minimum: number,
+  actual: number,
+  blocking = true,
+): void {
+  checks.push({
+    name,
+    expected: `>=${minimum}`,
+    actual,
+    passed: actual >= minimum,
+    blocking,
+  });
+}
+
+function addNumericSqlCheck(
+  name: string,
+  expected: number,
+  sql: string,
+  blocking = true,
+): void {
+  numericSqlChecks.push({ name, expected, sql, blocking });
 }
 
 function sqlLiteral(value: string): string {
@@ -98,44 +157,117 @@ function sqlLiteral(value: string): string {
 }
 
 function rowCountSql(entry: ContentManifestEntry): string {
-  if (entry.selector.kind === 'source') {
+  if (entry.selector.kind === "source") {
     return `SELECT count(*) AS count FROM ${entry.table} WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.selector.value)})`;
   }
-  if (entry.selector.kind === 'level') {
-    const column = entry.table === 'kanji' ? 'jlpt_level' : 'level';
+  if (entry.selector.kind === "level") {
+    const column = entry.table === "kanji" ? "jlpt_level" : "level";
     return `SELECT count(*) AS count FROM ${entry.table} WHERE ${column} = ${sqlLiteral(entry.selector.value)}`;
   }
   return `SELECT count(*) AS count FROM ${entry.table}`;
 }
 
-function compareManifests(expected: ContentManifest, actual: ContentManifest): void {
-  addCheck('manifest:schema-version', expected.schemaVersion, actual.schemaVersion);
-  addCheck('manifest:content-version', expected.contentVersion, actual.contentVersion);
-  addCheck('manifest:parser-version', expected.parserVersion, actual.parserVersion);
-  addCheck('manifest:sha256', expected.manifestSha256, actual.manifestSha256);
-  addCheck('manifest:seeded-source-count', expected.entries.length, actual.entries.length);
+function compareManifests(
+  expected: ContentManifest,
+  actual: ContentManifest,
+): void {
+  addCheck(
+    "manifest:schema-version",
+    expected.schemaVersion,
+    actual.schemaVersion,
+  );
+  addCheck(
+    "manifest:content-version",
+    expected.contentVersion,
+    actual.contentVersion,
+  );
+  addCheck(
+    "manifest:parser-version",
+    expected.parserVersion,
+    actual.parserVersion,
+  );
+  addCheck("manifest:sha256", expected.manifestSha256, actual.manifestSha256);
+  addCheck(
+    "manifest:seeded-source-count",
+    expected.entries.length,
+    actual.entries.length,
+  );
 
-  const actualEntries = new Map(actual.entries.map((entry) => [entry.sourceCode, entry]));
+  const actualEntries = new Map(
+    actual.entries.map((entry) => [entry.sourceCode, entry]),
+  );
   for (const entry of expected.entries) {
     const seeded = actualEntries.get(entry.sourceCode);
-    addCheck(`manifest:${entry.sourceCode}:present`, 'yes', seeded ? 'yes' : 'no');
+    addCheck(
+      `manifest:${entry.sourceCode}:present`,
+      "yes",
+      seeded ? "yes" : "no",
+    );
     if (!seeded) continue;
-    addCheck(`manifest:${entry.sourceCode}:sha256`, entry.sha256, seeded.sha256);
-    addCheck(`manifest:${entry.sourceCode}:source-version`, entry.sourceVersion, seeded.sourceVersion);
-    addCheck(`manifest:${entry.sourceCode}:parser-version`, entry.parserVersion, seeded.parserVersion);
-    addCheck(`manifest:${entry.sourceCode}:provenance`, JSON.stringify(entry.provenance), JSON.stringify(seeded.provenance));
-    addCheck(`manifest:${entry.sourceCode}:rows`, entry.expectedRows, seeded.expectedRows);
-    addCheck(`manifest:${entry.sourceCode}:categories`, entry.expectedCategories, seeded.expectedCategories);
+    addCheck(
+      `manifest:${entry.sourceCode}:sha256`,
+      entry.sha256,
+      seeded.sha256,
+    );
+    addCheck(
+      `manifest:${entry.sourceCode}:source-version`,
+      entry.sourceVersion,
+      seeded.sourceVersion,
+    );
+    addCheck(
+      `manifest:${entry.sourceCode}:parser-version`,
+      entry.parserVersion,
+      seeded.parserVersion,
+    );
+    addCheck(
+      `manifest:${entry.sourceCode}:provenance`,
+      JSON.stringify(entry.provenance),
+      JSON.stringify(seeded.provenance),
+    );
+    addCheck(
+      `manifest:${entry.sourceCode}:rows`,
+      entry.expectedRows,
+      seeded.expectedRows,
+    );
+    addCheck(
+      `manifest:${entry.sourceCode}:categories`,
+      entry.expectedCategories,
+      seeded.expectedCategories,
+    );
   }
 
   const expectedHomophones = expected.derivedContent.homophonePairs;
   const actualHomophones = actual.derivedContent.homophonePairs;
-  addCheck('manifest:homophones:sha256', expectedHomophones.sha256, actualHomophones.sha256);
-  addCheck('manifest:homophones:parser-version', expectedHomophones.parserVersion, actualHomophones.parserVersion);
-  addCheck('manifest:homophones:rows', expectedHomophones.expectedRows, actualHomophones.expectedRows);
-  addCheck('manifest:homophones:accent-source', expectedHomophones.accentSource, actualHomophones.accentSource);
-  addCheck('manifest:homophones:reviewer', expectedHomophones.reviewer, actualHomophones.reviewer);
-  addCheck('manifest:homophones:reviewed-at', expectedHomophones.reviewedAt, actualHomophones.reviewedAt);
+  addCheck(
+    "manifest:homophones:sha256",
+    expectedHomophones.sha256,
+    actualHomophones.sha256,
+  );
+  addCheck(
+    "manifest:homophones:parser-version",
+    expectedHomophones.parserVersion,
+    actualHomophones.parserVersion,
+  );
+  addCheck(
+    "manifest:homophones:rows",
+    expectedHomophones.expectedRows,
+    actualHomophones.expectedRows,
+  );
+  addCheck(
+    "manifest:homophones:accent-source",
+    expectedHomophones.accentSource,
+    actualHomophones.accentSource,
+  );
+  addCheck(
+    "manifest:homophones:reviewer",
+    expectedHomophones.reviewer,
+    actualHomophones.reviewer,
+  );
+  addCheck(
+    "manifest:homophones:reviewed-at",
+    expectedHomophones.reviewedAt,
+    actualHomophones.reviewedAt,
+  );
 }
 
 function verifySeedRunLedger(manifest: ContentManifest): void {
@@ -144,37 +276,77 @@ function verifySeedRunLedger(manifest: ContentManifest): void {
     `SELECT id, run_id, content_version, parser_version, manifest_sha256, generated_at
      FROM content_seed_runs WHERE run_id = ${sqlLiteral(manifest.seedRunId)}`,
   );
-  addCheck('seed-run:recorded', 1, seedRuns.length);
+  addCheck("seed-run:recorded", 1, seedRuns.length);
   const seedRun = seedRuns[0];
   if (!seedRun) return;
 
-  addCheck('seed-run:content-version', manifest.contentVersion, seedRun.content_version);
-  addCheck('seed-run:parser-version', manifest.parserVersion, seedRun.parser_version);
-  addCheck('seed-run:manifest-sha256', manifest.manifestSha256, seedRun.manifest_sha256);
-  addCheck('seed-run:generated-at', manifest.generatedAt, seedRun.generated_at);
+  addCheck(
+    "seed-run:content-version",
+    manifest.contentVersion,
+    seedRun.content_version,
+  );
+  addCheck(
+    "seed-run:parser-version",
+    manifest.parserVersion,
+    seedRun.parser_version,
+  );
+  addCheck(
+    "seed-run:manifest-sha256",
+    manifest.manifestSha256,
+    seedRun.manifest_sha256,
+  );
+  addCheck("seed-run:generated-at", manifest.generatedAt, seedRun.generated_at);
 
   const sourceRows = querySql<SeedSourceRow>(
     target,
     `SELECT source_code, source_checksum, parser_version, provenance_json
      FROM content_seed_sources WHERE seed_run_id = ${seedRun.id}`,
   );
-  addCheck('seed-run:source-record-count', SEEDED_SOURCE_COUNT + 1, sourceRows.length);
+  addCheck(
+    "seed-run:source-record-count",
+    SEEDED_SOURCE_COUNT + 1,
+    sourceRows.length,
+  );
   const sources = new Map(sourceRows.map((row) => [row.source_code, row]));
 
   for (const entry of manifest.entries) {
     const source = sources.get(entry.sourceCode);
-    addCheck(`seed-run:${entry.sourceCode}:recorded`, 'yes', source ? 'yes' : 'no');
+    addCheck(
+      `seed-run:${entry.sourceCode}:recorded`,
+      "yes",
+      source ? "yes" : "no",
+    );
     if (!source) continue;
-    addCheck(`seed-run:${entry.sourceCode}:checksum`, entry.sha256, source.source_checksum);
-    addCheck(`seed-run:${entry.sourceCode}:parser-version`, entry.parserVersion, source.parser_version);
-    addCheck(`seed-run:${entry.sourceCode}:provenance`, JSON.stringify(entry.provenance), source.provenance_json);
+    addCheck(
+      `seed-run:${entry.sourceCode}:checksum`,
+      entry.sha256,
+      source.source_checksum,
+    );
+    addCheck(
+      `seed-run:${entry.sourceCode}:parser-version`,
+      entry.parserVersion,
+      source.parser_version,
+    );
+    addCheck(
+      `seed-run:${entry.sourceCode}:provenance`,
+      JSON.stringify(entry.provenance),
+      source.provenance_json,
+    );
   }
 
-  const homophones = sources.get('derived:homophone_pairs');
-  addCheck('seed-run:homophones:recorded', 'yes', homophones ? 'yes' : 'no');
+  const homophones = sources.get("derived:homophone_pairs");
+  addCheck("seed-run:homophones:recorded", "yes", homophones ? "yes" : "no");
   if (homophones) {
-    addCheck('seed-run:homophones:checksum', manifest.derivedContent.homophonePairs.sha256, homophones.source_checksum);
-    addCheck('seed-run:homophones:parser-version', manifest.derivedContent.homophonePairs.parserVersion, homophones.parser_version);
+    addCheck(
+      "seed-run:homophones:checksum",
+      manifest.derivedContent.homophonePairs.sha256,
+      homophones.source_checksum,
+    );
+    addCheck(
+      "seed-run:homophones:parser-version",
+      manifest.derivedContent.homophonePairs.parserVersion,
+      homophones.parser_version,
+    );
   }
 }
 
@@ -203,13 +375,15 @@ function verifyHomophoneRelease(manifest: ContentManifest): void {
        AND vb.source_id = sb.id`,
   );
   addMinimumCheck(
-    'homophone_pairs:reviewed-release-minimum',
+    "homophone_pairs:reviewed-release-minimum",
     manifest.derivedContent.homophonePairs.expectedRows,
     reviewedPairs,
   );
 
   const homophoneChecks: Array<[string, string]> = [
-    ['homophone_pairs incomplete reviewed records', `SELECT count(*) AS count
+    [
+      "homophone_pairs incomplete reviewed records",
+      `SELECT count(*) AS count
       FROM homophone_pairs
       WHERE trim(COALESCE(note_ko, '')) <> '' AND (
         trim(accent_source) = '' OR trim(accent_source_url) = '' OR
@@ -217,13 +391,19 @@ function verifyHomophoneRelease(manifest: ContentManifest): void {
         trim(example_a_ja) = '' OR trim(example_a_ko) = '' OR
         trim(example_b_ja) = '' OR trim(example_b_ko) = '' OR
         trim(reviewer) = '' OR trim(reviewed_at) = ''
-      )`],
-    ['homophone_pairs reading mismatches', `SELECT count(*) AS count
+      )`,
+    ],
+    [
+      "homophone_pairs reading mismatches",
+      `SELECT count(*) AS count
       FROM homophone_pairs hp
       JOIN vocab va ON va.id = hp.word_a_id
       JOIN vocab vb ON vb.id = hp.word_b_id
-      WHERE trim(hp.reviewer) <> '' AND va.kana <> vb.kana`],
-    ['homophone_pairs source mapping mismatches', `SELECT count(*) AS count
+      WHERE trim(hp.reviewer) <> '' AND va.kana <> vb.kana`,
+    ],
+    [
+      "homophone_pairs source mapping mismatches",
+      `SELECT count(*) AS count
       FROM homophone_pairs hp
       JOIN vocab va ON va.id = hp.word_a_id
       JOIN vocab vb ON vb.id = hp.word_b_id
@@ -231,43 +411,51 @@ function verifyHomophoneRelease(manifest: ContentManifest): void {
       LEFT JOIN sources sb ON sb.code = hp.word_b_source_code
       WHERE trim(hp.reviewer) <> '' AND (
         sa.id IS NULL OR sb.id IS NULL OR va.source_id <> sa.id OR vb.source_id <> sb.id
-      )`],
-    ['homophone_pairs unordered duplicates', `SELECT count(*) AS count FROM (
+      )`,
+    ],
+    [
+      "homophone_pairs unordered duplicates",
+      `SELECT count(*) AS count FROM (
       SELECT min(word_a_id, word_b_id) AS low_id, max(word_a_id, word_b_id) AS high_id
       FROM homophone_pairs
       GROUP BY low_id, high_id
       HAVING count(*) > 1
-    )`],
+    )`,
+    ],
   ];
-  for (const [name, sql] of homophoneChecks) addCheck(name, 0, countSql(target, sql));
+  for (const [name, sql] of homophoneChecks)
+    addCheck(name, 0, countSql(target, sql));
 }
 
-assertManifest(currentManifest, 'current source tree');
-console.log(`\nD1 verification (${target.remote ? 'remote' : 'local'}, database=${target.database})\n`);
+assertManifest(currentManifest, "current source tree");
+console.log(
+  `\nD1 verification (${target.remote ? "remote" : "local"}, database=${target.database})\n`,
+);
 compareManifests(currentManifest, seededManifest);
 
 const sourceVersions = new Map(
   querySql<SourceVersionRow>(
     target,
-    `SELECT code, version FROM sources WHERE code IN (${currentManifest.entries.map((entry) => sqlLiteral(entry.sourceCode)).join(', ')})`,
+    `SELECT code, version FROM sources WHERE code IN (${currentManifest.entries.map((entry) => sqlLiteral(entry.sourceCode)).join(", ")})`,
   ).map((row) => [row.code, row.version]),
 );
 
 for (const entry of currentManifest.entries) {
-  addCheck(`source:${entry.sourceCode}:version`, entry.sourceVersion, sourceVersions.get(entry.sourceCode) ?? 'missing');
   addCheck(
+    `source:${entry.sourceCode}:version`,
+    entry.sourceVersion,
+    sourceVersions.get(entry.sourceCode) ?? "missing",
+  );
+  addNumericSqlCheck(
     `rows:${entry.sourceCode}:${entry.table}`,
     entry.expectedRows,
-    countSql(target, rowCountSql(entry)),
+    rowCountSql(entry),
   );
   if (entry.expectedCategories > 0) {
-    addCheck(
+    addNumericSqlCheck(
       `categories:${entry.sourceCode}`,
       entry.expectedCategories,
-      countSql(
-        target,
-        `SELECT count(*) AS count FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.sourceCode)})`,
-      ),
+      `SELECT count(*) AS count FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.sourceCode)})`,
     );
   }
 }
@@ -276,40 +464,69 @@ verifySeedRunLedger(seededManifest);
 verifyHomophoneRelease(seededManifest);
 
 for (const [ftsTable, sourceTable] of [
-  ['vocab_fts', 'vocab'],
-  ['sentences_fts', 'sentences'],
+  ["vocab_fts", "vocab"],
+  ["sentences_fts", "sentences"],
 ] as const) {
-  addCheck(
+  addNumericSqlCheck(
     `fts:${ftsTable}:exists`,
     1,
-    countSql(
-      target,
-      `SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name = ${sqlLiteral(ftsTable)}`,
-    ),
+    `SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name = ${sqlLiteral(ftsTable)}`,
   );
-  addCheck(
+  addNumericSqlCheck(
     `fts:${ftsTable}:parity`,
-    countSql(target, `SELECT count(*) AS count FROM ${sourceTable}`),
-    countSql(target, `SELECT count(*) AS count FROM ${ftsTable}`),
+    0,
+    `SELECT abs((SELECT count(*) FROM ${sourceTable}) - (SELECT count(*) FROM ${ftsTable})) AS count`,
   );
 }
 
 const requiredFieldChecks: Array<[string, string]> = [
-  ['vocab required fields', "SELECT count(*) AS count FROM vocab WHERE trim(ja) = '' OR trim(kana) = '' OR trim(ko) = ''"],
-  ['grammar required fields', "SELECT count(*) AS count FROM grammar WHERE trim(pattern) = '' OR trim(meaning_ko) = ''"],
-  ['kanji required fields', "SELECT count(*) AS count FROM kanji WHERE trim(char) = '' OR trim(meaning_ko) = ''"],
-  ['sentences required fields', "SELECT count(*) AS count FROM sentences WHERE trim(ja) = '' OR trim(ko) = ''"],
-  ['sysprog required fields', "SELECT count(*) AS count FROM sysprog_terms WHERE trim(ja) = '' OR trim(ko) = ''"],
-  ['vocab duplicates', 'SELECT count(*) AS count FROM (SELECT level, ja, kana FROM vocab GROUP BY level, ja, kana HAVING count(*) > 1)'],
-  ['grammar duplicates', 'SELECT count(*) AS count FROM (SELECT level, pattern FROM grammar GROUP BY level, pattern HAVING count(*) > 1)'],
-  ['sentence duplicates', 'SELECT count(*) AS count FROM (SELECT source_id, level, register, seq_no FROM sentences GROUP BY source_id, level, register, seq_no HAVING count(*) > 1)'],
+  [
+    "vocab required fields",
+    "SELECT count(*) AS count FROM vocab WHERE trim(ja) = '' OR trim(kana) = '' OR trim(ko) = ''",
+  ],
+  [
+    "grammar required fields",
+    "SELECT count(*) AS count FROM grammar WHERE trim(pattern) = '' OR trim(meaning_ko) = ''",
+  ],
+  [
+    "kanji required fields",
+    "SELECT count(*) AS count FROM kanji WHERE trim(char) = '' OR trim(meaning_ko) = ''",
+  ],
+  [
+    "sentences required fields",
+    "SELECT count(*) AS count FROM sentences WHERE trim(ja) = '' OR trim(ko) = ''",
+  ],
+  [
+    "sysprog required fields",
+    "SELECT count(*) AS count FROM sysprog_terms WHERE trim(ja) = '' OR trim(ko) = ''",
+  ],
+  [
+    "vocab duplicates",
+    "SELECT count(*) AS count FROM (SELECT level, ja, kana FROM vocab GROUP BY level, ja, kana HAVING count(*) > 1)",
+  ],
+  [
+    "grammar duplicates",
+    "SELECT count(*) AS count FROM (SELECT level, pattern FROM grammar GROUP BY level, pattern HAVING count(*) > 1)",
+  ],
+  [
+    "sentence duplicates",
+    "SELECT count(*) AS count FROM (SELECT source_id, level, register, seq_no FROM sentences GROUP BY source_id, level, register, seq_no HAVING count(*) > 1)",
+  ],
 ];
-for (const [name, sql] of requiredFieldChecks) addCheck(name, 0, countSql(target, sql));
+for (const [name, sql] of requiredFieldChecks) {
+  addNumericSqlCheck(name, 0, sql);
+}
 
-const fkViolations = querySql<Record<string, unknown>>(target, 'PRAGMA foreign_key_check');
-addCheck('foreign_key_check', 0, fkViolations.length);
+addNumericSqlCheck(
+  "foreign_key_check",
+  0,
+  "SELECT count(*) AS count FROM pragma_foreign_key_check",
+);
 
-function invalidImmutableAudioKey(itemType: string, levelColumn: string): string {
+function invalidImmutableAudioKey(
+  itemType: string,
+  levelColumn: string,
+): string {
   const prefix = `'audio/${itemType}/' || lower(${levelColumn}) || '/' || id || '-'`;
   return `(
     audio_r2_key IS NULL
@@ -319,45 +536,67 @@ function invalidImmutableAudioKey(itemType: string, levelColumn: string): string
   )`;
 }
 
-const audioMissing = countSql(
-  target,
+addNumericSqlCheck(
+  "audio_r2_key missing/non-immutable (R2 gate)",
+  0,
   `SELECT
      (SELECT count(*) FROM vocab
       WHERE level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey('vocab', 'level')})
+        AND ${invalidImmutableAudioKey("vocab", "level")})
      +
      (SELECT count(*) FROM kanji
       WHERE jlpt_level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey('kanji', 'jlpt_level')})
+        AND ${invalidImmutableAudioKey("kanji", "jlpt_level")})
      +
      (SELECT count(*) FROM sentences
-      WHERE level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey('sentence', 'level')})
+     WHERE level IN ('N5', 'N4', 'N3')
+        AND ${invalidImmutableAudioKey("sentence", "level")})
      AS count`,
+  requireAudio,
 );
-addCheck('audio_r2_key missing/non-immutable (R2 gate)', 0, audioMissing, requireAudio);
+
+const numericActuals = countSqlBatch(
+  target,
+  numericSqlChecks.map((check) => check.sql),
+);
+for (const [index, check] of numericSqlChecks.entries()) {
+  addCheck(
+    check.name,
+    check.expected,
+    numericActuals[index] ?? Number.NaN,
+    check.blocking,
+  );
+}
 
 for (const check of checks) {
-  const icon = check.passed ? 'OK' : check.blocking ? 'FAIL' : 'WARN';
-  console.log(`  ${icon.padEnd(4)} ${check.name} expected=${check.expected} actual=${check.actual}`);
+  const icon = check.passed ? "OK" : check.blocking ? "FAIL" : "WARN";
+  console.log(
+    `  ${icon.padEnd(4)} ${check.name} expected=${check.expected} actual=${check.actual}`,
+  );
 }
 
 fs.mkdirSync(path.dirname(reportPath), { recursive: true });
 fs.writeFileSync(
   reportPath,
-  `${JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    target,
-    contentVersion: seededManifest.contentVersion,
-    seedRunId: seededManifest.seedRunId,
-    checks,
-  }, null, 2)}\n`,
-  'utf8',
+  `${JSON.stringify(
+    {
+      generatedAt: new Date().toISOString(),
+      target,
+      contentVersion: seededManifest.contentVersion,
+      seedRunId: seededManifest.seedRunId,
+      checks,
+    },
+    null,
+    2,
+  )}\n`,
+  "utf8",
 );
 
 const failures = checks.filter((check) => check.blocking && !check.passed);
 if (failures.length > 0) {
-  console.error(`\nVerification failed: ${failures.length} blocking check(s). Report: ${reportPath}\n`);
+  console.error(
+    `\nVerification failed: ${failures.length} blocking check(s). Report: ${reportPath}\n`,
+  );
   process.exit(1);
 }
 console.log(`\nVerification passed. Report: ${reportPath}\n`);

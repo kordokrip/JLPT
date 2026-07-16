@@ -311,3 +311,13 @@ Backup은 D1 export가 query를 차단할 수 있으므로 `production` Environm
 | Chromium Browse E2E | `vocab-search.spec.ts` 4 PASS, `/browse/homophones`의 출처·검수 UI 확인 |
 
 fresh verifier의 유일한 warning은 미생성 R2 audio 4,954건이며 TD-08 범위로 유지했다. verifier 최소값을 낮추지 않았고, production D1/R2, Workers, Pages에는 이 변경을 배포하지 않았다. 이에 따라 TD-07은 코드·데이터 관문 기준 `검증 완료`로 갱신한다.
+
+## 18. N2/N1 후보 격리와 R1 검증 안정화 (2026-07-17 KST)
+
+R1의 `naturalKeys`, 빈 한국어 뜻 실패를 유지하고 `의미 (한국어)` 헤더만 추가로 허용했다. 후보 파서 수량은 N2 한자 367, 어휘 1,905(원천 `やかん` 중복 1건 제외), 문법 130, N1 한자 1,232, 어휘 2,699, 문법 135로 대조됐다. DB typecheck와 18개 DB 단위 테스트는 통과했다.
+
+격리 브랜치의 `audit:n2n1`은 후보 9개 파일의 provenance 헤더와 실제 표 행의 검수 태그를 확인한다. 결과는 `AUTO` 2,674건, `EN` 1,931건, 합계 4,605건과 200건 단위 24개 배치(마지막 5개)였다. provenance 기록은 9/9이지만 한자음 원자료 라이선스, 문법 원전 서지, 모든 한국어 의미의 편집 검수가 완료되지 않아 release-ready는 `false`다. 따라서 후보 9개는 manifest·`CONTENT_PATHS`·migration·공개 API·production seed에 등록하지 않았다. 이는 N5~N3 provenance와 동음이의어 검증으로 완료된 TD-07 판정을 변경하지 않는다.
+
+운영 seed 범위에는 N2/N1 파일이 없음을 `seed:diff`로 확인했다. 기존 verifier가 D1 count를 쿼리마다 별도 Wrangler 프로세스로 실행해 CI 시간 한도에 닿을 수 있던 문제는 동일한 row/checksum·FTS parity·FK·필수값·중복 검사를 한 D1 JSON batch로 묶어 해결했다. 그 결과 운영 13-source `verify:fresh`는 migration 7/7, FTS(vocab 3,300 / sentences 1,112), FK·중복·필수값 0으로 통과했다. 오디오 4,954건은 TD-08 정책대로 warning으로 남겼으며 최소값을 낮추지 않았다.
+
+WebKit 전체 E2E 중 같은-origin `127.0.0.1:5173`의 빠른 route 전환이 합성 access-control page error로 보고되던 테스트 누락을 보완했다. 실제 request failure/HTTP 4xx 검출은 유지한다. 비밀번호/OAuth 로그인 완료 직후 이전 익명 세션 probe가 상태를 덮어쓰지 않도록 auth store를 보강하고 단위 회귀를 추가했다. 최종 결과는 Chromium 65/65, WebKit 51/51 통과(Chromium 전용 14 skipped)다. 이 검증은 후보 문서의 출시 승인이 아니라 R1 파이프라인 회귀 확인이다.
