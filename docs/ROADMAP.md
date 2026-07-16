@@ -1,6 +1,6 @@
 # nihongo-n3 릴리스 로드맵
 
-기준일: 2026-07-15 KST
+기준일: 2026-07-16 KST
 원칙: JLPT N3 운영 안정화가 우선이며 R1, R2, R3를 독립 릴리스한다.
 
 ## 릴리스 순서
@@ -33,8 +33,8 @@ R1 기반 정상화
 
 ### 운영 전 남은 일
 
-1. GitHub billing lock을 해제한다.
-2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다.
+1. GitHub billing lock을 해제한다. **완료**
+2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: Audit·CodeQL·Required Verification·fresh D1은 정상화됐고 Backup은 전용 Cloudflare secret 대기다.
 3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
 4. 7개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
 5. content phase를 복사하고 검증한다.

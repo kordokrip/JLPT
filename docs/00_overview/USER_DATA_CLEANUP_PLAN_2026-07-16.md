@@ -2,7 +2,7 @@
 
 기준일: 2026-07-16 KST
 
-상태: **backup dry-run 완료 / production 실행 전**
+상태: **production remote dry-run 완료 / 사람 승인 실행 전**
 
 ## 1. 목적과 원칙
 
@@ -12,11 +12,11 @@
 
 ## 2. 교차검증 결과
 
-근거는 2026-07-15 02:32 UTC에 생성된 `nihongo-n3-prod` backup이다. 이 자료는 현재 실시간 DB가 아니므로 삭제 실행 근거로 사용할 수 없고 규모 확인용으로만 사용한다.
+2026-07-15 02:32 UTC에 생성된 `nihongo-n3-prod` backup과 2026-07-15 16:16 UTC production remote dry-run을 독립적으로 비교했다. 두 결과의 회원·연관 row 수가 일치했다. backup은 23개 일반 테이블의 SHA-256과 row count를 포함하며 2026-07-15 16:50 UTC에 fresh local D1 restore drill을 다시 통과했다.
 
 | 구분                    | 수량 | 판정                                   |
 | ----------------------- | ---: | -------------------------------------- |
-| 전체 회원               |   67 | backup 기준                            |
+| 전체 회원               |   67 | backup·remote 일치                     |
 | 보존 회원               |    2 | `ko***@gmail.com`, `no***@icloud.com`  |
 | 테스트 회원 후보        |   65 | `example.com` 64, `nihongo-n3.local` 1 |
 | 비인식 도메인 삭제 후보 |    0 | 안전 조건 통과                         |
@@ -40,14 +40,18 @@
 
 독립 SQL 집계와 `d1:users:cleanup` backup dry-run이 모두 회원 `67 / 2 / 65`와 동일한 연관 row 수를 반환했다. PII 최소화 plan hash는 `.artifacts/user-cleanup/backup-dry-run-2026-07-16.json`에 보존했다. 같은 백업의 local restore drill은 migration 7개와 일반 테이블 23개를 복원한 뒤 row count, SHA-256, FTS parity, FK 검사를 통과했다.
 
+최신 remote plan을 2026-07-16 KST에 다시 생성했으며 `67 / 2 / 65`, 삭제 연관 row 327건으로 일치했다. `ko***@gmail.com`은 이미 `admin`, `no***@icloud.com`은 `user`다. 따라서 별도 role 변경은 필요하지 않다. 애플리케이션의 관리자 route는 `admin` role을 단일 권한 기준으로 사용하고, 일반 회원 세션에는 403을 반환하는 회귀 테스트를 추가했다. 실제 이메일·user ID·fingerprint는 GitHub와 이 문서에 기록하지 않는다.
+
 ## 3. 현재 차단 조건
 
-- 루트 `.env.local`의 `CLOUDFLARE_API_TOKEN`, `OBSERVABILITY_API_TOKEN`은 값이 존재하지만 Cloudflare verify endpoint에서 모두 `Invalid API Token`이다.
-- 따라서 최신 production 회원 inventory와 remote dry-run을 아직 만들 수 없다.
-- GitHub Actions는 최신 PR SHA에서도 billing lock으로 runner가 시작되지 않는다.
-- 현재 backup은 24시간 실행 유효기간을 넘길 수 있으므로 새 backup이 필수다.
+- `apps/web/.env.local`의 account-owned token은 account token verify와 D1 Read probe를 통과했다. remote dry-run까지 완료했다.
+- GitHub billing lock은 해제됐고 runner가 정상 시작된다.
+- 현재 token은 D1 Read 전용이므로 production 삭제를 실행할 수 없다. 실행 runner에는 별도의 최소권한 D1 Write token이 필요하다.
+- GitHub `production` Environment는 `kordokrip` 필수 검토자와 `main` 전용 정책으로 생성했다. 실제 `--execute`와 UI 승인은 사람이 수행해야 한다.
+- GitHub에는 `CLOUDFLARE_ACCOUNT_ID`만 등록돼 있다. 범용 `CLOUDFLARE_API_TOKEN`은 비어 있으며 D1 Read token을 Pages/Workers/R2 write token으로 재사용하지 않는다.
+- remote plan은 생성 후 60분, backup은 생성 후 24시간만 유효하다. 승인 직전에 둘 다 다시 확인하고 만료됐다면 새로 생성한다.
 
-토큰 값은 로그나 문서에 출력하지 않는다. 필요한 권한은 대상 account의 D1 Read이며, 실제 실행용 승인 runner에는 D1 Edit가 별도로 필요하다.
+토큰 값은 로그나 문서에 출력하지 않는다. D1 Read, D1 Write, R2 backup, Pages deploy, Workers deploy는 용도별 최소권한 token으로 분리한다.
 
 ## 4. 안전장치
 
@@ -68,10 +72,11 @@
 
 ### A. 자격 증명과 최신 inventory
 
-1. Cloudflare API token을 새로 만들거나 활성 토큰으로 교체한다.
-2. token verify가 `active`인지 값 없이 확인한다.
-3. 최신 production backup과 restore drill을 승인된 workflow에서 완료한다.
-4. 실제 2명의 마스킹 계정이 `ko***@gmail.com`, `no***@icloud.com`인지 사람이 확인한다.
+1. D1 Read token의 account token verify와 remote D1 query를 확인한다. **완료**
+2. 실제 2명의 마스킹 계정과 `admin`/`user` role을 확인한다. **완료**
+3. 24시간 이내 production backup과 restore drill을 확인한다. **현재 backup 기준 완료, 실행 시각에 재검사 필요**
+4. production Environment의 필수 검토자와 `main` branch policy를 확인한다. **완료**
+5. 실행 전용 D1 Write token을 `production` Environment secret으로 등록한다. **미완료**
 
 ### B. Remote dry-run
 
@@ -106,11 +111,11 @@ pnpm -F @nihongo-n3/db d1:users:cleanup -- \
 
 ## 6. 이후 계획
 
-1. **회원 정리:** 최신 remote dry-run, 사람 승인, 삭제 후 사용자 2명·FK 정상 확인.
-2. **R1 CI:** GitHub billing lock 해제 후 PR #31의 Audit, CodeQL, Required Verification, Chromium/WebKit을 같은 SHA에서 재실행.
-3. **pnpm audit:** Node.js `>=22.13`과 pnpm 11 전환을 별도 검증해 bulk advisory endpoint로 복구.
-4. **prod-v2:** R1 merge 뒤 Blue/Green runbook으로 migration 7/7, content/mutable 이전, 30분 read-only 검증.
-5. **오디오 R2:** prod-v2 이후 30문장 사람 청감, provider 승인, N5→N4→N3 순차 batch, `verify:remote:audio` 누락 0.
-6. **운영 안정화:** 24시간 관측 후 TD-10, TD-14, TD-08 상태를 실제 원격 증거로 갱신.
+1. **R1 CI 마감:** PR #31의 Chromium/WebKit과 Backup을 같은 SHA에서 통과시킨다. Audit, CodeQL, Required Verification, fresh D1은 billing 해제 후 정상 실행 중이다.
+2. **Backup secret:** R2 write와 D1 export에 필요한 전용 `CLOUDFLARE_BACKUP_API_TOKEN`을 `production` Environment에 등록하고 Backup 원격 run·restore drill 증거를 확보한다.
+3. **회원 정리:** 실행 직전 backup/remote plan을 재생성하고 사람이 `production` Environment를 승인한다. 삭제 후 사용자 2명, admin role, 잔여 참조 0, FK 0을 확인한다.
+4. **R1 merge:** 모든 required check와 Backup 성공 후 PR #31을 merge한다.
+5. **prod-v2:** Blue/Green runbook으로 migration 7/7, content/mutable 이전, preview smoke와 30분 read-only 검증을 수행한다.
+6. **오디오 R2:** prod-v2 이후 30문장 사람 청감, provider 승인, N5→N4→N3 순차 batch, `verify:remote:audio` 누락 0을 수행한다.
 
 회원 삭제와 prod-v2 이전을 같은 변경 창에서 동시에 수행하지 않는다. 회원 정리를 먼저 완료하고 검증된 2명만 mutable phase로 이전한다.

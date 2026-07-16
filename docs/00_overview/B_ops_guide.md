@@ -176,6 +176,31 @@ GitHub billing annotation으로 job이 시작되지 않은 실패는 코드 실�
 
 Workers/Pages production deploy는 workflow_dispatch와 `production` Environment approval로만 실행한다. push나 PR은 검증 또는 preview까지만 수행한다.
 
+2026-07-16 기준 `production` Environment는 `kordokrip` 필수 검토자와 `main` branch policy로 구성했다. 단독 관리자 저장소이므로 `prevent_self_review=false`지만, 승인 클릭과 확인문을 생략할 수는 없다. Environment가 승인되기 전에는 secret에 접근할 수 없다.
+
+Cloudflare token은 용도별로 분리한다. D1 Read token을 범용 `CLOUDFLARE_API_TOKEN`으로 등록하지 않는다.
+
+| 용도 | 최소 권한 | 현재 상태 |
+| --- | --- | --- |
+| D1 inventory/cleanup dry-run | 대상 account D1 Read | 로컬 active·검증 완료 |
+| D1 migration/user cleanup execute | 대상 account D1 Write | `production` Environment 등록 대기 |
+| Backup `CLOUDFLARE_BACKUP_API_TOKEN` | D1 export/read + reports bucket R2 Object Write/lifecycle | `production` Environment 등록 대기 |
+| Pages preview/production | Cloudflare Pages Edit | 등록 대기 |
+| Workers production | Workers Scripts Edit와 필요한 binding read | 등록 대기 |
+
+비밀이 아닌 repository variables `VITE_API_URL`, `API_BASE_URL`, `WEB_BASE_URL`과 account ID 이름은 등록돼 있다. token 값은 문서·artifact·로그에 출력하지 않는다.
+
+`wrangler d1 export`와 D1 export REST API는 export 동안 다른 query를 차단할 수 있다. 따라서 Backup은 낮은 트래픽의 승인된 maintenance/read-only window에서만 실행하고, GitHub `production` Environment 승인 전에는 secret에 접근할 수 없게 한다. schedule run도 자동 실행하지 않고 사람이 maintenance window를 확인한 뒤 승인한다. export 시작부터 signed URL 완료까지 계속 polling하며, 중간에 polling을 중단해 export를 방치하지 않는다. R2 lifecycle은 전체 rules를 PUT으로 덮어쓰지 않고 `backups-30d-expiry` rule만 제거·재생성해 기존 Logpush/alert rule을 보존한다.
+
+로컬 또는 승인 runner에서 backup 도구를 직접 호출할 때도 downtime 인지를 명시해야 한다.
+
+```bash
+pnpm -F @nihongo-n3/db d1:backup -- \
+  --database=nihongo-n3-prod \
+  --out=.artifacts/d1-backup \
+  --allow-downtime
+```
+
 ## 9. 배포 후 관측
 
 ### 9.1 알림 대상과 기준

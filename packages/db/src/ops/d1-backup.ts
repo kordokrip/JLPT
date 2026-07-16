@@ -9,8 +9,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const database = process.argv.find((arg) => arg.startsWith('--database='))?.split('=')[1] ?? '';
 const outputDir = path.resolve(root, process.argv.find((arg) => arg.startsWith('--out='))?.split('=').slice(1).join('=') ?? '.artifacts/d1-backup');
 const config = path.resolve(root, process.argv.find((arg) => arg.startsWith('--config='))?.split('=').slice(1).join('=') ?? 'apps/api/wrangler.toml');
+const allowDowntime = process.argv.includes('--allow-downtime');
 
 if (!database) throw new Error('--database=<database> is required');
+if (!allowDowntime) {
+  throw new Error(
+    'D1 export blocks queries while it runs; pass --allow-downtime only in an approved maintenance window',
+  );
+}
 fs.mkdirSync(outputDir, { recursive: true });
 
 const files = D1_TRANSFER_TABLES.map((table) => {
@@ -18,7 +24,8 @@ const files = D1_TRANSFER_TABLES.map((table) => {
   fs.rmSync(file, { force: true });
   execFileSync('pnpm', [
     'exec', 'wrangler', 'd1', 'export', database, '--remote',
-    `--table=${table.name}`, '--no-schema', `--output=${file}`, `--config=${config}`,
+    `--table=${table.name}`, '--no-schema', '--skip-confirmation',
+    `--output=${file}`, `--config=${config}`,
   ], { cwd: root, stdio: 'inherit' });
   const countRaw = execFileSync('pnpm', [
     'exec', 'wrangler', 'd1', 'execute', database, '--remote', '--json',
