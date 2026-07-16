@@ -71,7 +71,7 @@ export default defineConfig({
           gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 },
         },
         {
-          command: "VITE_PWA_DEV_SW=false pnpm -F @nihongo-n3/web dev",
+          command: "VITE_PWA_DEV_SW=false corepack pnpm -F @nihongo-n3/web dev",
           port: 5173,
           reuseExistingServer: !process.env.CI,
           timeout: 60_000,

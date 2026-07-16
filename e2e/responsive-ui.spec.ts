@@ -54,21 +54,27 @@ test.describe("반응형 UI 안전성", () => {
     test(`${device.name}: 주요 화면이 viewport를 넘지 않는다`, async ({
       page,
     }) => {
-      await page.setViewportSize({
-        width: device.width,
-        height: device.height,
-      });
       await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
         await test.step(`${device.name} ${route}`, async () => {
-          await waitForStableLayout(page, route);
-          await expect
-            .poll(() => page.evaluate(expectNoHorizontalOverflow), {
-              message: `${device.name} ${route} horizontal overflow`,
-              timeout: 10_000,
-            })
-            .toBe(true);
+          const routePage = await page.context().newPage();
+          await routePage.setViewportSize({
+            width: device.width,
+            height: device.height,
+          });
+
+          try {
+            await waitForStableLayout(routePage, route);
+            await expect
+              .poll(() => routePage.evaluate(expectNoHorizontalOverflow), {
+                message: `${device.name} ${route} horizontal overflow`,
+                timeout: 10_000,
+              })
+              .toBe(true);
+          } finally {
+            await routePage.close();
+          }
         });
       }
     });

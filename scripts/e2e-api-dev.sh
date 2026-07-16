@@ -24,7 +24,7 @@ if [[ "${E2E_SKIP_DB_BOOTSTRAP:-}" != "1" ]]; then
   rm -rf "$PERSIST_TO"
   mkdir -p "$PERSIST_TO"
   echo "[e2e] applying canonical D1 migrations"
-  pnpm exec wrangler d1 migrations apply DB \
+  CI=1 pnpm exec wrangler d1 migrations apply DB \
     --local \
     --persist-to "$PERSIST_TO" \
     --config "$WRANGLER_CONFIG"
