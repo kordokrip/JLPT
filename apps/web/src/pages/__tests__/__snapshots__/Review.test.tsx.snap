@@ -1,0 +1,118 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Review page baseline > keeps the due-card review screen stable before feature extraction 1`] = `
+<DocumentFragment>
+  <div
+    class="app-page"
+  >
+    <div
+      class="mb-5 flex items-start justify-between gap-4"
+    >
+      <div>
+        <h1
+          class="font-serif-jp text-[var(--text-xl)] font-normal leading-tight text-foreground"
+        >
+          복습
+        </h1>
+        <p
+          class="mt-1 text-sm text-[var(--muted-foreground)]"
+        >
+          SRS 간격 반복 학습
+        </p>
+      </div>
+      <div
+        class="rounded-[var(--radius-md)] bg-[var(--surface-alt)] px-3 py-2 text-right"
+        data-visual-dynamic="true"
+      >
+        <div
+          class="text-base font-semibold text-foreground"
+        >
+          1 / 1
+        </div>
+        <div
+          class="text-xs text-[var(--muted-foreground)]"
+        >
+          0 완료
+        </div>
+      </div>
+    </div>
+    <div
+      aria-valuemax="1"
+      aria-valuemin="0"
+      aria-valuenow="0"
+      class="w-full rounded-full bg-[var(--muted)] overflow-hidden h-1.5 mb-5"
+      data-visual-dynamic="true"
+      role="progressbar"
+    >
+      <div
+        class="h-full rounded-full transition-[width] duration-300 bg-primary"
+        style="width: 0%;"
+      />
+    </div>
+    <div
+      data-testid="srs-card"
+    >
+      確認 / 확인
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Review page baseline > keeps the empty review screen stable before feature extraction 1`] = `
+<DocumentFragment>
+  <div
+    class="app-page flex min-h-[70vh] items-center justify-center"
+  >
+    <div
+      class="rounded-[var(--radius-lg)] bg-[var(--card)] border border-[var(--card-border)] shadow-[var(--shadow-soft)] w-full max-w-[620px] p-6 text-center sm:p-8"
+    >
+      <h1
+        class="mb-3 font-serif-jp text-[var(--text-2xl)] font-normal text-foreground"
+      >
+        오늘 복습 없음
+      </h1>
+      <p
+        class="mb-5 text-sm leading-6 text-[var(--muted-foreground)]"
+      >
+        오늘 복습할 카드가 없습니다
+      </p>
+      <div
+        class="surface-panel mx-auto mb-7 max-w-[480px] p-4 text-left"
+      >
+        <p
+          class="mb-1 text-sm font-semibold text-foreground"
+        >
+          처음이라면 N3 어휘 카드로 시작하세요
+        </p>
+        <p
+          class="text-sm leading-6 text-[var(--muted-foreground)]"
+        >
+          서버 어휘 데이터에서 카드 10장을 만들어 바로 복습 루프를 시작합니다. 이후 복습 기록에 따라 간격이 자동 조정됩니다.
+        </p>
+      </div>
+      <div
+        class="flex flex-col gap-3 sm:flex-row sm:justify-center"
+      >
+        <button
+          class="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] font-medium transition-all duration-[var(--transition-fast)] select-none press-feedback focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none bg-primary text-white shadow-sm hover:bg-primary-hover active:scale-[0.98] min-h-12 px-6 text-base"
+          disabled=""
+          type="button"
+        >
+          카드 10장 시작
+        </button>
+        <button
+          class="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] font-medium transition-all duration-[var(--transition-fast)] select-none press-feedback focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none border border-[var(--border)] bg-[var(--card)] text-[var(--text-primary)] hover:bg-accent-soft-20 min-h-12 px-6 text-base"
+        >
+          새로고침
+        </button>
+        <a
+          class="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] font-medium transition-all duration-[var(--transition-fast)] select-none press-feedback focus-visible:outline-2 focus-visible:outline-[var(--color-primary)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-[var(--text-primary)] hover:bg-accent-soft-20 min-h-12 px-6 text-base"
+          href="/"
+        >
+          홈으로 돌아가기
+        </a>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
