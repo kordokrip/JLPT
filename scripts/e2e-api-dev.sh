@@ -3,8 +3,22 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-PERSIST_TO="${E2E_D1_PERSIST_TO:-$ROOT_DIR/.artifacts/e2e/d1}"
 WRANGLER_CONFIG="${E2E_WRANGLER_CONFIG:-$ROOT_DIR/apps/api/wrangler.test.toml}"
+
+if [[ -n "${E2E_D1_PERSIST_TO:-}" ]]; then
+  PERSIST_TO="$E2E_D1_PERSIST_TO"
+  CLEANUP_PERSIST_TO=0
+else
+  PERSIST_TO="${TMPDIR:-/tmp}/nihongo-n3-e2e-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}"
+  CLEANUP_PERSIST_TO=1
+fi
+
+cleanup() {
+  if [[ "$CLEANUP_PERSIST_TO" == "1" ]]; then
+    rm -rf "$PERSIST_TO"
+  fi
+}
+trap cleanup EXIT INT TERM
 
 if [[ "${E2E_SKIP_DB_BOOTSTRAP:-}" != "1" ]]; then
   rm -rf "$PERSIST_TO"
