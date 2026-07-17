@@ -1,8 +1,8 @@
 # JLPT 워크스페이스 통합 분석 보고서
 
-기준일: 2026-07-15 KST
-기준 브랜치: `refactor/tech-debt-r1`
-기준 HEAD: `d88cb88`에서 시작한 미배포 작업 트리
+기준일: 2026-07-18 KST
+기준 브랜치: `release/2026-07-18-integration`
+기준 상태: R1 이후 검증된 변경을 통합한 production 미배포 후보
 
 ## 1. 결론
 
@@ -10,32 +10,32 @@
 
 2026-07-15 리팩토링은 기능 추가보다 다음 기반을 먼저 정상화했다.
 
-1. D1 스키마를 `packages/db/drizzle-v2`의 7개 migration ledger로 수렴했다.
+1. D1 스키마를 `packages/db/drizzle-v2`의 9개 migration ledger로 수렴했다.
 2. 런타임 DDL과 위험한 diff seed를 제거하고 fresh migrate/seed/verify를 CI 관문으로 만들었다.
-3. 공개 52 paths/56 operations, 관리자 7 paths/8 operations의 OpenAPI 명세와 생성 타입을 만들었다.
+3. 공개 53 paths, 관리자 7 paths의 OpenAPI 명세와 생성 타입을 만들었다.
 4. 앱 세션, Google OAuth bridge, Cloudflare Access 모드, read-only cutover를 독립 테스트했다.
 5. R2 고정 오디오 우선 정책과 승인된 Google 배치 경로를 코드화했다.
-6. `LearningTrackId`와 사용자×트랙 로컬 namespace를 도입하고 TOPIK foundation 화면만 열었다.
+6. `LearningTrackId`와 사용자×트랙 로컬·서버 namespace를 도입하고 TOPIK T1~T3 내부 기반을 공개 콘텐츠와 분리했다.
 
-현재 production 배포 판정은 **HOLD**다. 이유는 GitHub billing lock 해제와 필수 Actions 성공이 확인되지 않았고, 새 `nihongo-n3-prod-v2` 생성·이전·승인 절차를 실행하지 않았으며, R2 오디오 키 4,954건이 비어 있기 때문이다.
+현재 production 배포 판정은 **HOLD**다. GitHub billing lock은 해제됐지만 현재 통합 SHA의 필수 Actions와 Backup 성공이 아직 없고, 배포별 최소권한 Environment secret, 새 `nihongo-n3-prod-v2` 생성·이전·승인 절차가 남아 있다. R2 오디오 키 4,954건은 R2 완료를 별도로 차단한다.
 
 ## 2. 검증 스냅샷
 
-| 항목 | 2026-07-15 결과 | 판정 |
+| 항목 | 2026-07-18 결과 | 판정 |
 | --- | ---: | --- |
 | 패키지 타입 검사 | web/api/db/shared/content 통과 | 정적 관문 통과 |
-| API 통합 테스트 | 3 files, 78 tests 통과 | 실행 관문 통과 |
-| Web 단위 테스트 | 11 files, 33 tests 통과 | 실행 관문 통과 |
+| API 통합 테스트 | 4 files, 95 tests 통과 | 실행 관문 통과 |
+| Web 단위 테스트 | 23 files, 60 tests 통과 | 실행 관문 통과 |
 | Web/API build | Vite PWA, Wrangler dry-run 통과 | 빌드 관문 통과 |
 | Dependency audit | 알려진 high 이상 취약점 0 | 감사 통과 |
-| fresh D1 migrations | 7/7 적용 | ledger 검증 통과 |
+| fresh D1 migrations | 9/9 적용 | ledger 검증 통과 |
 | seed manifest | 13 sources, checksum·row count 일치 | 데이터 관문 통과 |
 | 적재량 | vocab 3,300 / grammar 316 / kanji 542 / sentences 1,112 / sysprog 82 / curriculum 52 | N5~N3 기준 |
 | FTS | vocab 3,300 / sentences 1,112 parity | 검색 인덱스 통과 |
-| OpenAPI | public 52 paths, admin 7 paths | route coverage 통과 |
-| 브라우저 회귀 | Chromium 65/65, WebKit 51/51 통과(시각 회귀 14건은 Chromium 전용으로 skip) | 로컬 browser matrix 통과 |
+| OpenAPI | public 53 paths, admin 7 paths | route coverage 통과 |
+| 브라우저 회귀 | Chromium 69/69, WebKit 55/55 통과(시각 회귀 14건은 Chromium 전용으로 skip) | 로컬 browser matrix 통과 |
 | R2 audio | `audio_r2_key` 4,954건 누락 | R2 릴리스 차단 |
-| GitHub required checks | billing lock 해제·원격 성공 미확인 | production 차단 |
+| GitHub required checks | billing 해제 확인, 통합 SHA 원격 실행 전 | production 차단 |
 
 ## 3. 실제 아키텍처
 
@@ -59,7 +59,7 @@ e2e             Chromium/WebKit Playwright 회귀
 | Architecture | 검증 | 모노레포 경계와 소유권 분리 | ADR 인덱스 추가 |
 | Backend | 검증 | 78 API tests, Wrangler dry-run | preview smoke 전체 실행 |
 | Content | 부분 | N5~N3 13 source manifest | provenance/오디오 완성 |
-| D1 | 구현 | 7개 canonical migration | prod-v2 Blue/Green 미실행 |
+| D1 | 구현 | 9개 canonical migration | prod-v2 Blue/Green 미실행 |
 | Edge | 부분 | Workers/Pages/D1/R2 설정 | Logpush/alerts 운영 확인 |
 | Frontend | 검증 | build + 33 unit + Chromium/WebKit E2E | preview smoke |
 | Governance | 개선 | 변경 제어 workflow, runbook | branch protection 확인 |
@@ -68,7 +68,7 @@ e2e             Chromium/WebKit Playwright 회귀
 | Jobs | 부분 | weekly/push/FSRS jobs | optimizer 연결 여부 결정 |
 | Knowledge | 부분 | 문서와 코드 연결 | 오래된 16주 파일명 정리 |
 | Logging | 구현 | request/release/route/status/latency JSON | 알림·보존 정책 운영 설정 |
-| Migration | 검증 | fresh 7/7, FK/FTS parity | prod-v2 ledger 생성 |
+| Migration | 검증 | fresh 9/9, FK/FTS parity | prod-v2 ledger 생성 |
 | Notifications | 부분 | Push API 존재 | 실제 VAPID smoke |
 | Offline | 검증 | IDB account×track namespace, Chromium/WebKit E2E | production cache 모니터링 |
 | Parser | 검증 | 의미 헤더·빈 뜻·중복 검사 | fixture 확대 |
@@ -107,7 +107,7 @@ e2e             Chromium/WebKit Playwright 회귀
 - 콘텐츠 API의 vocab/grammar/kanji 영역은 generated OpenAPI path/parameter 타입을 사용한다.
 - 콘텐츠 버전이 바뀌면 IndexedDB mirror를 무효화한다.
 - SRS, review, quiz, self-check, sync queue의 로컬 식별자는 `user:{id}|track:{track}`이다.
-- TOPIK은 foundation-only다. 기존 JLPT route는 `jlpt-ja` compatibility façade이며 TOPIK 문제은행·채점은 아직 없다.
+- TOPIK은 foundation-only다. 기존 JLPT route는 `jlpt-ja` compatibility façade다. 자체 저작 12문항은 내부 schema/manifest 검증용이며 공개 문제은행·채점·추천 API는 아직 없다.
 
 ### 5.4 오디오
 
@@ -134,7 +134,7 @@ e2e             Chromium/WebKit Playwright 회귀
 다음 조건이 모두 참이 되기 전 production 배포를 실행하지 않는다.
 
 1. GitHub billing lock 해제와 Audit, CodeQL, Required Verification, E2E, Backup 성공.
-2. `nihongo-n3-prod-v2` 생성, migration 7개 적용, 일반 테이블 이전과 restore drill 성공.
+2. `nihongo-n3-prod-v2` 생성, migration 9개 적용, 일반 테이블 이전과 restore drill 성공.
 3. preview에서 password, OAuth callback, session 유지, admin, sync queue smoke 성공.
 4. R2 릴리스이면 30표본 청감 승인과 `verify:remote:audio` 통과.
 5. production environment 수동 승인.

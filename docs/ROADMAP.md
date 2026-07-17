@@ -1,6 +1,6 @@
 # nihongo-n3 릴리스 로드맵
 
-기준일: 2026-07-16 KST
+기준일: 2026-07-18 KST
 원칙: JLPT N3 운영 안정화가 우선이며 R1, R2, R3를 독립 릴리스한다.
 
 ## 릴리스 순서
@@ -19,7 +19,7 @@ R1 기반 정상화
 ### 구현 완료
 
 - 현재 N2/N1 작업을 WIP branch에 격리
-- `drizzle-v2/0000`~`0007` canonical migration 구성
+- `drizzle-v2/0000`~`0008` canonical migration 구성
 - 일반 table은 Drizzle, FTS는 SQL migration으로 소유권 분리
 - runtime OAuth DDL 제거
 - manifest v2의 source별 provenance·row/checksum·version/parser version과 FTS/FK/필수값 검증
@@ -30,13 +30,16 @@ R1 기반 정상화
 - route inventory와 OpenAPI coverage test 추가
 - request ID/release SHA/route/status/latency/auth mode JSON log 추가
 - fresh D1 기반 CI, manual production change workflow 추가
+- Quiz·Review·Stats를 view/hook/logic/type feature module로 분리하고 기존 동작 snapshot 고정
+- N2/N1은 실제 DB 분포가 release 조건을 충족할 때만 노출하도록 server-derived gate 적용
+- TOPIK T1~T3의 ADR, track-aware schema, 비공개 자체 저작 12문항 검증 기반 추가
 
 ### 운영 전 남은 일
 
 1. GitHub billing lock을 해제한다. **완료**
-2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: SHA `8047e57d9c9f`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했고, Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다.
+2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: 이전 R1 SHA `8047e57d9c9f`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했다. 2026-07-18 통합 SHA는 원격 재검증이 필요하고 Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다.
 3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
-4. 8개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
+4. 9개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
 5. content phase를 복사하고 검증한다.
 6. 10~15분 read-only에서 mutable phase와 유효 session을 최종 동기화한다.
 7. preview smoke 후 Worker DB binding을 전환한다.
@@ -44,7 +47,7 @@ R1 기반 정상화
 
 ### R1 완료 정의
 
-- blank DB와 prod-v2에 migration 8/8
+- blank DB와 prod-v2에 migration 9/9
 - source/target 일반 table count 및 checksum 일치
 - FTS rebuild와 parity 일치
 - password login, Google OAuth callback, session 유지, admin, sync queue 성공
@@ -98,18 +101,26 @@ R1 기반 정상화
 - TOPIK foundation-only 화면
 - 기존 JLPT route의 compatibility façade
 
+### T1~T3 내부 구현 완료
+
+- 대상 사용자·영어 기본 설명·privacy/retention 계약을 ADR로 기록
+- 서버 학습 table과 FSRS key를 user×track 기준으로 확장
+- JLPT와 분리된 track source/exam level/seed provenance schema 추가
+- 자체 저작 TOPIK I placement 12문항을 local D1 verifier로 이중 검증
+- Chromium/WebKit에서 local·server account×track 격리 확인
+
 ### 현재 제한
 
-- TOPIK 문제은행, 채점, 레벨 진단, 추천 과정은 없다.
-- 서버 학습 table은 아직 JLPT compatibility route를 사용한다.
+- 12문항은 내부 QA bank이며 public seed, OpenAPI, 온보딩 CTA에 등록하지 않는다.
+- 공개 채점, 레벨 진단, 추천 과정, TOPIK 학습 API는 아직 없다.
 - TOPIK 화면은 출시 약속이 아니라 저장소·라우팅 경계를 검증하는 foundation이다.
 
 ### TOPIK 콘텐츠 릴리스 순서
 
-1. 영어 설명을 기본으로 할 대상 사용자와 UI 언어 정책 확정
-2. TOPIK level/section/content provenance 계약 설계
-3. 별도 migration과 manifest 작성
-4. 검수된 최소 문제은행으로 placement test 구현
+1. 영어 설명을 기본으로 할 대상 사용자와 UI 언어 정책 확정 **내부 완료**
+2. TOPIK level/section/content provenance 계약 설계 **내부 완료**
+3. 별도 migration과 manifest 작성 **내부 완료**
+4. 검수된 최소 문제은행으로 placement test 구현 **문제은행 검증 완료, 공개 API 미구현**
 5. track-aware API `/api/v1/tracks/topik-ko/...` 구현
 6. 사용자×트랙 서버 데이터 격리 검증
 7. Chromium/WebKit account×track E2E 통과

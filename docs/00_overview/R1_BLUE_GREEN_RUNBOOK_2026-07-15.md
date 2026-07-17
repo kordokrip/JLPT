@@ -1,6 +1,6 @@
 # R1 D1 Blue/Green 전환 Runbook
 
-기준일: 2026-07-15 KST
+기준일: 2026-07-18 KST
 대상: `nihongo-n3-prod` -> `nihongo-n3-prod-v2`
 상태: 절차와 도구 구현, remote 실행 전
 
@@ -16,7 +16,7 @@
 
 1. 현재 SHA의 Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup 성공
 2. Cloudflare production backup과 fresh local restore drill 성공
-3. `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`가 GitHub Environment secret에 존재
+3. `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_WRITE_API_TOKEN`, `CLOUDFLARE_BACKUP_API_TOKEN`, `CLOUDFLARE_WORKERS_API_TOKEN`, `CLOUDFLARE_PAGES_API_TOKEN`이 각 workflow의 GitHub Environment secret에 존재
 4. Google OAuth callback, app origin, session secret 확인
 5. 담당자와 10~15분 read-only 창 합의
 6. 이전 전후 검증 report 보존 위치 확정
@@ -43,7 +43,7 @@ pnpm -F @nihongo-n3/db exec tsx src/ops/apply-migrations.ts \
   --database=nihongo-n3-prod-v2
 ```
 
-`d1_migrations`에 8개가 순서대로 기록됐는지 확인한다.
+`d1_migrations`에 9개가 순서대로 기록됐는지 확인한다.
 
 승인 실행이 끝난 뒤 CODEX는 다음 읽기 전용 명령으로 ledger를 검증하고 JSON을 보존한다.
 
@@ -53,7 +53,7 @@ pnpm -F @nihongo-n3/db migrate:verify -- \
   --out=.artifacts/r1-blue-green/migration-ledger.json
 ```
 
-`0000_schema_convergence.sql`부터 `0007_content_provenance_homophones.sql`까지 8개가 누락·추가·순서 차이 없이 일치해야 한다.
+`0000_schema_convergence.sql`부터 `0008_topik_track_content_and_learning_keys.sql`까지 9개가 누락·추가·순서 차이 없이 일치해야 한다. `0008`의 TOPIK 문제은행은 공개 seed가 아니라 schema와 사용자×트랙 key만 운영 적용하며, 내부 QA bank seed는 별도 출시 승인 전 실행하지 않는다.
 
 ## 3. 변경되지 않는 콘텐츠 이전
 

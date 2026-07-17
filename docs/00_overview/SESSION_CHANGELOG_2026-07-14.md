@@ -321,3 +321,20 @@ R1의 `naturalKeys`, 빈 한국어 뜻 실패를 유지하고 `의미 (한국어
 운영 seed 범위에는 N2/N1 파일이 없음을 `seed:diff`로 확인했다. 기존 verifier가 D1 count를 쿼리마다 별도 Wrangler 프로세스로 실행해 CI 시간 한도에 닿을 수 있던 문제는 동일한 row/checksum·FTS parity·FK·필수값·중복 검사를 한 D1 JSON batch로 묶어 해결했다. 그 결과 운영 13-source `verify:fresh`는 migration 7/7, FTS(vocab 3,300 / sentences 1,112), FK·중복·필수값 0으로 통과했다. 오디오 4,954건은 TD-08 정책대로 warning으로 남겼으며 최소값을 낮추지 않았다.
 
 WebKit 전체 E2E 중 같은-origin `127.0.0.1:5173`의 빠른 route 전환이 합성 access-control page error로 보고되던 테스트 누락을 보완했다. 실제 request failure/HTTP 4xx 검출은 유지한다. 비밀번호/OAuth 로그인 완료 직후 이전 익명 세션 probe가 상태를 덮어쓰지 않도록 auth store를 보강하고 단위 회귀를 추가했다. 최종 결과는 Chromium 65/65, WebKit 51/51 통과(Chromium 전용 14 skipped)다. 이 검증은 후보 문서의 출시 승인이 아니라 R1 파이프라인 회귀 확인이다.
+
+## 19. 2026-07-18 통합 release candidate와 배포 판정
+
+R1 기준선 위에 provenance·동음이의어 30쌍, DB 분포 기반 N2/N1 release gate, Quiz·Review·Stats feature module, TOPIK T1~T3 비공개 기반을 순차 통합했다. WIP N2/N1 후보 4,605건은 검수 태그가 남아 운영 manifest와 `CONTENT_PATHS`에서 제외했고, TOPIK 자체 저작 12문항은 public seed/API/CTA에 연결하지 않았다.
+
+로그인·로그아웃과 비동기 session probe의 순서가 뒤집힐 때 최신 인증 상태가 덮이는 경쟁 조건을 차단하고 회귀 테스트 3건을 추가했다. D1 verifier는 Wrangler JSON batch의 statement/result-set 수를 엄격히 대조하면서 기존 provenance, seed ledger, 동음이의어, row/FTS/FK/필수값·중복 검사를 모두 유지한다. Quiz snapshot은 track status를 fixture로 격리해 실행 중 로컬 API 연결 오류를 남기지 않는다.
+
+| 관문 | 결과 |
+| --- | --- |
+| OpenAPI | public 53 paths, admin 7 paths, generated drift 0 |
+| Type/Unit/Build | typecheck PASS, ops 8, DB 20, Web 60, API 95, Vite/Wrangler build PASS |
+| Fresh D1 | migration 9/9, source 13, FTS 3,300/1,112, FK·중복·필수값 0 |
+| TOPIK 내부 verifier | 12문항, source 1, level 2, 필수값·정답·중복·FK·checksum 0 |
+| Chromium | 69/69 PASS |
+| WebKit | 55/55 PASS, Chromium 전용 시각 회귀 14건 skip |
+
+`gh secret list`를 값 비노출로 다시 확인한 결과 repository-level `CLOUDFLARE_ACCOUNT_ID`만 있고 `production` Environment의 Workers·Pages·D1 write·Backup 전용 token은 없다. 따라서 통합 브랜치 push와 PR/원격 검증까지만 진행 가능하며, production Workers/Pages 배포, D1/R2 변경, prod-v2 전환은 사람 승인과 최소권한 secret이 준비될 때까지 실행하지 않는다. 상세 범위와 시계열은 [통합 시계열 문서](./REFACTORING_RELEASE_TIMELINE_2026-07-18.md)에 기록했다.
