@@ -19,6 +19,7 @@ import {
   integer,
   real,
   index,
+  primaryKey,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
@@ -47,6 +48,69 @@ export const sources = sqliteTable('sources', {
   version: text('version').notNull().default('1.0.0'),
   ...timestamps,
 });
+
+/** Separate source/provenance contract for each learning track. */
+export const trackContentSources = sqliteTable(
+  'track_content_sources',
+  {
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    sourceCode: text('source_code').notNull(),
+    title: text('title').notNull(),
+    filePath: text('file_path').notNull(),
+    sourceVersion: text('source_version').notNull(),
+    provenanceJson: text('provenance_json').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.learningTrack, t.sourceCode] }),
+  }),
+);
+
+export const trackExamLevels = sqliteTable(
+  'track_exam_levels',
+  {
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    examLevel: text('exam_level').notNull(),
+    sortOrder: integer('sort_order').notNull(),
+    labelEn: text('label_en').notNull(),
+    labelKo: text('label_ko').notNull(),
+    sectionsJson: text('sections_json').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.learningTrack, t.examLevel] }),
+  }),
+);
+
+export const trackContentSeedRuns = sqliteTable(
+  'track_content_seed_runs',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    contentVersion: text('content_version').notNull(),
+    parserVersion: text('parser_version').notNull(),
+    manifestSha256: text('manifest_sha256').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    trackVersionUk: uniqueIndex('track_content_seed_runs_track_version_uk').on(t.learningTrack, t.contentVersion),
+  }),
+);
+
+export const trackContentSeedSources = sqliteTable(
+  'track_content_seed_sources',
+  {
+    seedRunId: text('seed_run_id').notNull().references(() => trackContentSeedRuns.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    sourceCode: text('source_code').notNull(),
+    sourceChecksum: text('source_checksum').notNull(),
+    parserVersion: text('parser_version').notNull(),
+    provenanceJson: text('provenance_json').notNull(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.seedRunId, t.sourceCode] }),
+  }),
+);
 
 export const categories = sqliteTable(
   'categories',
@@ -319,6 +383,7 @@ export const srsCards = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
     itemType: text('item_type', {
       enum: ['vocab', 'grammar', 'kanji', 'sentence', 'sysprog', 'homophone'],
     }).notNull(),
@@ -341,9 +406,9 @@ export const srsCards = sqliteTable(
     ...timestamps,
   },
   (t) => ({
-    dueIdx: index('srs_cards_due_idx').on(t.userId, t.dueAt),
-    naturalUk: uniqueIndex('srs_cards_natural_uk').on(t.userId, t.itemType, t.itemId),
-    stateIdx: index('srs_cards_state_idx').on(t.userId, t.state),
+    dueIdx: index('srs_cards_track_due_idx').on(t.userId, t.learningTrack, t.dueAt),
+    naturalUk: uniqueIndex('srs_cards_track_natural_uk').on(t.userId, t.learningTrack, t.itemType, t.itemId),
+    stateIdx: index('srs_cards_track_state_idx').on(t.userId, t.learningTrack, t.state),
   }),
 );
 
@@ -371,6 +436,7 @@ export const dailyLogs = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
     date: text('date').notNull(),
     sourceCode: text('source_code'),
     itemsNew: integer('items_new').notNull().default(0),
@@ -382,7 +448,7 @@ export const dailyLogs = sqliteTable(
     ...timestamps,
   },
   (t) => ({
-    userDateUk: uniqueIndex('daily_logs_user_date_uk').on(t.userId, t.date),
+    userDateUk: uniqueIndex('daily_logs_track_date_uk').on(t.userId, t.learningTrack, t.date),
   }),
 );
 
@@ -391,6 +457,7 @@ export const quizAttempts = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
     quizType: text('quiz_type').notNull(),
     mode: text('mode'),
     level: text('level'),
@@ -406,8 +473,8 @@ export const quizAttempts = sqliteTable(
     ...timestamps,
   },
   (t) => ({
-    userIdx: index('quiz_attempts_user_idx').on(t.userId),
-    weekIdx: index('quiz_attempts_week_idx').on(t.userId, t.weekNo),
+    userIdx: index('quiz_attempts_track_user_idx').on(t.userId, t.learningTrack, t.createdAt),
+    weekIdx: index('quiz_attempts_track_week_idx').on(t.userId, t.learningTrack, t.weekNo),
   }),
 );
 
@@ -416,6 +483,7 @@ export const selfCheck = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
     weekNo: integer('week_no').notNull(),
     vocabScore: integer('vocab_score'),
     grammarScore: integer('grammar_score'),
@@ -431,7 +499,7 @@ export const selfCheck = sqliteTable(
     ...timestamps,
   },
   (t) => ({
-    userWeekUk: uniqueIndex('self_check_user_week_uk').on(t.userId, t.weekNo),
+    userWeekUk: uniqueIndex('self_check_track_week_uk').on(t.userId, t.learningTrack, t.weekNo),
   }),
 );
 
@@ -440,6 +508,7 @@ export const selfCheckTemplates = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     code: text('code').notNull().unique(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull().default('jlpt-ja'),
     level: text('level').notNull().default('N3'),
     category: text('category').notNull(),
     sortOrder: integer('sort_order').notNull(),
@@ -451,7 +520,22 @@ export const selfCheckTemplates = sqliteTable(
     ...timestamps,
   },
   (t) => ({
-    levelIdx: index('self_check_templates_level_idx').on(t.level, t.category, t.sortOrder),
+    levelIdx: index('self_check_templates_track_level_idx').on(t.learningTrack, t.level, t.category, t.sortOrder),
+  }),
+);
+
+export const trackSrsSettings = sqliteTable(
+  'track_srs_settings',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    fsrsOptions: text('fsrs_options'),
+    fsrsWeights: text('fsrs_weights'),
+    srsSettings: text('srs_settings'),
+    ...timestamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.learningTrack] }),
   }),
 );
 
@@ -492,6 +576,39 @@ export const quizQuestionBank = sqliteTable('quiz_question_bank', {
 }, (t) => ({
   modeLevelIdx: index('quiz_question_bank_mode_level_idx').on(t.mode, t.level),
 }));
+
+/** Unpublished, self-authored TOPIK placement QA bank. No public route consumes this yet. */
+export const topikPlacementQuestions = sqliteTable(
+  'topik_placement_questions',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    examLevel: text('exam_level').notNull(),
+    section: text('section').notNull(),
+    skill: text('skill').notNull(),
+    difficulty: integer('difficulty').notNull(),
+    promptKo: text('prompt_ko').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    glossEn: text('gloss_en').notNull(),
+    choicesJson: text('choices_json').notNull(),
+    answerIndex: integer('answer_index').notNull(),
+    explanationEn: text('explanation_en').notNull(),
+    explanationKo: text('explanation_ko').notNull(),
+    sourceCode: text('source_code').notNull(),
+    authorReviewer: text('author_reviewer').notNull(),
+    secondReviewer: text('second_reviewer').notNull(),
+    reviewedAt: text('reviewed_at').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    levelSectionIdx: index('topik_placement_level_section_idx').on(
+      t.learningTrack,
+      t.examLevel,
+      t.section,
+      t.difficulty,
+    ),
+  }),
+);
 
 export const audioGenerationLog = sqliteTable('audio_generation_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),

@@ -219,6 +219,7 @@ export async function getSessionUser(c: Context<AppEnv>): Promise<AuthUser | nul
 export function setAuthContext(c: Context<AppEnv>, user: AuthUser): void {
   c.set('userId', user.id);
   c.set('userEmail', user.email);
+  c.set('learningTrack', user.learning_track);
   c.set('userRole', user.role);
 }
 

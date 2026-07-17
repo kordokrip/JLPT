@@ -29,6 +29,7 @@ sync.use('*', cfAccessAuth);
 async function applyReview(
   db: D1Database,
   userId: string,
+  learningTrack: 'jlpt-ja' | 'topik-ko',
   op: SyncOperation,
 ): Promise<void> {
   const p = op.payload as {
@@ -48,8 +49,8 @@ async function applyReview(
   if (!hasCardId && !hasItemKey) return;
 
   const cardStmt = hasCardId
-    ? db.prepare('SELECT * FROM srs_cards WHERE id = ? AND user_id = ?').bind(p.card_id, userId)
-    : db.prepare('SELECT * FROM srs_cards WHERE item_type = ? AND item_id = ? AND user_id = ?').bind(p.item_type, p.item_id, userId);
+    ? db.prepare('SELECT * FROM srs_cards WHERE id = ? AND user_id = ? AND learning_track = ?').bind(p.card_id, userId, learningTrack)
+    : db.prepare('SELECT * FROM srs_cards WHERE item_type = ? AND item_id = ? AND user_id = ? AND learning_track = ?').bind(p.item_type, p.item_id, userId, learningTrack);
 
   const card = await cardStmt
     .first<{
@@ -108,6 +109,7 @@ async function applyReview(
 async function applyDailyLog(
   db: D1Database,
   userId: string,
+  learningTrack: 'jlpt-ja' | 'topik-ko',
   op: SyncOperation,
 ): Promise<void> {
   const p = op.payload as Record<string, unknown>;
@@ -116,12 +118,12 @@ async function applyDailyLog(
   await db
     .prepare(
       `INSERT OR IGNORE INTO daily_logs
-         (user_id, date, source_code, items_new, items_review,
+         (user_id, learning_track, date, source_code, items_new, items_review,
           accuracy, time_min, audio_min, notes, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
-      userId, p.date,
+      userId, learningTrack, p.date,
       p.source_code ?? null,
       Number(p.items_new ?? 0),
       Number(p.items_review ?? 0),
@@ -137,6 +139,7 @@ async function applyDailyLog(
 async function applyQuiz(
   db: D1Database,
   userId: string,
+  learningTrack: 'jlpt-ja' | 'topik-ko',
   op: SyncOperation,
 ): Promise<void> {
   const p = op.payload as Record<string, unknown>;
@@ -145,12 +148,12 @@ async function applyQuiz(
   await db
     .prepare(
       `INSERT OR IGNORE INTO quiz_attempts
-         (user_id, quiz_type, week_no, total, correct,
+         (user_id, learning_track, quiz_type, week_no, total, correct,
           duration_sec, detail_json, attempted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
-      userId, p.quiz_type,
+      userId, learningTrack, p.quiz_type,
       p.week_no ?? null,
       Number(p.total), Number(p.correct ?? 0),
       p.duration_sec ?? null,
@@ -163,6 +166,7 @@ async function applyQuiz(
 async function applySelfCheck(
   db: D1Database,
   userId: string,
+  learningTrack: 'jlpt-ja' | 'topik-ko',
   op: SyncOperation,
 ): Promise<void> {
   const p = op.payload as Record<string, unknown>;
@@ -173,12 +177,12 @@ async function applySelfCheck(
     await db
       .prepare(
         `INSERT OR IGNORE INTO self_check
-           (user_id, week_no, vocab_score, grammar_score, reading_score,
+           (user_id, learning_track, week_no, vocab_score, grammar_score, reading_score,
             listening_score, speaking_score, writing_score, domain_score, notes, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
-        userId, Number(p.week_no),
+        userId, learningTrack, Number(p.week_no),
         p.vocab_score ?? null, p.grammar_score ?? null, p.reading_score ?? null,
         p.listening_score ?? null, p.speaking_score ?? null, p.writing_score ?? null,
         p.domain_score ?? null, p.notes ?? null, updatedAt,
@@ -188,12 +192,12 @@ async function applySelfCheck(
     await db
       .prepare(
         `INSERT OR IGNORE INTO self_check
-           (user_id, week_no, vocab_score, grammar_score,
+           (user_id, learning_track, week_no, vocab_score, grammar_score,
             listening_score, writing_score, domain_score, notes, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
-        userId, Number(p.week_no),
+        userId, learningTrack, Number(p.week_no),
         p.vocab_score ?? null, p.grammar_score ?? null,
         p.listening_score ?? null, p.writing_score ?? null,
         p.domain_score ?? null, p.notes ?? null, updatedAt,
@@ -210,16 +214,17 @@ sync.post('/sync', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const { last_synced_at, operations } = body.data;
   const processedOpIds: string[] = [];
 
   for (const op of operations) {
     try {
       switch (op.type) {
-        case 'review':     await applyReview(c.env.DB, userId, op); break;
-        case 'daily_log':  await applyDailyLog(c.env.DB, userId, op); break;
-        case 'quiz':       await applyQuiz(c.env.DB, userId, op); break;
-        case 'self_check': await applySelfCheck(c.env.DB, userId, op); break;
+        case 'review':     await applyReview(c.env.DB, userId, learningTrack, op); break;
+        case 'daily_log':  await applyDailyLog(c.env.DB, userId, learningTrack, op); break;
+        case 'quiz':       await applyQuiz(c.env.DB, userId, learningTrack, op); break;
+        case 'self_check': await applySelfCheck(c.env.DB, userId, learningTrack, op); break;
       }
       processedOpIds.push(op.op_id);
     } catch {
@@ -230,14 +235,14 @@ sync.post('/sync', async (c) => {
   // ── 서버 델타 (last_synced_at 이후 변경 데이터) ──
   const [srsRows, logRows, checkRows] = await Promise.all([
     c.env.DB.prepare(
-      `SELECT * FROM srs_cards WHERE user_id = ? AND updated_at > ?`,
-    ).bind(userId, last_synced_at).all(),
+      `SELECT * FROM srs_cards WHERE user_id = ? AND learning_track = ? AND updated_at > ?`,
+    ).bind(userId, learningTrack, last_synced_at).all(),
     c.env.DB.prepare(
-      `SELECT * FROM daily_logs WHERE user_id = ? AND updated_at > ?`,
-    ).bind(userId, last_synced_at).all(),
+      `SELECT * FROM daily_logs WHERE user_id = ? AND learning_track = ? AND updated_at > ?`,
+    ).bind(userId, learningTrack, last_synced_at).all(),
     c.env.DB.prepare(
-      `SELECT * FROM self_check WHERE user_id = ? AND updated_at > ?`,
-    ).bind(userId, last_synced_at).all(),
+      `SELECT * FROM self_check WHERE user_id = ? AND learning_track = ? AND updated_at > ?`,
+    ).bind(userId, learningTrack, last_synced_at).all(),
   ]);
 
   return ok(c, {

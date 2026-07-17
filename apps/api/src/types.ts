@@ -79,6 +79,7 @@ export type Env = {
 export type Variables = {
   userId: string;
   userEmail: string;
+  learningTrack: 'jlpt-ja' | 'topik-ko';
   userRole?: 'user' | 'admin';
   requestId: string;
   requestStartedAt: number;

@@ -3,8 +3,8 @@
  *
  * Phase 7-B: FSRS W 최적화 배치 잡
  *
- * - review_logs >= 200 인 사용자에 대해 ts-fsrs 옵티마이저 실행
- * - 결과 W 배열을 users.fsrs_weights 에 저장
+ * - review_logs >= 200 인 사용자·학습트랙에 대해 ts-fsrs 옵티마이저 실행
+ * - 결과 W 배열을 track_srs_settings.fsrs_weights 에 저장
  *
  * wrangler.toml Cron 설정:
  *   [[triggers.crons]]
@@ -65,6 +65,7 @@ function normalizeWeights(weights: number[]): number[] {
 async function computeOptimalWeights(
   env: Env,
   userId: string,
+  learningTrack: 'jlpt-ja' | 'topik-ko',
   logs: ReviewLogRow[],
 ): Promise<number[] | null> {
   const endpoint = (env.FSRS_OPTIMIZER_URL ?? '').trim();
@@ -82,7 +83,7 @@ async function computeOptimalWeights(
           ? { Authorization: `Bearer ${env.FSRS_OPTIMIZER_TOKEN}` }
           : {}),
       },
-      body: JSON.stringify({ user_id: userId, logs }),
+      body: JSON.stringify({ user_id: userId, learning_track: learningTrack, logs }),
     });
 
     if (!res.ok) {
@@ -111,13 +112,14 @@ async function computeOptimalWeights(
 export async function runFsrsOptimizer(env: Env): Promise<void> {
   const db = env.DB;
 
-  // 200개 이상 리뷰 로그를 가진 사용자 목록
-  type UserRow = { user_id: string; log_count: number };
+  // 200개 이상 리뷰 로그를 가진 사용자·트랙 목록
+  type UserRow = { user_id: string; learning_track: 'jlpt-ja' | 'topik-ko'; log_count: number };
   const candidates = await db
     .prepare(
-      `SELECT user_id, COUNT(*) AS log_count
-       FROM review_logs
-       GROUP BY user_id
+      `SELECT sc.user_id, sc.learning_track, COUNT(*) AS log_count
+       FROM review_logs rl
+       JOIN srs_cards sc ON sc.id = rl.card_id
+       GROUP BY sc.user_id, sc.learning_track
        HAVING log_count >= 200`,
     )
     .all<UserRow>();
@@ -128,32 +130,38 @@ export async function runFsrsOptimizer(env: Env): Promise<void> {
     return;
   }
 
-  for (const { user_id } of candidates.results ?? []) {
+  for (const { user_id, learning_track } of candidates.results ?? []) {
     try {
       const logs = await db
         .prepare(
           `SELECT rl.*, sc.user_id
            FROM review_logs rl
            JOIN srs_cards sc ON sc.id = rl.card_id
-           WHERE sc.user_id = ?
+           WHERE sc.user_id = ? AND sc.learning_track = ?
            ORDER BY rl.reviewed_at ASC
            LIMIT 2000`,
         )
-        .bind(user_id)
+        .bind(user_id, learning_track)
         .all<ReviewLogRow>();
 
       const rows = logs.results ?? [];
       if (rows.length < 200) continue;
 
-      const weights = await computeOptimalWeights(env, user_id, rows);
+      const weights = await computeOptimalWeights(env, user_id, learning_track, rows);
       if (!weights) {
         console.warn({ event: 'fsrs_optimizer_user_skipped', reason: 'no_valid_result' });
         continue;
       }
 
       await db
-        .prepare('UPDATE users SET fsrs_weights = ? WHERE id = ?')
-        .bind(JSON.stringify(weights), user_id)
+        .prepare(
+          `INSERT INTO track_srs_settings (user_id, learning_track, fsrs_weights, updated_at)
+           VALUES (?, ?, ?, unixepoch())
+           ON CONFLICT(user_id, learning_track) DO UPDATE SET
+             fsrs_weights = excluded.fsrs_weights,
+             updated_at = excluded.updated_at`,
+        )
+        .bind(user_id, learning_track, JSON.stringify(weights))
         .run();
 
       console.log({ event: 'fsrs_optimizer_user_updated', weight_count: weights.length });

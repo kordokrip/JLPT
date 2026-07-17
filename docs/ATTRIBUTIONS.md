@@ -1,6 +1,6 @@
 # 라이선스와 콘텐츠 출처
 
-기준일: 2026-07-16 KST
+기준일: 2026-07-18 KST
 
 이 문서는 코드, 학습 콘텐츠, 오디오, 시각 자산의 권리와 추적 경계를 분리한다. 콘텐츠별 실행 기준은 [content manifest](../packages/db/src/seed/content-manifest.ts)이며, 이 문서는 그 manifest가 참조하는 라이선스 설명의 기준점이다.
 
@@ -39,6 +39,17 @@
 공개 동음이의어 목록은 [검수 데이터셋](../packages/db/src/seed/homophone-pairs.ts)의 30쌍 이상만 대상으로 한다. 각 쌍은 두 어휘의 source code, 읽기, 악센트형, 일본어·한국어 예문, 검수자, 최종 검토일을 가지며 seed 시 실제 `vocab` row를 FK로 연결한다.
 
 악센트 검토는 [NINJAL UniDic](https://clrd.ninjal.ac.jp/unidic/en/)를 참조한다. 이 저장소는 UniDic 원데이터를 재배포하지 않으며, 향후 외부 원데이터를 포함하거나 자동 추출할 경우 해당 배포물의 라이선스와 버전을 별도로 검토한다. 공개 API는 검수 필드·동일 읽기·source mapping이 완전한 쌍만 반환한다.
+
+## TOPIK 자체 저작 콘텐츠
+
+`docs/07_topik/T3_placement_bank_v1.md`와
+`packages/db/src/seed/topik-placement-bank.ts`의 TOPIK I placement 문항은 프로젝트가
+자체 저작한 내부 검증용 콘텐츠입니다. `track_content_sources`와
+`track_content_seed_sources`에는 source code, 원천 문서 checksum, 작성 검수자, 2차 언어
+검수자, 최종 검토일을 함께 저장합니다. 이 자료는 공식 TOPIK 기출문항, 정답지, 음원,
+점수 환산표를 복제하거나 대체하지 않으며, 현재 공개 API와 사용자 화면에 노출하지
+않습니다. 공개 전에는 `TOPIK_PRODUCT_EXPANSION_PLAN_2026.md`의 provenance·정답·해설·FK·E2E
+관문 및 별도 수동 승인을 충족해야 합니다.
 
 ## 오디오
 

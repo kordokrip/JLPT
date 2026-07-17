@@ -41,6 +41,8 @@ import rawLearningTrackMigration from '../../../../packages/db/drizzle-v2/0005_l
 import rawOauthLearningTrackMigration from '../../../../packages/db/drizzle-v2/0006_oauth_learning_track.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawContentProvenanceHomophonesMigration from '../../../../packages/db/drizzle-v2/0007_content_provenance_homophones.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikTrackMigration from '../../../../packages/db/drizzle-v2/0008_topik_track_content_and_learning_keys.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -49,7 +51,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -556,6 +558,92 @@ describe('App auth', () => {
 
     const logout = await fetch('/api/v1/auth/logout', { method: 'POST', headers: { Cookie: cookie } });
     expect(logout.status).toBe(200);
+  });
+
+  it('partitions mutable server records and sync deltas by the authenticated learning track', async () => {
+    const cookie = await registerTestSession();
+    const headers = { 'Content-Type': 'application/json', Cookie: cookie };
+    const changeTrack = async (track: 'jlpt-ja' | 'topik-ko') => {
+      const response = await fetch('/api/v1/auth/track', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ track }),
+      });
+      expect(response.status).toBe(200);
+    };
+    const postDaily = async (date: string, itemsNew: number) => {
+      const response = await fetch('/api/v1/logs/daily', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ date, items_new: itemsNew, items_review: 0, time_min: 1, audio_min: 0 }),
+      });
+      expect(response.status).toBe(201);
+    };
+    const postSelfCheck = async (vocabScore: number) => {
+      const response = await fetch('/api/v1/self-check', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ week_no: 1, vocab_score: vocabScore }),
+      });
+      expect(response.status).toBe(201);
+    };
+
+    await changeTrack('topik-ko');
+    await postDaily('2026-07-17', 2);
+    await postSelfCheck(20);
+    const topikSrs = await fetch('/api/v1/srs/init', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ item_type: 'vocab', item_ids: [101] }),
+    });
+    expect(topikSrs.status).toBe(404);
+    const topikQuiz = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N3', count: 1 }),
+    });
+    expect(topikQuiz.status).toBe(404);
+
+    const topikSync = await fetch('/api/v1/sync', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        client_id: 'track-isolation-api',
+        last_synced_at: '2000-01-01T00:00:00.000Z',
+        operations: [{
+          op_id: '00000000-0000-4000-8000-000000000111',
+          type: 'daily_log',
+          payload: { date: '2026-07-16', items_new: 3, items_review: 0, time_min: 1, audio_min: 0 },
+          occurred_at: new Date().toISOString(),
+        }],
+      }),
+    });
+    expect(topikSync.status).toBe(200);
+    const topikSyncBody = await topikSync.json<{ data: { server_delta: { daily_logs: Array<{ learning_track: string; items_new: number }> } } }>();
+    expect(topikSyncBody.data.server_delta.daily_logs).toHaveLength(2);
+    expect(topikSyncBody.data.server_delta.daily_logs.every((row) => row.learning_track === 'topik-ko')).toBe(true);
+
+    await changeTrack('jlpt-ja');
+    await postDaily('2026-07-17', 9);
+    await postSelfCheck(90);
+    const jlptLogs = await fetch('/api/v1/logs/daily', { headers: { Cookie: cookie } });
+    const jlptLogsBody = await jlptLogs.json<{ data: Array<{ learning_track: string; items_new: number }> }>();
+    expect(jlptLogsBody.data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ learning_track: 'jlpt-ja', items_new: 9 }),
+    ]));
+    expect(jlptLogsBody.data.some((row) => row.learning_track === 'topik-ko')).toBe(false);
+    const jlptCheck = await fetch('/api/v1/self-check/1', { headers: { Cookie: cookie } });
+    const jlptCheckBody = await jlptCheck.json<{ data: { learning_track: string; vocab_score: number } }>();
+    expect(jlptCheckBody.data).toMatchObject({ learning_track: 'jlpt-ja', vocab_score: 90 });
+
+    await changeTrack('topik-ko');
+    const topikLogs = await fetch('/api/v1/logs/daily', { headers: { Cookie: cookie } });
+    const topikLogsBody = await topikLogs.json<{ data: Array<{ learning_track: string; items_new: number }> }>();
+    expect(topikLogsBody.data).toHaveLength(2);
+    expect(topikLogsBody.data.every((row) => row.learning_track === 'topik-ko')).toBe(true);
+    const topikCheck = await fetch('/api/v1/self-check/1', { headers: { Cookie: cookie } });
+    const topikCheckBody = await topikCheck.json<{ data: { learning_track: string; vocab_score: number } }>();
+    expect(topikCheckBody.data).toMatchObject({ learning_track: 'topik-ko', vocab_score: 20 });
   });
 
   it('logs out cleanly with production __Host session cookies', async () => {

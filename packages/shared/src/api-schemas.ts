@@ -34,6 +34,13 @@ export interface TrackStatusDto {
   write_enabled: boolean;
 }
 
+/** TOPIK content uses its own exam-level taxonomy; it is not a JLPT level alias. */
+export const topikExamLevelSchema = z.enum(['TOPIK-I', 'TOPIK-II']);
+export type TopikExamLevel = z.infer<typeof topikExamLevelSchema>;
+
+export const topikSectionSchema = z.enum(['vocabulary', 'grammar', 'reading', 'listening', 'writing']);
+export type TopikSection = z.infer<typeof topikSectionSchema>;
+
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 
 export const itemTypeSchema = z.enum([

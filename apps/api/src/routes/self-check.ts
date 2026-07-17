@@ -17,6 +17,7 @@ selfCheck.use('*', cfAccessAuth);
 
 // ── GET /self-check/templates ────────────────
 selfCheck.get('/self-check/templates', async (c) => {
+  const learningTrack = c.get('learningTrack');
   const level = (c.req.query('level') || 'N3').toUpperCase();
   if (!/^N[1-5]$/.test(level)) return badRequest(c, '유효하지 않은 level 파라미터');
 
@@ -38,10 +39,10 @@ selfCheck.get('/self-check/templates', async (c) => {
       `SELECT id, code, level, category, sort_order, item_ko,
               evidence_ko, recommendation_ko, source_name, source_url
        FROM self_check_templates
-       WHERE level = ?
+       WHERE learning_track = ? AND level = ?
        ORDER BY category, sort_order, id`,
     )
-      .bind(level)
+      .bind(learningTrack, level)
       .all<TemplateRow>();
 
     return ok(c, { level, templates: rows.results ?? [] });
@@ -54,6 +55,7 @@ selfCheck.get('/self-check/templates', async (c) => {
 // Phase 7-F: SRS 정확도 기반 레이더 점수 계산 (최근 7일)
 selfCheck.get('/self-check/scores', async (c) => {
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const since  = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // 아이템 타입별 정확도
@@ -64,10 +66,10 @@ selfCheck.get('/self-check/scores', async (c) => {
             SUM(CASE WHEN rl.rating IN ('good','easy') THEN 1 ELSE 0 END) AS correct
      FROM review_logs rl
      JOIN srs_cards sc ON sc.id = rl.card_id
-     WHERE sc.user_id = ? AND rl.reviewed_at >= ?
+     WHERE sc.user_id = ? AND sc.learning_track = ? AND rl.reviewed_at >= ?
      GROUP BY sc.item_type`,
   )
-    .bind(userId, since)
+    .bind(userId, learningTrack, since)
     .all<AccRow>();
 
   const acc: Record<string, number> = {};
@@ -81,10 +83,10 @@ selfCheck.get('/self-check/scores', async (c) => {
     `SELECT quiz_type,
             ROUND(AVG(CAST(correct AS REAL) / NULLIF(total, 0) * 100)) AS avg_score
      FROM quiz_attempts
-     WHERE user_id = ? AND created_at >= ?
+     WHERE user_id = ? AND learning_track = ? AND created_at >= ?
      GROUP BY quiz_type`,
   )
-    .bind(userId, since)
+    .bind(userId, learningTrack, since)
     .all<QuizRow>();
 
   const quiz: Record<string, number> = {};
@@ -113,10 +115,11 @@ selfCheck.get('/self-check/:week', async (c) => {
   if (!parsed.success) return badRequest(c, '유효하지 않은 week 파라미터');
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const row = await c.env.DB.prepare(
-    'SELECT * FROM self_check WHERE user_id = ? AND week_no = ?',
+    'SELECT * FROM self_check WHERE user_id = ? AND learning_track = ? AND week_no = ?',
   )
-    .bind(userId, parsed.data.week)
+    .bind(userId, learningTrack, parsed.data.week)
     .first();
 
   if (!row) return ok(c, null);
@@ -129,18 +132,20 @@ selfCheck.post('/self-check', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const d = body.data;
   const now = new Date().toISOString();
 
   try {
     await c.env.DB.prepare(
       `INSERT OR REPLACE INTO self_check
-         (user_id, week_no, vocab_score, grammar_score, reading_score,
+         (user_id, learning_track, week_no, vocab_score, grammar_score, reading_score,
           listening_score, speaking_score, writing_score, domain_score, notes, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         userId,
+        learningTrack,
         d.week_no,
         d.vocab_score ?? null,
         d.grammar_score ?? null,
@@ -156,12 +161,13 @@ selfCheck.post('/self-check', async (c) => {
   } catch {
     await c.env.DB.prepare(
       `INSERT OR REPLACE INTO self_check
-         (user_id, week_no, vocab_score, grammar_score,
+         (user_id, learning_track, week_no, vocab_score, grammar_score,
           listening_score, writing_score, domain_score, notes, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         userId,
+        learningTrack,
         d.week_no,
         d.vocab_score ?? null,
         d.grammar_score ?? null,

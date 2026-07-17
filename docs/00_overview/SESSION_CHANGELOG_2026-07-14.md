@@ -67,6 +67,39 @@
 
 TOPIK 문제은행·채점·추천은 구현하지 않았다.
 
+## 20. TOPIK T1~T3 내부 준비와 server track isolation (2026-07-17 KST)
+
+T1 제품 계약은 [ADR-001](./ADR-001-topik-t1-product-contract.md)으로 고정했다. 초기 대상은
+TOPIK I 진입 수준을 점검하려는 영어 사용 성인 자율학습자이며, 문항 prompt/보기는 한국어,
+해설은 영어 기본값이다. 앱 표시 언어와 학습 언어는 독립적으로 유지한다. 세션의
+`users.learning_track`만 server write/sync의 트랙 원천으로 사용하고 요청 body는 다른
+트랙을 지정하거나 덮어쓸 수 없다.
+
+T2는 `0008_topik_track_content_and_learning_keys.sql`과 Drizzle schema로 구현했다.
+`srs_cards`, `daily_logs`, `quiz_attempts`, `self_check`의 natural key 및 조회와
+`track_srs_settings`를 user×track으로 확장했다. `track_content_sources`,
+`track_exam_levels`, `track_content_seed_runs`, `track_content_seed_sources`는 JLPT와 독립된
+TOPIK provenance ledger를 제공한다. TOPIK SRS/quiz/reading은 출시 전 `404`로 닫고 기존
+JLPT compatibility route의 wire format은 유지했다.
+
+T3는 공식 기출·음원을 포함하지 않는 자체 저작 TOPIK I placement 12문항
+`TOPIK-PLACEMENT-V1`로 준비했다. 작성 검수, 2차 한국어 언어 검수, 최종 검토일, source
+checksum, parser version, manifest checksum을 함께 저장한다. fresh local D1
+`topik:verify`는 row 12, exam level 2, 빈 필드 0, invalid answer index 0, duplicate 0,
+FK 0, manifest/source checksum 일치를 확인했다.
+
+| 검증 | 결과 |
+| --- | --- |
+| DB unit test | 14 PASS |
+| DB `topik:verify` | PASS (local-only, remote write 없음) |
+| API routes test | 92 PASS |
+| Chromium `learning-track-isolation` | PASS |
+| WebKit `learning-track-isolation` | PASS |
+
+이 변경은 TOPIK public API, public OpenAPI, onboarding 콘텐츠 CTA, production seed 또는
+배포를 변경하지 않는다. `0007_content_provenance_homophones`가 R1 branch에 확정된 뒤
+`0008`을 순서대로 적용하며, T4/T5와 R1/R2 release gate가 선행된다.
+
 ## 5. 검증 기록
 
 | 명령/검사 | 결과 |

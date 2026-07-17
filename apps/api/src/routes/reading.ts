@@ -127,6 +127,10 @@ reading.post('/reading/:id/submit', cfAccessAuth, async (c) => {
 
   const db     = c.env.DB;
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK 독해는 검수 및 출시 승인 전까지 제공되지 않습니다');
+  }
 
   type QRow = { id: number; answer_index: number };
   const qRows = await db
@@ -152,11 +156,11 @@ reading.post('/reading/:id/submit', cfAccessAuth, async (c) => {
   const result = await db
     .prepare(
       `INSERT INTO quiz_attempts
-         (user_id, quiz_type, mode, total, correct, score,
+         (user_id, learning_track, quiz_type, mode, total, correct, score,
           detail_json, started_at, finished_at, created_at, updated_at)
-       VALUES (?, 'reading_mc', 'reading_mc', ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, 'reading_mc', 'reading_mc', ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .bind(userId, total, correct, score, detailJson, now, now, now, now)
+    .bind(userId, learningTrack, total, correct, score, detailJson, now, now, now, now)
     .run();
 
   return created(c, {

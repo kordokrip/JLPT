@@ -28,6 +28,7 @@
     "verify:remote:audio:r2": "tsx src/ops/verify-audio-r2.ts --remote",
     "verify:fresh": "tsx src/ops/verify-fresh.ts",
     "verify:fresh:audio": "tsx src/ops/verify-fresh.ts --require-audio",
+    "topik:verify": "tsx src/ops/verify-topik-placement.ts",
     "test": "tsx --test src/ops/*.test.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
