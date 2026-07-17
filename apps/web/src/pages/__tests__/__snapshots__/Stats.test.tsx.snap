@@ -1,0 +1,187 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Stats page snapshot > keeps the metrics shell and shows the translated error state on failure 1`] = `
+<DocumentFragment>
+  <main
+    class="max-w-3xl mx-auto px-4 py-8 space-y-8"
+  >
+    <h1
+      class="text-xl font-bold text-foreground"
+    >
+      학습 통계
+    </h1>
+    <section>
+      <h2
+        class="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-3"
+      >
+        연속 학습
+      </h2>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            —
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            현재 연속
+          </span>
+        </div>
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            —
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            최장 기록
+          </span>
+        </div>
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            —
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            누적 학습일
+          </span>
+        </div>
+      </div>
+      <p
+        class="mt-3 text-sm text-red-600"
+        role="alert"
+      >
+        통계를 불러오지 못했습니다. 네트워크 또는 API 상태를 확인하세요.
+      </p>
+    </section>
+    <section>
+      <h2
+        class="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-3"
+      >
+        학습 히트맵
+      </h2>
+      <div
+        class="p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm overflow-hidden"
+      >
+        <div
+          data-testid="heatmap"
+        >
+          heatmap
+        </div>
+      </div>
+    </section>
+  </main>
+</DocumentFragment>
+`;
+
+exports[`Stats page snapshot > renders streak metrics and the heatmap after a successful fetch 1`] = `
+<DocumentFragment>
+  <main
+    class="max-w-3xl mx-auto px-4 py-8 space-y-8"
+  >
+    <h1
+      class="text-xl font-bold text-foreground"
+    >
+      학습 통계
+    </h1>
+    <section>
+      <h2
+        class="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-3"
+      >
+        연속 학습
+      </h2>
+      <div
+        class="flex flex-wrap gap-3"
+      >
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            7일
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            현재 연속
+          </span>
+        </div>
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            21일
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            최장 기록
+          </span>
+        </div>
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            48일
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            누적 학습일
+          </span>
+        </div>
+        <div
+          class="flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm min-w-[100px]"
+        >
+          <span
+            class="text-2xl font-bold text-foreground tabular-nums"
+          >
+            2026-07-17
+          </span>
+          <span
+            class="text-xs text-[var(--muted-foreground)] mt-0.5"
+          >
+            최종 학습일
+          </span>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2
+        class="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wide mb-3"
+      >
+        학습 히트맵
+      </h2>
+      <div
+        class="p-4 rounded-xl bg-card border border-[var(--border)] shadow-sm overflow-hidden"
+      >
+        <div
+          data-testid="heatmap"
+        >
+          heatmap
+        </div>
+      </div>
+    </section>
+  </main>
+</DocumentFragment>
+`;
