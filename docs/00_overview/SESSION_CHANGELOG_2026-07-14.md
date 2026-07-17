@@ -260,3 +260,21 @@ GitHub billing lock 해제 후 같은 SHA `8047e57d9c9f` 원격 결과는 다음
 Pages 실패는 billing annotation이나 코드 빌드 실패가 아니다. D1 Read token을 범용으로 재사용하지 않고 `CLOUDFLARE_PAGES_API_TOKEN`, `CLOUDFLARE_WORKERS_API_TOKEN`, `CLOUDFLARE_D1_WRITE_API_TOKEN`, `CLOUDFLARE_BACKUP_API_TOKEN`으로 workflow 권한을 분리했다.
 
 Backup은 D1 export가 query를 차단할 수 있으므로 `production` Environment 사람 승인과 maintenance/read-only window를 강제했다. 전용 backup token이 아직 등록되지 않아 원격 export·R2 object 쓰기는 실행하지 않았다. 회원 65명 삭제도 신규 24시간 backup, 60분 remote plan, D1 Write token, 사람 승인이 모두 없으면 실행하지 않는다. production D1/R2/Workers/Pages는 변경하지 않았다.
+
+## 17. TD-07 콘텐츠 provenance와 동음이의어 공개 계약 (2026-07-16 KST)
+
+운영 seed manifest를 v2로 올리고, 실제 N5~N3 13개 source마다 원천·라이선스·검수자·최종 검토일을 포함하도록 했다. manifest identity는 source checksum과 parser version에서 결정하며, seed마다 새 run ID를 만들고 `content_seed_runs` 및 `content_seed_sources`에 content version, manifest SHA-256, source checksum, parser version, provenance를 남긴다. 이 ledger는 콘텐츠 변화를 추적할 뿐 사용자 데이터나 PII를 포함하지 않는다.
+
+`0007_content_provenance_homophones.sql`로 seed ledger와 검수 필드를 추가했다. 동음이의어 30쌍은 각 단어의 source mapping, 동일 읽기, 악센트 reference, 일본어·한국어 예문, 검수자·날짜를 가진다. verifier는 30쌍 이상, 불완전 record 0, 읽기 불일치 0, source mapping 불일치 0, unordered duplicate 0, FK violation 0을 blocking 조건으로 고정했다. 공개 `GET /api/v1/homophones`, public OpenAPI, Browse 탭은 같은 변경에서 활성화됐으며 미검수 row는 route에서 반환하지 않는다.
+
+| 검증 | 결과 |
+| --- | --- |
+| DB ops tests | 16 PASS |
+| API route/OpenAPI tests | 92 PASS |
+| Web type/API normalization tests | 38 PASS |
+| clean D1 `verify:fresh` | 8/8 migration, 215 checks, blocking failure 0 |
+| seed-run ledger | source 13 + derived homophone source 1, checksum/parser/provenance 모두 일치 |
+| homophone release checks | 30/30, incomplete/reading/source/duplicate 0 |
+| Chromium Browse E2E | `vocab-search.spec.ts` 4 PASS, `/browse/homophones`의 출처·검수 UI 확인 |
+
+fresh verifier의 유일한 warning은 미생성 R2 audio 4,954건이며 TD-08 범위로 유지했다. verifier 최소값을 낮추지 않았고, production D1/R2, Workers, Pages에는 이 변경을 배포하지 않았다. 이에 따라 TD-07은 코드·데이터 관문 기준 `검증 완료`로 갱신한다.

@@ -82,4 +82,15 @@ test.describe('어휘 검색', () => {
 
     await expect(japaneseText.or(noResult)).toBeVisible({ timeout: 10_000 });
   });
+
+  test('검수된 동음이의어 목록은 공개 API에서 렌더링된다', async ({ page }) => {
+    await page.goto('/browse/homophones');
+    await page.waitForLoadState('networkidle', { timeout: 15_000 });
+
+    await expect(
+      page.getByRole('heading', { name: /동음이의어 변별|Distinguish Homophones|同音異義語の聞き分け/ }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('紙', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/최종 검토|Last reviewed|最終確認/).first()).toBeVisible();
+  });
 });

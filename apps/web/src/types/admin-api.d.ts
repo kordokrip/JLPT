@@ -580,6 +580,59 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        HomophoneListResponse: {
+            data: {
+                id: number;
+                level: string;
+                reading: string;
+                note_ko: string;
+                word_a: {
+                    id: number;
+                    word: string;
+                    reading: string;
+                    meaning: string;
+                    level: string;
+                    source: {
+                        code: string;
+                        file_path: string;
+                        version: string;
+                    };
+                };
+                word_b: {
+                    id: number;
+                    word: string;
+                    reading: string;
+                    meaning: string;
+                    level: string;
+                    source: {
+                        code: string;
+                        file_path: string;
+                        version: string;
+                    };
+                };
+                accent: {
+                    source: string;
+                    /** Format: uri */
+                    source_url: string;
+                    word_a: string;
+                    word_b: string;
+                };
+                examples: {
+                    word_a: {
+                        ja: string;
+                        ko: string;
+                    };
+                    word_b: {
+                        ja: string;
+                        ko: string;
+                    };
+                };
+                review: {
+                    reviewer: string;
+                    reviewed_at: string;
+                };
+            }[];
+        };
         GenericCreatedResponse: {
             data?: unknown;
         };

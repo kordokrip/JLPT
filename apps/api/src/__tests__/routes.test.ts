@@ -38,6 +38,8 @@ import rawPracticeContentMigration from '../../../../packages/db/drizzle-v2/0004
 import rawLearningTrackMigration from '../../../../packages/db/drizzle-v2/0005_learning_track.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawOauthLearningTrackMigration from '../../../../packages/db/drizzle-v2/0006_oauth_learning_track.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentProvenanceHomophonesMigration from '../../../../packages/db/drizzle-v2/0007_content_provenance_homophones.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -46,7 +48,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -187,8 +189,97 @@ describe('OpenAPI route coverage', () => {
     expect(adminSpec.status).toBe(401);
   });
 
-  it('keeps unreviewed homophones out of the public contract', () => {
-    expect(getPublicOpenApiDocument().paths?.['/api/v1/homophones']).toBeUndefined();
+  it('exposes reviewed homophones in the public contract', () => {
+    const route = getPublicOpenApiDocument().paths?.['/api/v1/homophones']?.get;
+    expect(route).toBeDefined();
+    expect(route?.tags).toContain('Homophones');
+  });
+});
+
+// ─────────────────────────────────────────────
+// /api/v1/homophones
+// ─────────────────────────────────────────────
+describe('GET /api/v1/homophones', () => {
+  it('returns only complete reviewed pairs with source provenance', async () => {
+    const db = (env as unknown as { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES ('HP-TEST', 'Homophone test source', 'tests/homophones.md', 'test-v1')`,
+    ).run();
+
+    await db.batch([
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '試験紙', 'しけんし', '시험용 종이', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '試験氏', 'しけんし', '시험용 성씨', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '未検証一', 'みけんしょう', '미검수 하나', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '未検証二', 'みけんしょう', '미검수 둘', '[]')`,
+      ),
+    ]);
+
+    const reviewedA = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '試験紙' AND kana = 'しけんし'`,
+    ).first<{ id: number }>();
+    const reviewedB = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '試験氏' AND kana = 'しけんし'`,
+    ).first<{ id: number }>();
+    const hiddenA = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '未検証一' AND kana = 'みけんしょう'`,
+    ).first<{ id: number }>();
+    const hiddenB = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '未検証二' AND kana = 'みけんしょう'`,
+    ).first<{ id: number }>();
+    expect(reviewedA?.id).toBeTruthy();
+    expect(reviewedB?.id).toBeTruthy();
+    expect(hiddenA?.id).toBeTruthy();
+    expect(hiddenB?.id).toBeTruthy();
+
+    await db.batch([
+      db.prepare(
+        `INSERT OR IGNORE INTO homophone_pairs (
+          level, word_a_id, word_b_id, word_a_source_code, word_b_source_code,
+          note_ko, accent_source, accent_source_url, accent_a, accent_b,
+          example_a_ja, example_a_ko, example_b_ja, example_b_ko, reviewer, reviewed_at
+        ) VALUES (
+          'N3', ?, ?, 'HP-TEST', 'HP-TEST',
+          '검수된 동음이의어입니다.', 'test-accent', 'https://example.test/accent', '0형', '1형',
+          '試験紙を確認します。', '시험용 종이를 확인합니다.',
+          '試験氏に連絡します。', '시험용 성씨에게 연락합니다.', 'test reviewer', '2026-07-16'
+        )`,
+      ).bind(reviewedA!.id, reviewedB!.id),
+      db.prepare(
+        `INSERT OR IGNORE INTO homophone_pairs (level, word_a_id, word_b_id)
+         VALUES ('N3', ?, ?)`,
+      ).bind(hiddenA!.id, hiddenB!.id),
+    ]);
+
+    const res = await fetch('/api/v1/homophones?level=N3');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: Array<{
+      reading: string;
+      word_a: { word: string; source: { code: string } };
+      word_b: { word: string };
+      accent: { source_url: string };
+      review: { reviewer: string };
+    }> }>();
+    const reviewed = body.data.find((item) => item.word_a.word === '試験紙');
+    expect(reviewed).toMatchObject({
+      reading: 'しけんし',
+      word_a: { source: { code: 'HP-TEST' } },
+      word_b: { word: '試験氏' },
+      accent: { source_url: 'https://example.test/accent' },
+      review: { reviewer: 'test reviewer' },
+    });
+    expect(body.data.some((item) => item.word_a.word === '未検証一')).toBe(false);
   });
 });
 

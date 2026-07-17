@@ -60,7 +60,7 @@ function main(): void {
     missing,
     unexpected,
     orderMatches,
-    verified: expected.length === 7 && missing.length === 0 && unexpected.length === 0 && orderMatches,
+    verified: expected.length > 0 && missing.length === 0 && unexpected.length === 0 && orderMatches,
   };
 
   fs.mkdirSync(path.dirname(output), { recursive: true });

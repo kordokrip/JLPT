@@ -17,7 +17,7 @@ import {
   type LearningTrackId,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
-import type { paths } from '../types/api.js';
+import type { components, paths } from '../types/api.js';
 
 export const typedApi = createClient<paths>({
   baseUrl: apiBase(),
@@ -216,6 +216,15 @@ export const kanjiApi = {
     }));
     return res.ok ? { ...res, data: normalizeKanjiContentItem(res.data) } : res;
   },
+};
+
+export type HomophonePairItem = components['schemas']['HomophoneListResponse']['data'][number];
+
+export const homophonesApi = {
+  list: async (p?: { level?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; limit?: number }) =>
+    typedResult<HomophonePairItem[]>(await typedApi.GET('/api/v1/homophones', {
+      params: { query: p ?? {} },
+    })),
 };
 
 export const contentApi = {

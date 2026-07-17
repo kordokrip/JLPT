@@ -19,14 +19,14 @@ R1 기반 정상화
 ### 구현 완료
 
 - 현재 N2/N1 작업을 WIP branch에 격리
-- `drizzle-v2/0000`~`0006` canonical migration 구성
+- `drizzle-v2/0000`~`0007` canonical migration 구성
 - 일반 table은 Drizzle, FTS는 SQL migration으로 소유권 분리
 - runtime OAuth DDL 제거
-- seed manifest row/checksum과 FTS/FK/필수값 검증
+- manifest v2의 source별 provenance·row/checksum·version/parser version과 FTS/FK/필수값 검증
 - 위험한 partial diff seed를 validation-only로 변경
 - regular table Blue/Green, backup, restore drill 도구 추가
 - read-only cutover route guard 추가
-- public/admin OpenAPI 및 generated client type 추가
+- public/admin OpenAPI 및 generated client type 추가, 검수 완료 동음이의어 public route 활성화
 - route inventory와 OpenAPI coverage test 추가
 - request ID/release SHA/route/status/latency/auth mode JSON log 추가
 - fresh D1 기반 CI, manual production change workflow 추가
@@ -36,7 +36,7 @@ R1 기반 정상화
 1. GitHub billing lock을 해제한다. **완료**
 2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: SHA `8047e57d9c9f`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했고, Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다.
 3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
-4. 7개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
+4. 8개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
 5. content phase를 복사하고 검증한다.
 6. 10~15분 read-only에서 mutable phase와 유효 session을 최종 동기화한다.
 7. preview smoke 후 Worker DB binding을 전환한다.
@@ -44,7 +44,7 @@ R1 기반 정상화
 
 ### R1 완료 정의
 
-- blank DB와 prod-v2에 migration 7/7
+- blank DB와 prod-v2에 migration 8/8
 - source/target 일반 table count 및 checksum 일치
 - FTS rebuild와 parity 일치
 - password login, Google OAuth callback, session 유지, admin, sync queue 성공
@@ -56,8 +56,8 @@ R1 기반 정상화
 ### 구현 완료
 
 - category를 vocab/grammar보다 먼저 seed
-- manifest의 source별 row/checksum 검증
-- 동음이의어 public route와 문서 노출 보류
+- manifest v2의 13 source provenance·row/checksum·parser version 및 seed-run ledger 검증
+- 검수된 동음이의어 30쌍의 public route·OpenAPI·Browse UI 활성화
 - 코드와 콘텐츠 라이선스 문서 분리
 - 공개 audio route를 R2 read-only로 고정
 - Google batch에 admin, execute flag, approval token 요구
@@ -80,10 +80,10 @@ R1 기반 정상화
 
 ### 동음이의어 출시 조건
 
-- 출처·악센트·예문을 검수한 최소 30쌍
-- 중복·FK 검증 0건
-- UI와 공개 OpenAPI 동시 활성화
-- attribution과 provenance 기록
+- [x] 출처·악센트·예문을 검수한 30쌍 이상
+- [x] 중복·FK·동일 읽기·source mapping 검증 0건
+- [x] UI와 공개 OpenAPI 동시 활성화
+- [x] attribution, manifest provenance, seed-run ledger 기록
 
 ## R3 LearningTrack와 TOPIK 기반
 

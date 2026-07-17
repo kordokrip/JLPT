@@ -208,12 +208,54 @@ export const homophonePairs = sqliteTable(
     level: text('level', { enum: ['N5', 'N4', 'N3', 'N2', 'N1'] }).notNull(),
     wordAId: integer('word_a_id').notNull().references(() => vocab.id),
     wordBId: integer('word_b_id').notNull().references(() => vocab.id),
+    wordASourceCode: text('word_a_source_code').notNull().default(''),
+    wordBSourceCode: text('word_b_source_code').notNull().default(''),
     noteKo: text('note_ko'),
+    accentSource: text('accent_source').notNull().default(''),
+    accentSourceUrl: text('accent_source_url').notNull().default(''),
+    accentA: text('accent_a').notNull().default(''),
+    accentB: text('accent_b').notNull().default(''),
+    exampleAJa: text('example_a_ja').notNull().default(''),
+    exampleAKo: text('example_a_ko').notNull().default(''),
+    exampleBJa: text('example_b_ja').notNull().default(''),
+    exampleBKo: text('example_b_ko').notNull().default(''),
+    reviewer: text('reviewer').notNull().default(''),
+    reviewedAt: text('reviewed_at').notNull().default(''),
     ...timestamps,
   },
   (t) => ({
     pairUk: uniqueIndex('homophone_pair_uk').on(t.wordAId, t.wordBId),
     levelIdx: index('homophone_level_idx').on(t.level),
+    reviewedIdx: index('homophone_reviewed_idx').on(t.reviewedAt),
+  }),
+);
+
+export const contentSeedRuns = sqliteTable('content_seed_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  runId: text('run_id').notNull().unique(),
+  contentVersion: text('content_version').notNull(),
+  parserVersion: text('parser_version').notNull(),
+  manifestSha256: text('manifest_sha256').notNull(),
+  generatedAt: text('generated_at').notNull(),
+  appliedAt: integer('applied_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
+export const contentSeedSources = sqliteTable(
+  'content_seed_sources',
+  {
+    seedRunId: integer('seed_run_id')
+      .notNull()
+      .references(() => contentSeedRuns.id, { onDelete: 'cascade' }),
+    sourceCode: text('source_code').notNull(),
+    sourceChecksum: text('source_checksum').notNull(),
+    parserVersion: text('parser_version').notNull(),
+    provenanceJson: text('provenance_json').notNull(),
+  },
+  (t) => ({
+    runSourceUk: uniqueIndex('content_seed_sources_run_source_uk').on(t.seedRunId, t.sourceCode),
+    sourceIdx: index('content_seed_sources_source_idx').on(t.sourceCode),
   }),
 );
 
@@ -532,6 +574,10 @@ export type CurriculumWeek = typeof curriculumWeeks.$inferSelect;
 export type NewCurriculumWeek = typeof curriculumWeeks.$inferInsert;
 export type HomophonePair = typeof homophonePairs.$inferSelect;
 export type NewHomophonePair = typeof homophonePairs.$inferInsert;
+export type ContentSeedRun = typeof contentSeedRuns.$inferSelect;
+export type NewContentSeedRun = typeof contentSeedRuns.$inferInsert;
+export type ContentSeedSource = typeof contentSeedSources.$inferSelect;
+export type NewContentSeedSource = typeof contentSeedSources.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type SrsCard = typeof srsCards.$inferSelect;

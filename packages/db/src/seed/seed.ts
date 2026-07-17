@@ -24,6 +24,9 @@ console.log(`\nSeed start (${target.remote ? 'remote' : 'local'}, database=${tar
 
 try {
   const plan = buildContentSeedPlan();
+  console.log(
+    `Content version=${plan.manifest.contentVersion} parser=${plan.manifest.parserVersion} run=${plan.manifest.seedRunId}`,
+  );
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
   fs.writeFileSync(manifestPath, `${JSON.stringify(plan.manifest, null, 2)}\n`, 'utf8');
 
@@ -42,6 +45,10 @@ try {
       `  ${entry.sourceCode.padEnd(3)} ${entry.table.padEnd(18)} rows=${entry.expectedRows} categories=${entry.expectedCategories} sha256=${entry.sha256.slice(0, 12)}`,
     );
   }
+  const homophones = plan.manifest.derivedContent.homophonePairs;
+  console.log(
+    `  HMP ${'homophone_pairs'.padEnd(18)} rows=${homophones.expectedRows} sha256=${homophones.sha256.slice(0, 12)} parser=${homophones.parserVersion}`,
+  );
   console.log(`\nSeed complete. Manifest: ${manifestPath}\n`);
 } finally {
   fs.rmSync(tmpDir, { recursive: true, force: true });

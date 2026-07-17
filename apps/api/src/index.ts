@@ -12,6 +12,7 @@
  *   /api/v1/grammar     (공개, 엣지 캐시)
  *   /api/v1/kanji       (공개, 엣지 캐시)
  *   /api/v1/sentences   (공개, 엣지 캐시)
+ *   /api/v1/homophones  (공개, 엣지 캐시)
  *   /api/v1/sysprog     (공개, 엣지 캐시)
  *   /api/v1/audio       (공개, 엣지 캐시 30일)
  *   /api/v1/auth        (앱 로그인/회원가입/SSO)
@@ -35,6 +36,7 @@ import { grammarOA } from './routes/grammar-oa.js';
 import { kanjiOA } from './routes/kanji-oa.js';
 import { sentencesOA } from './routes/sentences-oa.js';
 import { sourcesOA } from './routes/sources-oa.js';
+import { homophonesOA } from './routes/homophones-oa.js';
 
 // ── Phase B 완료: 나머지 8개 라우트 ─────────────────────────────────
 import { sysprogOA } from './routes/sysprog-oa.js';
@@ -163,6 +165,7 @@ v1.use('/vocab*', contentCacheMiddleware);
 v1.use('/grammar*', contentCacheMiddleware);
 v1.use('/kanji*', contentCacheMiddleware);
 v1.use('/sentences*', contentCacheMiddleware);
+v1.use('/homophones*', contentCacheMiddleware);
 
 // ── OpenAPI 마이그레이션 완료 라우트 (Phase 6) ─
 v1.route('/', sourcesOA);   // /sources, /curriculum, /curriculum/:week
@@ -170,6 +173,7 @@ v1.route('/', vocabOA);     // /vocab, /vocab/search, /vocab/:id
 v1.route('/', grammarOA);   // /grammar, /grammar/:id
 v1.route('/', kanjiOA);     // /kanji, /kanji/:id
 v1.route('/', sentencesOA); // /sentences, /sentences/search, /sentences/:id
+v1.route('/', homophonesOA); // /homophones (검수 완료 동음이의어)
 
 // ── Phase B: 공개 콘텐츠 (캐시 + OA 라우트) ─────────────────────────
 v1.use('/sysprog*', contentCacheMiddleware);
@@ -224,6 +228,7 @@ const openApiBase = {
     { name: 'Grammar', description: '문법 패턴' },
     { name: 'Kanji', description: '한자' },
     { name: 'Sentences', description: '예문' },
+    { name: 'Homophones', description: '검수 완료 동음이의어 변별' },
     { name: 'Content', description: '검수 완료 학습 콘텐츠 (sysprog, sources)' },
     { name: 'Audio', description: 'R2 오디오 스트리밍' },
     { name: 'SRS', description: 'FSRS-6 간격반복학습' },

@@ -1138,6 +1138,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/homophones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 검수 완료 동음이의어 쌍 목록
+         * @description 출처, 악센트, 예문, 검수 기록을 모두 가진 동음이의어 쌍만 반환합니다.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    level?: "N5" | "N4" | "N3" | "N2" | "N1";
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 동음이의어 목록 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomophoneListResponse"];
+                    };
+                };
+                /** @description 잘못된 요청 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sysprog": {
         parameters: {
             query?: never;
@@ -3163,6 +3214,59 @@ export interface components {
             data: {
                 [key: string]: unknown;
             };
+        };
+        HomophoneListResponse: {
+            data: {
+                id: number;
+                level: string;
+                reading: string;
+                note_ko: string;
+                word_a: {
+                    id: number;
+                    word: string;
+                    reading: string;
+                    meaning: string;
+                    level: string;
+                    source: {
+                        code: string;
+                        file_path: string;
+                        version: string;
+                    };
+                };
+                word_b: {
+                    id: number;
+                    word: string;
+                    reading: string;
+                    meaning: string;
+                    level: string;
+                    source: {
+                        code: string;
+                        file_path: string;
+                        version: string;
+                    };
+                };
+                accent: {
+                    source: string;
+                    /** Format: uri */
+                    source_url: string;
+                    word_a: string;
+                    word_b: string;
+                };
+                examples: {
+                    word_a: {
+                        ja: string;
+                        ko: string;
+                    };
+                    word_b: {
+                        ja: string;
+                        ko: string;
+                    };
+                };
+                review: {
+                    reviewer: string;
+                    reviewed_at: string;
+                };
+            }[];
         };
         GenericCreatedResponse: {
             data?: unknown;

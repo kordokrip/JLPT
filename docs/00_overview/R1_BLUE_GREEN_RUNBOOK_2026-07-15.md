@@ -43,7 +43,7 @@ pnpm -F @nihongo-n3/db exec tsx src/ops/apply-migrations.ts \
   --database=nihongo-n3-prod-v2
 ```
 
-`d1_migrations`에 7개가 순서대로 기록됐는지 확인한다.
+`d1_migrations`에 8개가 순서대로 기록됐는지 확인한다.
 
 승인 실행이 끝난 뒤 CODEX는 다음 읽기 전용 명령으로 ledger를 검증하고 JSON을 보존한다.
 
@@ -53,7 +53,7 @@ pnpm -F @nihongo-n3/db migrate:verify -- \
   --out=.artifacts/r1-blue-green/migration-ledger.json
 ```
 
-`0000_schema_convergence.sql`부터 `0006_oauth_learning_track.sql`까지 7개가 누락·추가·순서 차이 없이 일치해야 한다.
+`0000_schema_convergence.sql`부터 `0007_content_provenance_homophones.sql`까지 8개가 누락·추가·순서 차이 없이 일치해야 한다.
 
 ## 3. 변경되지 않는 콘텐츠 이전
 

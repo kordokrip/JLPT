@@ -11,6 +11,7 @@
 | canonical migrations | `packages/db/drizzle-v2/*.sql` |
 | 콘텐츠 경로 | `packages/db/src/seed/constants.ts` |
 | seed manifest | `packages/db/src/seed/content-manifest.ts` |
+| 콘텐츠 출처·라이선스 설명 | `docs/ATTRIBUTIONS.md` |
 | DB verification | `packages/db/src/seed/verify.ts` |
 | OpenAPI types | `apps/web/src/types/api.d.ts`, `admin-api.d.ts` |
 | audio policy | `packages/shared/src/audio-policy.ts` |
@@ -49,7 +50,9 @@ pnpm test
 
 `seed:diff`는 parser 검증만 하고 D1을 변경하지 않는다. production 변경은 `Content and D1 Change Control`의 수동 `migrate` 또는 `seed` operation만 사용한다.
 
-N2/N1 파일이 없거나 provenance가 불완전하면 `CONTENT_PATHS`에 등록하지 않는다.
+manifest v2는 13개 seed source의 원천·라이선스·검수자·최종 검토일과 source checksum/version/parser version을 검증한다. 실제 seed run은 `content_seed_runs`와 `content_seed_sources`에 그 값을 기록하므로, 검증 report의 content version과 manifest SHA-256을 함께 보관한다.
+
+N2/N1 파일이 없거나 provenance가 불완전하면 `CONTENT_PATHS`에 등록하지 않는다. 동음이의어는 `homophone-pairs.ts`의 검수 데이터 30쌍 이상과 중복·FK·동일 읽기·source mapping 0건을 유지할 때만 public API에 노출한다.
 
 ## 4. D1 변경
 
@@ -119,7 +122,7 @@ pnpm exec wrangler versions secret put AUDIO_BATCH_APPROVAL_TOKEN --name nihongo
 
 ### 6.2 QA와 batch 순서
 
-1. R1 prod-v2 migration 7/7과 `audio_generation_log.provider`, `content_hash` 컬럼을 먼저 확인한다.
+1. R1 prod-v2 migration 8/8과 `audio_generation_log.provider`, `content_hash` 컬럼을 먼저 확인한다.
 2. `/audio-qa`의 `audio-qa-30-v1` 30문장을 browser, Cloudflare, Google, VOICEVOX 네 후보에서 모두 재생한다.
 3. 평가자, device/OS/browser, 실제 voice/model/version, 평가일과 5개 점수를 모두 입력한다.
 4. Markdown 내보내기 결과를 review하고 승인 provider와 근거를 기록한다. 한 후보라도 30개가 없으면 승인하지 않는다.

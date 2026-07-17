@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { NaturalJapaneseSearch } from '../../components/feature/NaturalJapaneseSearch';
+import type { HomophonePairItem } from '../../lib/api';
 import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
 import { BrowseSidebar, MobileBrowseTabs, MobileLevelFilters } from './BrowseFilters';
 import { BrowseList, LoadingList } from './BrowseList';
@@ -10,7 +11,7 @@ type BrowseViewProps = {
   currentType: ContentType;
   query: string;
   level: JlptLevel | undefined;
-  items: Array<VocabItem | GrammarItem | KanjiItem>;
+  items: Array<VocabItem | GrammarItem | KanjiItem | HomophonePairItem>;
   loading: boolean;
   onType: (type: ContentType) => void;
   onLevel: (level: JlptLevel | undefined) => void;
@@ -46,17 +47,26 @@ export function BrowseView({
             </div>
           </div>
 
-          <div className="surface-card mb-4 p-3 shadow-none">
-            <input
-              type="search"
-              placeholder={t('browse.searchPlaceholder')}
-              value={query}
-              onChange={(e) => onQuery(e.target.value)}
-              aria-label={t('browse.ariaSearch', { type: t(`browse.${currentType}`) })}
-              className="h-12 w-full rounded-[var(--radius-md)] border-[0.5px] border-[var(--border)] bg-[var(--input-bg)] px-4 text-base text-foreground outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]"
-            />
-            <MobileLevelFilters level={level} onLevel={onLevel} />
-          </div>
+          {currentType === 'homophones' ? (
+            <div className="surface-card mb-4 p-4 shadow-none">
+              <p className="text-sm leading-6 text-[var(--muted-foreground)]">
+                {t('browse.homophoneIntro')}
+              </p>
+              <MobileLevelFilters level={level} onLevel={onLevel} />
+            </div>
+          ) : (
+            <div className="surface-card mb-4 p-3 shadow-none">
+              <input
+                type="search"
+                placeholder={t('browse.searchPlaceholder')}
+                value={query}
+                onChange={(e) => onQuery(e.target.value)}
+                aria-label={t('browse.ariaSearch', { type: t(`browse.${currentType}`) })}
+                className="h-12 w-full rounded-[var(--radius-md)] border-[0.5px] border-[var(--border)] bg-[var(--input-bg)] px-4 text-base text-foreground outline-none transition-colors placeholder:text-[var(--muted-foreground)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]"
+              />
+              <MobileLevelFilters level={level} onLevel={onLevel} />
+            </div>
+          )}
 
           {currentType === 'vocab' && <NaturalJapaneseSearch onUse={onQuery} />}
 
