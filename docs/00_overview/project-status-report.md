@@ -72,6 +72,8 @@ Fresh D1 주요 값:
 
 따라서 이번 상태에서 Workers, Pages, D1 production 변경을 실행하지 않는다.
 
+통합 SHA `4d7e96f7039c`의 원격 Audit, CodeQL, Required Verification, fresh D1, Chromium, WebKit은 모두 성공했다. Pages workflow는 build까지 성공했지만 Preview Deploy에서 `CLOUDFLARE_PAGES_API_TOKEN`이 없어 실패했으며, 이는 코드·빌드 실패나 billing annotation이 아니다.
+
 ## 다음 승인 순서
 
 1. 생성 타입 drift 0인 현재 변경을 검토 가능한 commit으로 고정

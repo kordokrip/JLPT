@@ -102,6 +102,23 @@ E2E 범위에는 password/OAuth 시작·재로그인, admin 보호, SRS, sync, �
 
 로컬 D1 Read token이나 범용 account token을 이 자리에 재사용하지 않는다. 각 token은 해당 Worker/Pages/D1/R2 권한만 가진 최소권한 token으로 발급한다.
 
+### 최초 통합 SHA 원격 증거
+
+PR: [#35](https://github.com/kordokrip/JLPT/pull/35)
+
+검증 SHA: `4d7e96f7039c881bb04386beb10b361eed075a49`
+
+| Workflow | 결과 | URL |
+| --- | --- | --- |
+| Dependency Audit | success | [run 29598979614](https://github.com/kordokrip/JLPT/actions/runs/29598979614) |
+| CodeQL | success | [run 29598979983](https://github.com/kordokrip/JLPT/actions/runs/29598979983) |
+| Required Verification | success | [run 29598980063](https://github.com/kordokrip/JLPT/actions/runs/29598980063) |
+| Fresh D1 validation | success | [run 29598979912](https://github.com/kordokrip/JLPT/actions/runs/29598979912) |
+| Chromium/WebKit E2E | success | [run 29598979938](https://github.com/kordokrip/JLPT/actions/runs/29598979938) |
+| Pages build/preview | build success, preview failure | [run 29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) |
+
+Pages 실패는 billing이나 앱 build가 아니라 Wrangler가 `CLOUDFLARE_PAGES_API_TOKEN`을 받지 못한 운영 설정 실패다. Backup은 전용 token과 Environment 승인이 없어 실행하지 않았다. 따라서 필수 코드 검증은 성공했지만 production release gate 전체는 아직 닫히지 않았다.
+
 ## 8. 배포 실행 순서
 
 1. 통합 브랜치를 push하고 main 대상 PR을 만든다.

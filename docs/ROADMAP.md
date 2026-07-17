@@ -37,7 +37,7 @@ R1 기반 정상화
 ### 운영 전 남은 일
 
 1. GitHub billing lock을 해제한다. **완료**
-2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: 이전 R1 SHA `8047e57d9c9f`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했다. 2026-07-18 통합 SHA는 원격 재검증이 필요하고 Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다.
+2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: 통합 SHA `4d7e96f7039c`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했다. Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다. Pages preview는 build 통과 후 Pages 전용 token 부재로 실패했다.
 3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
 4. 9개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
 5. content phase를 복사하고 검증한다.

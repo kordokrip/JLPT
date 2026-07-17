@@ -338,3 +338,16 @@ R1 기준선 위에 provenance·동음이의어 30쌍, DB 분포 기반 N2/N1 re
 | WebKit | 55/55 PASS, Chromium 전용 시각 회귀 14건 skip |
 
 `gh secret list`를 값 비노출로 다시 확인한 결과 repository-level `CLOUDFLARE_ACCOUNT_ID`만 있고 `production` Environment의 Workers·Pages·D1 write·Backup 전용 token은 없다. 따라서 통합 브랜치 push와 PR/원격 검증까지만 진행 가능하며, production Workers/Pages 배포, D1/R2 변경, prod-v2 전환은 사람 승인과 최소권한 secret이 준비될 때까지 실행하지 않는다. 상세 범위와 시계열은 [통합 시계열 문서](./REFACTORING_RELEASE_TIMELINE_2026-07-18.md)에 기록했다.
+
+통합 브랜치를 push하고 [PR #35](https://github.com/kordokrip/JLPT/pull/35)를 생성했다. SHA `4d7e96f7039c`에서 원격 결과는 다음과 같다.
+
+| Workflow | Run | 결론 | 분류 |
+| --- | --- | --- | --- |
+| Dependency Audit | [29598979614](https://github.com/kordokrip/JLPT/actions/runs/29598979614) | success | advisory 0, runner 정상 |
+| CodeQL | [29598979983](https://github.com/kordokrip/JLPT/actions/runs/29598979983) | success | 보안 분석 정상 |
+| Required Verification | [29598980063](https://github.com/kordokrip/JLPT/actions/runs/29598980063) | success | type·unit·build·D1 정상 |
+| Content/D1 validation | [29598979912](https://github.com/kordokrip/JLPT/actions/runs/29598979912) | success | fresh D1 validation만 실행, production change skip |
+| Chromium/WebKit E2E | [29598979938](https://github.com/kordokrip/JLPT/actions/runs/29598979938) | success | 두 browser matrix 정상 |
+| Pages | [29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) | failure | build 성공, preview token 미등록 |
+
+Pages 실패 로그는 Wrangler가 비대화형 환경의 `CLOUDFLARE_API_TOKEN`을 받지 못했다고 명시한다. workflow 우회나 optional 전환은 하지 않았고, 최소권한 Pages token 등록 전 병합·production 배포를 보류했다.

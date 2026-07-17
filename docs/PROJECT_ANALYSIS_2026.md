@@ -35,7 +35,7 @@
 | OpenAPI | public 53 paths, admin 7 paths | route coverage 통과 |
 | 브라우저 회귀 | Chromium 69/69, WebKit 55/55 통과(시각 회귀 14건은 Chromium 전용으로 skip) | 로컬 browser matrix 통과 |
 | R2 audio | `audio_r2_key` 4,954건 누락 | R2 릴리스 차단 |
-| GitHub required checks | billing 해제 확인, 통합 SHA 원격 실행 전 | production 차단 |
+| GitHub required checks | `4d7e96f`의 Audit·CodeQL·Verify·fresh D1·Chromium/WebKit 성공 | Backup·Pages secret로 production 차단 |
 
 ## 3. 실제 아키텍처
 
