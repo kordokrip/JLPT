@@ -62,9 +62,19 @@ try {
     if (!entry) throw new Error(`Backup manifest is missing table ${table.name}`);
     const filePath = path.join(inputDir, entry.file);
     if (!fs.existsSync(filePath)) throw new Error(`Backup file is missing: ${filePath}`);
-    const actualSha256 = createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+    const contents = fs.readFileSync(filePath);
+    const actualSha256 = createHash('sha256').update(contents).digest('hex');
     if (actualSha256 !== entry.sha256) {
       throw new Error(`Backup checksum mismatch for ${table.name}`);
+    }
+    if (entry.rowCount === 0) {
+      if (/\bINSERT\s+INTO\b/i.test(contents.toString('utf8'))) {
+        throw new Error(`Zero-row backup unexpectedly contains INSERT statements for ${table.name}`);
+      }
+      continue;
+    }
+    if (contents.toString('utf8').trim().length === 0) {
+      throw new Error(`Non-empty table backup is empty: ${table.name}`);
     }
     wrangler(['d1', 'execute', 'DB', ...localArgs(), '--file', filePath]);
   }

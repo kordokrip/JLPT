@@ -37,7 +37,7 @@ R1 기반 정상화
 ### 운영 전 남은 일
 
 1. GitHub billing lock을 해제한다. **완료**
-2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: 통합 SHA `4d7e96f7039c`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했다. Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다. Pages preview는 build 통과 후 Pages 전용 token 부재로 실패했다.
+2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **완료**: main SHA `27c379fbeb1c7b6c818ee5c356906c8d9e9c901c`에서 Audit [29622944142](https://github.com/kordokrip/JLPT/actions/runs/29622944142), CodeQL [29622944177](https://github.com/kordokrip/JLPT/actions/runs/29622944177), Required Verification [29622944185](https://github.com/kordokrip/JLPT/actions/runs/29622944185), fresh D1 [29622944213](https://github.com/kordokrip/JLPT/actions/runs/29622944213), Chromium/WebKit [29622944149](https://github.com/kordokrip/JLPT/actions/runs/29622944149), Pages build [29622944176](https://github.com/kordokrip/JLPT/actions/runs/29622944176)가 통과했다. GitHub Backup [29631932489](https://github.com/kordokrip/JLPT/actions/runs/29631932489)는 D1 export API 인증 `10000`으로 실패했지만, 같은 release SHA를 기록한 Cloudflare Workflow 수동 백업과 23-table restore drill이 통과했다.
 3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
 4. 9개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
 5. content phase를 복사하고 검증한다.
@@ -156,4 +156,4 @@ R2에는 추가로 다음을 요구한다.
 pnpm -F @nihongo-n3/db verify:remote:audio
 ```
 
-production 변경은 GitHub `production` Environment의 수동 승인과 workflow_dispatch로만 실행한다. 로컬 성공만으로 배포하지 않는다.
+production 앱 배포·D1 migration·seed·binding 변경은 GitHub `production` Environment의 수동 승인과 workflow_dispatch로만 실행한다. 로컬 성공만으로 배포하지 않는다. 백업은 예외적으로 같은 release SHA를 기록하는 승인된 Cloudflare Workflow 수동 실행을 허용하며, R2 manifest checksum과 fresh D1 restore drill이 모두 통과해야 릴리스 증거로 인정한다.

@@ -1,0 +1,24 @@
+{
+  "name": "@nihongo-n3/d1-backup",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy",
+    "test": "tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "trigger": "wrangler workflows trigger nihongo-n3-d1-backup-workflow '{\"confirmation\":\"BACKUP\"}'",
+    "instances": "wrangler workflows instances list nihongo-n3-d1-backup-workflow"
+  },
+  "dependencies": {
+    "@nihongo-n3/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260617.1",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^4.103.0"
+  }
+}
