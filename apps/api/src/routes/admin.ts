@@ -4,7 +4,7 @@
  * GET  /weekly-report — 최신 주간 학습 리포트 조회 (R2에서 읽기)
  * POST /weekly-report — 수동 리포트 생성 (즉시 생성 후 R2 저장)
  *
- * 보호: Cloudflare Access JWT (cfAccessAuth)
+ * 보호: application admin session
  * Cron: 매주 일요일 23:00 KST (14:00 UTC) scheduled handler에서 자동 생성
  *
  * 리포트 항목:
@@ -15,15 +15,16 @@
  */
 import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
-import { cfAccessAuth } from '../middleware/auth.js';
+import { adminSessionAuth } from '../lib/auth-session.js';
 import { badRequest, ok, problem } from '../lib/response.js';
-import { runAudioGeneration } from '../jobs/generate-audio.js';
+import { AUDIO_BATCH_LEVELS, runAudioGeneration, type AudioBatchLevel } from '../jobs/generate-audio.js';
 import { getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from '../lib/tts/index.js';
 import { probeVoicevoxEngine } from '../lib/tts/voicevox.js';
 import { parseAudioQaProvider, warmupAudioQa, type AudioQaProvider } from '../lib/audio-qa.js';
+import { equalSecret } from '../lib/secret.js';
 
 const admin = new Hono<AppEnv>();
-admin.use('*', cfAccessAuth);
+admin.use('*', adminSessionAuth);
 
 // ── GET /dashboard ──────────────────────────────────────────
 admin.get('/dashboard', async (c) => {
@@ -397,58 +398,66 @@ export async function sendReportEmail(
 // dry_run=true 시 실제 생성 없이 대상 목록만 반환
 admin.post('/audio/queue', async (c) => {
   const body = (await c.req.json<{
+    execute?: boolean;
     dry_run?: boolean;
     batch?: number;
     provider?: string;
     force_regenerate?: boolean;
+    level?: string;
   }>().catch(() => ({}))) as {
+    execute?: boolean;
     dry_run?: boolean;
     batch?: number;
     provider?: string;
     force_regenerate?: boolean;
+    level?: string;
   };
 
   const provider = parseBatchProvider(body.provider);
   if (body.provider && !provider) {
     return badRequest(c, `지원하지 않는 TTS provider입니다: ${body.provider}`);
   }
+  const level = parseAudioBatchLevel(body.level);
+  if (body.level && !level) {
+    return badRequest(c, `지원하지 않는 JLPT level입니다: ${body.level}`);
+  }
 
-  if (body && 'dry_run' in body && body.dry_run) {
-    // 생성 대상 통계 조회만 반환
-    const db = c.env.DB;
-    type CountRow = { total: number; done: number };
-    const [sentences, vocab, kanji] = await Promise.all([
-      db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM sentences`).first<CountRow>(),
-      db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM vocab`).first<CountRow>(),
-      db.prepare(`SELECT COUNT(*) AS total, SUM(CASE WHEN audio_r2_key IS NOT NULL THEN 1 ELSE 0 END) AS done FROM kanji WHERE on_yomi IS NOT NULL`).first<CountRow>(),
-    ]);
+  if (body.execute !== true || body.dry_run === true) {
+    const selectedProvider = provider ?? 'google';
+    const stats = await loadAudioBatchStats(c.env.DB, selectedProvider, level);
     return ok(c, {
       dry_run: true,
-      provider: provider ?? getTtsProviderInfo(c.env).provider,
-      force_regenerate: body.force_regenerate === true,
-      stats: {
-        sentences: { total: sentences?.total ?? 0, done: sentences?.done ?? 0 },
-        vocab:     { total: vocab?.total ?? 0,     done: vocab?.done ?? 0     },
-        kanji:     { total: kanji?.total ?? 0,     done: kanji?.done ?? 0     },
-      },
+      approval_required: true,
+      provider: selectedProvider,
+      level: level ?? 'all',
+      execution_order: AUDIO_BATCH_LEVELS,
+      immutable_overwrite_allowed: false,
+      stats,
     });
   }
 
-  if (provider === 'voicevox') {
-    const voicevoxUrl = getVoicevoxUrl(c.env);
-    if (!voicevoxUrl) {
-      return badRequest(c, 'VOICEVOX_URL_SECRET 또는 VOICEVOX_URL 설정 후 R2 재생성을 실행하십시오');
-    }
-    const voicevox = await probeVoicevoxEngine(voicevoxUrl, { timeoutMs: 5000 });
-    if (!voicevox.ok) {
-      return badRequest(c, `VOICEVOX provider가 준비되지 않았습니다: ${voicevox.error}`);
-    }
+  if (provider !== 'google') {
+    return badRequest(c, '운영 전체 배치는 승인된 Google Cloud TTS provider만 사용할 수 있습니다');
+  }
+  if (!level) {
+    return badRequest(c, `실제 오디오 배치는 level을 ${AUDIO_BATCH_LEVELS.join(', ')} 중 하나로 지정해야 합니다`);
+  }
+  if (body.force_regenerate === true) {
+    return badRequest(c, 'immutable key는 덮어쓸 수 없습니다. provider model/version을 올려 새 key를 생성하세요');
+  }
+  if (!c.env.GOOGLE_TTS_API_KEY?.trim()) {
+    return badRequest(c, '승인된 환경에 GOOGLE_TTS_API_KEY가 설정되지 않았습니다');
+  }
+  const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
+  const suppliedApproval = c.req.header('x-audio-batch-approval')?.trim();
+  if (!configuredApproval || !suppliedApproval || !(await equalSecret(configuredApproval, suppliedApproval))) {
+    return badRequest(c, '오디오 배치 승인 토큰이 없거나 일치하지 않습니다');
   }
 
   const result = await runAudioGeneration(c.env, {
     ...(provider ? { provider } : {}),
     ...(typeof body.batch === 'number' ? { batchSize: body.batch } : {}),
-    forceRegenerate: body.force_regenerate === true,
+    level,
   });
   return ok(c, result);
 });
@@ -465,6 +474,12 @@ admin.get('/audio/providers', async (c) => {
         ok: true,
         model: getTtsProviderInfo(c.env, 'cloudflare').model,
       },
+      google: {
+        configured: Boolean(c.env.GOOGLE_TTS_API_KEY),
+        ok: Boolean(c.env.GOOGLE_TTS_API_KEY),
+        model: getTtsProviderInfo(c.env, 'google').model,
+        use: 'approved-batch-only',
+      },
       voicevox: {
         ...voicevox,
         model: getTtsProviderInfo(c.env, 'voicevox').model,
@@ -480,8 +495,16 @@ admin.post('/audio/qa/warmup', async (c) => {
     force?: boolean;
   };
   const providers = parseQaWarmupProviders(body.provider);
+  if (providers.includes('google')) {
+    const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
+    const suppliedApproval = c.req.header('x-audio-batch-approval')?.trim();
+    if (!configuredApproval || !suppliedApproval || !(await equalSecret(configuredApproval, suppliedApproval))) {
+      return badRequest(c, 'Google QA 오디오 생성에는 오디오 배치 승인 토큰이 필요합니다');
+    }
+  }
   const results: Record<AudioQaProvider, Awaited<ReturnType<typeof warmupAudioQa>>> = {
     cloudflare: [],
+    google: [],
     voicevox: [],
   };
 
@@ -506,9 +529,53 @@ admin.post('/audio/qa/warmup', async (c) => {
   });
 });
 
-function parseBatchProvider(value: string | undefined): Extract<TtsProviderId, 'cloudflare' | 'voicevox'> | undefined {
-  if (value === 'cloudflare' || value === 'voicevox') return value;
+function parseBatchProvider(value: string | undefined): Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'> | undefined {
+  if (value === 'cloudflare' || value === 'google' || value === 'voicevox') return value;
   return undefined;
+}
+
+function parseAudioBatchLevel(value: string | undefined): AudioBatchLevel | undefined {
+  return AUDIO_BATCH_LEVELS.find((level) => level === value);
+}
+
+async function loadAudioBatchStats(
+  db: D1Database,
+  provider: string,
+  level?: AudioBatchLevel,
+): Promise<Record<'sentences' | 'vocab' | 'kanji', { total: number; approved: number; pending: number }>> {
+  type CountRow = { total: number; approved: number };
+  const query = async (
+    table: 'sentences' | 'vocab' | 'kanji',
+    itemType: 'sentence' | 'vocab' | 'kanji',
+    levelColumn: 'level' | 'jlpt_level',
+  ): Promise<{ total: number; approved: number; pending: number }> => {
+    const levels = level ? [level] : [...AUDIO_BATCH_LEVELS];
+    const placeholders = levels.map(() => '?').join(', ');
+    const row = await db.prepare(`
+      SELECT COUNT(*) AS total,
+             SUM(CASE WHEN EXISTS (
+               SELECT 1 FROM audio_generation_log AS generation
+               WHERE generation.item_type = ?
+                 AND generation.item_id = item.id
+                 AND generation.provider = ?
+                 AND generation.success = 1
+                 AND generation.r2_key = item.audio_r2_key
+             ) THEN 1 ELSE 0 END) AS approved
+      FROM ${table} AS item
+      WHERE item.${levelColumn} IN (${placeholders})`)
+      .bind(itemType, provider, ...levels)
+      .first<CountRow>();
+    const total = row?.total ?? 0;
+    const approved = row?.approved ?? 0;
+    return { total, approved, pending: total - approved };
+  };
+
+  const [sentences, vocab, kanji] = await Promise.all([
+    query('sentences', 'sentence', 'level'),
+    query('vocab', 'vocab', 'level'),
+    query('kanji', 'kanji', 'jlpt_level'),
+  ]);
+  return { sentences, vocab, kanji };
 }
 
 function parseQaWarmupProviders(value: string | undefined): AudioQaProvider[] {

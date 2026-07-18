@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { audioPlayer } from '../../lib/audio';
 import { initialListeningAudioSource, toSubmittedAnswers } from '../../features/quiz-listening/logic';
 
 describe('toSubmittedAnswers', () => {
@@ -12,18 +11,11 @@ describe('toSubmittedAnswers', () => {
 });
 
 describe('initialListeningAudioSource', () => {
-  it('uses browser voice when the user preference is browser even if server audio exists', () => {
-    audioPlayer.sourcePreference = 'browser';
-    expect(initialListeningAudioSource(true)).toBe('browser');
-  });
-
-  it('keeps browser voice as the listening default even when the global preference is server', () => {
-    audioPlayer.sourcePreference = 'server';
-    expect(initialListeningAudioSource(true)).toBe('browser');
+  it('uses approved R2 audio when the listening question has a fixed asset', () => {
+    expect(initialListeningAudioSource(true)).toBe('server');
   });
 
   it('falls back to browser voice when no server audio exists', () => {
-    audioPlayer.sourcePreference = 'server';
     expect(initialListeningAudioSource(false)).toBe('browser');
   });
 });

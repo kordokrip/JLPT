@@ -25,17 +25,22 @@ srs.post('/srs/init', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const { item_type, item_ids } = body.data;
   const now = new Date().toISOString();
+
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK SRS 콘텐츠는 아직 출시되지 않았습니다');
+  }
 
   // 각 아이템에 대해 INSERT OR IGNORE 로 신규 카드 생성
   const stmts = item_ids.map((itemId) =>
     c.env.DB.prepare(
       `INSERT OR IGNORE INTO srs_cards
-         (user_id, item_type, item_id, state, stability, difficulty,
+         (user_id, learning_track, item_type, item_id, state, stability, difficulty,
           lapses, reps, due_at, created_at, updated_at)
-       VALUES (?, ?, ?, 'new', 2.5, 5.0, 0, 0, ?, ?, ?)`,
-    ).bind(userId, item_type, itemId, now, now, now),
+       VALUES (?, ?, ?, ?, 'new', 2.5, 5.0, 0, 0, ?, ?, ?)`,
+    ).bind(userId, learningTrack, item_type, itemId, now, now, now),
   );
 
   await c.env.DB.batch(stmts);
@@ -49,11 +54,16 @@ srs.get('/srs/due', async (c) => {
   if (!q.success) return badRequest(c, q.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const { limit, item_type } = q.data;
   const now = new Date().toISOString();
 
-  const conditions = ["user_id = ?", "due_at <= ?"];
-  const bindings: unknown[] = [userId, now];
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK SRS 콘텐츠는 아직 출시되지 않았습니다');
+  }
+
+  const conditions = ["user_id = ?", "learning_track = ?", "due_at <= ?"];
+  const bindings: unknown[] = [userId, learningTrack, now];
 
   if (item_type) {
     conditions.push('item_type = ?');
@@ -79,13 +89,18 @@ srs.post('/srs/review', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const { card_id, rating, response_ms } = body.data;
+
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK SRS 콘텐츠는 아직 출시되지 않았습니다');
+  }
 
   // 카드 조회
   const card = await c.env.DB.prepare(
-    'SELECT * FROM srs_cards WHERE id = ? AND user_id = ?',
+    'SELECT * FROM srs_cards WHERE id = ? AND user_id = ? AND learning_track = ?',
   )
-    .bind(card_id, userId)
+    .bind(card_id, userId, learningTrack)
     .first<{
       id: number;
       state: string;
@@ -159,10 +174,11 @@ srs.post('/srs/review', async (c) => {
 // ── GET /srs/settings ────────────────────────
 srs.get('/srs/settings', async (c) => {
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const row = await c.env.DB.prepare(
-    'SELECT fsrs_options FROM users WHERE id = ?',
+    'SELECT fsrs_options FROM track_srs_settings WHERE user_id = ? AND learning_track = ?',
   )
-    .bind(userId)
+    .bind(userId, learningTrack)
     .first<{ fsrs_options: string | null }>();
 
   const defaults = {
@@ -182,10 +198,15 @@ srs.put('/srs/settings', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   await c.env.DB.prepare(
-    'UPDATE users SET fsrs_options = ? WHERE id = ?',
+    `INSERT INTO track_srs_settings (user_id, learning_track, fsrs_options, updated_at)
+     VALUES (?, ?, ?, unixepoch())
+     ON CONFLICT(user_id, learning_track) DO UPDATE SET
+       fsrs_options = excluded.fsrs_options,
+       updated_at = excluded.updated_at`,
   )
-    .bind(JSON.stringify(body.data), userId)
+    .bind(userId, learningTrack, JSON.stringify(body.data))
     .run();
 
   return ok(c, body.data);
@@ -194,14 +215,15 @@ srs.put('/srs/settings', async (c) => {
 // ── GET /srs/stats ────────────────────────────
 srs.get('/srs/stats', async (c) => {
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
 
   const rows = await c.env.DB.prepare(
     `SELECT state, COUNT(*) AS count
      FROM srs_cards
-     WHERE user_id = ?
+     WHERE user_id = ? AND learning_track = ?
      GROUP BY state`,
   )
-    .bind(userId)
+    .bind(userId, learningTrack)
     .all<{ state: string; count: number }>();
 
   const stats: Record<string, number> = {
@@ -215,9 +237,9 @@ srs.get('/srs/stats', async (c) => {
   const firstRow = await c.env.DB.prepare(
     `SELECT MIN(created_at) AS first_card_created_at
      FROM srs_cards
-     WHERE user_id = ?`,
+     WHERE user_id = ? AND learning_track = ?`,
   )
-    .bind(userId)
+    .bind(userId, learningTrack)
     .first<{ first_card_created_at: string | null }>();
 
   return ok(c, {

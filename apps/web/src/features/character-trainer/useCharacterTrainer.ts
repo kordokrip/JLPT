@@ -1,21 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { kanjiApi } from '../../lib/api';
 import { HIRAGANA, KATAKANA } from './data';
 import { buildChoices, getExpectedAnswer, makeKanjiCard, readProgress, writeProgress } from './logic';
 import type { CharacterMode, CharacterStage, JlptLevel, StudyCard } from './types';
+import { useSettingsStore } from '../../stores/settings-store';
+import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
+import { useTrackStatus } from '../../hooks/useTrackStatus';
 
 export function useCharacterTrainer() {
   const [mode, setMode] = useState<CharacterMode>('hiragana');
-  const [level, setLevel] = useState<JlptLevel>('N5');
+  const { levels } = useTrackStatus();
+  const [level, setLevel] = useState<JlptLevel>(levels[0] ?? DEFAULT_JLPT_LEVEL);
   const [index, setIndex] = useState(0);
   const [stage, setStage] = useState<CharacterStage>('observe');
   const [revealed, setRevealed] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [, forceTick] = useState(0);
+  const track = useSettingsStore((state) => state.learningTrack);
+
+  useEffect(() => {
+    if (!levels.includes(level)) setLevel(levels[0] ?? DEFAULT_JLPT_LEVEL);
+  }, [level, levels]);
 
   const kanjiQuery = useQuery({
-    queryKey: ['character-trainer-kanji', level],
+    queryKey: ['character-trainer-kanji', track, level],
     queryFn: async () => {
       const res = await kanjiApi.list({ level, limit: 200 });
       return res.ok ? res.data.map(makeKanjiCard) : [];
@@ -66,6 +75,7 @@ export function useCharacterTrainer() {
   return {
     mode,
     level,
+    levels,
     index,
     stage,
     revealed,

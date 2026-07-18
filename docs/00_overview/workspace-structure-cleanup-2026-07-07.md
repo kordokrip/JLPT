@@ -1,5 +1,7 @@
 # JLPT 워크스페이스 구조 정리 및 리팩토링 점검 보고서
 
+> **역사 문서:** 이 문서는 2026-07-07 구조 점검 결과다. 이후 R1 스키마 수렴, OpenAPI 분리, CI 강화 및 LearningTrack 기반 작업이 반영되었으므로 현재 상태는 `docs/00_overview/project-status-report.md`와 `docs/PROJECT_ANALYSIS_2026.md`를 따른다.
+
 기준일: 2026-07-07 KST
 
 ## 1. 결론

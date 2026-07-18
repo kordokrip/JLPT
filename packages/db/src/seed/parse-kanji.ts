@@ -14,23 +14,30 @@ export interface KanjiSql {
   sourceCode: string;
   level: 'N5' | 'N4' | 'N3';
   filePath: string;
+  naturalKeys?: Set<string>;
 }
 
 export function parseKanji(opts: KanjiSql): string[] {
   const tables = parseMarkdownTables(opts.filePath);
   const statements: string[] = [];
+  const naturalKeys = opts.naturalKeys ?? new Set<string>();
 
   for (const table of tables) {
-    const { headers, rows } = table;
+    const { headers, rows, nearestH2 } = table;
 
     // 한자 테이블 판별: '한자' 컬럼 필수
-    const charIdx    = headers.findIndex((h) => /한자/.test(h));
+    const charIdx    = headers.findIndex((h) => /^한자$/u.test(h.trim()));
     if (charIdx === -1) continue;
 
-    const meaningIdx = headers.findIndex((h) => /의미/.test(h));
+    const meaningIdx = headers.findIndex((h) => /^(?:한국어\s*)?(?:의미|뜻)$/u.test(h.trim()));
     const onYomiIdx  = headers.findIndex((h) => /음독/.test(h));
     const kunYomiIdx = headers.findIndex((h) => /훈독/.test(h));
     const hanjaIdx   = headers.findIndex((h) => /한국\s*한자음/.test(h));
+
+    if (meaningIdx === -1) {
+      if (!/카테고리\s+/u.test(nearestH2)) continue;
+      throw new Error(`[kanji:${opts.sourceCode}] 의미 헤더(의미/뜻/한국어 뜻)가 없습니다.`);
+    }
 
     for (const row of rows) {
       const char = normalizeCell(stripBr(row[charIdx] ?? ''));
@@ -40,6 +47,12 @@ export function parseKanji(opts: KanjiSql): string[] {
       const onYomi    = normalizeCell(stripBr(row[onYomiIdx ?? -1] ?? '')) || null;
       const kunYomi   = normalizeCell(stripBr(row[kunYomiIdx ?? -1] ?? '')) || null;
       const hanja     = normalizeCell(stripBr(row[hanjaIdx ?? -1] ?? '')) || null;
+
+      if (!meaningKo) {
+        throw new Error(`[kanji:${opts.sourceCode}] 한국어 뜻이 비어 있습니다: ${char}`);
+      }
+      if (naturalKeys.has(char)) continue;
+      naturalKeys.add(char);
 
       statements.push(
         [

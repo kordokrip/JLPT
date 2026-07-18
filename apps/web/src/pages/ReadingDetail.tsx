@@ -15,6 +15,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useSettingsStore } from '../stores/settings-store';
 
 // ─── 타입 ──────────────────────────────────────────────────────────────────
 
@@ -314,13 +315,14 @@ export default function ReadingDetail() {
   const { id }     = useParams<{ id: string }>();
   const navigate   = useNavigate();
   const { t } = useTranslation();
+  const track = useSettingsStore((state) => state.learningTrack);
 
   const [showFurigana, setShowFurigana] = useState(true);
   const [mobileTab,    setMobileTab]   = useState<'text' | 'quiz'>('text');
   const [popover, setPopover] = useState<{ word: string; rect: DOMRect } | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['reading-detail', id],
+    queryKey: ['reading-detail', track, id],
     queryFn:  async () => {
       const res = await api.get<PassageFull>(`/reading/${id}`);
       if (!res.ok) throw new Error(res.message);

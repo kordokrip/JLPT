@@ -1,18 +1,40 @@
-import { expect, test, type Page } from '@playwright/test';
-import { ensureAuthenticated } from './auth-helper';
+import { expect, test, type Page } from "@playwright/test";
+import { ensureAuthenticated } from "./auth-helper";
 
 const ROUTES = [
-  { path: '/', label: '홈', text: /오늘 할 일|Today's Tasks|今日のタスク/ },
-  { path: '/review', label: '복습', text: /복습|Review|復習/ },
-  { path: '/browse/vocab', label: '찾아보기', text: /어휘 찾아보기|Browse Vocabulary|語彙ブラウズ/ },
-  { path: '/quiz', label: '퀴즈', text: /퀴즈|Quiz|クイズ/ },
-  { path: '/characters', label: '문자암기', text: /문자 암기|Moji Trainer|Characters/ },
-  { path: '/reading', label: '독해', text: /독해|Reading|読解/ },
-  { path: '/curriculum', label: '커리큘럼', text: /16주 학습 계획|16-Week|16週/ },
-  { path: '/self-check', label: '자가진단', text: /자가진단|Self-Check|自己診断/ },
-  { path: '/stats', label: '통계', text: /학습 통계|Learning Stats|学習統計/ },
-  { path: '/settings', label: '설정', text: /설정|Settings|設定/ },
+  { path: "/", label: "홈", text: /오늘 할 일|Today's Tasks|今日のタスク/ },
+  { path: "/review", label: "복습", text: /복습|Review|復習/ },
+  {
+    path: "/browse/vocab",
+    label: "찾아보기",
+    text: /어휘 찾아보기|Browse Vocabulary|語彙ブラウズ/,
+  },
+  { path: "/quiz", label: "퀴즈", text: /퀴즈|Quiz|クイズ/ },
+  {
+    path: "/characters",
+    label: "문자암기",
+    text: /문자 암기|Moji Trainer|Characters/,
+  },
+  { path: "/reading", label: "독해", text: /독해|Reading|読解/ },
+  {
+    path: "/curriculum",
+    label: "커리큘럼",
+    text: /12개월 학습 계획|12-Month Study Plan|12か月の学習計画/,
+  },
+  {
+    path: "/self-check",
+    label: "자가진단",
+    text: /자가진단|Self-Check|自己診断/,
+  },
+  { path: "/stats", label: "통계", text: /학습 통계|Learning Stats|学習統計/ },
+  { path: "/settings", label: "설정", text: /설정|Settings|設定/ },
 ] as const;
+
+const EXPECTED_NAVIGATION_CANCELLATIONS = new Set([
+  "net::ERR_ABORTED",
+  "cancelled",
+  "Load request cancelled",
+]);
 
 async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   const failures: string[] = [];
@@ -20,49 +42,76 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
 
-  page.on('requestfailed', (request) => {
+  page.on("requestfailed", (request) => {
     const failure = request.failure();
-    const errorText = failure?.errorText ?? 'failed';
-    if (errorText !== 'net::ERR_ABORTED' && errorText !== 'cancelled') {
+    const errorText = failure?.errorText ?? "failed";
+    if (!EXPECTED_NAVIGATION_CANCELLATIONS.has(errorText)) {
       failures.push(`${request.method()} ${request.url()} ${errorText}`);
     }
   });
-  page.on('response', (response) => {
+  page.on("response", (response) => {
     const url = response.url();
-    if (url.includes('/api/v1/') && response.status() >= 400) {
+    if (url.includes("/api/v1/") && response.status() >= 400) {
       badResponses.push(`${response.status()} ${url}`);
     }
   });
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  page.on("console", (msg) => {
+    if (msg.type() === "error") consoleErrors.push(msg.text());
   });
-  page.on('pageerror', (err) => pageErrors.push(err.message));
+  page.on("pageerror", (err) => pageErrors.push(err.message));
 
   await run();
+  await page.waitForTimeout(250);
 
-  expect(failures, 'network request failures').toEqual([]);
-  expect(badResponses, 'bad API responses').toEqual([]);
-  expect(consoleErrors, 'browser console errors').toEqual([]);
+  const apiBaseUrl =
+    process.env.E2E_API_URL ??
+    process.env.API_BASE_URL ??
+    "http://localhost:8787";
+  const health = await page.request.get(
+    `${apiBaseUrl.replace(/\/$/, "")}/health`,
+    { timeout: 10_000 },
+  );
+  expect(
+    health.ok(),
+    "API must remain healthy after navigation cancellations",
+  ).toBe(true);
+
+  expect(failures, "network request failures").toEqual([]);
+  expect(badResponses, "bad API responses").toEqual([]);
+  expect(consoleErrors, "browser console errors").toEqual([]);
   const actionablePageErrors = pageErrors.filter((message) => {
-    if (/\/localhost:5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(message)) return false;
+    // WebKit can emit a synthetic page error when a same-origin request is
+    // cancelled by the next route navigation. Both local hostnames are used
+    // by the E2E runner, and request/response assertions above still catch
+    // genuine network and HTTP failures.
+    if (
+      /\/(?:localhost|127\.0\.0\.1):5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(
+        message,
+      )
+    )
+      return false;
     if (
       failures.length === 0 &&
       badResponses.length === 0 &&
-      /\/nihongo-n3\.pages\.dev\/sw\.js.*due to access control checks/.test(message)
+      /\/nihongo-n3\.pages\.dev\/sw\.js.*due to access control checks/.test(
+        message,
+      )
     ) {
       return false;
     }
     if (
       failures.length === 0 &&
       badResponses.length === 0 &&
-      /\/nihongo-n3-api\.kordokrip\.workers\.dev\/api\/v1\/.*due to access control checks/.test(message)
+      /\/nihongo-n3-api\.kordokrip\.workers\.dev\/api\/v1\/.*due to access control checks/.test(
+        message,
+      )
     ) {
       return false;
     }
     return true;
   });
 
-  expect(actionablePageErrors, 'uncaught page errors').toEqual([]);
+  expect(actionablePageErrors, "uncaught page errors").toEqual([]);
 }
 
 async function expectVisibleHref(page: Page, href: string, label: string) {
@@ -72,7 +121,12 @@ async function expectVisibleHref(page: Page, href: string, label: string) {
         links.some((link) => {
           const style = window.getComputedStyle(link);
           const rect = link.getBoundingClientRect();
-          return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+          return (
+            style.visibility !== "hidden" &&
+            style.display !== "none" &&
+            rect.width > 0 &&
+            rect.height > 0
+          );
         }),
       );
     } catch {
@@ -80,10 +134,18 @@ async function expectVisibleHref(page: Page, href: string, label: string) {
     }
   };
 
-  if (!(await isVisible()) && page.viewportSize()?.width && page.viewportSize()!.width < 768) {
-    const dialog = page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ });
+  if (
+    !(await isVisible()) &&
+    page.viewportSize()?.width &&
+    page.viewportSize()!.width < 768
+  ) {
+    const dialog = page.getByRole("dialog", {
+      name: /추가 메뉴|More menu|追加メニュー/,
+    });
     if (!(await dialog.isVisible().catch(() => false))) {
-      const more = page.locator('nav[aria-label] button', { hasText: /더보기|More|その他/ }).last();
+      const more = page
+        .locator("nav[aria-label] button", { hasText: /더보기|More|その他/ })
+        .last();
       if (await more.isVisible()) {
         await more.click({ force: true });
         await expect(dialog).toBeVisible({ timeout: 5_000 });
@@ -91,14 +153,18 @@ async function expectVisibleHref(page: Page, href: string, label: string) {
     }
   }
 
-  await expect.poll(isVisible, { message: `${label} nav link`, timeout: 10_000 }).toBe(true);
+  await expect
+    .poll(isVisible, { message: `${label} nav link`, timeout: 10_000 })
+    .toBe(true);
 }
 
 async function gotoAppRoute(page: Page, path: string) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      await page.goto(path, { waitUntil: 'commit', timeout: 20_000 });
-      await expect(page.locator('#root > *').first()).toBeVisible({ timeout: 15_000 });
+      await page.goto(path, { waitUntil: "commit", timeout: 20_000 });
+      await expect(page.locator("#root > *").first()).toBeVisible({
+        timeout: 15_000,
+      });
       return;
     } catch (err) {
       if (attempt === 1) throw err;
@@ -107,18 +173,23 @@ async function gotoAppRoute(page: Page, path: string) {
   }
 }
 
-test.describe('운영 메뉴 smoke', () => {
+test.describe("운영 메뉴 smoke", () => {
   for (const viewport of [
-    { name: 'desktop', width: 1280, height: 900 },
-    { name: 'mobile', width: 390, height: 844 },
+    { name: "desktop", width: 1280, height: 900 },
+    { name: "mobile", width: 390, height: 844 },
   ] as const) {
-    test(`${viewport.name}: 모든 주요 메뉴가 렌더링되고 라우팅된다`, async ({ page }) => {
+    test(`${viewport.name}: 모든 주요 메뉴가 렌더링되고 라우팅된다`, async ({
+      page,
+    }) => {
       test.setTimeout(60_000);
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.setViewportSize({
+        width: viewport.width,
+        height: viewport.height,
+      });
       await ensureAuthenticated(page);
 
       await assertNoRuntimeFailures(page, async () => {
-        await gotoAppRoute(page, '/');
+        await gotoAppRoute(page, "/");
 
         for (const route of ROUTES) {
           await expectVisibleHref(page, route.path, route.label);
@@ -126,7 +197,10 @@ test.describe('운영 메뉴 smoke', () => {
 
         for (const route of ROUTES) {
           await gotoAppRoute(page, route.path);
-          await expect(page.locator('main').getByText(route.text).first(), `${route.path} content`).toBeVisible({
+          await expect(
+            page.locator("main").getByText(route.text).first(),
+            `${route.path} content`,
+          ).toBeVisible({
             timeout: 15_000,
           });
         }

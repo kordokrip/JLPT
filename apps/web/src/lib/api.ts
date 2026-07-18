@@ -14,7 +14,17 @@ import {
   normalizeVocabContentItem,
   type ApiRawContentRecord,
   type ContentVersionDto,
+  type JlptLevel,
+  type LearningTrackId,
+  type TrackStatusDto,
 } from '@nihongo-n3/shared';
+import createClient from 'openapi-fetch';
+import type { components, paths } from '../types/api.js';
+
+export const typedApi = createClient<paths>({
+  baseUrl: apiBase(),
+  credentials: 'include',
+});
 
 // ─────────────────────────────────────────────
 // 공통 응답 타입
@@ -32,6 +42,22 @@ export interface ApiError {
 }
 
 export type ApiResult<T> = ApiOk<T> | ApiError;
+
+function typedResult<T>(result: {
+  data?: unknown;
+  error?: unknown;
+  response: Response;
+}): ApiResult<T> {
+  if (result.error !== undefined || !result.response.ok) {
+    const error = result.error as { detail?: string; message?: string } | undefined;
+    return {
+      ok: false,
+      status: result.response.status,
+      message: error?.detail ?? error?.message ?? `HTTP ${result.response.status}`,
+    };
+  }
+  return { ok: true, ...(result.data as object) } as ApiOk<T>;
+}
 
 // ─────────────────────────────────────────────
 // 코어 fetch 래퍼
@@ -118,6 +144,9 @@ export const api = {
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) }),
 
+  patch: <T>(path: string, body?: unknown) =>
+    request<T>(path, { method: 'PATCH', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) }),
+
   delete: <T>(path: string) =>
     request<T>(path, { method: 'DELETE' }),
 };
@@ -139,46 +168,73 @@ function asItems<T>(value: ApiList<T>): T[] {
 
 // 어휘
 export const vocabApi = {
-  list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<ApiRawContentRecord[]>('/vocab', p as Record<string, string>);
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
+    const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/vocab', {
+      params: { query: p ?? {} },
+    }));
     return res.ok ? { ...res, data: res.data.map(normalizeVocabContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<ApiRawContentRecord>(`/vocab/${id}`);
+    const res = typedResult<ApiRawContentRecord>(await typedApi.GET('/api/v1/vocab/{id}', {
+      params: { path: { id: String(id) } },
+    }));
     return res.ok ? { ...res, data: normalizeVocabContentItem(res.data) } : res;
   },
   search: async (q: string, limit = 20) => {
-    const res = await api.get<ApiRawContentRecord[]>('/vocab/search', { q, limit });
+    const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/vocab/search', {
+      params: { query: { q, limit } },
+    }));
     return res.ok ? { ...res, data: res.data.map(normalizeVocabContentItem) } : res;
   },
 };
 
 // 문법
 export const grammarApi = {
-  list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<ApiRawContentRecord[]>('/grammar', p as Record<string, string>);
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
+    const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/grammar', {
+      params: { query: p ?? {} },
+    }));
     return res.ok ? { ...res, data: res.data.map(normalizeGrammarContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<ApiRawContentRecord>(`/grammar/${id}`);
+    const res = typedResult<ApiRawContentRecord>(await typedApi.GET('/api/v1/grammar/{id}', {
+      params: { path: { id: String(id) } },
+    }));
     return res.ok ? { ...res, data: normalizeGrammarContentItem(res.data) } : res;
   },
 };
 
 // 한자
 export const kanjiApi = {
-  list: async (p?: { level?: string; limit?: number; cursor?: string }) => {
-    const res = await api.get<ApiRawContentRecord[]>('/kanji', p as Record<string, string>);
+  list: async (p?: { level?: JlptLevel; limit?: number; cursor?: string }) => {
+    const res = typedResult<ApiRawContentRecord[]>(await typedApi.GET('/api/v1/kanji', {
+      params: { query: p ?? {} },
+    }));
     return res.ok ? { ...res, data: res.data.map(normalizeKanjiContentItem) } : res;
   },
   get: async (id: number) => {
-    const res = await api.get<ApiRawContentRecord>(`/kanji/${id}`);
+    const res = typedResult<ApiRawContentRecord>(await typedApi.GET('/api/v1/kanji/{id}', {
+      params: { path: { id: String(id) } },
+    }));
     return res.ok ? { ...res, data: normalizeKanjiContentItem(res.data) } : res;
   },
 };
 
+export type HomophonePairItem = components['schemas']['HomophoneListResponse']['data'][number];
+
+export const homophonesApi = {
+  list: async (p?: { level?: 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; limit?: number }) =>
+    typedResult<HomophonePairItem[]>(await typedApi.GET('/api/v1/homophones', {
+      params: { query: p ?? {} },
+    })),
+};
+
 export const contentApi = {
   version: () => api.get<ContentVersionDto>('/content/version'),
+};
+
+export const tracksApi = {
+  status: (track: LearningTrackId) => api.get<TrackStatusDto>(`/tracks/${track}/status`),
 };
 
 // SRS
@@ -248,6 +304,7 @@ export interface AuthUser {
   display_name: string;
   role: AuthRole;
   auth_provider?: string;
+  learning_track: LearningTrackId;
 }
 
 export interface AuthConfig {
@@ -296,7 +353,9 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<{ user: AuthUser }>('/auth/login', { email, password }),
   logout: () => api.post<{ ok: boolean }>('/auth/logout'),
-  googleStartUrl: () => apiUrl(`/auth/google/start?source=web&ts=${Date.now()}`),
+  setTrack: (track: LearningTrackId) => api.patch<{ track: LearningTrackId }>('/auth/track', { track }),
+  googleStartUrl: (track: LearningTrackId) =>
+    apiUrl(`/auth/google/start?source=web&track=${encodeURIComponent(track)}&ts=${Date.now()}`),
   adminUsers: () => api.get<AdminUsersOverview>('/auth/admin/users'),
 };
 
@@ -320,10 +379,3 @@ export const __apiTestUtils = {
 // openapi-typescript 가 api.d.ts 를 갱신하면 아래 클라이언트 호출이
 // 컴파일 시 타입 오류로 즉시 감지됩니다.
 // ─────────────────────────────────────────────
-import createClient from 'openapi-fetch';
-import type { paths } from '../types/api.js';
-
-export const typedApi = createClient<paths>({
-  baseUrl: apiBase(),
-  credentials: 'include',
-});

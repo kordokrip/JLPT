@@ -17,8 +17,8 @@ export type { TtsAdapter, TtsOptions, TtsProviderId, TtsProviderInfo } from './t
 interface TtsEnv {
   AI:                { run: (model: string, input: Record<string, unknown>) => Promise<unknown> };
   TTS_PROVIDER:      string;
-  GOOGLE_TTS_API_KEY: string;
-  AZURE_TTS_KEY:     string;
+  GOOGLE_TTS_API_KEY?: string;
+  AZURE_TTS_KEY?:     string;
   AZURE_TTS_REGION:  string;
   VOICEVOX_URL?:      string;
   VOICEVOX_URL_SECRET?: string;
@@ -76,7 +76,7 @@ export function getTtsProviderInfo(env: TtsEnv, providerOverride?: TtsProviderId
   if (provider === 'style-bert-vits2') {
     return { provider, model: 'style-bert-vits2:self-hosted', audioVersion: 'style-bert-vits2-v1' };
   }
-  if (provider === 'google') return { provider, model: 'google-cloud-tts', audioVersion: 'google-v1' };
+  if (provider === 'google') return { provider, model: 'ja-JP-Neural2-B', audioVersion: 'google-neural2-v1' };
   if (provider === 'azure') return { provider, model: 'azure-tts', audioVersion: 'azure-v1' };
   return { provider: 'cloudflare', model: CLOUDFLARE_MELOTTS_MODEL, audioVersion: 'melotts-v2' };
 }

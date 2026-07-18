@@ -41,7 +41,7 @@ test.describe('퀴즈 기능 smoke', () => {
         expect(new Set(question.choices).size, `${mode} choices are unique`).toBe(question.choices.length);
         if (mode === 'listening') {
           expect(question.script_ja, 'listening script_ja').toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
-          expect(question.audio_key, 'listening audio key').toMatch(/^audio\/sentence\/n[1-5]\/\d+\.mp3$/);
+          expect(question.audio_key, 'fresh DB must not fabricate an unapproved R2 key').toBeUndefined();
         }
       }
     }
@@ -92,9 +92,63 @@ test.describe('퀴즈 기능 smoke', () => {
     });
   });
 
-  test('청해 전용 화면은 브라우저 일본어 음성을 기본 선택지로 제공한다', async ({ page }) => {
+  test('청해 전용 화면은 승인된 R2가 없으면 브라우저 fallback을 제공한다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
+      const serverAudioRequests: string[] = [];
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname.startsWith('/api/v1/audio/')) {
+          serverAudioRequests.push(request.url());
+        }
+      });
       await page.addInitScript(() => {
+        const spoken: Array<{ text: string; lang: string; voice: string | null }> = [];
+        Object.defineProperty(window, '__spokenJapaneseForTest', { value: spoken, configurable: true });
+
+        class FakeSpeechSynthesisUtterance {
+          text: string;
+          lang = '';
+          rate = 1;
+          pitch = 1;
+          volume = 1;
+          voice: SpeechSynthesisVoice | null = null;
+          onstart: (() => void) | null = null;
+          onend: (() => void) | null = null;
+          onerror: (() => void) | null = null;
+
+          constructor(text: string) {
+            this.text = text;
+          }
+        }
+
+        const japaneseVoice = {
+          default: true,
+          lang: 'ja-JP',
+          localService: true,
+          name: 'Japanese E2E Voice',
+          voiceURI: 'ja-jp-e2e',
+        } as SpeechSynthesisVoice;
+        Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+          configurable: true,
+          value: FakeSpeechSynthesisUtterance,
+        });
+        Object.defineProperty(window, 'speechSynthesis', {
+          configurable: true,
+          value: {
+            addEventListener: () => undefined,
+            cancel: () => undefined,
+            getVoices: () => [japaneseVoice],
+            speak: (utterance: FakeSpeechSynthesisUtterance) => {
+              spoken.push({
+                text: utterance.text,
+                lang: utterance.lang,
+                voice: utterance.voice?.voiceURI ?? null,
+              });
+              utterance.onstart?.();
+              utterance.onend?.();
+            },
+          },
+        });
+
         localStorage.setItem('nihongo-n3-settings', JSON.stringify({
           state: {
             language: 'ko',
@@ -113,10 +167,25 @@ test.describe('퀴즈 기능 smoke', () => {
       });
       await page.goto('/quiz/listening');
       await expect(page.getByRole('heading', { name: /청해 퀴즈|Listening Quiz|聴解クイズ/ })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /브라우저 음성|Browser voice|ブラウザー音声/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /서버 오디오|Server audio|サーバー音声/ })).toBeVisible();
       await expect(page.getByText(/일본어 브라우저 음성으로 재생합니다|Japanese browser voice|日本語ブラウザー音声/)).toBeVisible();
+      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toHaveCount(0);
+      const play = page.getByRole('button', { name: /재생|Play|再生/ });
+      await expect(play).toBeVisible();
+      await play.click();
+      await expect.poll(async () => page.evaluate(() => (
+        window as unknown as { __spokenJapaneseForTest: unknown[] }
+      ).__spokenJapaneseForTest.length)).toBe(1);
+      const spoken = await page.evaluate(() => (
+        window as unknown as {
+          __spokenJapaneseForTest: Array<{ text: string; lang: string; voice: string | null }>;
+        }
+      ).__spokenJapaneseForTest);
+      expect(spoken).toHaveLength(1);
+      expect(spoken[0]?.lang).toBe('ja-JP');
+      expect(spoken[0]?.voice).toBe('ja-jp-e2e');
+      expect(spoken[0]?.text).toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
+      expect(serverAudioRequests, 'must not request a fabricated R2 path').toEqual([]);
+      await expect(page.locator('audio[src]')).toHaveCount(0);
       await expect(page.getByRole('radiogroup')).toBeVisible();
     });
   });

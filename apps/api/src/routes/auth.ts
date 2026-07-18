@@ -16,6 +16,7 @@ import {
   sha256Hex,
   verifyPassword,
 } from '../lib/auth-session.js';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const auth = new Hono<AppEnv>();
 
@@ -26,6 +27,7 @@ type UserRow = {
   password_hash?: string | null;
   role: 'user' | 'admin';
   auth_provider: 'password' | 'google' | 'cf-access';
+  learning_track: 'jlpt-ja' | 'topik-ko';
 };
 
 function appOrigin(c: Context<AppEnv>): string {
@@ -50,13 +52,14 @@ async function readBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
   return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
 }
 
-function publicUser(row: { id: string; email: string; display_name: string; role: string; auth_provider?: string | null }) {
+function publicUser(row: { id: string; email: string; display_name: string; role: string; auth_provider?: string | null; learning_track?: string | null }) {
   return {
     id: row.id,
     email: row.email,
     display_name: row.display_name,
     role: row.role === 'admin' ? 'admin' : 'user',
     auth_provider: row.auth_provider ?? 'password',
+    learning_track: row.learning_track === 'topik-ko' ? 'topik-ko' : 'jlpt-ja',
   };
 }
 
@@ -66,7 +69,7 @@ function isPasswordStrong(password: string): boolean {
 
 async function findUserByEmail(c: Context<AppEnv>, email: string): Promise<UserRow | null> {
   return c.env.DB.prepare(
-    `SELECT id, email, display_name, password_hash, COALESCE(role, 'user') AS role, auth_provider
+    `SELECT id, email, display_name, password_hash, COALESCE(role, 'user') AS role, auth_provider, learning_track
        FROM users
       WHERE lower(email) = lower(?)
       LIMIT 1`,
@@ -75,47 +78,26 @@ async function findUserByEmail(c: Context<AppEnv>, email: string): Promise<UserR
     .first<UserRow>();
 }
 
-async function ensureOAuthBridgeTable(c: Context<AppEnv>): Promise<void> {
-  await c.env.DB.prepare(
-    `CREATE TABLE IF NOT EXISTS oauth_login_tokens (
-       token_hash TEXT PRIMARY KEY,
-       user_id TEXT NOT NULL,
-       expires_at INTEGER NOT NULL,
-       created_at INTEGER NOT NULL,
-       consumed_at INTEGER
-     )`,
-  ).run();
-}
-
-async function ensureOAuthStateTable(c: Context<AppEnv>): Promise<void> {
-  await c.env.DB.prepare(
-    `CREATE TABLE IF NOT EXISTS oauth_states (
-       state_hash TEXT PRIMARY KEY,
-       expires_at INTEGER NOT NULL,
-       created_at INTEGER NOT NULL,
-       consumed_at INTEGER
-     )`,
-  ).run();
-}
-
-async function saveOAuthState(c: Context<AppEnv>, state: string): Promise<void> {
-  await ensureOAuthStateTable(c);
+async function saveOAuthState(
+  c: Context<AppEnv>,
+  state: string,
+  learningTrack: UserRow['learning_track'],
+): Promise<void> {
   const stateHash = await sha256Hex(state);
   const now = Math.floor(Date.now() / 1000);
   await c.env.DB.prepare(
-    `INSERT INTO oauth_states (state_hash, expires_at, created_at)
-     VALUES (?, ?, ?)`,
+    `INSERT INTO oauth_states (state_hash, learning_track, expires_at, created_at)
+     VALUES (?, ?, ?, ?)`,
   )
-    .bind(stateHash, now + 600, now)
+    .bind(stateHash, learningTrack, now + 600, now)
     .run();
 }
 
-async function consumeOAuthState(c: Context<AppEnv>, state: string): Promise<boolean> {
-  await ensureOAuthStateTable(c);
+async function consumeOAuthState(c: Context<AppEnv>, state: string): Promise<UserRow['learning_track'] | null> {
   const stateHash = await sha256Hex(state);
   const now = Math.floor(Date.now() / 1000);
   const row = await c.env.DB.prepare(
-    `SELECT state_hash
+    `SELECT learning_track
        FROM oauth_states
       WHERE state_hash = ?
         AND consumed_at IS NULL
@@ -123,16 +105,15 @@ async function consumeOAuthState(c: Context<AppEnv>, state: string): Promise<boo
       LIMIT 1`,
   )
     .bind(stateHash, now)
-    .first<{ state_hash: string }>();
-  if (!row) return false;
+    .first<{ learning_track: UserRow['learning_track'] }>();
+  if (!row) return null;
   await c.env.DB.prepare('UPDATE oauth_states SET consumed_at = ? WHERE state_hash = ?')
     .bind(now, stateHash)
     .run();
-  return true;
+  return row.learning_track === 'topik-ko' ? 'topik-ko' : 'jlpt-ja';
 }
 
 async function createOAuthBridgeToken(c: Context<AppEnv>, userId: string): Promise<string> {
-  await ensureOAuthBridgeTable(c);
   const token = randomToken(32);
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
@@ -146,7 +127,6 @@ async function createOAuthBridgeToken(c: Context<AppEnv>, userId: string): Promi
 }
 
 async function consumeOAuthBridgeToken(c: Context<AppEnv>, token: string): Promise<string | null> {
-  await ensureOAuthBridgeTable(c);
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
   const row = await c.env.DB.prepare(
@@ -171,7 +151,7 @@ async function upsertGoogleUser(
   profile: { sub: string; email: string; name: string },
 ): Promise<UserRow> {
   const existing = await c.env.DB.prepare(
-    `SELECT id, email, display_name, COALESCE(role, 'user') AS role, auth_provider
+    `SELECT id, email, display_name, COALESCE(role, 'user') AS role, auth_provider, learning_track
        FROM users
       WHERE google_sub = ? OR lower(email) = lower(?)
       LIMIT 1`,
@@ -201,6 +181,7 @@ async function upsertGoogleUser(
     display_name: profile.name || profile.email.split('@')[0] || 'Google User',
     role: 'user',
     auth_provider: 'google',
+    learning_track: 'jlpt-ja',
   };
   await c.env.DB.prepare(
     `INSERT INTO users (id, email, display_name, role, auth_provider, google_sub, last_login_at, created_at, updated_at)
@@ -279,6 +260,7 @@ auth.post('/auth/register', async (c) => {
     password_hash: await hashPassword(password),
     role,
     auth_provider: 'password',
+    learning_track: 'jlpt-ja',
   };
   await c.env.DB.prepare(
     `INSERT INTO users (id, email, display_name, password_hash, role, auth_provider, created_at, updated_at, last_login_at)
@@ -316,13 +298,26 @@ auth.post('/auth/logout', appSessionAuth, async (c) => {
   return c.json({ data: { ok: true } });
 });
 
+auth.patch('/auth/track', appSessionAuth, async (c) => {
+  const body = await readBody(c);
+  const track = body.track;
+  if (track !== 'jlpt-ja' && track !== 'topik-ko') {
+    return c.json({ error: '지원하지 않는 학습 트랙입니다' }, 400);
+  }
+  await c.env.DB.prepare('UPDATE users SET learning_track = ?, updated_at = unixepoch() WHERE id = ?')
+    .bind(track, c.get('userId'))
+    .run();
+  return c.json({ data: { track } });
+});
+
 auth.get('/auth/google/start', async (c) => {
   if (!c.env.GOOGLE_CLIENT_ID || !c.env.GOOGLE_CLIENT_SECRET) {
     return c.json({ error: 'Google 로그인이 아직 설정되지 않았습니다' }, 503);
   }
+  const requestedTrack = c.req.query('track') === 'topik-ko' ? 'topik-ko' : 'jlpt-ja';
   const state = randomToken(24);
   setOauthStateCookie(c, state);
-  await saveOAuthState(c, state);
+  await saveOAuthState(c, state, requestedTrack);
   await recordLoginEvent(c, { provider: 'google', eventType: 'google_start' });
   const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
@@ -344,15 +339,21 @@ auth.get('/auth/google/callback', async (c) => {
   if (!code || !state) {
     return c.redirect(`${origin}/login?error=google_state`, 302);
   }
-  const storedStateOk = state ? await consumeOAuthState(c, state) : false;
+  const requestedTrack = state ? await consumeOAuthState(c, state) : null;
   const cookieStateOk = Boolean(state && expected && state === expected);
-  if (!cookieStateOk && !storedStateOk) {
+  if (!cookieStateOk && !requestedTrack) {
     return c.redirect(`${origin}/login?error=google_state`, 302);
   }
   try {
     const token = await tokenExchange(c, code);
     const profile = await fetchGoogleProfile(token.access_token);
     const user = await upsertGoogleUser(c, profile);
+    if (requestedTrack && user.learning_track !== requestedTrack) {
+      await c.env.DB.prepare('UPDATE users SET learning_track = ?, updated_at = unixepoch() WHERE id = ?')
+        .bind(requestedTrack, user.id)
+        .run();
+      user.learning_track = requestedTrack;
+    }
     await recordLoginEvent(c, { userId: user.id, email: user.email, provider: 'google', eventType: 'google_callback' });
     const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
     if (new URL(redirectUri).origin !== new URL(origin).origin) {
@@ -362,7 +363,7 @@ auth.get('/auth/google/callback', async (c) => {
     await createSession(c, user.id);
     return c.redirect(origin, 302);
   } catch (err) {
-    console.error('[auth/google]', err);
+    console.error({ event: 'google_oauth_callback_error', error_name: safeErrorName(err) });
     return c.redirect(`${origin}/login?error=google_callback`, 302);
   }
 });

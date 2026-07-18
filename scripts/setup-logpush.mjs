@@ -1,159 +1,263 @@
 #!/usr/bin/env node
-/**
- * scripts/setup-logpush.mjs
- *
- * Cloudflare Logpush 파이프라인을 R2 버킷으로 설정하는 스크립트.
- *
- * 전제 조건:
- *   1. `wrangler login` 으로 인증 완료
- *   2. 환경 변수 또는 .env 파일에 아래 값 설정:
- *      - CF_ACCOUNT_ID      : Cloudflare 계정 ID
- *      - CF_API_TOKEN       : Logpush 권한 포함 API 토큰
- *      - CF_ZONE_ID         : (선택) 존 ID — Workers 로그는 계정 레벨이므로 불필요
- *      - R2_BUCKET_NAME     : 로그를 저장할 R2 버킷 이름
- *      - WORKER_NAME        : Workers 스크립트 이름 (wrangler.toml name 필드)
- *
- * 사용법:
- *   node scripts/setup-logpush.mjs [--dry-run]
- *
- * 동작:
- *   1. 기존 nihongo-n3-workers-logpush 잡이 있으면 조회 후 업데이트
- *   2. 없으면 새 Logpush 잡 생성
- *   3. --dry-run 플래그 시 API 호출 없이 payload 출력만
- *
- * Logpush 필드 (Workers Trace Events):
- *   scriptName, outcome, wallTimeMs, cpuTimeMs,
- *   eventType, exceptions, logs
- */
 
-import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const args = new Set(process.argv.slice(2));
+const APPLY = args.has('--apply');
+const VERIFY_ONLY = args.has('--verify-only');
 
-// ─── .env 로드 (있을 때만) ────────────────────────────────────────────
-const envPath = resolve(__dirname, '../.env');
-if (existsSync(envPath)) {
-  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
-    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-    if (m && !process.env[m[1]]) {
-      process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
-    }
-  }
-}
+if (args.has('--help')) {
+  console.log(`Usage:
+  node scripts/setup-logpush.mjs --dry-run
+  node scripts/setup-logpush.mjs --apply
+  node scripts/setup-logpush.mjs --verify-only
 
-// ─── 필수 환경 변수 검증 ─────────────────────────────────────────────
-const REQUIRED = ['CF_ACCOUNT_ID', 'CF_API_TOKEN', 'R2_BUCKET_NAME', 'WORKER_NAME'];
-const missing = REQUIRED.filter((k) => !process.env[k]);
-if (missing.length) {
-  console.error('[setup-logpush] 필수 환경 변수 누락:', missing.join(', '));
-  process.exit(1);
-}
+Required for --apply:
+  CLOUDFLARE_ACCOUNT_ID (or CF_ACCOUNT_ID)
+  CLOUDFLARE_API_TOKEN  (or CF_API_TOKEN; Logs Write)
+  R2_ACCESS_KEY_ID      (bucket-scoped Object Write)
+  R2_SECRET_ACCESS_KEY
 
-const ACCOUNT_ID  = process.env.CF_ACCOUNT_ID;
-const API_TOKEN   = process.env.CF_API_TOKEN;
-const BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const WORKER_NAME = process.env.WORKER_NAME;
-const DRY_RUN     = process.argv.includes('--dry-run');
-const JOB_NAME    = `${WORKER_NAME}-logpush`;
+Optional:
+  R2_BUCKET_NAME=nihongo-n3-reports
+  WORKER_NAME=nihongo-n3-api
+  LOGPUSH_PREFIX=logs/workers
+  LOGPUSH_JOB_NAME=nihongo-n3-api-logpush-r2
+  LOGPUSH_REPORT=.artifacts/observability/logpush-job.json
 
-/** Cloudflare v4 API 호출 헬퍼 */
-async function cfFetch(path, opts = {}) {
-  const url  = `https://api.cloudflare.com/client/v4${path}`;
-  const res  = await fetch(url, {
-    ...opts,
-    headers: {
-      Authorization: `Bearer ${API_TOKEN}`,
-      'Content-Type': 'application/json',
-      ...(opts.headers ?? {}),
-    },
-  });
-  const json = await res.json();
-  if (!json.success) {
-    throw new Error(`CF API error: ${JSON.stringify(json.errors)}`);
-  }
-  return json.result;
-}
-
-// ─── Logpush 잡 payload ───────────────────────────────────────────
-const jobPayload = {
-  name:               JOB_NAME,
-  destination_conf:   `r2://${BUCKET_NAME}/logpush/{DATE}?account-id=${ACCOUNT_ID}`,
-  dataset:            'workers_trace_events',
-  enabled:            true,
-  logpull_options:    'fields=ScriptName,Outcome,WallTimeMs,CPUTimeMs,EventType,Exceptions,Logs&timestamps=rfc3339',
-  filter:             JSON.stringify({
-    where: {
-      key:   'ScriptName',
-      op:    'eq',
-      value: WORKER_NAME,
-    },
-  }),
-  output_options: {
-    field_delimiter: '\n',
-    batch_prefix:    '',
-    batch_suffix:    '',
-    record_prefix:   '',
-    record_suffix:   '\n',
-    record_template: '{{{json}}}',
-    timestamp_format: 'rfc3339',
-    sample_rate:      1,
-  },
-};
-
-if (DRY_RUN) {
-  console.log('[setup-logpush] --dry-run: payload 미리보기\n');
-  console.log(JSON.stringify(jobPayload, null, 2));
+The script never prints R2 credentials. Without --apply it only emits a
+redacted plan and performs no Cloudflare mutation.
+`);
   process.exit(0);
 }
 
-// ─── 메인 실행 ───────────────────────────────────────────────────
-(async () => {
-  console.log(`[setup-logpush] 계정 ID : ${ACCOUNT_ID}`);
-  console.log(`[setup-logpush] 버킷    : ${BUCKET_NAME}`);
-  console.log(`[setup-logpush] Worker  : ${WORKER_NAME}`);
-  console.log(`[setup-logpush] 잡 이름 : ${JOB_NAME}\n`);
+loadEnvFile(path.resolve('.env'));
+loadEnvFile(path.resolve('.env.local'));
 
-  // 기존 잡 목록 조회
-  const existingJobs = await cfFetch(`/accounts/${ACCOUNT_ID}/logpush/jobs`);
-  const existing = (existingJobs ?? []).find((j) => j.name === JOB_NAME);
+const ACCOUNT_ID = firstEnv('CLOUDFLARE_ACCOUNT_ID', 'CF_ACCOUNT_ID');
+const API_TOKEN = firstEnv('CLOUDFLARE_API_TOKEN', 'CF_API_TOKEN');
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID?.trim();
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY?.trim();
+const BUCKET_NAME = process.env.R2_BUCKET_NAME?.trim() || 'nihongo-n3-reports';
+const WORKER_NAME = process.env.WORKER_NAME?.trim() || 'nihongo-n3-api';
+const PREFIX = normalizePrefix(process.env.LOGPUSH_PREFIX?.trim() || 'logs/workers');
+const JOB_NAME = process.env.LOGPUSH_JOB_NAME?.trim() || `${WORKER_NAME}-logpush-r2`;
+const REPORT_PATH = path.resolve(
+  process.env.LOGPUSH_REPORT?.trim() || '.artifacts/observability/logpush-job.json',
+);
 
-  if (existing) {
-    console.log(`[setup-logpush] 기존 잡 발견 (id=${existing.id}) — 업데이트 중...`);
-    const updated = await cfFetch(`/accounts/${ACCOUNT_ID}/logpush/jobs/${existing.id}`, {
-      method: 'PUT',
-      body:   JSON.stringify(jobPayload),
-    });
-    console.log('[setup-logpush] ✓ 업데이트 완료:', updated.id);
-  } else {
-    console.log('[setup-logpush] 새 Logpush 잡 생성 중...');
-    // ownership 토큰 발급
-    const ownership = await cfFetch(`/accounts/${ACCOUNT_ID}/logpush/ownership`, {
-      method: 'POST',
-      body:   JSON.stringify({ destination_conf: jobPayload.destination_conf }),
-    });
-    console.log('[setup-logpush] ownership filename:', ownership?.filename);
+const FIELD_NAMES = [
+  'EventTimestampMs',
+  'EventType',
+  'Outcome',
+  'Logs',
+  'ScriptName',
+  'ScriptVersion',
+  'CPUTimeMs',
+  'WallTimeMs',
+];
 
-    const created = await cfFetch(`/accounts/${ACCOUNT_ID}/logpush/jobs`, {
-      method: 'POST',
-      body:   JSON.stringify({
-        ...jobPayload,
-        ownership_challenge: ownership?.filename ?? '',
-      }),
-    });
-    console.log('[setup-logpush] ✓ 잡 생성 완료 (id=%s)', created.id);
-  }
-
-  console.log('\n[setup-logpush] 완료!');
-  console.log(
-    '  R2 경로 패턴: ' +
-    `r2://${BUCKET_NAME}/logpush/{DATE}/...`,
-  );
-  console.log(
-    '  로그 확인: wrangler r2 object list ' + BUCKET_NAME + ' --prefix logpush/',
-  );
-})().catch((err) => {
-  console.error('[setup-logpush] 오류:', err.message);
-  process.exit(1);
+const destinationConf = buildDestinationConf({
+  accountId: ACCOUNT_ID || '<account-id>',
+  accessKeyId: R2_ACCESS_KEY_ID || '<r2-access-key-id>',
+  secretAccessKey: R2_SECRET_ACCESS_KEY || '<r2-secret-access-key>',
 });
+
+const jobPayload = {
+  name: JOB_NAME,
+  destination_conf: destinationConf,
+  dataset: 'workers_trace_events',
+  enabled: true,
+  output_options: {
+    field_names: FIELD_NAMES,
+    timestamp_format: 'rfc3339ms',
+    sample_rate: 1,
+  },
+  filter: JSON.stringify({
+    where: {
+      key: 'ScriptName',
+      operator: 'eq',
+      value: WORKER_NAME,
+    },
+  }),
+};
+
+if (!APPLY && !VERIFY_ONLY) {
+  const plan = {
+    mode: 'dry-run',
+    job: redactJob(jobPayload),
+    lifecycle: {
+      bucket: BUCKET_NAME,
+      prefix: `${PREFIX}/`,
+      retention_days: 30,
+      rule: 'nihongo-n3-worker-logs-30d',
+      command:
+        `pnpm exec wrangler r2 bucket lifecycle add ${BUCKET_NAME} ` +
+        `nihongo-n3-worker-logs-30d ${PREFIX}/ --expire-days 30 --force`,
+    },
+    required_permissions: {
+      cloudflare_api_token: ['Logs Write'],
+      r2_token: [`Object Write: ${BUCKET_NAME}`],
+    },
+  };
+  console.log(JSON.stringify(plan, null, 2));
+  process.exit(0);
+}
+
+const required = [
+  ['CLOUDFLARE_ACCOUNT_ID or CF_ACCOUNT_ID', ACCOUNT_ID],
+  ['CLOUDFLARE_API_TOKEN or CF_API_TOKEN', API_TOKEN],
+];
+if (APPLY) {
+  required.push(
+    ['R2_ACCESS_KEY_ID', R2_ACCESS_KEY_ID],
+    ['R2_SECRET_ACCESS_KEY', R2_SECRET_ACCESS_KEY],
+  );
+}
+
+const missing = required.filter(([, value]) => !value).map(([name]) => name);
+if (missing.length > 0) {
+  throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+}
+
+const basePath = `/accounts/${ACCOUNT_ID}`;
+const fields = await cfFetch(`${basePath}/logpush/datasets/workers_trace_events/fields`);
+const availableFields = new Set(Object.keys(fields ?? {}));
+const unavailableFields = FIELD_NAMES.filter((field) => !availableFields.has(field));
+if (unavailableFields.length > 0) {
+  throw new Error(`Cloudflare dataset does not expose fields: ${unavailableFields.join(', ')}`);
+}
+
+const jobs = await cfFetch(`${basePath}/logpush/jobs`);
+const existing = (jobs ?? []).find(
+  (job) => job.name === JOB_NAME && job.dataset === 'workers_trace_events',
+);
+
+if (VERIFY_ONLY) {
+  if (!existing) throw new Error(`Logpush job not found: ${JOB_NAME}`);
+  const report = buildReport(existing, 'verified');
+  writeReport(report);
+  console.log(JSON.stringify(report, null, 2));
+  process.exit(existing.enabled && !existing.error_message ? 0 : 1);
+}
+
+const result = existing
+  ? await cfFetch(`${basePath}/logpush/jobs/${existing.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(jobPayload),
+    })
+  : await cfFetch(`${basePath}/logpush/jobs`, {
+      method: 'POST',
+      body: JSON.stringify(jobPayload),
+    });
+
+const report = buildReport(result, existing ? 'updated' : 'created');
+writeReport(report);
+console.log(JSON.stringify(report, null, 2));
+
+function firstEnv(...names) {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  for (const rawLine of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const match = line.match(/^(?:export\s+)?([A-Z_][A-Z0-9_]*)=(.*)$/);
+    if (!match || process.env[match[1]] !== undefined) continue;
+    let value = match[2].trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] = value;
+  }
+}
+
+function normalizePrefix(value) {
+  const normalized = value.replace(/^\/+|\/+$/g, '');
+  if (!normalized) throw new Error('LOGPUSH_PREFIX must not be empty');
+  return normalized;
+}
+
+function buildDestinationConf({ accountId, accessKeyId, secretAccessKey }) {
+  const query = new URLSearchParams({
+    'account-id': accountId,
+    'access-key-id': accessKeyId,
+    'secret-access-key': secretAccessKey,
+  });
+  return `r2://${BUCKET_NAME}/${PREFIX}/{DATE}?${query.toString()}`;
+}
+
+async function cfFetch(apiPath, options = {}) {
+  const response = await fetch(`https://api.cloudflare.com/client/v4${apiPath}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${API_TOKEN}`,
+      'Content-Type': 'application/json',
+      ...(options.headers ?? {}),
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.success === false) {
+    const errors = (body?.errors ?? []).map((error) => ({
+      code: error.code,
+      message: error.message,
+    }));
+    throw new Error(`Cloudflare API ${response.status}: ${JSON.stringify(errors)}`);
+  }
+  return body?.result;
+}
+
+function redactDestination(value) {
+  return String(value ?? '')
+    .replace(/([?&]access-key-id=)[^&]*/i, '$1<redacted>')
+    .replace(/([?&]secret-access-key=)[^&]*/i, '$1<redacted>');
+}
+
+function redactJob(job) {
+  return {
+    ...job,
+    destination_conf: redactDestination(job.destination_conf),
+  };
+}
+
+function buildReport(job, action) {
+  return {
+    checked_at: new Date().toISOString(),
+    action,
+    job: {
+      id: job.id,
+      name: job.name,
+      dataset: job.dataset,
+      enabled: job.enabled,
+      destination_conf: redactDestination(job.destination_conf),
+      output_options: job.output_options,
+      filter: job.filter,
+      last_complete: job.last_complete ?? null,
+      last_error: job.last_error ?? null,
+      error_message: job.error_message ?? null,
+    },
+    retention: {
+      bucket: BUCKET_NAME,
+      prefix: `${PREFIX}/`,
+      days: 30,
+      rule: 'nihongo-n3-worker-logs-30d',
+    },
+  };
+}
+
+function writeReport(report) {
+  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, { mode: 0o600 });
+}

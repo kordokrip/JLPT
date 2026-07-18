@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { ok, notFound, badRequest } from '../lib/response.js';
 import { paginate, decodeCursor } from '../lib/cursor.js';
+import { ftsLiteralQuery } from '../lib/fts.js';
 import { sentencesQuerySchema, vocabSearchQuerySchema } from '@nihongo-n3/shared';
 
 const sentences = new Hono<AppEnv>();
@@ -57,7 +58,7 @@ sentences.get('/sentences/search', async (c) => {
        ORDER BY rank
        LIMIT ?`,
     )
-      .bind(q.data.q, q.data.limit)
+      .bind(ftsLiteralQuery(q.data.q), q.data.limit)
       .all();
   } else {
     const like = `%${q.data.q}%`;

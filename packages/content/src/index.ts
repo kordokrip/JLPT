@@ -159,11 +159,11 @@ export const CONTENT_FILES = [
     seeded: true,
   },
   {
-    code: 'self_check_16weeks',
+    code: 'self_check_annual',
     level: 'supplement',
     category: 'selfcheck',
     path: 'docs/04_supplement/C_self_check_16weeks.md',
-    displayName: '16주 자가진단',
+    displayName: '12개월 기본 학습계획·자가진단 근거',
     seeded: false,
   },
 ] as const satisfies readonly ContentFileMeta[];

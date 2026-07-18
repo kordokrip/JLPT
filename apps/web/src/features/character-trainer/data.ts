@@ -1,8 +1,6 @@
-import type { CharacterStage, JlptLevel, KanaCard, KanaPronunciationExample } from './types';
+import type { CharacterStage, KanaCard, KanaPronunciationExample } from './types';
 
 export const CHARACTER_STAGES: CharacterStage[] = ['observe', 'recall', 'write', 'writeQuiz', 'quiz'];
-export const JLPT_LEVELS: JlptLevel[] = ['N5', 'N4', 'N3'];
-
 export const stageText: Record<CharacterStage, { title: string; desc: string }> = {
   observe: { title: '1. 관찰', desc: '모양, 읽기, 의미를 10초 동안 함께 봅니다.' },
   recall:  { title: '2. 가리기 인출', desc: '글자를 보지 않고 읽기와 뜻을 먼저 떠올립니다.' },
@@ -20,7 +18,7 @@ export const kanjiRules = [
 ];
 
 export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): string {
-  return `audio/kana/${mode}/${reading}.m4a`;
+  return `audio/kana/v2/${mode}/${reading}.m4a`;
 }
 
 export const HIRAGANA: KanaCard[] = [

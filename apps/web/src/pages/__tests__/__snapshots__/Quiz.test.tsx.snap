@@ -1,0 +1,218 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Quiz page baseline > keeps the invalid mode message stable before feature extraction 1`] = `
+<DocumentFragment>
+  <div
+    class="max-w-[480px] mx-auto px-8 py-12 text-center"
+  >
+    <p
+      class="text-[var(--muted-foreground)]"
+    >
+      알 수 없는 퀴즈 모드: unsupported
+    </p>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Quiz page baseline > keeps the mode configuration screen stable before feature extraction 1`] = `
+<DocumentFragment>
+  <div
+    class="mx-auto max-w-[480px] px-6 py-8 pb-28 sm:px-8 sm:py-12"
+  >
+    <button
+      class="mb-6 flex min-h-11 items-center gap-1 rounded-[var(--radius-md)] px-2 text-sm font-medium text-[var(--muted-foreground)] hover:bg-accent-soft-20 hover:text-foreground"
+      type="button"
+    >
+      ← 모드 선택
+    </button>
+    <h2
+      class="font-pretendard text-[28px] font-medium text-foreground mb-1"
+    >
+      📖 어휘 선택
+    </h2>
+    <p
+      class="font-pretendard text-[13px] text-[var(--muted-foreground)] mb-8"
+    >
+      레벨과 문제 수를 선택하세요
+    </p>
+    <div
+      class="mb-6"
+    >
+      <p
+        class="font-pretendard text-[12px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] mb-2"
+      >
+        JLPT 레벨
+      </p>
+      <div
+        class="flex gap-2 flex-wrap"
+      >
+        <button
+          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
+          type="button"
+        >
+          N5
+        </button>
+        <button
+          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
+          type="button"
+        >
+          N4
+        </button>
+        <button
+          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+          type="button"
+        >
+          N3
+        </button>
+      </div>
+    </div>
+    <div
+      class="mb-8"
+    >
+      <p
+        class="font-pretendard text-[12px] uppercase tracking-[0.08em] text-[var(--muted-foreground)] mb-2"
+      >
+        문제 수
+        <span
+          class="normal-case ml-1"
+        >
+          5문제
+        </span>
+      </p>
+      <input
+        aria-label="문제 수 선택"
+        class="h-11 w-full accent-[var(--accent)]"
+        max="20"
+        min="3"
+        step="1"
+        type="range"
+        value="5"
+      />
+      <div
+        class="flex justify-between text-[11px] text-[var(--muted-foreground)] mt-1"
+      >
+        <span>
+          3
+        </span>
+        <span>
+          20
+        </span>
+      </div>
+    </div>
+    <button
+      class="min-h-12 w-full rounded-lg bg-[var(--accent)] text-white font-pretendard font-medium
+                     hover:opacity-90 transition-opacity disabled:opacity-50"
+      type="button"
+    >
+      시작하기
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Quiz page baseline > keeps the mode selection screen stable before feature extraction 1`] = `
+<DocumentFragment>
+  <div
+    class="max-w-[640px] mx-auto px-8 py-12"
+  >
+    <h1
+      class="font-pretendard text-[32px] font-medium text-foreground leading-none mb-2"
+    >
+      퀴즈
+    </h1>
+    <p
+      class="font-pretendard text-[14px] text-[var(--muted-foreground)] mb-8"
+    >
+      학습 모드를 선택하세요
+    </p>
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+    >
+      <button
+        class="card-hairline rounded-xl p-5 text-left hover:border-[var(--accent)]
+                       transition-colors group"
+        type="button"
+      >
+        <div
+          class="text-2xl mb-2"
+        >
+          📖
+        </div>
+        <div
+          class="font-pretendard font-semibold text-[15px] text-foreground mb-1"
+        >
+          어휘 선택
+        </div>
+        <div
+          class="font-pretendard text-[12px] text-[var(--muted-foreground)]"
+        >
+          단어의 뜻을 4지선다로 고르세요
+        </div>
+      </button>
+      <button
+        class="card-hairline rounded-xl p-5 text-left hover:border-[var(--accent)]
+                       transition-colors group"
+        type="button"
+      >
+        <div
+          class="text-2xl mb-2"
+        >
+          漢
+        </div>
+        <div
+          class="font-pretendard font-semibold text-[15px] text-foreground mb-1"
+        >
+          한자 읽기
+        </div>
+        <div
+          class="font-pretendard text-[12px] text-[var(--muted-foreground)]"
+        >
+          한자의 올바른 읽기를 고르세요
+        </div>
+      </button>
+      <button
+        class="card-hairline rounded-xl p-5 text-left hover:border-[var(--accent)]
+                       transition-colors group"
+        type="button"
+      >
+        <div
+          class="text-2xl mb-2"
+        >
+          ✏️
+        </div>
+        <div
+          class="font-pretendard font-semibold text-[15px] text-foreground mb-1"
+        >
+          문법 빈칸
+        </div>
+        <div
+          class="font-pretendard text-[12px] text-[var(--muted-foreground)]"
+        >
+          빈칸에 알맞은 문법 표현을 고르세요
+        </div>
+      </button>
+      <button
+        class="card-hairline rounded-xl p-5 text-left hover:border-[var(--accent)]
+                       transition-colors group"
+        type="button"
+      >
+        <div
+          class="text-2xl mb-2"
+        >
+          🎧
+        </div>
+        <div
+          class="font-pretendard font-semibold text-[15px] text-foreground mb-1"
+        >
+          청해
+        </div>
+        <div
+          class="font-pretendard text-[12px] text-[var(--muted-foreground)]"
+        >
+          음성을 듣고 올바른 해석을 고르세요
+        </div>
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

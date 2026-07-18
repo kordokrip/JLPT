@@ -1,5 +1,5 @@
 /**
- * SideNav — 데스크탑 사이드바 (md 이상에서 표시)
+ * SideNav — 태블릿/데스크탑 사이드바 (760px 이상에서 표시)
  * Figma Make 디자인 적용
  */
 import { NavLink } from 'react-router-dom';
@@ -38,7 +38,7 @@ export function SideNav() {
       aria-label={t('nav.sideLabel')}
       data-state={compact ? 'collapsed' : 'expanded'}
       data-mode={railMode ? 'rail' : 'sidebar'}
-      className="fixed inset-y-0 left-0 z-40 hidden flex-col border-r-[0.5px] border-[var(--border)] bg-[var(--surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur transition-[width] duration-300 md:flex"
+      className="fixed inset-y-0 left-0 z-40 hidden flex-col border-r-[0.5px] border-[var(--border)] bg-[var(--surface-glass)] shadow-[var(--shadow-soft)] backdrop-blur transition-[width] duration-300 min-[760px]:flex"
       style={{ width: 'var(--active-sidebar-width)' }}
     >
       {/* 로고 */}
@@ -143,7 +143,7 @@ function useNavigationRailMode() {
   const [matches, setMatches] = useState(false);
 
   useEffect(() => {
-    const query = window.matchMedia('(min-width: 768px) and (max-width: 1023.98px)');
+    const query = window.matchMedia('(min-width: 760px) and (max-width: 1023.98px)');
     const update = () => setMatches(query.matches);
     update();
     query.addEventListener('change', update);

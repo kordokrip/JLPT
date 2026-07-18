@@ -2,8 +2,11 @@ import { useTranslation } from 'react-i18next';
 import QuizTimer from '../../components/feature/QuizTimer';
 import { ListeningAudioPlayer } from './ListeningAudioPlayer';
 import type { ListeningQuestion } from './types';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 type QuizListeningViewProps = {
+  level: JlptLevel;
+  levels: readonly JlptLevel[];
   questions: ListeningQuestion[];
   current: ListeningQuestion | undefined;
   idx: number;
@@ -13,6 +16,7 @@ type QuizListeningViewProps = {
   isLoading: boolean;
   error: unknown;
   submitPending: boolean;
+  onLevel: (level: JlptLevel) => void;
   onSelect: (choice: string) => void;
   onReveal: () => void;
   onNext: () => void;
@@ -20,6 +24,8 @@ type QuizListeningViewProps = {
 };
 
 export function QuizListeningView({
+  level,
+  levels,
   questions,
   current,
   idx,
@@ -29,6 +35,7 @@ export function QuizListeningView({
   isLoading,
   error,
   submitPending,
+  onLevel,
   onSelect,
   onReveal,
   onNext,
@@ -64,6 +71,22 @@ export function QuizListeningView({
           <p className="font-pretendard text-[13px] text-[var(--muted-foreground)] mt-1">
             {idx + 1} / {questions.length}
           </p>
+          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t('quiz.jlptLevel')}>
+            {levels.map((candidate) => (
+              <button
+                key={candidate}
+                type="button"
+                onClick={() => onLevel(candidate)}
+                className={`min-h-11 rounded-full border px-3 text-xs font-semibold transition-colors ${
+                  level === candidate
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                    : 'border-[var(--border)] text-[var(--muted-foreground)]'
+                }`}
+              >
+                {t(`levels.${candidate}`)}
+              </button>
+            ))}
+          </div>
         </div>
         <QuizTimer running={!revealed} />
       </div>

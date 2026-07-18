@@ -5,8 +5,11 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
 import type { SupportedLang } from '../i18n';
+import type { LearningTrackId } from '@nihongo-n3/shared';
 
 interface SettingsState {
+  learningTrack: LearningTrackId;
+  setLearningTrack: (track: LearningTrackId) => void;
   // 언어
   language:    SupportedLang;
   setLanguage: (l: SupportedLang) => void;
@@ -43,6 +46,8 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
+      learningTrack: 'jlpt-ja',
+      setLearningTrack: (learningTrack) => set({ learningTrack }),
       language:    'ko',
       setLanguage: (l) => set({ language: l }),
 
@@ -71,7 +76,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 2,
+      version: 3,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>

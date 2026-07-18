@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../lib/api';
 import { useAuthStore } from '../stores/auth-store';
 import type { FormEvent } from 'react';
+import { useSettingsStore } from '../stores/settings-store';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const learningTrack = useSettingsStore((state) => state.learningTrack);
   const rawNextPath = params.get('next') || '/';
   const nextPath = rawNextPath.startsWith('/') && !rawNextPath.startsWith('//') ? rawNextPath : '/';
 
@@ -82,7 +84,7 @@ export default function Login() {
           </div>
 
           <a
-            href={config?.google_enabled ? authApi.googleStartUrl() : undefined}
+            href={config?.google_enabled ? authApi.googleStartUrl(learningTrack) : undefined}
             aria-disabled={!config?.google_enabled}
             className={`flex min-h-12 items-center justify-center rounded-xl border border-[var(--border)] text-sm font-semibold ${
               config?.google_enabled ? '' : 'pointer-events-none opacity-50'

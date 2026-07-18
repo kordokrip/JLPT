@@ -59,6 +59,14 @@ const ja = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   home: {
     greeting:      'ゆっくりでも続けることが実力になります。',
     thisWeek:      '今週',
@@ -77,6 +85,8 @@ const ja = {
     newWordsCount: '新しい単語 {{count}}個',
     selfCheckLink: '自己診断チェック',
     abilityCheck:  '実力チェック',
+    courseScopeTitle: '学習範囲',
+    courseScopeExpanded: 'N5からN1までのコンテンツが準備されました。上位レベルの学習は基本52週間コースとは別に管理します。',
   },
 
   review: {
@@ -121,6 +131,7 @@ const ja = {
       vocab:   '語彙ブラウズ',
       grammar: '文法ブラウズ',
       kanji:   '漢字ブラウズ',
+      homophones: '同音異義語の聞き分け',
     },
     category: 'カテゴリー',
     level:    'レベル',
@@ -129,9 +140,12 @@ const ja = {
     vocab:    '語彙',
     grammar:  '文法',
     kanji:    '漢字',
+    homophones: '同音異義語',
     search:   '検索',
     searchPlaceholder: '検索...',
     noResult: '検索結果がありません',
+    contentPendingTitle: 'コンテンツ準備中',
+    contentPendingDescription: '{{level}}の{{type}}コンテンツを確認中です。先に公開済みの別レベルを学習してください。',
     meaning:  '意味',
     example:  '例文',
     reading:  '読み',
@@ -141,6 +155,10 @@ const ja = {
     itemNotFound: '項目が見つかりません。',
     onyomi: '音読み',
     kunyomi: '訓読み',
+    homophoneIntro: '同じ読みの語を、意味、アクセント、例文で聞き分けます。すべての項目で出典と検証記録を確認しています。',
+    accent: 'アクセント',
+    source: '出典',
+    reviewed: '最終確認',
     ariaSearch: '{{type}}を検索',
   },
 
@@ -244,6 +262,8 @@ const ja = {
     tryQuiz:  'クイズを解く',
     loadError: '読解文を読み込めません',
     emptyFiltered: '条件に合う読解文がありません',
+    contentPendingTitle: 'コンテンツ準備中',
+    contentPendingDescription: '{{level}}の読解コンテンツを準備しています。先に公開済みの別レベルを学習してください。',
     loadingMore: '読み込み中...',
     wordCount: '{{count}}字',
     source: '出典: {{source}}',
@@ -272,8 +292,8 @@ const ja = {
 
   curriculum: {
     title:      'カリキュラム',
-    planTitle:  '16週間の計画',
-    subtitle:   'JLPT N3合格に向けた16週間の学習ロードマップ',
+    planTitle:  '12か月の学習計画',
+    subtitle:   '文字とN5の基礎からJLPT N3の実戦まで進む52週間のロードマップ',
     week:       '週目',
     weekLabel:  '{{week}}週目',
     weekShort:  '{{week}}週',

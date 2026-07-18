@@ -56,7 +56,7 @@ const curriculumListRoute = createRoute({
   method: 'get',
   path: '/curriculum',
   tags: ['Curriculum'],
-  summary: '전체 16주 커리큘럼',
+  summary: '전체 52주 기본 커리큘럼',
   responses: {
     200: {
       content: { 'application/json': { schema: curriculumListResponse } },

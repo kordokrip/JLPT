@@ -21,11 +21,11 @@ export interface AudioPlaybackPolicy {
 export const AUDIO_PLAYBACK_POLICIES: Record<AudioSurface, AudioPlaybackPolicy> = {
   kana: {
     surface: 'kana',
-    primary: 'browser',
-    fallback: 'r2',
+    primary: 'r2',
+    fallback: 'browser',
     preferGoogleVoice: true,
     slow: true,
-    descriptionKo: '문자 암기는 한 글자 반복 대신 예시 단어를 브라우저 일본어 음성으로 천천히 재생한다.',
+    descriptionKo: '문자 암기는 검수된 R2 고정 예시 단어 오디오를 우선하고, 없을 때만 일본어 브라우저 음성을 사용한다.',
   },
   vocab: {
     surface: 'vocab',
@@ -53,19 +53,19 @@ export const AUDIO_PLAYBACK_POLICIES: Record<AudioSurface, AudioPlaybackPolicy> 
   },
   example: {
     surface: 'example',
-    primary: 'browser',
-    fallback: 'r2',
+    primary: 'r2',
+    fallback: 'browser',
     preferGoogleVoice: true,
     slow: false,
-    descriptionKo: '짧은 예문 버튼은 즉시 반응하는 브라우저 일본어 음성을 우선한다.',
+    descriptionKo: '예문은 승인된 R2 배치 오디오를 우선하고, 고정 오디오가 없을 때 브라우저 음성으로 대체한다.',
   },
   listening: {
     surface: 'listening',
-    primary: 'browser',
-    fallback: 'r2',
+    primary: 'r2',
+    fallback: 'browser',
     preferGoogleVoice: true,
     slow: false,
-    descriptionKo: '청해 퀴즈는 현재 사용자 체감 품질이 높은 브라우저 일본어 음성을 기본으로 하고 R2 서버 오디오를 선택지로 둔다.',
+    descriptionKo: '청해 퀴즈는 검수된 R2 고정 오디오를 기본으로 하며, 파일이 없거나 실패한 경우만 브라우저 일본어 음성을 표시한다.',
   },
   qa: {
     surface: 'qa',

@@ -27,6 +27,49 @@ export interface ParsedTable {
   nearestH3: string;
 }
 
+export interface ParsedCategory {
+  code: string;
+  nameKo: string;
+  orderIdx: number;
+}
+
+/**
+ * Parse category headings used by the N5-N3 source documents.
+ * Examples: "카테고리 A. 인사", "2. 카테고리 G1 — 추측·양태".
+ */
+export function parseCategoryHeading(heading: string): ParsedCategory | null {
+  const match = heading.match(/카테고리\s+([A-Z][A-Z0-9-]*)\s*[.\-—–]\s*(.+)$/i);
+  if (!match?.[1] || !match[2]) return null;
+
+  const code = match[1].toUpperCase();
+  const nameKo = match[2]
+    .replace(/\s*\([^)]*(?:개|문형|행)[^)]*\)\s*$/u, '')
+    .trim();
+  const letter = code.match(/[A-Z]/)?.[0];
+  const numeric = Number.parseInt(code.replace(/\D/g, ''), 10);
+  const orderIdx = Number.isFinite(numeric)
+    ? numeric
+    : letter
+      ? letter.charCodeAt(0) - 64
+      : 0;
+
+  return nameKo ? { code, nameKo, orderIdx } : null;
+}
+
+export function categoryInsert(
+  sourceCode: string,
+  category: ParsedCategory,
+): string {
+  return [
+    'INSERT OR IGNORE INTO `categories`',
+    '  (`source_id`, `code`, `name_ko`, `order_idx`)',
+    'VALUES (',
+    `  (SELECT id FROM sources WHERE code = ${esc(sourceCode)}),`,
+    `  ${esc(category.code)}, ${esc(category.nameKo)}, ${category.orderIdx}`,
+    ');',
+  ].join('\n');
+}
+
 // ─────────────────────────────────────────────
 // 마크다운 → ParsedTable[]
 // ─────────────────────────────────────────────

@@ -150,6 +150,7 @@ export async function cfAccessAuth(
   if (c.env.ENVIRONMENT !== 'production' || c.env.AUTH_MODE === 'public-owner') {
     c.set('userId', 'owner');
     c.set('userEmail', 'owner@nihongo-n3.local');
+    c.set('learningTrack', 'jlpt-ja');
     await next();
     return;
   }
@@ -202,6 +203,13 @@ export async function cfAccessAuth(
     )
       .bind(payload.sub, payload.email, payload.email.split('@')[0] ?? payload.sub)
       .run();
+
+    const user = await c.env.DB.prepare(
+      `SELECT learning_track FROM users WHERE id = ? LIMIT 1`,
+    )
+      .bind(payload.sub)
+      .first<{ learning_track: string | null }>();
+    c.set('learningTrack', user?.learning_track === 'topik-ko' ? 'topik-ko' : 'jlpt-ja');
 
     await next();
   } catch (err) {

@@ -66,7 +66,6 @@ export function SRSCard({
         text: reading || heading,
         audioPath,
         surface: 'vocab',
-        prefer: reading || heading ? 'browser' : 'server',
         preferGoogleVoice: true,
       }).catch(() => {/* ignore */});
     }

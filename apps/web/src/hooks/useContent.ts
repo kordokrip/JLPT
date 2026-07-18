@@ -6,11 +6,14 @@ import { useQuery } from '@tanstack/react-query';
 import { db } from '../lib/db';
 import { grammarApi, kanjiApi } from '../lib/api';
 import { ensureContentFresh } from '../lib/content-cache';
+import type { JlptLevel } from '@nihongo-n3/shared';
+import { useSettingsStore } from '../stores/settings-store';
 
 // ─────────────────────────────────────────────
 // 문법
 // ─────────────────────────────────────────────
-export function useGrammarList(level?: string, limit = 50) {
+export function useGrammarList(level?: JlptLevel, limit = 50) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(
     () =>
       level
@@ -20,7 +23,7 @@ export function useGrammarList(level?: string, limit = 50) {
   );
 
   const { isFetching } = useQuery({
-    queryKey: ['grammar', 'list', level, limit],
+    queryKey: ['grammar', track, 'list', level, limit],
     queryFn: async () => {
       await ensureContentFresh();
       const count = level
@@ -40,9 +43,10 @@ export function useGrammarList(level?: string, limit = 50) {
 }
 
 export function useGrammarItem(id: number) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(() => db.grammar.get(id), [id]);
   const { isFetching } = useQuery({
-    queryKey: ['grammar', 'item', id],
+    queryKey: ['grammar', track, 'item', id],
     queryFn: async () => {
       await ensureContentFresh();
       const current = await db.grammar.get(id);
@@ -61,7 +65,8 @@ export function useGrammarItem(id: number) {
 // ─────────────────────────────────────────────
 // 한자
 // ─────────────────────────────────────────────
-export function useKanjiList(level?: string, limit = 50) {
+export function useKanjiList(level?: JlptLevel, limit = 50) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(
     () =>
       level
@@ -71,7 +76,7 @@ export function useKanjiList(level?: string, limit = 50) {
   );
 
   const { isFetching } = useQuery({
-    queryKey: ['kanji', 'list', level, limit],
+    queryKey: ['kanji', track, 'list', level, limit],
     queryFn: async () => {
       await ensureContentFresh();
       const count = level
@@ -91,9 +96,10 @@ export function useKanjiList(level?: string, limit = 50) {
 }
 
 export function useKanjiItem(id: number) {
+  const track = useSettingsStore((state) => state.learningTrack);
   const local = useLiveQuery(() => db.kanji.get(id), [id]);
   const { isFetching } = useQuery({
-    queryKey: ['kanji', 'item', id],
+    queryKey: ['kanji', track, 'item', id],
     queryFn: async () => {
       await ensureContentFresh();
       const current = await db.kanji.get(id);

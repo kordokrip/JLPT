@@ -8,13 +8,16 @@
  *  - 무한 스크롤 (cursor 기반)
  *  - 카드 클릭 → /reading/:id
  */
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useSettingsStore } from '../stores/settings-store';
+import type { JlptLevel } from '@nihongo-n3/shared';
+import { useTrackStatus } from '../hooks/useTrackStatus';
 
-type Level = 'N5' | 'N4' | 'N3' | 'N2';
+type Level = JlptLevel;
 type Genre = 'email' | 'ad' | 'essay' | 'news' | 'instruction' | 'conversation' | 'notice' | '';
 
 interface PassageItem {
@@ -30,14 +33,6 @@ interface PassageListRes {
   items:  PassageItem[];
   cursor: string | null;
 }
-
-const LEVELS: Array<{ v: Level | '' }> = [
-  { v: '' },
-  { v: 'N5' },
-  { v: 'N4' },
-  { v: 'N3' },
-  { v: 'N2' },
-];
 
 const GENRES: Array<{ v: Genre | ''; key: string; icon: string }> = [
   { v: '',             key: 'all',          icon: '📚' },
@@ -55,6 +50,7 @@ const LEVEL_COLORS: Record<Level, string> = {
   N4: 'bg-blue-100   text-blue-700   dark:bg-blue-900   dark:text-blue-300',
   N3: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
   N2: 'bg-red-100    text-red-700    dark:bg-red-900    dark:text-red-300',
+  N1: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
 };
 
 export default function Reading() {
@@ -62,6 +58,13 @@ export default function Reading() {
   const { t } = useTranslation();
   const [level, setLevel] = useState<Level | ''>('');
   const [genre, setGenre] = useState<Genre | ''>('');
+  const track = useSettingsStore((state) => state.learningTrack);
+  const { levels } = useTrackStatus();
+  const levelOptions: Array<Level | ''> = ['', ...levels];
+
+  useEffect(() => {
+    if (level && !levels.includes(level)) setLevel('');
+  }, [level, levels]);
 
   const fetchPage = useCallback(
     async ({ pageParam }: { pageParam: string | null }): Promise<PassageListRes> => {
@@ -87,7 +90,7 @@ export default function Reading() {
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey:          ['reading-list', level, genre],
+    queryKey:          ['reading-list', track, level, genre],
     queryFn:           fetchPage,
     initialPageParam:  null as string | null,
     getNextPageParam:  (last: PassageListRes) => last.cursor ?? undefined,
@@ -128,18 +131,18 @@ export default function Reading() {
 
       {/* 레벨 필터 */}
       <div className="flex gap-2 flex-wrap">
-        {LEVELS.map(({ v }) => (
+        {levelOptions.map((candidate) => (
           <button
-            key={v || 'all'}
+            key={candidate || 'all'}
             type="button"
-            onClick={() => setLevel(v)}
+            onClick={() => setLevel(candidate)}
             className={`min-h-11 rounded-full border px-4 font-pretendard text-sm font-medium transition-colors ${
-              level === v
+              level === candidate
                 ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                 : 'border-[var(--border)] text-foreground hover:border-[var(--accent)]'
             }`}
           >
-            {v || t('common.all')}
+            {candidate ? t(`levels.${candidate}`) : t('common.all')}
           </button>
         ))}
       </div>
@@ -185,9 +188,16 @@ export default function Reading() {
 
       {/* 지문 카드 목록 */}
       {!isLoading && allItems.length === 0 && !error && (
-        <p className="text-center text-[var(--muted-foreground)] font-pretendard text-sm py-12">
-          {t('reading.emptyFiltered')}
-        </p>
+        <div className="surface-panel py-12 text-center">
+          <p className="font-pretendard text-sm font-semibold text-foreground">
+            {level ? t('reading.contentPendingTitle') : t('reading.emptyFiltered')}
+          </p>
+          {level && (
+            <p className="mx-auto mt-2 max-w-md font-pretendard text-sm leading-6 text-[var(--muted-foreground)]">
+              {t('reading.contentPendingDescription', { level: t(`levels.${level}`) })}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

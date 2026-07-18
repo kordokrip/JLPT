@@ -3,6 +3,7 @@
  * OpenAPIHono wrapper + docs for reading routes
  */
 import { OpenAPIHono, z } from '@hono/zod-openapi';
+import { jlptLevelSchema } from '@nihongo-n3/shared';
 import type { AppEnv } from '../types.js';
 import { reading } from './reading.js';
 import { createdResponseSchema, dataResponseSchema, idParamSchema, listResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
@@ -16,7 +17,7 @@ mountLegacyRouteWithOpenApiDocs(readingOA, reading, [
     summary: '독해 지문 목록',
     request: {
       query: z.object({
-        level: z.enum(['N5', 'N4', 'N3', 'N2', 'N1']).optional(),
+        level: jlptLevelSchema.optional(),
         limit: z.coerce.number().int().min(1).max(100).optional(),
       }),
     },

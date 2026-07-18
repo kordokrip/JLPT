@@ -18,7 +18,7 @@ export function buildAudioUrl(path: string): string {
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
 export type AudioSourcePreference = 'browser' | 'server';
-export type TtsProviderId = 'browser' | 'cloudflare' | 'voicevox' | 'style-bert-vits2';
+export type TtsProviderId = 'browser' | 'cloudflare' | 'google' | 'voicevox' | 'style-bert-vits2';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
@@ -160,6 +160,23 @@ class AudioPlayer {
       .sort((a, b) => voiceSortScore(b) - voiceSortScore(a) || a.name.localeCompare(b.name));
   }
 
+  async getResolvedJapaneseVoice(options: {
+    voiceGender?: VoiceGender;
+    voiceURI?: string | null;
+    lang?: string;
+    preferGoogleVoice?: boolean;
+  } = {}): Promise<JapaneseVoiceOption | null> {
+    if (!('speechSynthesis' in window)) return null;
+    await this.warmVoices();
+    const voice = this.pickJapaneseVoice(
+      options.voiceGender ?? this._voiceGender,
+      options.lang ?? 'ja-JP',
+      options.voiceURI ?? this._voiceURI,
+      options.preferGoogleVoice ?? true,
+    );
+    return voice ? toJapaneseVoiceOption(voice) : null;
+  }
+
   private pickJapaneseVoice(
     gender: VoiceGender,
     lang = 'ja-JP',
@@ -169,38 +186,10 @@ class AudioPlayer {
     if (!('speechSynthesis' in window)) return undefined;
     const voices = window.speechSynthesis.getVoices();
     const langPrefix = lang.split('-')[0]?.toLowerCase() ?? 'ja';
-    const japaneseVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
-    if (japaneseVoices.length === 0) return undefined;
-    const googleVoice = preferGoogleVoice ? japaneseVoices.find(isGoogleJapaneseVoice) : undefined;
-    if (googleVoice) return googleVoice;
-
-    if (voiceURI) {
-      const selected = japaneseVoices.find((voice) => voice.voiceURI === voiceURI);
-      if (selected) return selected;
-    }
-
-    const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
-    const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];
-    const naturalHints = ['premium', 'enhanced', 'siri', 'natural', 'neural', 'apple', 'google'];
-    const hints = gender === 'female' ? femaleHints : maleHints;
-    const oppositeHints = gender === 'female' ? maleHints : femaleHints;
-
-    const scored = japaneseVoices
-      .map((voice) => {
-        const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
-        const score =
-          (voice.lang.toLowerCase() === 'ja-jp' ? 8 : 0) +
-          (isGoogleJapaneseVoice(voice) ? 20 : 0) +
-          (voice.localService ? 3 : 0) +
-          (voice.default ? 2 : 0) +
-          (naturalHints.some((hint) => haystack.includes(hint)) ? 3 : 0) +
-          (hints.some((hint) => haystack.includes(hint)) ? 4 : 0) +
-          (oppositeHints.some((hint) => haystack.includes(hint)) ? -3 : 0);
-        return { voice, score };
-      })
-      .sort((a, b) => b.score - a.score);
-
-    return scored[0]?.voice;
+    return selectJapaneseVoice(
+      voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix)),
+      { gender, voiceURI, preferGoogleVoice },
+    );
   }
 
   async speakText(text: string, options: SpeechOptions = {}): Promise<void> {
@@ -240,7 +229,7 @@ class AudioPlayer {
     text,
     audioPath,
     surface,
-    prefer = this._sourcePreference,
+    prefer,
     forceBrowser = false,
     slow = false,
     repeat = 1,
@@ -248,7 +237,8 @@ class AudioPlayer {
   }: PronunciationOptions): Promise<void> {
     const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
-    const preferBrowser = forceBrowser || prefer === 'browser' || (!audioPath && policy.primary === 'browser');
+    const source = prefer ?? policy.primary;
+    const preferBrowser = forceBrowser || source === 'browser' || (!audioPath && policy.primary === 'browser');
     const useSlow = slow || policy.slow;
     const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
 
@@ -341,6 +331,52 @@ export function voiceSortScore(voice: JapaneseVoiceOption): number {
     (voice.localService ? 2 : 0) +
     (voice.default ? 1 : 0)
   );
+}
+
+export function selectJapaneseVoice<T extends JapaneseVoiceOption>(
+  voices: T[],
+  options: { gender: VoiceGender; voiceURI: string | null; preferGoogleVoice: boolean },
+): T | undefined {
+  if (voices.length === 0) return undefined;
+
+  if (options.voiceURI) {
+    const selected = voices.find((voice) => voice.voiceURI === options.voiceURI);
+    if (selected) return selected;
+  }
+
+  const googleVoice = options.preferGoogleVoice ? voices.find(isGoogleJapaneseVoice) : undefined;
+  if (googleVoice) return googleVoice;
+
+  const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
+  const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];
+  const naturalHints = ['premium', 'enhanced', 'siri', 'natural', 'neural', 'apple', 'google'];
+  const hints = options.gender === 'female' ? femaleHints : maleHints;
+  const oppositeHints = options.gender === 'female' ? maleHints : femaleHints;
+
+  return voices
+    .map((voice) => {
+      const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
+      const score =
+        (voice.lang.toLowerCase() === 'ja-jp' ? 8 : 0) +
+        (isGoogleJapaneseVoice(voice) ? 20 : 0) +
+        (voice.localService ? 3 : 0) +
+        (voice.default ? 2 : 0) +
+        (naturalHints.some((hint) => haystack.includes(hint)) ? 3 : 0) +
+        (hints.some((hint) => haystack.includes(hint)) ? 4 : 0) +
+        (oppositeHints.some((hint) => haystack.includes(hint)) ? -3 : 0);
+      return { voice, score };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.voice;
+}
+
+function toJapaneseVoiceOption(voice: Pick<SpeechSynthesisVoice, 'voiceURI' | 'name' | 'lang' | 'localService' | 'default'>): JapaneseVoiceOption {
+  return {
+    voiceURI: voice.voiceURI,
+    name: voice.name,
+    lang: voice.lang,
+    localService: voice.localService,
+    default: voice.default,
+  };
 }
 
 /** 싱글톤 플레이어 */

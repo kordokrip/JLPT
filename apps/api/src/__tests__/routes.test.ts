@@ -6,9 +6,17 @@
  * 모든 요청은 실제 Workers 런타임에서 실행된다.
  * 인증이 필요한 라우트는 ENVIRONMENT=test 에서 dev bypass를 사용한다.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import app from '../index.js';
+import { JLPT_LEVELS, type JlptLevel } from '@nihongo-n3/shared';
+import app, {
+  app as honoApp,
+  getAdminOpenApiDocument,
+  getPublicOpenApiDocument,
+  INTERNAL_ROUTE_EXCEPTIONS,
+} from '../index.js';
+import { audioContentHash, buildImmutableAudioKey } from '../jobs/generate-audio.js';
+import { receiver as observabilityReceiver } from '../observability-receiver.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -18,15 +26,23 @@ declare module '*.sql?raw' {
 }
 
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawMigration from '../../../../packages/db/drizzle/0000_init.sql?raw';
+import rawMigration from '../../../../packages/db/drizzle-v2/0000_schema_convergence.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawSelfCheckMigration from '../../../../packages/db/drizzle/0001_self_check_templates.sql?raw';
+import rawFtsMigration from '../../../../packages/db/drizzle-v2/0001_fts.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawPhase8Migration from '../../../../packages/db/src/migrate/phase8-audio-reading.sql?raw';
+import rawAppDefaultsMigration from '../../../../packages/db/drizzle-v2/0002_app_defaults.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawPracticeContentMigration from '../../../../packages/db/drizzle/0002_jlpt_n3_practice_content.sql?raw';
+import rawSelfCheckMigration from '../../../../packages/db/drizzle-v2/0003_self_check_templates.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
-import rawAuthMigration from '../../../../packages/db/drizzle/0003_app_auth.sql?raw';
+import rawPracticeContentMigration from '../../../../packages/db/drizzle-v2/0004_jlpt_n3_practice_content.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawLearningTrackMigration from '../../../../packages/db/drizzle-v2/0005_learning_track.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawOauthLearningTrackMigration from '../../../../packages/db/drizzle-v2/0006_oauth_learning_track.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentProvenanceHomophonesMigration from '../../../../packages/db/drizzle-v2/0007_content_provenance_homophones.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikTrackMigration from '../../../../packages/db/drizzle-v2/0008_topik_track_content_and_learning_keys.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -35,7 +51,8 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawSelfCheckMigration}\n${rawPhase8Migration}\n${rawPracticeContentMigration}\n${rawAuthMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}`
+    .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
       const t = line.trim();
@@ -65,9 +82,13 @@ beforeAll(async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (env as any).DB.prepare(stmt).run();
-    } catch (e) {
-      // FTS5 등 miniflare 미지원 DDL 오류는 무시 (경고만 출력)
-      console.warn('[setup] DDL skipped:', stmt.slice(0, 60).replace(/\n/g, ' '));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/fts5|virtual table/i.test(message)) {
+        console.warn('[setup] FTS DDL unavailable:', stmt.slice(0, 60).replace(/\n/g, ' '));
+        continue;
+      }
+      throw error;
     }
   }
 });
@@ -92,10 +113,178 @@ async function fetchWithEnv(path: string, testEnv: typeof env, init?: RequestIni
   return res;
 }
 
+async function fetchReceiver(path: string, testEnv: typeof env, init?: RequestInit) {
+  const request = new Request(`https://alerts.example.test${path}`, init);
+  const ctx = createExecutionContext();
+  const res = await observabilityReceiver.fetch(request, testEnv, ctx);
+  await waitOnExecutionContext(ctx);
+  return res;
+}
+
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   return res.json<T>();
 }
+
+async function registerTestSession(role: 'user' | 'admin' = 'user'): Promise<string> {
+  const email = `admin-route-${role}-${Date.now()}-${crypto.randomUUID()}@example.com`;
+  const register = await fetch('/api/v1/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: 'Passw0rd1234', display_name: `${role} route test` }),
+  });
+  expect(register.status).toBe(201);
+
+  if (role === 'admin') {
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `UPDATE users SET role = 'admin' WHERE email = ?`,
+    ).bind(email).run();
+  }
+
+  return register.headers.get('set-cookie') ?? '';
+}
+
+const OPENAPI_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'] as const;
+
+function documentRoutes(document: ReturnType<typeof getPublicOpenApiDocument>): Set<string> {
+  const routes = new Set<string>();
+  for (const [path, item] of Object.entries(document.paths ?? {})) {
+    for (const method of OPENAPI_METHODS) {
+      if (item?.[method]) routes.add(`${method.toUpperCase()} ${path}`);
+    }
+  }
+  return routes;
+}
+
+function normalizeRuntimePath(path: string): string {
+  return path.replace(/:([A-Za-z0-9_]+)(?:\{[^}]+\})?/g, '{$1}');
+}
+
+describe('OpenAPI route coverage', () => {
+  it('matches every registered HTTP route except approved internal endpoints', () => {
+    const runtime = new Set(
+      honoApp.routes
+        .filter((route) => route.method !== 'ALL')
+        .map((route) => `${route.method} ${normalizeRuntimePath(route.path)}`)
+        .filter((route) => !INTERNAL_ROUTE_EXCEPTIONS.has(route)),
+    );
+    const documented = new Set([
+      ...documentRoutes(getPublicOpenApiDocument()),
+      ...documentRoutes(getAdminOpenApiDocument()),
+    ]);
+
+    expect([...runtime].filter((route) => !documented.has(route))).toEqual([]);
+    expect([...documented].filter((route) => !runtime.has(route))).toEqual([]);
+  });
+
+  it('keeps admin paths out of the public specification', () => {
+    expect(Object.keys(getPublicOpenApiDocument().paths ?? {}).some((path) =>
+      path.startsWith('/admin') || path.startsWith('/api/v1/auth/admin/'),
+    )).toBe(false);
+    expect(Object.keys(getAdminOpenApiDocument().paths ?? {}).length).toBeGreaterThan(0);
+  });
+
+  it('protects the admin specification with an application session', async () => {
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const publicSpec = await fetchWithEnv('/openapi.json', productionEnv);
+    const adminSpec = await fetchWithEnv('/openapi/admin.json', productionEnv);
+    expect(publicSpec.status).toBe(200);
+    expect(adminSpec.status).toBe(401);
+  });
+
+  it('exposes reviewed homophones in the public contract', () => {
+    const route = getPublicOpenApiDocument().paths?.['/api/v1/homophones']?.get;
+    expect(route).toBeDefined();
+    expect(route?.tags).toContain('Homophones');
+  });
+});
+
+// ─────────────────────────────────────────────
+// /api/v1/homophones
+// ─────────────────────────────────────────────
+describe('GET /api/v1/homophones', () => {
+  it('returns only complete reviewed pairs with source provenance', async () => {
+    const db = (env as unknown as { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES ('HP-TEST', 'Homophone test source', 'tests/homophones.md', 'test-v1')`,
+    ).run();
+
+    await db.batch([
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '試験紙', 'しけんし', '시험용 종이', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '試験氏', 'しけんし', '시험용 성씨', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '未検証一', 'みけんしょう', '미검수 하나', '[]')`,
+      ),
+      db.prepare(
+        `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, tags)
+         VALUES ((SELECT id FROM sources WHERE code = 'HP-TEST'), 'N3', '未検証二', 'みけんしょう', '미검수 둘', '[]')`,
+      ),
+    ]);
+
+    const reviewedA = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '試験紙' AND kana = 'しけんし'`,
+    ).first<{ id: number }>();
+    const reviewedB = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '試験氏' AND kana = 'しけんし'`,
+    ).first<{ id: number }>();
+    const hiddenA = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '未検証一' AND kana = 'みけんしょう'`,
+    ).first<{ id: number }>();
+    const hiddenB = await db.prepare(
+      `SELECT id FROM vocab WHERE level = 'N3' AND ja = '未検証二' AND kana = 'みけんしょう'`,
+    ).first<{ id: number }>();
+    expect(reviewedA?.id).toBeTruthy();
+    expect(reviewedB?.id).toBeTruthy();
+    expect(hiddenA?.id).toBeTruthy();
+    expect(hiddenB?.id).toBeTruthy();
+
+    await db.batch([
+      db.prepare(
+        `INSERT OR IGNORE INTO homophone_pairs (
+          level, word_a_id, word_b_id, word_a_source_code, word_b_source_code,
+          note_ko, accent_source, accent_source_url, accent_a, accent_b,
+          example_a_ja, example_a_ko, example_b_ja, example_b_ko, reviewer, reviewed_at
+        ) VALUES (
+          'N3', ?, ?, 'HP-TEST', 'HP-TEST',
+          '검수된 동음이의어입니다.', 'test-accent', 'https://example.test/accent', '0형', '1형',
+          '試験紙を確認します。', '시험용 종이를 확인합니다.',
+          '試験氏に連絡します。', '시험용 성씨에게 연락합니다.', 'test reviewer', '2026-07-16'
+        )`,
+      ).bind(reviewedA!.id, reviewedB!.id),
+      db.prepare(
+        `INSERT OR IGNORE INTO homophone_pairs (level, word_a_id, word_b_id)
+         VALUES ('N3', ?, ?)`,
+      ).bind(hiddenA!.id, hiddenB!.id),
+    ]);
+
+    const res = await fetch('/api/v1/homophones?level=N3');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: Array<{
+      reading: string;
+      word_a: { word: string; source: { code: string } };
+      word_b: { word: string };
+      accent: { source_url: string };
+      review: { reviewer: string };
+    }> }>();
+    const reviewed = body.data.find((item) => item.word_a.word === '試験紙');
+    expect(reviewed).toMatchObject({
+      reading: 'しけんし',
+      word_a: { source: { code: 'HP-TEST' } },
+      word_b: { word: '試験氏' },
+      accent: { source_url: 'https://example.test/accent' },
+      review: { reviewer: 'test reviewer' },
+    });
+    expect(body.data.some((item) => item.word_a.word === '未検証一')).toBe(false);
+  });
+});
 
 // ─────────────────────────────────────────────
 // /
@@ -110,6 +299,165 @@ describe('GET /', () => {
   });
 });
 
+describe('request observability', () => {
+  it.each([
+    ['/api/v1/vocab/987654321?token=private-query-value', '/api/v1/vocab/:id', ['987654321', 'private-query-value']],
+    ['/api/v1/reading/444444', '/api/v1/reading/:id', ['444444']],
+    ['/not-a-real-route/private-segment?email=private@example.com', '/*', ['private-segment', 'private@example.com']],
+  ])('logs a route template without request path values: %s', async (path, expectedRoute, forbiddenValues) => {
+    const messages: Record<string, unknown>[] = [];
+    const log = vi.spyOn(console, 'log').mockImplementation((message) => {
+      if (message && typeof message === 'object') {
+        messages.push(message as Record<string, unknown>);
+      }
+    });
+
+    try {
+      await fetch(path);
+    } finally {
+      log.mockRestore();
+    }
+
+    const requestLog = messages.find((message) => message['event'] === 'http_request');
+
+    expect(requestLog?.['route']).toBe(expectedRoute);
+    for (const forbidden of forbiddenValues) {
+      expect(JSON.stringify(requestLog)).not.toContain(forbidden);
+    }
+    expect(requestLog).not.toHaveProperty('path');
+    expect(requestLog).not.toHaveProperty('url');
+    expect(requestLog).not.toHaveProperty('query');
+  });
+
+  it('keeps the 5xx canary unavailable outside an authenticated preview', async () => {
+    const productionEnv = {
+      ...env,
+      ENVIRONMENT: 'production',
+      OBSERVABILITY_CANARY_TOKEN: 'preview-secret-value',
+    };
+    const previewEnv = {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_CANARY_TOKEN: 'preview-secret-value',
+    };
+
+    expect((await fetchWithEnv('/__ops/canary/5xx', productionEnv, {
+      headers: { 'X-Observability-Canary': 'preview-secret-value' },
+    })).status).toBe(404);
+    expect((await fetchWithEnv('/__ops/canary/5xx', previewEnv, {
+      headers: { 'X-Observability-Canary': 'wrong-secret-value' },
+    })).status).toBe(404);
+  });
+
+  it('fires a PII-free 5xx event for an authenticated preview canary', async () => {
+    const secret = 'preview-secret-value';
+    const messages: Record<string, unknown>[] = [];
+    const log = vi.spyOn(console, 'log').mockImplementation((message) => {
+      if (message && typeof message === 'object') messages.push(message as Record<string, unknown>);
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation((message) => {
+      if (message && typeof message === 'object') messages.push(message as Record<string, unknown>);
+    });
+
+    try {
+      const response = await fetchWithEnv(
+        '/__ops/canary/5xx',
+        { ...env, ENVIRONMENT: 'preview', OBSERVABILITY_CANARY_TOKEN: secret },
+        { headers: { 'X-Observability-Canary': secret } },
+      );
+      expect(response.status).toBe(500);
+    } finally {
+      log.mockRestore();
+      error.mockRestore();
+    }
+
+    const requestLog = messages.find((message) => message['event'] === 'http_request');
+    const errorLog = messages.find((message) => message['event'] === 'application_error');
+    expect(requestLog).toMatchObject({ route: '/__ops/canary/5xx', status: 500 });
+    expect(errorLog).toMatchObject({
+      route: '/__ops/canary/5xx',
+      error_name: 'ObservabilityCanaryError',
+    });
+    expect(JSON.stringify(messages)).not.toContain(secret);
+    expect(JSON.stringify(messages)).not.toContain('x-observability-canary');
+  });
+
+  it('authenticates the direct alert receiver and stores PII-free R2 evidence', async () => {
+    const webhookToken = 'preview-webhook-secret';
+    const canaryToken = 'preview-canary-secret';
+    const workerName = 'nihongo-n3-api-observability-preview';
+    const previewEnv = {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_ALERT_WEBHOOK_TOKEN: webhookToken,
+      OBSERVABILITY_CANARY_TOKEN: canaryToken,
+      OBSERVABILITY_WORKER_NAME: workerName,
+    };
+    const generatedAt = new Date().toISOString();
+    const payload = {
+      source: 'post-deploy-observe',
+      service: workerName,
+      generated_at: generatedAt,
+      release: 'test-release',
+      dedupe_key: `${workerName}:test:${generatedAt}`,
+      event_rows_received: 25,
+      telemetry_truncated: false,
+      alerts: { five_xx: { fired: true, requests: 25, errors: 25, rate: 1 } },
+      requests: { requests: 25, five_xx: 25, five_xx_rate: 1 },
+      releases: [{ release: 'test-release', requests: 25, five_xx: 25 }],
+      routes: [{ route: '/__ops/canary/5xx', requests: 25, five_xx: 25 }],
+    };
+
+    expect((await fetchReceiver('/__ops/alerts/cloudflare', previewEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer wrong-token' },
+      body: JSON.stringify(payload),
+    })).status).toBe(404);
+
+    const accepted = await fetchReceiver('/__ops/alerts/cloudflare', previewEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${webhookToken}` },
+      body: JSON.stringify(payload),
+    });
+    expect(accepted.status).toBe(202);
+    const receipt = await accepted.json<{ received: boolean; object_key: string; sha256: string }>();
+    expect(receipt.received).toBe(true);
+    expect(receipt.object_key).toMatch(/^alerts\/observability\/\d{4}\/\d{2}\/\d{2}\/[a-f0-9]{64}\.json$/);
+    expect(receipt.sha256).toHaveLength(64);
+    const evidence = await fetchReceiver('/__ops/evidence/r2?kind=alerts', previewEnv, {
+      headers: { 'X-Observability-Canary': canaryToken },
+    });
+    expect(evidence.status).toBe(200);
+    const evidenceBody = await evidence.json<{ count: number; objects: Array<{ key: string }> }>();
+    expect(evidenceBody.count).toBeGreaterThan(0);
+    expect(evidenceBody.objects.some((object) => object.key === receipt.object_key)).toBe(true);
+  });
+
+  it('rejects alert evidence containing PII-shaped fields', async () => {
+    const token = 'preview-webhook-secret';
+    const workerName = 'nihongo-n3-api-observability-preview';
+    const response = await fetchReceiver('/__ops/alerts/cloudflare', {
+      ...env,
+      ENVIRONMENT: 'preview',
+      OBSERVABILITY_ALERT_WEBHOOK_TOKEN: token,
+      OBSERVABILITY_WORKER_NAME: workerName,
+    }, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        source: 'test',
+        service: workerName,
+        generated_at: new Date().toISOString(),
+        release: 'test',
+        dedupe_key: 'test',
+        event_rows_received: 1,
+        user_email: 'private@example.com',
+      }),
+    });
+    expect(response.status).toBe(400);
+  });
+});
+
 // ─────────────────────────────────────────────
 // /health
 // ─────────────────────────────────────────────
@@ -119,6 +467,51 @@ describe('GET /health', () => {
     expect(res.status).toBe(200);
     const body = await res.json<{ status: string }>();
     expect(body.status).toBe('ok');
+  });
+
+  it('returns request and release correlation headers', async () => {
+    const res = await fetch('/health', { headers: { 'X-Request-ID': 'test-request-1234' } });
+    expect(res.headers.get('x-request-id')).toBe('test-request-1234');
+    expect(res.headers.get('x-release')).toBe('test');
+  });
+});
+
+describe('Read-only cutover mode', () => {
+  const readOnlyEnv = {
+    ...env,
+    ENVIRONMENT: 'production',
+    AUTH_MODE: 'app-session',
+    MAINTENANCE_MODE: 'read-only',
+  };
+
+  it('keeps read endpoints available', async () => {
+    const res = await fetchWithEnv('/api/v1/sources', readOnlyEnv);
+    expect(res.status).toBe(200);
+  });
+
+  it('blocks database-changing commands with retry metadata', async () => {
+    const res = await fetchWithEnv('/api/v1/auth/login', readOnlyEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com', password: 'Passw0rd1234' }),
+    });
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('900');
+  });
+
+  it('blocks OAuth GET routes that write state', async () => {
+    const res = await fetchWithEnv('/api/v1/auth/google/start', readOnlyEnv);
+    expect(res.status).toBe(503);
+  });
+
+  it('allows the explicitly side-effect-free translation command', async () => {
+    const testReadOnlyEnv = { ...readOnlyEnv, ENVIRONMENT: 'test', AUTH_MODE: 'public-owner' };
+    const res = await fetchWithEnv('/api/v1/ai/translate', testReadOnlyEnv, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: '오늘은 조금 피곤해요', target: 'ja', tone: 'polite' }),
+    });
+    expect(res.status).toBe(200);
   });
 });
 
@@ -147,12 +540,110 @@ describe('App auth', () => {
 
     const me = await fetch('/api/v1/auth/me', { headers: { Cookie: cookie } });
     expect(me.status).toBe(200);
-    const meBody = await me.json<{ data: { authenticated: boolean; user: { email: string } } }>();
+    const meBody = await me.json<{ data: { authenticated: boolean; user: { email: string; learning_track: string } } }>();
     expect(meBody.data.authenticated).toBe(true);
     expect(meBody.data.user.email).toBe(email);
+    expect(meBody.data.user.learning_track).toBe('jlpt-ja');
+
+    const switchTrack = await fetch('/api/v1/auth/track', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ track: 'topik-ko' }),
+    });
+    expect(switchTrack.status).toBe(200);
+
+    const switchedMe = await fetch('/api/v1/auth/me', { headers: { Cookie: cookie } });
+    const switchedBody = await switchedMe.json<{ data: { user: { learning_track: string } } }>();
+    expect(switchedBody.data.user.learning_track).toBe('topik-ko');
 
     const logout = await fetch('/api/v1/auth/logout', { method: 'POST', headers: { Cookie: cookie } });
     expect(logout.status).toBe(200);
+  });
+
+  it('partitions mutable server records and sync deltas by the authenticated learning track', async () => {
+    const cookie = await registerTestSession();
+    const headers = { 'Content-Type': 'application/json', Cookie: cookie };
+    const changeTrack = async (track: 'jlpt-ja' | 'topik-ko') => {
+      const response = await fetch('/api/v1/auth/track', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ track }),
+      });
+      expect(response.status).toBe(200);
+    };
+    const postDaily = async (date: string, itemsNew: number) => {
+      const response = await fetch('/api/v1/logs/daily', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ date, items_new: itemsNew, items_review: 0, time_min: 1, audio_min: 0 }),
+      });
+      expect(response.status).toBe(201);
+    };
+    const postSelfCheck = async (vocabScore: number) => {
+      const response = await fetch('/api/v1/self-check', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ week_no: 1, vocab_score: vocabScore }),
+      });
+      expect(response.status).toBe(201);
+    };
+
+    await changeTrack('topik-ko');
+    await postDaily('2026-07-17', 2);
+    await postSelfCheck(20);
+    const topikSrs = await fetch('/api/v1/srs/init', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ item_type: 'vocab', item_ids: [101] }),
+    });
+    expect(topikSrs.status).toBe(404);
+    const topikQuiz = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N3', count: 1 }),
+    });
+    expect(topikQuiz.status).toBe(404);
+
+    const topikSync = await fetch('/api/v1/sync', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        client_id: 'track-isolation-api',
+        last_synced_at: '2000-01-01T00:00:00.000Z',
+        operations: [{
+          op_id: '00000000-0000-4000-8000-000000000111',
+          type: 'daily_log',
+          payload: { date: '2026-07-16', items_new: 3, items_review: 0, time_min: 1, audio_min: 0 },
+          occurred_at: new Date().toISOString(),
+        }],
+      }),
+    });
+    expect(topikSync.status).toBe(200);
+    const topikSyncBody = await topikSync.json<{ data: { server_delta: { daily_logs: Array<{ learning_track: string; items_new: number }> } } }>();
+    expect(topikSyncBody.data.server_delta.daily_logs).toHaveLength(2);
+    expect(topikSyncBody.data.server_delta.daily_logs.every((row) => row.learning_track === 'topik-ko')).toBe(true);
+
+    await changeTrack('jlpt-ja');
+    await postDaily('2026-07-17', 9);
+    await postSelfCheck(90);
+    const jlptLogs = await fetch('/api/v1/logs/daily', { headers: { Cookie: cookie } });
+    const jlptLogsBody = await jlptLogs.json<{ data: Array<{ learning_track: string; items_new: number }> }>();
+    expect(jlptLogsBody.data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ learning_track: 'jlpt-ja', items_new: 9 }),
+    ]));
+    expect(jlptLogsBody.data.some((row) => row.learning_track === 'topik-ko')).toBe(false);
+    const jlptCheck = await fetch('/api/v1/self-check/1', { headers: { Cookie: cookie } });
+    const jlptCheckBody = await jlptCheck.json<{ data: { learning_track: string; vocab_score: number } }>();
+    expect(jlptCheckBody.data).toMatchObject({ learning_track: 'jlpt-ja', vocab_score: 90 });
+
+    await changeTrack('topik-ko');
+    const topikLogs = await fetch('/api/v1/logs/daily', { headers: { Cookie: cookie } });
+    const topikLogsBody = await topikLogs.json<{ data: Array<{ learning_track: string; items_new: number }> }>();
+    expect(topikLogsBody.data).toHaveLength(2);
+    expect(topikLogsBody.data.every((row) => row.learning_track === 'topik-ko')).toBe(true);
+    const topikCheck = await fetch('/api/v1/self-check/1', { headers: { Cookie: cookie } });
+    const topikCheckBody = await topikCheck.json<{ data: { learning_track: string; vocab_score: number } }>();
+    expect(topikCheckBody.data).toMatchObject({ learning_track: 'topik-ko', vocab_score: 20 });
   });
 
   it('logs out cleanly with production __Host session cookies', async () => {
@@ -197,7 +688,7 @@ describe('App auth', () => {
       GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
     };
     const res = await app.fetch(
-      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start', {
+      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko', {
         headers: { Origin: 'https://nihongo-n3.pages.dev' },
       }),
       productionEnv,
@@ -210,6 +701,83 @@ describe('App auth', () => {
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('https://accounts.google.com/o/oauth2/v2/auth');
     expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback');
+    const stateRow = await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `SELECT learning_track FROM oauth_states ORDER BY created_at DESC LIMIT 1`,
+    ).first<{ learning_track: string }>();
+    expect(stateRow?.learning_track).toBe('topik-ko');
+  });
+
+  it('completes Google OAuth through the cross-origin bridge and keeps the requested track', async () => {
+    const productionEnv = {
+      ...env,
+      ENVIRONMENT: 'production',
+      AUTH_MODE: 'app-session',
+      APP_ORIGIN: 'https://nihongo-n3.pages.dev',
+      GOOGLE_CLIENT_ID: 'google-client-id',
+      GOOGLE_CLIENT_SECRET: 'google-client-secret',
+      GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
+    };
+    const start = await app.fetch(
+      new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko'),
+      productionEnv,
+      createExecutionContext(),
+    );
+    const oauthCookie = (start.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+    const googleLocation = new URL(start.headers.get('location') ?? 'https://invalid.test');
+    const state = googleLocation.searchParams.get('state') ?? '';
+
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url === 'https://oauth2.googleapis.com/token') {
+        return Response.json({ access_token: 'test-google-access-token' });
+      }
+      if (url === 'https://openidconnect.googleapis.com/v1/userinfo') {
+        return Response.json({
+          sub: `google-sub-${Date.now()}`,
+          email: `google-${Date.now()}@example.com`,
+          name: 'Google Test User',
+          email_verified: true,
+        });
+      }
+      throw new Error(`Unexpected OAuth test request: ${url}`);
+    });
+
+    try {
+      const callback = await app.fetch(
+        new Request(
+          `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
+          { headers: { Cookie: oauthCookie } },
+        ),
+        productionEnv,
+        createExecutionContext(),
+      );
+      expect(callback.status).toBe(302);
+      const bridgeLocation = new URL(callback.headers.get('location') ?? 'https://invalid.test');
+      expect(bridgeLocation.origin).toBe('https://nihongo-n3.pages.dev');
+      expect(bridgeLocation.pathname).toBe('/api/v1/auth/complete');
+
+      const complete = await app.fetch(
+        new Request(bridgeLocation),
+        productionEnv,
+        createExecutionContext(),
+      );
+      expect(complete.status).toBe(302);
+      const sessionCookie = complete.headers.get('set-cookie') ?? '';
+      expect(sessionCookie).toContain('__Host-n3_session=');
+
+      const me = await app.fetch(
+        new Request('https://nihongo-n3.pages.dev/api/v1/auth/me', {
+          headers: { Cookie: sessionCookie.split(';')[0] ?? '' },
+        }),
+        productionEnv,
+        createExecutionContext(),
+      );
+      const meBody = await me.json<{ data: { user: { learning_track: string } } }>();
+      expect(me.status).toBe(200);
+      expect(meBody.data.user.learning_track).toBe('topik-ko');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('rejects weak passwords and invalid login attempts', async () => {
@@ -226,6 +794,167 @@ describe('App auth', () => {
       body: JSON.stringify({ email: 'missing@example.com', password: 'Passw0rd1234' }),
     });
     expect(login.status).toBe(401);
+  });
+});
+
+describe('Learning tracks', () => {
+  async function seedCompleteTrackLevels(levels: readonly JlptLevel[]) {
+    const sourceCode = 'N7-TRACK-STATUS';
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES (?, ?, ?, 'test')`,
+    ).bind(sourceCode, 'N7 track status fixture', 'test/n7-track-status').run();
+    const source = await (env as typeof env & { DB: D1Database }).DB.prepare(
+      'SELECT id FROM sources WHERE code = ?',
+    ).bind(sourceCode).first<{ id: number }>();
+    expect(source?.id).toBeTypeOf('number');
+
+    const characters = ['㐀', '㐁', '㐂', '㐃', '㐄'];
+    for (const level of levels) {
+      const index = JLPT_LEVELS.indexOf(level);
+      await (env as typeof env & { DB: D1Database }).DB.batch([
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO vocab (source_id, level, ja, kana, ko, pos)
+           VALUES (?, ?, ?, ?, ?, 'test')`,
+        ).bind(source!.id, level, `track-${level}`, `とらっく-${level.toLowerCase()}`, `${level} 뜻`),
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO grammar (source_id, level, pattern, meaning_ko, examples)
+           VALUES (?, ?, ?, ?, '[]')`,
+        ).bind(source!.id, level, `〜${level}`, `${level} 문법`),
+        (env as typeof env & { DB: D1Database }).DB.prepare(
+          `INSERT OR IGNORE INTO kanji (char, on_yomi, meaning_ko, jlpt_level)
+           VALUES (?, 'テスト', ?, ?)`,
+        ).bind(characters[index]!, `${level} 한자`, level),
+      ]);
+    }
+  }
+
+  it('derives JLPT release stages from complete DB level coverage and keeps TOPIK foundation-only', async () => {
+    await seedCompleteTrackLevels(['N5', 'N4', 'N3']);
+    const jlpt = await json<{ data: { available: boolean; content_release: string; available_levels: string[] } }>(
+      '/api/v1/tracks/jlpt-ja/status',
+    );
+    const topik = await json<{ data: { available: boolean; content_release: string } }>(
+      '/api/v1/tracks/topik-ko/status',
+    );
+    expect(jlpt.data).toEqual(expect.objectContaining({ available: true, content_release: 'n5-n3' }));
+    expect(jlpt.data.available_levels).toEqual(['N5', 'N4', 'N3']);
+    expect(topik.data).toEqual(expect.objectContaining({ available: false, content_release: 'foundation-only' }));
+
+    await seedCompleteTrackLevels(['N2', 'N1']);
+    const expanded = await json<{ data: { content_release: string; available_levels: string[] } }>(
+      '/api/v1/tracks/jlpt-ja/status',
+    );
+    expect(expanded.data).toMatchObject({
+      content_release: 'n5-n1',
+      available_levels: ['N5', 'N4', 'N3', 'N2', 'N1'],
+    });
+  });
+
+  it.each(['N2', 'N1'] as const)('generates a level-matched %s vocabulary quiz', async (level) => {
+    await seedCompleteTrackLevels([level]);
+    await (env as typeof env & { DB: D1Database }).DB.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner')`,
+    ).run();
+
+    const response = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level, count: 1 }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      data: { level: string; questions: Array<{ prompt: string }> };
+    }>();
+    expect(body.data.level).toBe(level);
+    expect(body.data.questions).toHaveLength(1);
+    expect(body.data.questions[0]?.prompt).toBe(`track-${level}`);
+  });
+});
+
+describe('R2 audio policy', () => {
+  it('returns a visible 404 instead of generating missing audio on demand', async () => {
+    const res = await fetch('/api/v1/audio/audio/vocab/n3/not-generated.mp3');
+    expect(res.status).toBe(404);
+  });
+
+  it('uses stable provider and content version hashes in immutable keys', async () => {
+    const provider = { provider: 'google', model: 'ja-JP-Neural2-B', audioVersion: '2026-07-15' } as const;
+    const task = { id: 7, type: 'vocab' as const, level: 'N3', text: '勉強' };
+    const firstHash = await audioContentHash(task.text, provider);
+    const secondHash = await audioContentHash(task.text, provider);
+    const key = await buildImmutableAudioKey(task, provider);
+    expect(firstHash).toBe(secondHash);
+    expect(key).toMatch(/^audio\/vocab\/n3\/7-[a-f0-9]{16}\.mp3$/);
+    expect(await audioContentHash(task.text, { ...provider, audioVersion: 'next' })).not.toBe(firstHash);
+  });
+
+  it('keeps the production audio batch dry-run by default and rejects unapproved execution', async () => {
+    const unauthenticated = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(unauthenticated.status).toBe(401);
+
+    const userCookie = await registerTestSession('user');
+    const forbidden = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: userCookie },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(forbidden.status).toBe(403);
+
+    const adminCookie = await registerTestSession('admin');
+    const dryRun = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+      body: JSON.stringify({ provider: 'google' }),
+    });
+    expect(dryRun.status).toBe(200);
+    const dryRunBody = await dryRun.json<{ data: {
+      dry_run: boolean;
+      execution_order: string[];
+      immutable_overwrite_allowed: boolean;
+      stats: { vocab: { pending: number } };
+    } }>();
+    expect(dryRunBody.data.dry_run).toBe(true);
+    expect(dryRunBody.data.execution_order).toEqual(['N5', 'N4', 'N3']);
+    expect(dryRunBody.data.immutable_overwrite_allowed).toBe(false);
+    expect(dryRunBody.data.stats.vocab.pending).toBeGreaterThanOrEqual(0);
+
+    const execute = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5' }),
+    });
+    expect(execute.status).toBe(400);
+
+    const force = await fetch('/admin/audio/queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5', force_regenerate: true }),
+    });
+    expect(force.status).toBe(400);
+  });
+
+  it('exposes only safe provider metadata for fixed QA candidates', async () => {
+    const assets = (env as unknown as { ASSETS: R2Bucket }).ASSETS;
+    await assets.put('audio/qa/google/1.wav', new Uint8Array([82, 73, 70, 70]), {
+      httpMetadata: { contentType: 'audio/wav' },
+      customMetadata: {
+        provider: 'google',
+        model: 'ja-JP-Neural2-B',
+        audioVersion: 'google-neural2-v1',
+      },
+    });
+
+    const response = await fetch('/api/v1/audio/audio/qa/google/1.wav', { method: 'HEAD' });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-audio-provider')).toBe('google');
+    expect(response.headers.get('x-audio-model')).toBe('ja-JP-Neural2-B');
+    expect(response.headers.get('x-audio-version')).toBe('google-neural2-v1');
   });
 });
 
@@ -286,6 +1015,18 @@ describe('GET /api/v1/vocab/search', () => {
 
   it('정상 검색 → 200', async () => {
     const res = await fetch('/api/v1/vocab/search?q=test');
+    expect(res.status).toBe(200);
+  });
+
+  it('FTS 연산 문자가 포함된 입력을 literal로 처리한다', async () => {
+    const res = await fetch(`/api/v1/vocab/search?q=${encodeURIComponent('A: "test"')}`);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('GET /api/v1/sentences/search', () => {
+  it('문장 부호가 포함된 입력을 FTS literal로 처리한다', async () => {
+    const res = await fetch(`/api/v1/sentences/search?q=${encodeURIComponent('A: 予約した時間を変更したいんですが、今日の午後は空いていますか。')}`);
     expect(res.status).toBe(200);
   });
 });

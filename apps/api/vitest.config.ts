@@ -14,10 +14,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      wrangler: { configPath: './wrangler.toml', environment: 'test' },
+      wrangler: { configPath: './wrangler.test.toml' },
       miniflare: {
         d1Databases: ['DB'],
-        r2Buckets: ['ASSETS'],
+        r2Buckets: ['ASSETS', 'REPORTS'],
       },
     }),
   ],

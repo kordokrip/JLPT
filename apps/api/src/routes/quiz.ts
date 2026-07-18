@@ -14,6 +14,7 @@ import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, notFound, badRequest, internalError } from '../lib/response.js';
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
+import { safeErrorName } from '../lib/safe-log.js';
 
 const quiz = new Hono<AppEnv>();
 quiz.use('*', cfAccessAuth);
@@ -72,6 +73,11 @@ async function loadRows<T>(
 // POST /quiz/generate
 // ───────────────────────────────────────────────────────
 quiz.post('/quiz/generate', async (c) => {
+  const learningTrack = c.get('learningTrack');
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK 퀴즈는 검수 및 출시 승인 전까지 제공되지 않습니다');
+  }
+
   const body = quizGenerateBodySchema.safeParse(
     await c.req.json().catch(() => null),
   );
@@ -245,14 +251,14 @@ quiz.post('/quiz/generate', async (c) => {
           choices:  buildChoices(ans.sentence_ko, distractorCandidates),
           answer:   ans.sentence_ko,
           item_id:  ans.id,
-          audio_key: ans.audio_r2_key ?? `audio/sentence/${ans.level.toLowerCase()}/${ans.id}.mp3`,
+          ...(ans.audio_r2_key ? { audio_key: ans.audio_r2_key } : {}),
           script_ja: ans.sentence_ja,
           script_ko: ans.sentence_ko,
         });
       }
     }
   } catch (err) {
-    console.error('[quiz/generate]', err);
+    console.error({ event: 'quiz_generation_error', error_name: safeErrorName(err) });
     return internalError(c, '문제 생성 중 오류가 발생했습니다');
   }
 
@@ -269,11 +275,11 @@ quiz.post('/quiz/generate', async (c) => {
     const result = await db
       .prepare(
         `INSERT INTO quiz_attempts
-           (user_id, quiz_type, mode, level, total, correct,
+           (user_id, learning_track, quiz_type, mode, level, total, correct,
             questions_json, started_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
       )
-      .bind(userId, mode, mode, level, questions.length, questionsJson, now, now, now)
+      .bind(userId, learningTrack, mode, mode, level, questions.length, questionsJson, now, now, now)
       .run();
     quizId = result.meta.last_row_id as number;
   } catch {
@@ -281,10 +287,10 @@ quiz.post('/quiz/generate', async (c) => {
     const result = await db
       .prepare(
         `INSERT INTO quiz_attempts
-           (user_id, quiz_type, total, correct, detail_json, created_at, updated_at)
-         VALUES (?, ?, ?, 0, ?, ?, ?)`,
+           (user_id, learning_track, quiz_type, total, correct, detail_json, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 0, ?, ?, ?)`,
       )
-      .bind(userId, mode, questions.length, questionsJson, now, now)
+      .bind(userId, learningTrack, mode, questions.length, questionsJson, now, now)
       .run();
     quizId = result.meta.last_row_id as number;
   }
@@ -299,6 +305,11 @@ quiz.post('/quiz/generate', async (c) => {
 // POST /quiz/submit
 // ───────────────────────────────────────────────────────
 quiz.post('/quiz/submit', async (c) => {
+  const learningTrack = c.get('learningTrack');
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK 퀴즈는 검수 및 출시 승인 전까지 제공되지 않습니다');
+  }
+
   const body = quizSubmitBodySchema.safeParse(
     await c.req.json().catch(() => null),
   );
@@ -318,8 +329,8 @@ quiz.post('/quiz/submit', async (c) => {
   };
 
   const attempt = await db
-    .prepare('SELECT * FROM quiz_attempts WHERE id = ? AND user_id = ?')
-    .bind(quiz_id, userId)
+    .prepare('SELECT * FROM quiz_attempts WHERE id = ? AND user_id = ? AND learning_track = ?')
+    .bind(quiz_id, userId, learningTrack)
     .first<StoredAttempt>();
 
   if (!attempt) return notFound(c, `quiz_id=${quiz_id} 를 찾을 수 없습니다`);
@@ -354,18 +365,18 @@ quiz.post('/quiz/submit', async (c) => {
       .prepare(
         `UPDATE quiz_attempts
            SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ? AND learning_track = ?`,
       )
-      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id)
+      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id, learningTrack)
       .run();
   } catch {
     await db
       .prepare(
         `UPDATE quiz_attempts
            SET correct = ?, detail_json = ?, updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ? AND learning_track = ?`,
       )
-      .bind(correctCount, JSON.stringify(detail), now, quiz_id)
+      .bind(correctCount, JSON.stringify(detail), now, quiz_id, learningTrack)
       .run();
   }
 
@@ -383,6 +394,10 @@ quiz.post('/quiz/submit', async (c) => {
 // ───────────────────────────────────────────────────────
 quiz.get('/quiz/history', async (c) => {
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
+  if (learningTrack !== 'jlpt-ja') {
+    return notFound(c, 'TOPIK 퀴즈는 검수 및 출시 승인 전까지 제공되지 않습니다');
+  }
 
   type HistoryRow = {
     id: number; quiz_type: string; total: number;
@@ -395,22 +410,22 @@ quiz.get('/quiz/history', async (c) => {
       .prepare(
         `SELECT id, quiz_type, total, correct, created_at, finished_at
          FROM quiz_attempts
-         WHERE user_id = ?
+         WHERE user_id = ? AND learning_track = ?
          ORDER BY created_at DESC
          LIMIT 20`,
       )
-      .bind(userId)
+      .bind(userId, learningTrack)
       .all<HistoryRow>();
   } catch {
     rows = await c.env.DB
       .prepare(
         `SELECT id, quiz_type, total, correct, created_at, NULL AS finished_at
          FROM quiz_attempts
-         WHERE user_id = ?
+         WHERE user_id = ? AND learning_track = ?
          ORDER BY created_at DESC
          LIMIT 20`,
       )
-      .bind(userId)
+      .bind(userId, learningTrack)
       .all<HistoryRow>();
   }
 

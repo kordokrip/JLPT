@@ -59,6 +59,14 @@ const en = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   home: {
     greeting:      'Keep going. Consistency builds mastery.',
     thisWeek:      'This Week',
@@ -77,6 +85,8 @@ const en = {
     newWordsCount: '{{count}} new words',
     selfCheckLink: 'Self-Check',
     abilityCheck:  'Ability test',
+    courseScopeTitle: 'Course scope',
+    courseScopeExpanded: 'Content from N5 through N1 is available. Higher-level study is managed separately from the core 52-week course.',
   },
 
   review: {
@@ -121,6 +131,7 @@ const en = {
       vocab:   'Browse Vocabulary',
       grammar: 'Browse Grammar',
       kanji:   'Browse Kanji',
+      homophones: 'Distinguish Homophones',
     },
     category: 'Category',
     level:    'Level',
@@ -129,9 +140,12 @@ const en = {
     vocab:    'Vocabulary',
     grammar:  'Grammar',
     kanji:    'Kanji',
+    homophones: 'Homophones',
     search:   'Search',
     searchPlaceholder: 'Search...',
     noResult: 'No results found',
+    contentPendingTitle: 'Content in preparation',
+    contentPendingDescription: '{{level}} {{type}} content is under review. Start with another released level in the meantime.',
     meaning:  'Meaning',
     example:  'Example',
     reading:  'Reading',
@@ -141,6 +155,10 @@ const en = {
     itemNotFound: 'Item not found.',
     onyomi: 'On reading',
     kunyomi: 'Kun reading',
+    homophoneIntro: 'Distinguish words with the same reading through meaning, accent, and examples. Every item includes source and review records.',
+    accent: 'Accent',
+    source: 'Source',
+    reviewed: 'Last reviewed',
     ariaSearch: 'Search {{type}}',
   },
 
@@ -244,6 +262,8 @@ const en = {
     tryQuiz:  'Take Quiz',
     loadError: 'Could not load the passage',
     emptyFiltered: 'No passages match the current filters',
+    contentPendingTitle: 'Content in preparation',
+    contentPendingDescription: '{{level}} reading content is under review. Start with another released level in the meantime.',
     loadingMore: 'Loading...',
     wordCount: '{{count}} characters',
     source: 'Source: {{source}}',
@@ -272,8 +292,8 @@ const en = {
 
   curriculum: {
     title:      'Curriculum',
-    planTitle:  '16-Week Plan',
-    subtitle:   'A 16-week roadmap toward JLPT N3',
+    planTitle:  '12-Month Study Plan',
+    subtitle:   'A 52-week roadmap from kana and N5 foundations to JLPT N3 practice',
     week:       'Week',
     weekLabel:  'Week {{week}}',
     weekShort:  'W{{week}}',

@@ -1,0 +1,353 @@
+# 기술부채 리팩토링 세션 변경 기록
+
+분석 시작: 2026-07-14 KST
+구현·재검증: 2026-07-15 KST
+브랜치: `refactor/tech-debt-r1`
+배포: 실행하지 않음
+
+## 1. 작업 격리
+
+검수되지 않은 N2/N1 변경은 `wip/n2-n1-content-2026-07-14`에 commit `1ae2401`로 보존했다. R1은 이전 정상 HEAD에서 별도 branch로 시작했다. 누락된 N2/N1 원본을 생성됐다고 가정하지 않았고 `AUTO`/`EN` 자료를 운영 seed에 넣지 않았다.
+
+## 2. R1 변경
+
+### D1
+
+- `packages/db/drizzle-v2/0000`~`0006` 추가
+- Drizzle 일반 table과 FTS SQL migration 소유권 분리
+- runtime OAuth DDL 제거
+- source manifest row/checksum 검증 추가
+- category 선행 seed, parser 의미 헤더/빈 뜻 검증 추가
+- validation-only `seed-diff`로 변경
+- Blue/Green, backup, restore drill, migration guard 도구 추가
+- read-only cutover middleware 추가
+
+### API 계약·인증
+
+- auth/track route OpenAPI 명세 추가
+- public/admin OpenAPI 분리와 generated types 추가
+- runtime route coverage 테스트 추가
+- Google OAuth state에 learning track 저장
+- cross-origin bridge token callback 통합 테스트 추가
+- admin OpenAPI 보호 테스트 추가
+- app-session / cf-access guardrail 테스트 유지
+
+### CI·관측성
+
+- `Required Verification` workflow 추가
+- content push의 자동 production migration/seed 제거
+- production 변경은 workflow_dispatch + Environment approval로 제한
+- E2E D1을 독립 persist directory에서 migrate/seed/verify
+- PII 없는 JSON request/release log 추가
+
+## 3. R2 변경
+
+- 공개 audio route를 R2 read-only로 전환
+- R2 -> Japanese browser fallback 정책 통합
+- Google 전체 batch approval gate 추가
+- content/provider/model/version hash immutable key 추가
+- 30문장 QA에 Google 후보 및 평가 저장 추가
+- kana v2 script를 `문자。대표 단어` 한 번 재생으로 변경
+- 동음이의어 public 노출 보류
+- 코드·콘텐츠·오디오·시각 자산 attribution 분리
+- 52주 기본 과정과 16주 추천 조건 구현
+
+실제 Google batch와 R2 업로드는 실행하지 않았다. fresh DB 기준 `audio_r2_key` 4,954건이 비어 있다.
+
+## 4. R3 foundation 변경
+
+- `LearningTrackId = 'jlpt-ja' | 'topik-ko'`
+- users/oauth_states track migration
+- track status API
+- 첫 접속 학습 언어 선택
+- TOPIK foundation-only route
+- user×track IndexedDB, localStorage, React Query namespace
+- track switch API와 session restore
+- Chromium account×track isolation E2E
+
+TOPIK 문제은행·채점·추천은 구현하지 않았다.
+
+## 20. TOPIK T1~T3 내부 준비와 server track isolation (2026-07-17 KST)
+
+T1 제품 계약은 [ADR-001](./ADR-001-topik-t1-product-contract.md)으로 고정했다. 초기 대상은
+TOPIK I 진입 수준을 점검하려는 영어 사용 성인 자율학습자이며, 문항 prompt/보기는 한국어,
+해설은 영어 기본값이다. 앱 표시 언어와 학습 언어는 독립적으로 유지한다. 세션의
+`users.learning_track`만 server write/sync의 트랙 원천으로 사용하고 요청 body는 다른
+트랙을 지정하거나 덮어쓸 수 없다.
+
+T2는 `0008_topik_track_content_and_learning_keys.sql`과 Drizzle schema로 구현했다.
+`srs_cards`, `daily_logs`, `quiz_attempts`, `self_check`의 natural key 및 조회와
+`track_srs_settings`를 user×track으로 확장했다. `track_content_sources`,
+`track_exam_levels`, `track_content_seed_runs`, `track_content_seed_sources`는 JLPT와 독립된
+TOPIK provenance ledger를 제공한다. TOPIK SRS/quiz/reading은 출시 전 `404`로 닫고 기존
+JLPT compatibility route의 wire format은 유지했다.
+
+T3는 공식 기출·음원을 포함하지 않는 자체 저작 TOPIK I placement 12문항
+`TOPIK-PLACEMENT-V1`로 준비했다. 작성 검수, 2차 한국어 언어 검수, 최종 검토일, source
+checksum, parser version, manifest checksum을 함께 저장한다. fresh local D1
+`topik:verify`는 row 12, exam level 2, 빈 필드 0, invalid answer index 0, duplicate 0,
+FK 0, manifest/source checksum 일치를 확인했다.
+
+| 검증 | 결과 |
+| --- | --- |
+| DB unit test | 14 PASS |
+| DB `topik:verify` | PASS (local-only, remote write 없음) |
+| API routes test | 92 PASS |
+| Chromium `learning-track-isolation` | PASS |
+| WebKit `learning-track-isolation` | PASS |
+
+이 변경은 TOPIK public API, public OpenAPI, onboarding 콘텐츠 CTA, production seed 또는
+배포를 변경하지 않는다. `0007_content_provenance_homophones`가 R1 branch에 확정된 뒤
+`0008`을 순서대로 적용하며, T4/T5와 R1/R2 release gate가 선행된다.
+
+## 5. 검증 기록
+
+| 명령/검사 | 결과 |
+| --- | --- |
+| package typecheck 5종 | PASS |
+| API test | 78 PASS |
+| Web test | 33 PASS |
+| API Wrangler dry-run | PASS |
+| Web PWA build | PASS |
+| dependency audit high | 0 known vulnerabilities |
+| fresh D1 migrate | 7/7 PASS |
+| manifest/checksum/row | 13 sources PASS |
+| FTS parity | vocab 3,300 / sentences 1,112 PASS |
+| FK/required/duplicate | 0 PASS |
+| Playwright Chromium | 65 PASS |
+| Playwright WebKit | 51 PASS, Chromium 전용 시각 회귀 14 SKIP |
+| `pnpm verify:ci` | PASS |
+| R2 audio strict gate | EXPECTED FAIL, 4,954 missing만 blocking |
+| GitHub required Actions | BLOCKED pending billing resolution |
+
+## 6. 구현 중 발견해 추가 수정한 회귀
+
+1. session user query가 `learning_track`을 반환하지 않아 새로고침 시 JLPT로 되돌아갈 수 있던 문제
+2. CI E2E에서 Google test credentials가 없어 OAuth start가 503이 되던 문제
+3. E2E가 기존 `.wrangler` DB에 의존해 migration ledger 충돌이 나던 문제
+4. 위험한 partial diff seed가 source column이 없는 table을 삭제하려던 문제
+5. Wrangler 일반 vars에 secret 성격의 빈 키가 남아 있던 문제
+6. OpenAPI production server URL과 16주 summary가 현재 기준과 다르던 문제
+7. 청해 API가 `audio_r2_key`가 없어도 존재하지 않는 legacy R2 경로를 만들어 페이지 로드 404를 발생시키던 문제
+8. E2E가 현재 12개월/52주 과정과 R2-first 정책 대신 과거 16주/browser-first 문구를 요구하던 문제
+9. 관측 로그가 route template이 아닌 실제 path를 기록해 path parameter를 노출할 수 있던 문제
+
+## 7. 원격 CI 확인
+
+2026-07-15 KST에 `gh`로 최근 원격 실행을 읽기 전용 확인했다. Backup run `29348512843`과 CodeQL run `29226573527`은 runner step이 하나도 시작되지 않았고 `The job was not started because your account is locked due to a billing issue.` annotation으로 실패했다. Dependency Audit workflow는 `disabled_manually` 상태였다.
+
+## 8. 배포 결정
+
+production 배포를 수행하지 않았다. 로컬 Chromium/WebKit matrix는 통과했지만 GitHub billing lock, 원격 required Actions, prod-v2, R2 audio gate가 충족되지 않았기 때문이다. 다음 세션은 [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)의 승인 조건에서 재개한다.
+
+## 9. 후속 계획 문서 갱신 (2026-07-15, R1 분석 후속)
+
+R1 구현 내역을 runbook·ROADMAP·ops guide·코드(ops 스크립트, content-manifest, tracks API)와 교차검증한 뒤 계획 문서를 재작성했다.
+
+- [CODEX_NEXT_PROMPTS_2026-07-15.md](./CODEX_NEXT_PROMPTS_2026-07-15.md) 신규 — 구 W1~W6 완료 판정 표와 N0~N9 시계열 프롬프트. 상환 우선순위(TD-10→01→14→13→08→07→12)와 릴리스 순서(R1→R2→R3)에 정렬. `--execute`·Environment 승인은 사람 게이트로 명시.
+- [N2_N1_REINTEGRATION_PLAN_2026-07-15.md](./N2_N1_REINTEGRATION_PLAN_2026-07-15.md) 신규 — wip 브랜치 격리 콘텐츠의 재통합 전제 조건(rebase·provenance·검수 태그 0)과 R1 이후 무효가 된 구 가이드 커맨드 대비표.
+- 구 `CODEX_REFACTORING_PROMPTS_2026-07-14.md`, `N2_N1_CONTENT_UPDATE_GUIDE.md`는 wip 브랜치 보존본을 역사 문서로 취급하고 현행 브랜치에 복원하지 않는다.
+
+## 10. GitHub 필수 workflow 재검증 (2026-07-15 KST)
+
+`refactor/tech-debt-r1`의 HEAD와 원격 branch가 모두 `5c25e9f959228b48e007a2a4d8c24d809bbf661c`임을 확인했다. `Dependency Audit`은 실행 전에 `disabled_manually`였으며 `gh workflow enable` 후 `active`로 전환했다.
+
+| Workflow | Run | 결론 | SHA | 분류 |
+| --- | --- | --- | --- | --- |
+| Dependency Audit | [29383425422](https://github.com/kordokrip/JLPT/actions/runs/29383425422) | failure, canary 재실행도 동일 | `5c25e9f9592` | runner step 미시작, billing annotation |
+| CodeQL Security Analysis | [29383426508](https://github.com/kordokrip/JLPT/actions/runs/29383426508) | failure | `5c25e9f9592` | runner step 미시작, billing annotation |
+| E2E Tests (Chromium/WebKit) | [29383428226](https://github.com/kordokrip/JLPT/actions/runs/29383428226) | failure | `5c25e9f9592` | 두 matrix job 모두 미시작, billing annotation |
+| Backup D1 Database -> R2 | [29383429640](https://github.com/kordokrip/JLPT/actions/runs/29383429640) | failure | `5c25e9f9592` | export job 미시작, billing annotation; R2 변경 없음 |
+| Required Verification | run 미생성 | dispatch 거부 | `5c25e9f9592` | `verify.yml`이 기본 branch에 없어 GitHub API가 HTTP 404 반환 |
+
+네 개의 생성된 run은 모두 `The job was not started because your account is locked due to a billing issue.` annotation으로 종료됐다. 이는 기존 run `29348512843`, `29226573527`과 같은 외부 계정 차단 유형이며 checkout이나 프로젝트 명령이 실행되지 않았으므로 코드 실패로 분류할 수 없다. 잠금 해제 전파 가능성을 확인하려고 60초 후 Audit run을 한 번 재실행했으나 같은 annotation이 재현됐다.
+
+Required Verification은 workflow를 수정해서 우회하지 않았다. GitHub의 수동 dispatch는 workflow가 기본 branch에 등록돼 있어야 하므로, 현재 branch에만 존재하는 `verify.yml`은 `gh workflow run verify.yml --ref refactor/tech-debt-r1`로 실행할 수 없었다. TD-10은 `외부 차단`, TD-14는 `구현 완료`를 유지하며 production 배포와 D1/R2 변경은 수행하지 않았다.
+
+## 11. prod-v2 Blue/Green 사전 점검과 자동화 보강 (2026-07-15 KST)
+
+`R1_BLUE_GREEN_RUNBOOK_2026-07-15.md`만을 절차 기준으로 원격 상태를 읽기 전용 확인했다.
+
+| 점검 | 결과 |
+| --- | --- |
+| `nihongo-n3-prod-v2` | BLOCKED, D1 목록에 없음 |
+| migration workflow | BLOCKED, default branch는 구 자동 변경 workflow이며 승인형 workflow는 R1 branch에만 존재 |
+| GitHub `production` Environment | BLOCKED, Environment와 Cloudflare Environment secret 이름 없음 |
+| 같은 SHA required Actions | BLOCKED, current-SHA Audit `29383879798`도 runner 시작 전 billing annotation |
+| Worker Google secret 이름 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 확인, 값 미출력 |
+| report 보존 | `.artifacts/r1-blue-green`, `.artifacts/r1-preview-smoke` 준비 |
+
+기존 production을 변경 없이 조회한 content/FTS 수량은 다음과 같다.
+
+| 항목 | production | fresh 기준 | 판정 |
+| --- | ---: | ---: | --- |
+| vocab / vocab_fts | 3,427 / 3,427 | 3,300 / 3,300 | 127건 drift, 이전 승인 전 조사 필요 |
+| sentences / sentences_fts | 1,112 / 1,112 | 1,112 / 1,112 | 일치 |
+| categories | 0 | seed category 생성 | drift |
+| curriculum_weeks | 16 | 52 | drift |
+
+구현·검증 변경:
+
+- D1 transfer dry-run도 table별 count/checksum을 계산하고 `verification-before.json`을 남긴다.
+- 사람 승인 실행 후 `verification-after.json`, FTS 원본 parity와 3,300/1,112 기준을 함께 판정한다.
+- `migrate:verify`가 remote `d1_migrations`를 7개 migration 파일과 순서까지 읽기 전용 비교한다.
+- preview smoke가 공개 조회, password session, admin 보호, SRS, sync, OAuth 오류 경로, read-only 503/`Retry-After: 900`을 JSON으로 보존한다.
+- smoke 중 FTS `MATCH`에 문장 부호가 들어오면 500이 발생하는 결함을 발견해 literal query helper와 회귀 테스트를 추가했다.
+
+검증 결과는 API 80 tests, `pnpm verify:ci`, 로컬 preview off 21/21, read-only 17/17 PASS다. 실제 Google consent callback/complete, 인증된 admin 성공, prod-v2 migration/transfer, binding 전환, 30분 관측은 사람 실행과 원격 인프라가 없어 미수행이다. `--execute`, Environment 승인, production 배포·D1/R2 변경은 수행하지 않았다.
+
+## 12. TD-13 관측성 preview 운영 연결 검증 (2026-07-15 KST)
+
+PII 없는 Workers JSON log를 Logpush/R2와 운영 알림에 연결하기 위한 코드·문서·로컬 검증을 완료하고 Cloudflare 원격 상태를 교차 확인했다.
+
+| 점검 | 결과 | 증거/판정 |
+| --- | --- | --- |
+| R2 보존 정책 | PASS | `nihongo-n3-worker-logs-30d`, `logs/workers/`, 30일 원격 재조회 |
+| route template·canary secret 비노출 | PASS | API 90 tests, PII/path parameter 회귀와 receiver payload 거부 테스트 |
+| 3종 threshold 판정 | PASS | ops 8 tests, saved query 3개와 공통 판정 코어 |
+| 5분 alert runner | **preview 원격 PASS** | `*/5 * * * *`, 08:00 UTC 자동 Cron delivery |
+| 전체 로컬 verify | PASS | OpenAPI 52/7, package typecheck, ops 8/Web 33/API 90 tests, Worker/PWA build |
+| OpenAPI drift | PASS | public 52 paths, admin 7 paths |
+| production 공개 smoke | PASS | `/health` 등 7/7; 현재 배포본은 `X-Release` 미설정 |
+| dependency audit high | BLOCKED | npm legacy audit endpoint HTTP 410; 취약점 판정이 아니며 ignore하지 않음 |
+| account-level Logpush job | PASS | 새 job 생성, enabled, `error_message=null`, R2 destination 비밀값 redacted 검증 |
+| Observability saved query | PASS | 5xx/auth failure/D1 error 3개 원격 생성 |
+| preview Worker Logpush | PASS | `nihongo-n3-api-observability-preview`, job `1790981`, `error_message=null` |
+| preview alert Cron/secrets | PASS | runtime secret 이름, `*/5` Cron, receiver service binding 원격 확인 |
+| production 연결 | GATED | 기존 Worker 미변경; required checks와 Environment 승인 후 별도 적용 |
+| Logpush/Observability/Notifications API | PASS | account-owned token active, 관련 4개 API HTTP 200 |
+| R2 Logpush object | PASS | `logs/workers/observability-preview/` `.log.gz` 20개 metadata 확인 |
+| preview 5xx alert canary | PASS | 25/25 HTTP 500, detector fired, direct delivery 202 |
+| Cron webhook/R2 evidence | PASS | generated `08:00:33.615Z`, received `08:00:34.272Z`, alert object 4개 확인 |
+
+직접 운영 HTTPS 수신 endpoint는 별도 receiver Worker로 분리했다. 외부 호출은 bearer 인증을 사용하고 sender Worker는 내부 service binding을 우선한다. 수신 데이터는 PII가 없는 집계로 제한하고 R2에는 content hash 기반 불변 object로 남긴다. 초기 same-Worker public fetch 실패와 Observability API envelope 오판을 발견했으며 각각 receiver/service binding 분리, top-level `view`와 `result.events.events` 정규화로 수정했다.
+
+preview end-to-end 증거가 확보되어 TD-13을 `검증 완료 (preview E2E)`로 변경했다. production release gate와 Environment 승인을 건너뛰지 않았고 production Worker와 D1은 변경하지 않았다. preview에는 전용 token 자동 발급 권한 부족으로 기존 account control token을 임시 사용했으며 production 전 최소권한 토큰 교체가 필수다.
+
+## 13. TD-08 오디오 상환 사전 구현과 원격 차단 확인 (2026-07-15 KST)
+
+R2 read-only 원칙을 유지하면서 QA·batch·검증 경로를 교차검증했다.
+
+| 점검 | 결과 |
+| --- | --- |
+| production batch secret 이름 | `GOOGLE_TTS_API_KEY`, `AUDIO_BATCH_APPROVAL_TOKEN` 모두 없음, 값 미출력 |
+| preview batch secret 이름 | 두 preview Worker 모두 없음 |
+| QA 후보 | Cloudflare 30/30, Google 0/30(400), VOICEVOX 0/30(404), browser는 평가 device 의존 |
+| production D1 batch schema | `audio_generation_log.provider`, `content_hash` 없음 |
+| production 오디오 대상 | N5~N3 vocab 3,427 + kanji 546 + sentences 1,112 = 5,085 |
+| 새 불변 key 일치 | 0/5,085 |
+| strict remote gate | EXPECTED FAIL, 오디오 5,085건과 기존 production content drift 14개 blocking |
+| API tests | 91 PASS |
+| DB verifier tests | 3 PASS |
+| fresh D1 gate | PASS, migrations 7/7·manifest/FTS/FK/필수 필드 정상; audio 4,954 WARN |
+| fresh D1 strict audio gate | EXPECTED FAIL, audio 4,954건만 blocking |
+| Chromium quiz/fallback E2E | 7/7 PASS, `ja-JP` 1회·서버 audio 요청 0 |
+| WebKit quiz/fallback E2E | 7/7 PASS, `ja-JP` 1회·서버 audio 요청 0 |
+
+API와 웹 QA 표본을 `audio-qa-30-v1`로 통합하고, 네 provider 120개 평가와 평가자/device/browser/날짜/candidate metadata가 모두 있어야 승인되는 scorecard를 추가했다. admin queue는 N5→N4→N3 level을 강제하고, Google batch secret과 timing-safe approval token 없이 실행되지 않는다. 기존 immutable object 덮어쓰기를 금지하고 provider별 성공 이력과 R2 metadata가 완전히 일치할 때만 D1 key를 채택한다.
+
+`verify:remote:audio`는 NULL만 세던 방식에서 D1 불변 key와 R2 S3 HEAD metadata를 함께 대조하는 방식으로 강화했다. verifier 최소값은 낮추지 않았다. 사람 QA, `--execute`, production secret 설정, D1/R2 쓰기, 배포는 수행하지 않았다. R1 prod-v2 migration 7/7과 네 후보 준비가 선행되지 않아 TD-08은 `진행 중`을 유지한다.
+
+## 14. R1 draft PR과 GitHub billing lock 재확인 (2026-07-15 KST)
+
+커밋 `3e1bd9d10d80412cb858639d30c8f2a0cea8d905`를 원격 `refactor/tech-debt-r1`에 push하고 [draft PR #31](https://github.com/kordokrip/JLPT/pull/31)을 생성했다. PR 생성으로 시작된 모든 job은 checkout 전에 2~3초 안에 종료됐고 step 목록이 비어 있었다.
+
+| Workflow | Run | 결론 | SHA | 분류 |
+| --- | --- | --- | --- | --- |
+| Dependency Audit | [29424755756](https://github.com/kordokrip/JLPT/actions/runs/29424755756) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| CodeQL Security Analysis | [29424755869](https://github.com/kordokrip/JLPT/actions/runs/29424755869) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| Required Verification | [29424755793](https://github.com/kordokrip/JLPT/actions/runs/29424755793) | failure | `3e1bd9d10d80` | runner 미시작, billing annotation |
+| E2E Tests | [29424755770](https://github.com/kordokrip/JLPT/actions/runs/29424755770) | failure | `3e1bd9d10d80` | Chromium/WebKit 모두 runner 미시작 |
+| Content and D1 Change Control | [29424755973](https://github.com/kordokrip/JLPT/actions/runs/29424755973) | failure | `3e1bd9d10d80` | fresh verification runner 미시작, production job skip |
+| Deploy Web | [29424755843](https://github.com/kordokrip/JLPT/actions/runs/29424755843) | failure | `3e1bd9d10d80` | build runner 미시작, deploy jobs skip |
+
+각 실패 check annotation을 GitHub API로 다시 조회했으며 모두 `The job was not started because your account is locked due to a billing issue.`였다. 이는 audit, CodeQL, 테스트, 빌드 명령의 코드 실패가 아니라 GitHub 계정 수준의 외부 차단이다. billing lock이 해제됐다고 가정해 workflow 파일이나 required check를 우회하지 않았고, 불필요한 재실행도 중단했다.
+
+Backup workflow는 검증 과정에서도 R2 object를 쓰므로 이 PR 생성 단계에서 수동 실행하지 않았다. production 배포, D1/R2 변경, secret 등록, 오디오 batch는 수행하지 않았다. 따라서 TD-10은 `외부 차단`, TD-14는 `구현 완료`, TD-08은 `진행 중`을 유지한다.
+
+## 15. Production 회원 cleanup dry-run (2026-07-16 KST)
+
+2026-07-15 production backup을 독립 SQL과 신규 cleanup planner로 두 번 집계했다. 전체 67명 중 실제 계정 후보는 마스킹 기준 2명이고, `example.com` 64명과 `nihongo-n3.local` 1명 등 65명이 명시적인 테스트 계정이다. 테스트 계정 연관 삭제 후보는 session 75, login event 95, SRS card 10, review log 8, quiz attempt 73, self check 1건이다.
+
+`d1:users:cleanup`은 2명 allowlist, test-domain 제한, PII 마스킹 fingerprint, plan hash, 60분 remote plan 만료, 24시간 backup, 동적 확인문, Environment 승인, post-delete FK 검사를 강제한다. backup plan은 실행 입력으로 사용할 수 없다. 회원 cleanup 단위 테스트 7개, DB test 10개, 전체 `pnpm verify`, backup dry-run `67 / 2 / 65`가 통과했다. 같은 백업의 local restore drill도 migration 7개와 일반 테이블 23개의 row count, SHA-256, FTS parity, FK 검사를 통과했다.
+
+이 시점의 루트 `.env.local` Cloudflare API token은 verify endpoint에서 `Invalid API Token`이었다. 따라서 당시에는 최신 remote inventory와 production 삭제를 수행하지 않았다. 토큰 복구와 remote dry-run 결과는 아래 16절과 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)에 갱신했다.
+
+## 16. Billing 해제, 회원 remote 재검증, R1 관문 정상화 (2026-07-16 KST)
+
+Cloudflare D1 Read token을 account token verify와 remote D1 query로 재검증했다. PII를 출력하지 않는 remote cleanup plan은 전체 67명, 보존 2명, 명시적 test domain 삭제 후보 65명, 연관 row 327건으로 이전 backup 집계와 일치했다. `ko***@gmail.com`은 `admin`, `no***@icloud.com`은 `user`로 확인했다. 관리자 route는 일반 app session이 아니라 `admin` role을 필수로 하도록 수정했고 401/403/200 회귀 테스를 통과했다.
+
+로컬 최종 관문은 `pnpm audit --audit-level high`, OpenAPI drift, typecheck, 단위 147건, build, fresh D1 migration 7/7·manifest·FTS 3,300/1,112·FK, Chromium 65건, WebKit 51건을 통과했다. fresh 오디오 4,954건은 계획된 TD-08 warning으로 남겨 검증 기준을 낮추지 않았다.
+
+GitHub billing lock 해제 후 같은 SHA `8047e57d9c9f` 원격 결과는 다음과 같다.
+
+| Workflow | Run | 결론 | 분류 |
+| --- | --- | --- | --- |
+| Dependency Audit | [29467627640](https://github.com/kordokrip/JLPT/actions/runs/29467627640) | success | advisory 0, runner 정상 |
+| CodeQL Security Analysis | [29467627702](https://github.com/kordokrip/JLPT/actions/runs/29467627702) | success | 보안 분석 정상 |
+| Required Verification | [29467627775](https://github.com/kordokrip/JLPT/actions/runs/29467627775) | success | type·unit·build·D1 정상 |
+| Content and D1 Change Control | [29467627639](https://github.com/kordokrip/JLPT/actions/runs/29467627639) | success | fresh D1 validate만 실행, production change skip |
+| E2E Tests | [29467627631](https://github.com/kordokrip/JLPT/actions/runs/29467627631) | success | Chromium 65, WebKit 51 pass |
+| Deploy Web preview | [29467627706](https://github.com/kordokrip/JLPT/actions/runs/29467627706) | failure | build success, Pages 전용 token 미등록 |
+
+Pages 실패는 billing annotation이나 코드 빌드 실패가 아니다. D1 Read token을 범용으로 재사용하지 않고 `CLOUDFLARE_PAGES_API_TOKEN`, `CLOUDFLARE_WORKERS_API_TOKEN`, `CLOUDFLARE_D1_WRITE_API_TOKEN`, `CLOUDFLARE_BACKUP_API_TOKEN`으로 workflow 권한을 분리했다.
+
+Backup은 D1 export가 query를 차단할 수 있으므로 `production` Environment 사람 승인과 maintenance/read-only window를 강제했다. 전용 backup token이 아직 등록되지 않아 원격 export·R2 object 쓰기는 실행하지 않았다. 회원 65명 삭제도 신규 24시간 backup, 60분 remote plan, D1 Write token, 사람 승인이 모두 없으면 실행하지 않는다. production D1/R2/Workers/Pages는 변경하지 않았다.
+
+## 17. TD-07 콘텐츠 provenance와 동음이의어 공개 계약 (2026-07-16 KST)
+
+운영 seed manifest를 v2로 올리고, 실제 N5~N3 13개 source마다 원천·라이선스·검수자·최종 검토일을 포함하도록 했다. manifest identity는 source checksum과 parser version에서 결정하며, seed마다 새 run ID를 만들고 `content_seed_runs` 및 `content_seed_sources`에 content version, manifest SHA-256, source checksum, parser version, provenance를 남긴다. 이 ledger는 콘텐츠 변화를 추적할 뿐 사용자 데이터나 PII를 포함하지 않는다.
+
+`0007_content_provenance_homophones.sql`로 seed ledger와 검수 필드를 추가했다. 동음이의어 30쌍은 각 단어의 source mapping, 동일 읽기, 악센트 reference, 일본어·한국어 예문, 검수자·날짜를 가진다. verifier는 30쌍 이상, 불완전 record 0, 읽기 불일치 0, source mapping 불일치 0, unordered duplicate 0, FK violation 0을 blocking 조건으로 고정했다. 공개 `GET /api/v1/homophones`, public OpenAPI, Browse 탭은 같은 변경에서 활성화됐으며 미검수 row는 route에서 반환하지 않는다.
+
+| 검증 | 결과 |
+| --- | --- |
+| DB ops tests | 16 PASS |
+| API route/OpenAPI tests | 92 PASS |
+| Web type/API normalization tests | 38 PASS |
+| clean D1 `verify:fresh` | 8/8 migration, 215 checks, blocking failure 0 |
+| seed-run ledger | source 13 + derived homophone source 1, checksum/parser/provenance 모두 일치 |
+| homophone release checks | 30/30, incomplete/reading/source/duplicate 0 |
+| Chromium Browse E2E | `vocab-search.spec.ts` 4 PASS, `/browse/homophones`의 출처·검수 UI 확인 |
+
+fresh verifier의 유일한 warning은 미생성 R2 audio 4,954건이며 TD-08 범위로 유지했다. verifier 최소값을 낮추지 않았고, production D1/R2, Workers, Pages에는 이 변경을 배포하지 않았다. 이에 따라 TD-07은 코드·데이터 관문 기준 `검증 완료`로 갱신한다.
+
+## 18. N2/N1 후보 격리와 R1 검증 안정화 (2026-07-17 KST)
+
+R1의 `naturalKeys`, 빈 한국어 뜻 실패를 유지하고 `의미 (한국어)` 헤더만 추가로 허용했다. 후보 파서 수량은 N2 한자 367, 어휘 1,905(원천 `やかん` 중복 1건 제외), 문법 130, N1 한자 1,232, 어휘 2,699, 문법 135로 대조됐다. DB typecheck와 18개 DB 단위 테스트는 통과했다.
+
+격리 브랜치의 `audit:n2n1`은 후보 9개 파일의 provenance 헤더와 실제 표 행의 검수 태그를 확인한다. 결과는 `AUTO` 2,674건, `EN` 1,931건, 합계 4,605건과 200건 단위 24개 배치(마지막 5개)였다. provenance 기록은 9/9이지만 한자음 원자료 라이선스, 문법 원전 서지, 모든 한국어 의미의 편집 검수가 완료되지 않아 release-ready는 `false`다. 따라서 후보 9개는 manifest·`CONTENT_PATHS`·migration·공개 API·production seed에 등록하지 않았다. 이는 N5~N3 provenance와 동음이의어 검증으로 완료된 TD-07 판정을 변경하지 않는다.
+
+운영 seed 범위에는 N2/N1 파일이 없음을 `seed:diff`로 확인했다. 기존 verifier가 D1 count를 쿼리마다 별도 Wrangler 프로세스로 실행해 CI 시간 한도에 닿을 수 있던 문제는 동일한 row/checksum·FTS parity·FK·필수값·중복 검사를 한 D1 JSON batch로 묶어 해결했다. 그 결과 운영 13-source `verify:fresh`는 migration 7/7, FTS(vocab 3,300 / sentences 1,112), FK·중복·필수값 0으로 통과했다. 오디오 4,954건은 TD-08 정책대로 warning으로 남겼으며 최소값을 낮추지 않았다.
+
+WebKit 전체 E2E 중 같은-origin `127.0.0.1:5173`의 빠른 route 전환이 합성 access-control page error로 보고되던 테스트 누락을 보완했다. 실제 request failure/HTTP 4xx 검출은 유지한다. 비밀번호/OAuth 로그인 완료 직후 이전 익명 세션 probe가 상태를 덮어쓰지 않도록 auth store를 보강하고 단위 회귀를 추가했다. 최종 결과는 Chromium 65/65, WebKit 51/51 통과(Chromium 전용 14 skipped)다. 이 검증은 후보 문서의 출시 승인이 아니라 R1 파이프라인 회귀 확인이다.
+
+## 19. 2026-07-18 통합 release candidate와 배포 판정
+
+R1 기준선 위에 provenance·동음이의어 30쌍, DB 분포 기반 N2/N1 release gate, Quiz·Review·Stats feature module, TOPIK T1~T3 비공개 기반을 순차 통합했다. WIP N2/N1 후보 4,605건은 검수 태그가 남아 운영 manifest와 `CONTENT_PATHS`에서 제외했고, TOPIK 자체 저작 12문항은 public seed/API/CTA에 연결하지 않았다.
+
+로그인·로그아웃과 비동기 session probe의 순서가 뒤집힐 때 최신 인증 상태가 덮이는 경쟁 조건을 차단하고 회귀 테스트 3건을 추가했다. D1 verifier는 Wrangler JSON batch의 statement/result-set 수를 엄격히 대조하면서 기존 provenance, seed ledger, 동음이의어, row/FTS/FK/필수값·중복 검사를 모두 유지한다. Quiz snapshot은 track status를 fixture로 격리해 실행 중 로컬 API 연결 오류를 남기지 않는다.
+
+| 관문 | 결과 |
+| --- | --- |
+| OpenAPI | public 53 paths, admin 7 paths, generated drift 0 |
+| Type/Unit/Build | typecheck PASS, ops 8, DB 20, Web 60, API 95, Vite/Wrangler build PASS |
+| Fresh D1 | migration 9/9, source 13, FTS 3,300/1,112, FK·중복·필수값 0 |
+| TOPIK 내부 verifier | 12문항, source 1, level 2, 필수값·정답·중복·FK·checksum 0 |
+| Chromium | 69/69 PASS |
+| WebKit | 55/55 PASS, Chromium 전용 시각 회귀 14건 skip |
+
+`gh secret list`를 값 비노출로 다시 확인한 결과 repository-level `CLOUDFLARE_ACCOUNT_ID`만 있고 `production` Environment의 Workers·Pages·D1 write·Backup 전용 token은 없다. 따라서 통합 브랜치 push와 PR/원격 검증까지만 진행 가능하며, production Workers/Pages 배포, D1/R2 변경, prod-v2 전환은 사람 승인과 최소권한 secret이 준비될 때까지 실행하지 않는다. 상세 범위와 시계열은 [통합 시계열 문서](./REFACTORING_RELEASE_TIMELINE_2026-07-18.md)에 기록했다.
+
+통합 브랜치를 push하고 [PR #35](https://github.com/kordokrip/JLPT/pull/35)를 생성했다. SHA `4d7e96f7039c`에서 원격 결과는 다음과 같다.
+
+| Workflow | Run | 결론 | 분류 |
+| --- | --- | --- | --- |
+| Dependency Audit | [29598979614](https://github.com/kordokrip/JLPT/actions/runs/29598979614) | success | advisory 0, runner 정상 |
+| CodeQL | [29598979983](https://github.com/kordokrip/JLPT/actions/runs/29598979983) | success | 보안 분석 정상 |
+| Required Verification | [29598980063](https://github.com/kordokrip/JLPT/actions/runs/29598980063) | success | type·unit·build·D1 정상 |
+| Content/D1 validation | [29598979912](https://github.com/kordokrip/JLPT/actions/runs/29598979912) | success | fresh D1 validation만 실행, production change skip |
+| Chromium/WebKit E2E | [29598979938](https://github.com/kordokrip/JLPT/actions/runs/29598979938) | success | 두 browser matrix 정상 |
+| Pages | [29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) | failure | build 성공, preview token 미등록 |
+
+Pages 실패 로그는 Wrangler가 비대화형 환경의 `CLOUDFLARE_API_TOKEN`을 받지 못했다고 명시한다. workflow 우회나 optional 전환은 하지 않았고, 최소권한 Pages token 등록 전 병합·production 배포를 보류했다.

@@ -36,7 +36,7 @@ export function parseSysProg(opts: SysProgSql): string[] {
 
     // 카테고리 코드 파싱: "## SP-A. 프로그래밍 기초" → "SP-A"
     const catMatch = nearestH2.match(/(SP-[A-Z])/i);
-    const catCode  = catMatch ? catMatch[1].toUpperCase() : 'SP-A';
+    const catCode  = catMatch?.[1]?.toUpperCase() ?? 'SP-A';
     const domain   = CATEGORY_TO_DOMAIN[catCode] ?? 'programming';
 
     for (const row of rows) {

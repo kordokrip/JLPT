@@ -5,12 +5,41 @@
  * apps/api (서버 검증) 과 apps/web (클라이언트 타입) 양쪽에서 공유.
  */
 import { z } from 'zod';
+import {
+  CONTENT_RELEASES,
+  JLPT_LEVELS,
+  type ContentRelease,
+  type JlptLevel,
+} from './jlpt-levels';
 
 // ─────────────────────────────────────────────
 // 공통
 // ─────────────────────────────────────────────
-export const jlptLevelSchema = z.enum(['N5', 'N4', 'N3', 'N2', 'N1']);
-export type JlptLevel = z.infer<typeof jlptLevelSchema>;
+export const jlptLevelSchema = z.enum([...JLPT_LEVELS] as [JlptLevel, ...JlptLevel[]]);
+export type { JlptLevel } from './jlpt-levels';
+
+export const contentReleaseSchema = z.enum(
+  [...CONTENT_RELEASES] as [ContentRelease, ...ContentRelease[]],
+);
+export type { ContentRelease } from './jlpt-levels';
+
+export const learningTrackIdSchema = z.enum(['jlpt-ja', 'topik-ko']);
+export type LearningTrackId = z.infer<typeof learningTrackIdSchema>;
+
+export interface TrackStatusDto {
+  track: LearningTrackId;
+  available: boolean;
+  content_release: ContentRelease;
+  available_levels: JlptLevel[];
+  write_enabled: boolean;
+}
+
+/** TOPIK content uses its own exam-level taxonomy; it is not a JLPT level alias. */
+export const topikExamLevelSchema = z.enum(['TOPIK-I', 'TOPIK-II']);
+export type TopikExamLevel = z.infer<typeof topikExamLevelSchema>;
+
+export const topikSectionSchema = z.enum(['vocabulary', 'grammar', 'reading', 'listening', 'writing']);
+export type TopikSection = z.infer<typeof topikSectionSchema>;
 
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 

@@ -61,6 +61,14 @@ const ko = {
     },
   },
 
+  levels: {
+    N5: 'N5',
+    N4: 'N4',
+    N3: 'N3',
+    N2: 'N2',
+    N1: 'N1',
+  },
+
   // ── 홈 ──
   home: {
     greeting:      '오늘도 천천히. 꾸준함이 실력이 됩니다.',
@@ -80,6 +88,8 @@ const ko = {
     newWordsCount: '새 단어 {{count}}개',
     selfCheckLink: '자가진단 체크',
     abilityCheck:  '실력 체크',
+    courseScopeTitle: '학습 범위',
+    courseScopeExpanded: 'N5부터 N1까지의 콘텐츠가 준비되었습니다. 기본 52주 과정과 상위 레벨 학습은 별도로 관리됩니다.',
   },
 
   // ── 복습 ──
@@ -126,6 +136,7 @@ const ko = {
       vocab:   '어휘 찾아보기',
       grammar: '문법 찾아보기',
       kanji:   '한자 찾아보기',
+      homophones: '동음이의어 변별',
     },
     category: '카테고리',
     level:    '레벨',
@@ -134,9 +145,12 @@ const ko = {
     vocab:    '어휘',
     grammar:  '문법',
     kanji:    '한자',
+    homophones: '동음이의어',
     search:   '검색',
     searchPlaceholder: '검색...',
     noResult: '검색 결과가 없습니다',
+    contentPendingTitle: '콘텐츠 준비 중',
+    contentPendingDescription: '{{level}} {{type}} 콘텐츠를 검수하고 있습니다. 다른 공개 레벨을 먼저 학습해 보세요.',
     meaning:  '의미',
     example:  '예문',
     reading:  '읽기',
@@ -146,6 +160,10 @@ const ko = {
     itemNotFound: '항목을 찾을 수 없습니다.',
     onyomi: '음독',
     kunyomi: '훈독',
+    homophoneIntro: '같은 읽기를 가진 단어를 뜻, 악센트, 예문으로 구분합니다. 모든 항목은 출처와 검수 기록을 확인했습니다.',
+    accent: '악센트',
+    source: '출처',
+    reviewed: '최종 검토',
     ariaSearch: '{{type}} 검색',
   },
 
@@ -252,6 +270,8 @@ const ko = {
     tryQuiz:  '퀴즈 풀기',
     loadError: '지문을 불러올 수 없습니다',
     emptyFiltered: '조건에 맞는 지문이 없습니다',
+    contentPendingTitle: '콘텐츠 준비 중',
+    contentPendingDescription: '{{level}} 독해 콘텐츠를 준비하고 있습니다. 다른 공개 레벨을 먼저 학습해 보세요.',
     loadingMore: '불러오는 중...',
     wordCount: '{{count}}자',
     source: '출처: {{source}}',
@@ -281,8 +301,8 @@ const ko = {
   // ── 커리큘럼 ──
   curriculum: {
     title:      '커리큘럼',
-    planTitle:  '16주 학습 계획',
-    subtitle:   'JLPT N3 목표 달성을 위한 16주 학습 로드맵',
+    planTitle:  '12개월 학습 계획',
+    subtitle:   '문자와 N5 기반부터 JLPT N3 실전까지 이어지는 52주 로드맵',
     week:       '주차',
     weekLabel:  '{{week}}주차',
     weekShort:  '{{week}}주',

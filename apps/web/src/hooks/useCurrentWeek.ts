@@ -3,10 +3,11 @@
  *
  * /srs/stats 의 firstCardCreatedAt 을 사용해
  * 오늘 날짜와의 차이를 주차로 환산한다.
- * 데이터 없으면 1주차, 최대 16주차.
+ * 데이터 없으면 1주차, 기본 과정은 최대 52주차.
  */
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useDataScope } from './useDataScope';
 
 interface SrsStats {
   new: number;
@@ -17,8 +18,9 @@ interface SrsStats {
 }
 
 export function useCurrentWeek(): { week: number; startedAt: Date | null; isLoading: boolean } {
+  const dataScope = useDataScope();
   const { data, isLoading } = useQuery<SrsStats>({
-    queryKey: ['srs-stats'],
+    queryKey: ['srs-stats', dataScope],
     queryFn: async () => {
       const res = await api.get<SrsStats>('/srs/stats');
       return res.ok ? res.data : { new: 0, learning: 0, review: 0, relearning: 0, firstCardCreatedAt: null };
@@ -33,7 +35,7 @@ export function useCurrentWeek(): { week: number; startedAt: Date | null; isLoad
   const startedAt = new Date(data.firstCardCreatedAt);
   const diffMs    = Date.now() - startedAt.getTime();
   const diffDays  = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const week      = Math.min(Math.floor(diffDays / 7) + 1, 16);
+  const week      = Math.min(Math.floor(diffDays / 7) + 1, 52);
 
   return { week, startedAt, isLoading };
 }

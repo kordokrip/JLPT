@@ -22,17 +22,19 @@ logs.post('/logs/daily', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const d = body.data;
   const now = new Date().toISOString();
 
   await c.env.DB.prepare(
     `INSERT OR REPLACE INTO daily_logs
-       (user_id, date, source_code, items_new, items_review,
+       (user_id, learning_track, date, source_code, items_new, items_review,
         accuracy, time_min, audio_min, notes, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       userId,
+      learningTrack,
       d.date,
       d.source_code ?? null,
       d.items_new,
@@ -54,8 +56,9 @@ logs.get('/logs/daily', async (c) => {
   if (!q.success) return badRequest(c, q.error.message);
 
   const userId = c.get('userId');
-  const conditions = ['user_id = ?'];
-  const bindings: unknown[] = [userId];
+  const learningTrack = c.get('learningTrack');
+  const conditions = ['user_id = ?', 'learning_track = ?'];
+  const bindings: unknown[] = [userId, learningTrack];
 
   if (q.data.from) { conditions.push('date >= ?'); bindings.push(q.data.from); }
   if (q.data.to)   { conditions.push('date <= ?'); bindings.push(q.data.to); }
@@ -75,17 +78,19 @@ logs.post('/quiz/attempt', async (c) => {
   if (!body.success) return badRequest(c, body.error.message);
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const d = body.data;
   const now = new Date().toISOString();
 
   const result = await c.env.DB.prepare(
     `INSERT INTO quiz_attempts
-       (user_id, quiz_type, week_no, total, correct,
+       (user_id, learning_track, quiz_type, week_no, total, correct,
         duration_sec, detail_json, attempted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       userId,
+      learningTrack,
       d.quiz_type,
       d.week_no ?? null,
       d.total,
@@ -102,6 +107,7 @@ logs.post('/quiz/attempt', async (c) => {
 // ── GET /logs/streak ──────────────────────────
 logs.get('/logs/streak', async (c) => {
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
 
   // KST = UTC+9
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -110,9 +116,9 @@ logs.get('/logs/streak', async (c) => {
 
   const rows = await c.env.DB.prepare(
     `SELECT date FROM daily_logs
-     WHERE user_id = ? AND items_new + items_review > 0
+     WHERE user_id = ? AND learning_track = ? AND items_new + items_review > 0
      ORDER BY date ASC`,
-  ).bind(userId).all<{ date: string }>();
+  ).bind(userId, learningTrack).all<{ date: string }>();
 
   const allDates = (rows.results ?? []).map((r) => r.date);
   const dateSet  = new Set(allDates);
@@ -165,12 +171,13 @@ logs.get('/logs/heatmap', async (c) => {
   }
 
   const userId = c.get('userId');
+  const learningTrack = c.get('learningTrack');
   const rows = await c.env.DB.prepare(
     `SELECT date, SUM(items_new + items_review) AS total
      FROM daily_logs
-     WHERE user_id = ? AND date LIKE ? AND items_new + items_review > 0
+     WHERE user_id = ? AND learning_track = ? AND date LIKE ? AND items_new + items_review > 0
      GROUP BY date`,
-  ).bind(userId, `${year}-%`).all<{ date: string; total: number }>();
+  ).bind(userId, learningTrack, `${year}-%`).all<{ date: string; total: number }>();
 
   const heatmap: Record<string, { count: number; intensity: number }> = {};
   for (const row of rows.results ?? []) {

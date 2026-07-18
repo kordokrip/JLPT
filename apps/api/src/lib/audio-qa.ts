@@ -2,7 +2,7 @@ import type { Env } from '../types.js';
 import { AUDIO_QA_SAMPLES } from './audio-qa-samples.js';
 import { createTtsAdapter, getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from './tts/index.js';
 
-export type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'voicevox'>;
+export type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'>;
 export type AudioQaKey = { provider: AudioQaProvider; index: number };
 
 export type AudioQaWarmupResult = {
@@ -25,7 +25,7 @@ export function detectAudioContentType(buffer: ArrayBuffer): 'audio/mpeg' | 'aud
 }
 
 export function parseAudioQaProvider(value: string): AudioQaProvider | null {
-  return value === 'cloudflare' || value === 'voicevox' ? value : null;
+  return value === 'cloudflare' || value === 'google' || value === 'voicevox' ? value : null;
 }
 
 export function parseAudioQaKey(key: string): AudioQaKey | null {
@@ -57,7 +57,7 @@ export function shouldRegenerateQaAudio(
     meta.audioVersion !== providerInfo.audioVersion;
 }
 
-export async function generateQaAudioObject(
+async function generateQaAudioObject(
   env: Env,
   provider: AudioQaProvider,
   index: number,
@@ -88,21 +88,6 @@ export async function generateQaAudioObject(
     },
   });
   return env.ASSETS.get(key);
-}
-
-export async function getOrGenerateQaAudio(
-  env: Env,
-  provider: AudioQaProvider,
-  index: number,
-  options: { force?: boolean } = {},
-): Promise<R2ObjectBody | null> {
-  const key = buildAudioQaKey(provider, index);
-  const providerInfo = getTtsProviderInfo(env, provider);
-  let r2obj = options.force ? null : await env.ASSETS.get(key);
-  if (!r2obj || shouldRegenerateQaAudio(r2obj, providerInfo)) {
-    r2obj = await generateQaAudioObject(env, provider, index);
-  }
-  return r2obj;
 }
 
 export async function warmupAudioQa(

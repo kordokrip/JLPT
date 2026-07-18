@@ -1,95 +1,307 @@
-## 📗 부록 B — `B_ops_guide.md`
+# 운영 가이드
 
-### B.1 13개 소스 업로드 순서 (반드시 이 순서)
+기준일: 2026-07-16 KST
+범위: 콘텐츠 검증, D1 변경, 테스트, 오디오, 배포
 
-| # | 파일명 | 역할 | 업로드 시점 |
-|---|---|---|---|
-| 0 | `00_index.md` | 전체 인덱스·메타데이터 | Day 0 (최초) |
-| 1 | `01_learning_strategy.md` | 학습 전략·인지과학 원리 | Day 0 |
-| 2 | `02_curriculum_master.md` | 16주 마스터 커리큘럼 | Day 0 |
-| 3 | `03_jlpt_n5_vocab.md` | N5 어휘 800 | W1 시작일 |
-| 4 | `04_jlpt_n5_grammar.md` | N5 문법 80 | W1 |
-| 5 | `05_jlpt_n4_vocab.md` | N4 어휘 1,500 | W4 |
-| 6 | `06_jlpt_n4_grammar.md` | N4 문법 150 | W4 |
-| 7 | `07_kanji_500.md` | 상용한자 500자 | W2 (병행) |
-| 8 | `08_pronunciation_listening.md` | 발음·청해 가이드 | W1 (병행) |
-| 9 | `09_culture_business.md` | 문화·비즈니스 매너 | W8 |
-| 10A | `10A_jlpt_n3_vocab_part1.md` | N3 어휘 전반 1,850 | W9 |
-| 10B | `10B_jlpt_n3_vocab_part2.md` | N3 어휘 후반 1,850 | W12 |
-| 11 | `11_jlpt_n3_grammar.md` | N3 문법 200 | W9 |
-| 12 | `12_example_sentences.md` | 예문 1,100 | W1 (병행 누적) |
-| +A | `A_sysprog_vocab_500.md` | 직무 어휘 500 | W1 (병행) |
-| +B | `B_notebooklm_ops_guide.md` | 본 가이드 | Day 0 |
-| +C | `C_self_check_16weeks.md` | 자가 진단 | 매주 갱신 |
+## 1. 운영 source of truth
 
+| 목적 | 경로 |
+| --- | --- |
+| D1 schema | `packages/db/src/schema.ts` |
+| canonical migrations | `packages/db/drizzle-v2/*.sql` |
+| 콘텐츠 경로 | `packages/db/src/seed/constants.ts` |
+| seed manifest | `packages/db/src/seed/content-manifest.ts` |
+| 콘텐츠 출처·라이선스 설명 | `docs/ATTRIBUTIONS.md` |
+| DB verification | `packages/db/src/seed/verify.ts` |
+| OpenAPI types | `apps/web/src/types/api.d.ts`, `admin-api.d.ts` |
+| audio policy | `packages/shared/src/audio-policy.ts` |
+| release gates | `.github/workflows/verify.yml`, `e2e.yml` |
 
-### B.2 챗 프롬프트 30종 템플릿
+## 2. 현재 운영 콘텐츠
 
-**① 학습 계획·진단 (1~5)**
-1. `[Source: 02 + C] 오늘 날짜 기준 내 진척률을 분석하고, 지연 영역 3개와 회복 플랜을 제시해줘.`
-2. `[Source: 02] 이번 주차 학습 목표를 To-Do 리스트로 출력 (어휘·문법·예문·한자 분리).`
-3. `[Source: 01] 망각곡선에 따라 오늘 복습해야 할 항목을 1·3·7·21일 간격으로 추출.`
-4. `[Source: C] 자가 진단 결과 70% 미달 영역을 진단하고 보충 학습 카드를 생성.`
-5. `[Source: 02 + A] 직무 어휘 학습이 본 커리큘럼과 충돌하지 않도록 통합 일일 스케줄을 작성.`
+운영 seed는 `docs/01_n5`, `docs/02_n4`, `docs/03_n3`, `docs/04_supplement`의 실제 존재 파일 13개만 사용한다. 과거의 루트 파일명이나 16주 업로드 표는 사용하지 않는다.
 
-**② 어휘 학습 (6~12)**
-6. `[Source: 03] N5 어휘 A 카테고리 30개로 한일 페어 플래시카드를 만들어줘.`
-7. `[Source: 10A] N3 동음이의어 5쌍 인터리빙 퀴즈 10문항 생성.`
-8. `[Source: A] SP-D(OpenCV) 어휘 15개로 기술 회의 예문을 만들어줘.`
-9. `[Source: 10B + A] 반도체 카테고리 N3+직무 어휘 통합 매핑표 작성.`
-10. `[Source: 03+05+10A] 한자 1자에 N5/N4/N3 어휘를 묶은 한자 패밀리 카드 20세트.`
-11. `[Source: A] SP-E 노광·증착·식각 어휘로 공정 설명 스크립트 (3분) 작성.`
-12. `[Source: 12] 예문에서 직무 어휘(부록 A)가 등장한 문장만 추출.`
+| Code | 현재 파일 | parser 결과 |
+| --- | --- | ---: |
+| 04 | `docs/01_n5/04_vocab.md` | vocab 700 |
+| 05 | `docs/01_n5/05_grammar.md` | grammar 55 |
+| 03 | `docs/01_n5/03_kanji.md` | kanji 103 |
+| 07 | `docs/02_n4/07_vocab.md` | vocab 548 |
+| 08 | `docs/02_n4/08_grammar.md` | grammar 98 |
+| 06 | `docs/02_n4/06_kanji.md` | kanji 164 |
+| 10A | `docs/03_n3/10A_vocab_part1.md` | vocab 1,092 |
+| 10B | `docs/03_n3/10B_vocab_part2.md` | vocab 960 |
+| 11 | `docs/03_n3/11_grammar.md` | grammar 163 |
+| 09 | `docs/03_n3/09_kanji.md` | kanji 275 |
+| 12 | `docs/04_supplement/12_example_sentences.md` | sentences 1,100 |
+| A | `docs/04_supplement/A_sysprog_vocab_500.md` | sysprog 82 |
+| C | `docs/04_supplement/C_self_check_16weeks.md` | curriculum 52 |
 
-**③ 문법·예문 (13~18)**
-13. `[Source: 11] G5 조건표현 4종(と·ば·たら·なら) 비교표와 변별 퀴즈 15문항.`
-14. `[Source: 06+11] N4→N3 문법 진화 매핑 (8쌍) 표 형식.`
-15. `[Source: 11+A] G12 경어 + SP-J 메일 표현을 결합한 비즈니스 메일 5종 작성.`
-16. `[Source: 12] N3 신문체 예문 30개에서 N3 문법 패턴을 자동 태깅.`
-17. `[Source: 11] 인터리빙 변별 30쌍 (예: ～ば vs ～たら) 카드.`
-18. `[Source: 12 + A] 회의 시나리오 (납기 지연 사과) 롤플레이 대본 작성.`
+파일명 `C_self_check_16weeks.md`는 legacy지만 현재 parser는 52주 기본 계획을 생성한다.
 
-**④ 한자·발음 (19~22)**
-19. `[Source: 07] 부수별 한자 그룹핑 마인드맵 출력.`
-20. `[Source: 07+A] 직무 빈출 한자 50자만 추출하여 별도 카드.`
-21. `[Source: 08] 박자(モーラ) 발음 연습 — 長音·促音·撥音 각 10개씩 셋.`
-22. `[Source: 08+12] 청해용 1.0×/1.25× 트랙 스크립트 (10분).`
+## 3. 콘텐츠 변경 절차
 
-**⑤ 평가·모의고사 (23~26)**
-23. `[Source: 03~12] N5 모의시험 100문항 (어휘 35·문법 30·독해 20·청해 15).`
-24. `[Source: 10A+10B+11] N3 모의시험 250문항 (실전 비율).`
-25. `[Source: A] 직무 어휘 200문항 (반도체 60·이미지처리 40·회의 50·메일 50).`
-26. `[Source: C] 16주차 종합 평가표 — 영역별 정답률·시간·약점 분석 리포트.`
-
-**⑥ 운영·자동화 (27~30)**
-27. `[Source: B] 오늘 학습 로그를 JSON 형식으로 출력 (date, source, items, accuracy, time_sec).`
-28. `[Source: B+C] 주간 학습 로그를 요약하여 막대 그래프용 데이터 테이블 생성.`
-29. `[Source: B] 학습 정체 감지 — 3일 연속 정확도 <70%인 영역 자동 알림 룰 정의.`
-30. `[Source: 모든 소스] 학습 완료(W16) 후 N3 합격 가능성을 카테고리별 점수로 추정.`
-
-### B.3 학습 로그 자동화
-
-**로그 스키마 (JSON Lines, `learning_log.jsonl`)**
-```json
-{"date":"2026-05-24","week":1,"day":1,"source":"03_jlpt_n5_vocab",
- "category":"A-1","items_new":30,"items_review":0,
- "accuracy":0.83,"time_min":36,"audio_min":10,
- "flashcards_done":30,"quiz_score":null,"notes":"감정어휘 양호"}
+```bash
+pnpm -F @nihongo-n3/db seed:diff
+pnpm -F @nihongo-n3/db verify:fresh
+pnpm typecheck
+pnpm test
 ```
 
-**자동화 워크플로 (3단계)**
-1. **입력**: 매일 학습 후 NotebookLM 챗에 프롬프트 #27 실행 → JSON 출력 → 로컬 `learning_log.jsonl`에 append (사용자가 복사하거나 Python 스크립트로 자동 저장).
-2. **집계**: 주말마다 프롬프트 #28 실행 → 주간 요약. Python `pandas` 1줄 스크립트로 CSV 변환:
-   ```python
-   import pandas as pd; pd.read_json("learning_log.jsonl", lines=True).to_csv("weekly.csv")
-   ```
-3. **시각화·경보**: 프롬프트 #29로 약점 자동 감지 → 다음 주 스케줄에 보충 블록 자동 삽입 요청 (#1 재실행).
+`seed:diff`는 parser 검증만 하고 D1을 변경하지 않는다. production 변경은 `Content and D1 Change Control`의 수동 `migrate` 또는 `seed` operation만 사용한다.
 
-**권장 KPI**
-| KPI | 목표 | 경보 임계 |
-|---|---|---|
-| 일일 학습 시간 | 90~120분 | <60분 3일 연속 |
-| 어휘 정확도 | ≥80% | <70% 영역별 |
-| 문법 정확도 | ≥75% | <65% |
-| 청해 정확도 | ≥70% | <60% |
-| 주간 누적 카드 | ≥150 | <100 |
+manifest v2는 13개 seed source의 원천·라이선스·검수자·최종 검토일과 source checksum/version/parser version을 검증한다. 실제 seed run은 `content_seed_runs`와 `content_seed_sources`에 그 값을 기록하므로, 검증 report의 content version과 manifest SHA-256을 함께 보관한다.
+
+N2/N1 파일이 없거나 provenance가 불완전하면 `CONTENT_PATHS`에 등록하지 않는다. 동음이의어는 `homophone-pairs.ts`의 검수 데이터 30쌍 이상과 중복·FK·동일 읽기·source mapping 0건을 유지할 때만 public API에 노출한다.
+
+## 4. D1 변경
+
+일반 table migration은 Drizzle schema에서 생성하고 reviewed SQL을 `drizzle-v2`의 다음 번호로 추가한다. FTS virtual table/trigger만 수동 SQL migration으로 관리한다. 기존 번호를 수정하지 않는다.
+
+로컬:
+
+```bash
+pnpm -F @nihongo-n3/db verify:fresh
+```
+
+Remote production은 GitHub Environment 승인 후에만 실행한다. prod-v2 전환은 [Blue/Green runbook](./R1_BLUE_GREEN_RUNBOOK_2026-07-15.md)을 따른다.
+
+## 5. 인증 운영
+
+기본 운영 모드는 `app-session`이다.
+
+- password와 Google OAuth가 같은 D1 user/session 모델을 사용한다.
+- Google 승인 redirect URI는 `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback`이다.
+- Pages/Worker cross-origin callback은 `/api/v1/auth/complete` bridge token을 사용한다.
+- `cf-access`로 바꿀 때는 `CF_ACCESS_AUD`, `CF_TEAM_DOMAIN` secret과 실제 JWT test가 필요하다.
+- admin OpenAPI와 회원 관리 route는 admin app session으로 보호한다.
+
+Secret은 `.env`, `.dev.vars`, GitHub/Cloudflare secret에만 두고 commit하지 않는다.
+
+```bash
+wrangler secret put AUTH_SECRET
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put CF_ACCESS_AUD
+wrangler secret put CF_TEAM_DOMAIN
+```
+
+## 6. 오디오 운영
+
+공개 audio API는 R2 read-only다. 런타임 요청으로 유료 TTS를 호출하지 않는다.
+
+### 6.1 Secret 범위 확인
+
+Google batch secret은 Pages, preview Worker, 로컬 Vite 환경에 두지 않는다. `nihongo-n3-api`의 승인된 production version에만 둔다. `wrangler secret put`은 즉시 새 Worker version을 만들 수 있으므로 개인 터미널에서 production 기본 대상을 추정해 실행하지 않는다.
+
+값을 출력하지 않고 현재 배포된 secret 이름만 확인한다.
+
+```bash
+cd apps/api
+pnpm exec wrangler secret list --name nihongo-n3-api --format json
+pnpm exec wrangler secret list --name nihongo-n3-api-observability-preview --format json
+pnpm exec wrangler secret list --name nihongo-n3-observability-receiver-preview --format json
+```
+
+확인 기준:
+
+- 승인 전: 세 Worker 모두 `GOOGLE_TTS_API_KEY`, `AUDIO_BATCH_APPROVAL_TOKEN`이 없어야 한다.
+- 승인 후: 두 이름은 `nihongo-n3-api` production version에만 있어야 한다.
+- secret 값, 길이, prefix를 명령 출력·artifact·문서에 남기지 않는다.
+- GitHub `production` Environment 수동 승인 뒤 runner에서만 값을 전달한다.
+- staging이 필요하면 `wrangler versions secret put <NAME> --name nihongo-n3-api`로 version을 만든 뒤, 그 version 배포를 별도 승인한다.
+
+승인 runner에서 설정하는 이름은 다음 두 개다. 실제 값은 GitHub Environment secret에서 stdin으로 전달하고 shell에 `echo`하지 않는다.
+
+```bash
+pnpm exec wrangler versions secret put GOOGLE_TTS_API_KEY --name nihongo-n3-api
+pnpm exec wrangler versions secret put AUDIO_BATCH_APPROVAL_TOKEN --name nihongo-n3-api
+```
+
+2026-07-15 읽기 전용 재조회 결과 production·preview에 두 이름은 모두 없었다. 따라서 Google QA warmup과 전체 batch는 아직 승인되지 않았다.
+
+### 6.2 QA와 batch 순서
+
+1. R1 prod-v2 migration 8/8과 `audio_generation_log.provider`, `content_hash` 컬럼을 먼저 확인한다.
+2. `/audio-qa`의 `audio-qa-30-v1` 30문장을 browser, Cloudflare, Google, VOICEVOX 네 후보에서 모두 재생한다.
+3. 평가자, device/OS/browser, 실제 voice/model/version, 평가일과 5개 점수를 모두 입력한다.
+4. Markdown 내보내기 결과를 review하고 승인 provider와 근거를 기록한다. 한 후보라도 30개가 없으면 승인하지 않는다.
+5. `/admin/audio/queue`를 `execute:false`로 조회하고 N5, N4, N3 순서와 pending 수량을 확인한다.
+6. 사람의 비용·청감 승인 뒤에만 `execute:true`를 level 하나씩 실행한다. 한 요청은 최대 200건, 일일 총 500건이므로 같은 level의 pending이 0이 될 때까지 승인된 창에서 반복한다.
+7. object를 덮어쓰지 않는다. 콘텐츠·provider·model·version이 바뀌면 새 hash key를 만든다.
+
+현재 production D1은 구 스키마라 `audio_generation_log`에 `provider`, `content_hash`가 없다. prod-v2 전환 전에 batch를 실행하면 실패하므로 임시 `ALTER TABLE`로 우회하지 않는다.
+
+전체 생성 뒤 D1 불변 key와 R2 HEAD metadata를 함께 검증한다. `AUDIO_R2_ACCESS_KEY_ID`, `AUDIO_R2_SECRET_ACCESS_KEY`는 `nihongo-n3-audio` Object Read 권한으로만 발급한다. Logpush의 reports 버킷 자격증명과 재사용하지 않는다.
+
+```bash
+pnpm -F @nihongo-n3/db verify:remote:audio
+```
+
+게이트는 N5~N3의 `vocab`, `kanji`, `sentences` 전부에 대해 Google profile, 16자리 content hash key, R2 존재, provider/model/audio version/content hash/item metadata, `Cache-Control: immutable`을 요구한다. 누락 허용값은 0이다.
+
+자세한 정책은 [오디오 정책](./audio-tts-provider-policy-2026-07-07.md)을 참조한다.
+
+## 7. 배포 전 로컬 관문
+
+도구 기준은 `.node-version`과 루트 `packageManager`가 소유한다.
+
+- Node.js `22.17.0` 이상 (`engines` 최소 `22.13.0`)
+- pnpm `11.4.0` 이상
+- pnpm 11 build script allowlist는 `pnpm-workspace.yaml`의 `allowBuilds`만 사용한다.
+
+```bash
+pnpm audit --audit-level high
+pnpm openapi:generate
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm -F @nihongo-n3/db verify:fresh
+pnpm -F @nihongo-n3/e2e test:chromium
+pnpm -F @nihongo-n3/e2e test:webkit
+```
+
+생성된 OpenAPI type을 commit한 뒤 `pnpm openapi:check`가 clean tree에서 통과해야 한다.
+
+pnpm 9/10은 종료된 npm legacy audit endpoint 때문에 HTTP 410으로 실패한다. 이를 무시하지 않고 bulk advisory endpoint를 사용하는 pnpm 11.4.0으로 고정한다. `--ignore-registry-errors`나 audit 생략은 허용하지 않는다. 전환 근거는 [pnpm issue #11265](https://github.com/pnpm/pnpm/issues/11265)와 [pnpm 11 변경 사항](https://github.com/orgs/pnpm/discussions/11377)이다.
+
+## 8. CI와 배포
+
+필수 workflow:
+
+- Dependency Audit
+- CodeQL Security Analysis
+- Required Verification
+- E2E Tests (Chromium/WebKit)
+- Backup D1 Database -> R2
+
+GitHub billing annotation으로 job이 시작되지 않은 실패는 코드 실패와 구분하되, 성공으로 간주하지 않는다. billing을 해결한 뒤 같은 SHA에서 다시 실행한다.
+
+Workers/Pages production deploy는 workflow_dispatch와 `production` Environment approval로만 실행한다. push나 PR은 검증 또는 preview까지만 수행한다.
+
+2026-07-16 기준 `production` Environment는 `kordokrip` 필수 검토자와 `main` branch policy로 구성했다. 단독 관리자 저장소이므로 `prevent_self_review=false`지만, 승인 클릭과 확인문을 생략할 수는 없다. Environment가 승인되기 전에는 secret에 접근할 수 없다.
+
+Cloudflare token은 용도별로 분리한다. D1 Read token을 범용 `CLOUDFLARE_API_TOKEN`으로 등록하지 않는다.
+
+| 용도 | 최소 권한 | 현재 상태 |
+| --- | --- | --- |
+| D1 inventory/cleanup dry-run | 대상 account D1 Read | 로컬 active·검증 완료 |
+| D1 migration/user cleanup execute `CLOUDFLARE_D1_WRITE_API_TOKEN` | 대상 account D1 Write | `production` Environment 등록 대기 |
+| Backup `CLOUDFLARE_BACKUP_API_TOKEN` | D1 export/read + reports bucket R2 Object Write/lifecycle | `production` Environment 등록 대기 |
+| Pages preview/production `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare Pages Edit | repository/`production` Environment 등록 대기 |
+| Workers production `CLOUDFLARE_WORKERS_API_TOKEN` | Workers Scripts Edit와 필요한 binding read | `production` Environment 등록 대기 |
+
+비밀이 아닌 repository variables `VITE_API_URL`, `API_BASE_URL`, `WEB_BASE_URL`과 account ID 이름은 등록돼 있다. token 값은 문서·artifact·로그에 출력하지 않는다.
+
+`wrangler d1 export`와 D1 export REST API는 export 동안 다른 query를 차단할 수 있다. 따라서 Backup은 낮은 트래픽의 승인된 maintenance/read-only window에서만 실행하고, GitHub `production` Environment 승인 전에는 secret에 접근할 수 없게 한다. schedule run도 자동 실행하지 않고 사람이 maintenance window를 확인한 뒤 승인한다. export 시작부터 signed URL 완료까지 계속 polling하며, 중간에 polling을 중단해 export를 방치하지 않는다. R2 lifecycle은 전체 rules를 PUT으로 덮어쓰지 않고 `backups-30d-expiry` rule만 제거·재생성해 기존 Logpush/alert rule을 보존한다.
+
+로컬 또는 승인 runner에서 backup 도구를 직접 호출할 때도 downtime 인지를 명시해야 한다.
+
+```bash
+pnpm -F @nihongo-n3/db d1:backup -- \
+  --database=nihongo-n3-prod \
+  --out=.artifacts/d1-backup \
+  --allow-downtime
+```
+
+## 9. 배포 후 관측
+
+### 9.1 알림 대상과 기준
+
+| 경보 | 기준 | 1차 대상 | 보조 확인 |
+| --- | --- | --- | --- |
+| 5xx | 1% 초과/5분 | `OBSERVABILITY_ALERT_WEBHOOK_URL` 운영 채널 | Workers Observability 5xx saved query |
+| auth failure trend | 5건 이상 + 직전 55분 5분 환산 평균의 3배 이상 | 동일 운영 채널 | auth failure saved query와 로그인 이벤트 |
+| D1 error | 1건 이상/5분 | 동일 운영 채널 | D1 Metrics와 `d1_error` saved query |
+
+webhook URL·token과 실제 수신자 주소는 secret으로 관리하며 저장소에 적지 않는다. Cloudflare account Super Administrator는 2차 에스컬레이션 대상이다. 계정 역할 변경 시 primary recipient와 backup administrator가 모두 유효한지 분기별로 확인한다.
+
+Cloudflare Notifications는 Workers structured log 임의 임계값을 직접 제공하지 않는다. `workers.dev`에 zone HTTP Traffic alert를 연결해 완료로 간주하지 않는다. 설정 근거와 제한은 [Logpush/R2 운영 설정](./logpush-r2-setup.md)을 따른다.
+
+세 경보는 Workers Observability saved query와 API Worker의 `*/5 * * * *` Cron이 같은 공통 코어로 판정하고 secret webhook으로 전달한다. saved query만 만든 상태는 알림 구성이 완료된 것이 아니다. `pnpm ops:alerts -- --verify-only`로 cron과 필수 secret 이름을 확인하고 webhook 수신, preview canary까지 검증해야 운영 완료다.
+
+직접 운영 수신 채널은 별도 HTTPS Worker endpoint로 둔다. 외부 시스템은 bearer 인증된 HTTPS endpoint를 사용하고, API Worker는 동일 수신 Worker에 대한 `OBSERVABILITY_ALERT_RECEIVER` service binding을 우선 사용한다. 수신 Worker는 집계 JSON만 `nihongo-n3-reports/alerts/observability/`에 저장하며 이메일, 사용자 ID, 실제 request path/query를 허용하지 않는다. 무인증 alert/evidence 요청은 내용을 노출하지 않는다.
+
+### 9.2 on-call 확인 절차
+
+1. 수신자는 5분 이내 alert의 service, release SHA, window, 판정 수치를 확인한다.
+2. `.artifacts/observability`의 같은 시간대 report와 Workers Observability saved query를 대조한다.
+3. 5xx는 가장 높은 오류 route template과 직전 release를 비교한다. 실제 path/query를 공유 채널에 붙이지 않는다.
+4. auth 급증은 Google/password 구분과 rate-limit 상태를 확인하되 이메일·사용자 ID를 추출하지 않는다.
+5. D1 오류는 D1 Metrics, migration ledger, binding 대상 DB를 확인하고 쓰기 route를 필요하면 read-only로 전환한다.
+6. 사용자 영향이 지속되면 production Environment 승인권자에게 rollback 또는 read-only 결정을 에스컬레이션한다.
+7. 해소 시각, 원인, 조치, release SHA를 SESSION_CHANGELOG와 status report에 남긴다.
+
+분기 1회 또는 알림 경로 변경 직후 preview에서 다음 canary를 실행한다. production에서는 canary secret을 설정하지 않는다.
+
+```bash
+pnpm ops:observe -- \
+  --base-url=https://<preview-worker> \
+  --window=30m \
+  --release-sha=<PREVIEW_SHA> \
+  --trigger-canary \
+  --canary-count=25 \
+  --canary-wait-seconds=45
+```
+
+HTTP 500 생성, 5xx detector 발화, 운영 채널 webhook 수신 시각을 함께 기록한다. 세 항목 중 하나라도 없으면 alert delivery 장애로 처리한다.
+
+2026-07-15 preview 검증에서는 sender/receiver 분리, runtime secret 이름, service binding, `*/5` Cron을 원격 확인했다. 25/25 canary 500, 5xx detector 발화, direct webhook 202, 자동 Cron webhook 수신, R2 Logpush/alert object 생성까지 통과했다. production Worker는 변경하지 않았으며 production 적용 시 같은 절차를 다시 수행한다.
+
+### 9.3 최초 30분
+
+배포 직후와 30분 시점에 다음을 실행한다.
+
+```bash
+pnpm ops:observe -- \
+  --base-url=https://nihongo-n3-api.kordokrip.workers.dev \
+  --window=30m \
+  --release-sha=<DEPLOYED_SHA> \
+  --fail-on-alert
+```
+
+자동 확인 범위:
+
+- `/health`, `/openapi.json`, auth config
+- vocab/grammar/kanji/sentences 공개 route
+- release SHA별 5xx 비율과 p50/p95 latency
+- auth failure trend, D1 error
+
+수동 확인 범위:
+
+- web shell
+- password login/logout/session refresh
+- Google OAuth start/callback/complete
+- quiz, SRS review, sync queue
+- admin protection
+
+### 9.4 24시간
+
+```bash
+pnpm ops:observe -- \
+  --base-url=https://nihongo-n3-api.kordokrip.workers.dev \
+  --window=24h \
+  --release-sha=<DEPLOYED_SHA> \
+  --fail-on-alert
+```
+
+24시간 report에서 release SHA별 5xx·latency, auth failure, D1 error를 직전 안정 release와 비교한다. 결과와 Logpush object 증거는 원시 PII 없이 status report와 SESSION_CHANGELOG에 반영한다.
+
+## 10. 회원 데이터 정리
+
+Production 회원 삭제는 [회원 데이터 정리 계획](./USER_DATA_CLEANUP_PLAN_2026-07-16.md)을 따른다. 관리자 UI나 ad-hoc SQL에서 `DELETE FROM users`를 직접 실행하지 않는다.
+
+필수 순서:
+
+1. 24시간 이내 production backup과 local restore drill 성공
+2. 이메일을 마스킹한 remote inventory 생성
+3. 실제 회원 user ID 정확히 2개를 allowlist로 사람 확인
+4. 비인식 도메인 삭제 후보 0 확인
+5. `d1:users:cleanup` remote dry-run report와 plan hash 보존
+6. GitHub `production` Environment 승인
+7. 동적 확인문과 `--execute`로 정확한 후보 ID만 삭제
+8. 보존 회원 2명, 잔여 test reference 0, FK 0 검증
+
+`login_events`는 `users` 삭제 시 `SET NULL`이므로 별도 정책이 필요하다. 후보 user ID에 연결된 이벤트와 user ID가 없는 승인 test-domain 이벤트만 삭제한다. 보존 회원과 연결된 이벤트, user ID가 없는 Google OAuth 시작과 미분류 보안 이벤트는 보존한다.
+
+실행용 token은 D1 Edit 최소권한으로 승인 runner에만 둔다. 로컬 token으로는 remote dry-run까지만 수행하며 token 값, 원문 이메일, IP, user agent를 artifact나 CI log에 남기지 않는다.

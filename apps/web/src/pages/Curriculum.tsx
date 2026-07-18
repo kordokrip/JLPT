@@ -1,5 +1,5 @@
 /**
- * Curriculum — 16주 학습 커리큘럼 타임라인
+ * Curriculum — 기본 52주 학습 커리큘럼 타임라인
  * Figma Make 디자인 적용 + 실제 API 데이터 연결
  */
 import { useState } from 'react';
@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useCurrentWeek } from '../hooks/useCurrentWeek';
+import { useSettingsStore } from '../stores/settings-store';
+import { DEFAULT_JLPT_LEVEL, recommendStudyPlan } from '@nihongo-n3/shared';
 
 interface Week {
   week:     number;
@@ -43,7 +45,7 @@ export function normalizeCurriculumWeek(row: CurriculumApiWeek): Week {
   return {
     week,
     theme: row.theme ?? `Week ${week}`,
-    level: 'N3',
+    level: DEFAULT_JLPT_LEVEL,
     progress: 0,
     vocab_count: row.vocab_target ?? 0,
     grammar_count: row.grammar_target ?? 0,
@@ -61,10 +63,12 @@ export default function Curriculum() {
   const { week: currentWeek } = useCurrentWeek();
   const { t } = useTranslation();
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
+  const track = useSettingsStore((state) => state.learningTrack);
+  const planRecommendation = recommendStudyPlan({});
   // null 이면 useEffect 로 currentWeek 로 초기화
 
   const { data: weeks, isLoading } = useQuery<Week[]>({
-    queryKey: ['curriculum'],
+    queryKey: ['curriculum', track],
     queryFn: async () => {
       const res = await api.get<CurriculumApiWeek[]>('/curriculum');
       return res.ok ? res.data.map(normalizeCurriculumWeek) : [];
@@ -81,6 +85,14 @@ export default function Curriculum() {
         </h1>
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)]">
           {t('curriculum.subtitle')}
+        </p>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--surface-alt)] px-4 py-3 text-sm">
+        <strong className="text-foreground">기본 12개월 과정</strong>
+        <p className="mt-1 text-[var(--muted-foreground)]">
+          16주 집중과정은 가나 90%, N5 진단 80%, 주 420분, 시험까지 20주 이내 조건을 모두 충족할 때만 추천합니다.
+          현재 판정: {planRecommendation.eligibleForIntensive ? '집중과정 가능' : '52주 기본과정'}
         </p>
       </div>
 
@@ -254,10 +266,10 @@ function LoadingTimeline() {
 }
 
 /* API 응답이 없을 때 쓰는 기본 데이터 (progress는 런타임에서 weekState로 결정) */
-const FALLBACK_WEEKS: Week[] = Array.from({ length: 16 }, (_, i) => ({
+const FALLBACK_WEEKS: Week[] = Array.from({ length: 52 }, (_, i) => ({
   week: i + 1,
   theme: `Week ${i + 1} — 학습 주제`,
-  level: 'N3',
+  level: DEFAULT_JLPT_LEVEL,
   progress: 0,
   vocab_count: 30,
   grammar_count: 5,

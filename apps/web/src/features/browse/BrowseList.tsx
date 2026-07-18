@@ -1,18 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PronunciationButton } from '../../components/feature/PronunciationButton';
-import { levelVariant } from '../../components/ui/Badge';
+import { Badge, levelVariant } from '../../components/ui/Badge';
+import type { HomophonePairItem } from '../../lib/api';
 import type { GrammarItem, KanjiItem, VocabItem } from '../../lib/db';
 import type { ContentType } from './types';
+import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
 
 export function BrowseList({
   currentType,
   items,
 }: {
   currentType: ContentType;
-  items: Array<VocabItem | GrammarItem | KanjiItem>;
+  items: Array<VocabItem | GrammarItem | KanjiItem | HomophonePairItem>;
 }) {
   const navigate = useNavigate();
+
+  if (currentType === 'homophones') {
+    return <HomophoneList items={items as HomophonePairItem[]} />;
+  }
 
   if (currentType === 'vocab') {
     return (
@@ -36,6 +42,85 @@ export function BrowseList({
         </li>
       ))}
     </ul>
+  );
+}
+
+function HomophoneList({ items }: { items: HomophonePairItem[] }) {
+  const { t } = useTranslation();
+  return (
+    <ul role="list" className="space-y-3">
+      {items.map((item) => (
+        <li key={item.id} role="listitem">
+          <article className="surface-card p-4 shadow-none sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-serif-jp text-[var(--text-xl)] leading-tight text-foreground">
+                  {item.reading}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-[var(--muted-foreground)]">{item.note_ko}</p>
+              </div>
+              <PronunciationButton
+                compact
+                text={item.reading}
+                surface="vocab"
+                label={`${item.reading} ${t('browse.playPronunciation')}`}
+                className="shrink-0 border-0 bg-transparent p-0"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <HomophoneWord
+                word={item.word_a}
+                accent={item.accent.word_a}
+                example={item.examples.word_a}
+                labels={{ accent: t('browse.accent'), source: t('browse.source') }}
+              />
+              <HomophoneWord
+                word={item.word_b}
+                accent={item.accent.word_b}
+                example={item.examples.word_b}
+                labels={{ accent: t('browse.accent'), source: t('browse.source') }}
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 border-t border-[var(--border)] pt-3 text-xs text-[var(--muted-foreground)]">
+              <span>{t('browse.accent')}: {item.accent.source}</span>
+              <span>{t('browse.reviewed')}: {item.review.reviewed_at}</span>
+            </div>
+          </article>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function HomophoneWord({
+  word,
+  accent,
+  example,
+  labels,
+}: {
+  word: HomophonePairItem['word_a'];
+  accent: string;
+  example: HomophonePairItem['examples']['word_a'];
+  labels: { accent: string; source: string };
+}) {
+  return (
+    <section className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-alt)] p-3">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="font-serif-jp text-[var(--text-xl)] text-foreground">{word.word}</span>
+        <span className="text-sm text-[var(--muted-foreground)]">{word.meaning}</span>
+        <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
+          {word.level}
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-[var(--muted-foreground)]">{labels.accent}: {accent}</p>
+      <p className="mt-2 font-sans-jp text-sm leading-6 text-foreground">{example.ja}</p>
+      <p className="text-sm leading-6 text-[var(--muted-foreground)]">{example.ko}</p>
+      <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+        {labels.source}: {word.source.code} · {word.source.version}
+      </p>
+    </section>
   );
 }
 
@@ -68,13 +153,9 @@ function VocabListItem({ item, onOpen }: { item: VocabItem; onOpen: () => void }
                       {item.part_of_speech}
                     </span>
                   )}
-                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${
-                    levelVariant(item.level ?? 'n3').includes('n3') ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                    : levelVariant(item.level ?? 'n3').includes('n4') ? 'bg-blue-50 text-blue-600'
-                    : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {(item.level ?? 'N3').toUpperCase()}
-                  </span>
+                  <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+                    {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+                  </Badge>
                 </div>
                 {item.example_jp && (
                   <p className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
@@ -116,9 +197,9 @@ function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base font-semibold text-foreground">{item.meaning}</span>
-            <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
-              {(item.level ?? 'N3').toUpperCase()}
-            </span>
+            <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+              {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+            </Badge>
           </div>
           <div className="font-sans-jp text-sm leading-6 text-[var(--muted-foreground)]">
             {item.reading_on && <span>{t('browse.onyomi')}: {item.reading_on}　</span>}
@@ -150,9 +231,9 @@ function GrammarListItem({ item, onOpen }: { item: GrammarItem; onOpen: () => vo
     >
       <div className="mb-1.5 flex items-center gap-2">
         <span className="font-sans-jp text-base font-semibold text-foreground">{item.pattern}</span>
-        <span className="rounded bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
-          {(item.level ?? 'N3').toUpperCase()}
-        </span>
+        <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+          {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+        </Badge>
       </div>
       <p className="text-sm leading-6 text-[var(--muted-foreground)]">
         {item.meaning}

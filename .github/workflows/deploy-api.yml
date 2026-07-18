@@ -13,8 +13,10 @@ on:
 jobs:
   deploy:
     name: Deploy to Cloudflare Workers
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: production
 
     permissions:
       contents: read
@@ -29,17 +31,18 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "22.17.0"
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Run release verification
+        run: pnpm verify:ci
 
       - name: Validate API auth mode configuration
         env:
@@ -57,7 +60,7 @@ jobs:
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/api
           command: deploy
@@ -67,6 +70,7 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: production
 
     steps:
       - name: Wait for propagation

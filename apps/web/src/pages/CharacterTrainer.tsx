@@ -8,6 +8,7 @@ export default function CharacterTrainer() {
     <CharacterTrainerView
       mode={trainer.mode}
       level={trainer.level}
+      levels={trainer.levels}
       index={trainer.index}
       stage={trainer.stage}
       revealed={trainer.revealed}

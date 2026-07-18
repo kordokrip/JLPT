@@ -6,17 +6,19 @@ import { useCurrentWeek } from '../../hooks/useCurrentWeek';
 import { DEFAULT_SELF_CHECK_TEMPLATES, SELF_CHECK_STORAGE_PREFIX } from './data';
 import { buildRecommendations, calcScore, parseRouteWeek, scoresFromSaved, sectionsFromTemplates } from './logic';
 import type { SelfCheckPayload, SelfCheckRow, TemplateResponse } from './types';
+import { useDataScope } from '../../hooks/useDataScope';
 
 export function useSelfCheck() {
   const qc = useQueryClient();
   const { week: routeWeek } = useParams<{ week?: string }>();
   const { week: currentWeek, isLoading: isCurrentWeekLoading } = useCurrentWeek();
   const selectedWeek = parseRouteWeek(routeWeek) ?? currentWeek;
-  const storageKey = `${SELF_CHECK_STORAGE_PREFIX}:${selectedWeek}`;
+  const dataScope = useDataScope();
+  const storageKey = `${SELF_CHECK_STORAGE_PREFIX}:${dataScope}:${selectedWeek}`;
   const [local, setLocal] = useState<Set<string>>(new Set());
 
   const { data: savedCheck, isLoading } = useQuery<SelfCheckRow | null>({
-    queryKey: ['self-check', selectedWeek],
+    queryKey: ['self-check', dataScope, selectedWeek],
     queryFn: async ({ signal }) => {
       const res = await api.get<SelfCheckRow>(`/self-check/${selectedWeek}`, undefined, { signal });
       return res.ok ? res.data : null;
@@ -28,13 +30,13 @@ export function useSelfCheck() {
   const submit = useMutation({
     mutationFn: (payload: SelfCheckPayload) => api.post('/self-check', payload),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['self-check', selectedWeek] });
-      void qc.invalidateQueries({ queryKey: ['self-check-scores'] });
+      void qc.invalidateQueries({ queryKey: ['self-check', dataScope, selectedWeek] });
+      void qc.invalidateQueries({ queryKey: ['self-check-scores', dataScope] });
     },
   });
 
   const { data: templateData } = useQuery<TemplateResponse>({
-    queryKey: ['self-check-templates', 'N3'],
+    queryKey: ['self-check-templates', dataScope, 'N3'],
     queryFn: async ({ signal }) => {
       const res = await api.get<TemplateResponse>('/self-check/templates', { level: 'N3' }, { signal });
       return res.ok ? res.data : { level: 'N3', templates: [] };
@@ -86,7 +88,7 @@ export function useSelfCheck() {
   ], [checkedLocal, templates]);
 
   const { data: scoresData } = useQuery<{ scores: number[]; hasData: boolean }>({
-    queryKey: ['self-check-scores'],
+    queryKey: ['self-check-scores', dataScope],
     queryFn: async ({ signal }) => {
       const res = await api.get<{ scores: number[]; hasData: boolean }>('/self-check/scores', undefined, { signal });
       return res.ok ? res.data : { scores: [0, 0, 0, 0, 0, 0], hasData: false };

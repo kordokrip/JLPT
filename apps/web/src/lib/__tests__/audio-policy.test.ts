@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { getAudioPlaybackPolicy, prefersBrowserAudio } from '@nihongo-n3/shared';
 
 describe('audio playback policy', () => {
-  it('keeps kana and listening on browser Japanese voice by default', () => {
-    expect(prefersBrowserAudio('kana')).toBe(true);
-    expect(prefersBrowserAudio('listening')).toBe(true);
+  it('uses approved R2 assets before browser Japanese fallback', () => {
+    expect(prefersBrowserAudio('kana')).toBe(false);
+    expect(prefersBrowserAudio('listening')).toBe(false);
     expect(getAudioPlaybackPolicy('kana')).toMatchObject({
-      primary: 'browser',
+      primary: 'r2',
+      fallback: 'browser',
       slow: true,
       preferGoogleVoice: true,
     });
