@@ -91,7 +91,7 @@ E2E 범위에는 password/OAuth 시작·재로그인, admin 보호, SRS, sync, �
 
 ## 7. 배포 상태와 차단 사유
 
-2026-07-18 `gh secret list --env production` 및 repository secret 조회 결과 배포에 필요한 전용 token은 등록되어 있지 않고 repository-level `CLOUDFLARE_ACCOUNT_ID`만 확인됐다. 값은 조회하거나 문서화하지 않았다.
+2026-07-18 repository-level `CLOUDFLARE_PAGES_API_TOKEN`과 `production` Environment의 같은 이름 secret을 등록했다. 토큰 값은 출력하거나 문서화하지 않았으며 Cloudflare token verify와 `nihongo-n3` Pages 프로젝트 조회로 유효성을 확인했다. 나머지 Workers·D1 write·Backup 전용 token은 아직 등록 대기 상태다.
 
 필요한 secret 이름:
 
@@ -117,7 +117,22 @@ PR: [#35](https://github.com/kordokrip/JLPT/pull/35)
 | Chromium/WebKit E2E | success | [run 29598979938](https://github.com/kordokrip/JLPT/actions/runs/29598979938) |
 | Pages build/preview | build success, preview failure | [run 29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) |
 
-Pages 실패는 billing이나 앱 build가 아니라 Wrangler가 `CLOUDFLARE_PAGES_API_TOKEN`을 받지 못한 운영 설정 실패다. Backup은 전용 token과 Environment 승인이 없어 실행하지 않았다. 따라서 필수 코드 검증은 성공했지만 production release gate 전체는 아직 닫히지 않았다.
+Pages 최초 실패는 billing이나 앱 build가 아니라 Wrangler가 `CLOUDFLARE_PAGES_API_TOKEN`을 받지 못한 운영 설정 실패였다. token 등록 후 같은 run의 실패 job을 재실행해 Preview Deploy가 성공했다. 이 과정에서 긴 branch 이름을 workflow가 직접 URL로 조합한 댓글은 404를 가리키고, Wrangler가 반환한 축약 alias는 200을 반환하는 별도 CI 결함을 발견했다. workflow는 `pages-deployment-alias-url` 출력을 사용하고 해당 URL HTTP smoke 성공 후 댓글을 남기도록 수정했다. Backup은 전용 token과 Environment 승인이 없어 실행하지 않았다. 따라서 Pages preview 관문은 복구됐지만 production release gate 전체는 아직 닫히지 않았다.
+
+### Pages 인증 복구 시점 후보 SHA
+
+검증 SHA: `c24ce81fbbbdc436d4a7acc4b7c5d157eb27c4bd`
+
+| Workflow | 결과 | URL |
+| --- | --- | --- |
+| Dependency Audit | success | [run 29599509204](https://github.com/kordokrip/JLPT/actions/runs/29599509204) |
+| CodeQL | success | [run 29599508794](https://github.com/kordokrip/JLPT/actions/runs/29599508794) |
+| Required Verification | success | [run 29599507517](https://github.com/kordokrip/JLPT/actions/runs/29599507517) |
+| Fresh D1 validation | success | [run 29599507645](https://github.com/kordokrip/JLPT/actions/runs/29599507645) |
+| Chromium/WebKit E2E | success | [run 29599507657](https://github.com/kordokrip/JLPT/actions/runs/29599507657) |
+| Pages build/preview | success after credential rerun | [run 29599510828](https://github.com/kordokrip/JLPT/actions/runs/29599510828) |
+
+기존 production API에는 `ops:observe --smoke-only`를 실행해 health·OpenAPI·auth config·vocab·grammar·kanji·sentences 7/7 성공을 확인했고, 기존 Pages origin과 실제 preview deployment/alias는 모두 HTTP 200을 반환했다. 이 결과는 신규 production 배포 완료가 아니라 기존 운영 상태와 preview artifact 검증 증거다.
 
 ## 8. 배포 실행 순서
 
@@ -130,7 +145,7 @@ Pages 실패는 billing이나 앱 build가 아니라 Wrangler가 `CLOUDFLARE_PAG
 7. PR을 main에 병합한 뒤 GitHub UI에서 Workers와 Pages workflow_dispatch를 승인한다.
 8. 배포 후 30분 smoke와 24시간 release SHA별 5xx/latency/D1/auth 관측을 기록한다.
 
-현재 1~2단계는 진행 가능하다. 3단계 이후는 secret 등록과 GitHub `production` Environment 사람 승인 없이는 실행하지 않는다.
+현재 1~2단계와 Pages preview 인증 복구는 완료됐다. 3단계의 나머지 전용 secret 등록 이후 작업은 GitHub `production` Environment 사람 승인 없이는 실행하지 않는다.
 
 ## 9. 다음 부채
 
