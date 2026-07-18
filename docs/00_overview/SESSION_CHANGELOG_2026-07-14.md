@@ -351,3 +351,24 @@ R1 기준선 위에 provenance·동음이의어 30쌍, DB 분포 기반 N2/N1 re
 | Pages | [29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) | failure | build 성공, preview token 미등록 |
 
 Pages 실패 로그는 Wrangler가 비대화형 환경의 `CLOUDFLARE_API_TOKEN`을 받지 못했다고 명시한다. workflow 우회나 optional 전환은 하지 않았고, 최소권한 Pages token 등록 전 병합·production 배포를 보류했다.
+
+## 20. GitHub D1 export 실패와 Cloudflare Workflow 백업 전환 (2026-07-18 KST)
+
+main SHA `27c379fbeb1c7b6c818ee5c356906c8d9e9c901c`의 GitHub Backup run [29631932489](https://github.com/kordokrip/JLPT/actions/runs/29631932489)는 `production` Environment 승인과 runner 시작 후 D1 export 단계에서 Cloudflare API `10000 Authentication error`로 실패했다. 활성 상태이며 대상 account에 D1 Read·Write를 가진 신규 scoped token으로 export REST API를 직접 호출해도 같은 오류가 재현됐다. 이는 과거의 billing annotation처럼 job 미시작 실패도 아니고, backup SQL·restore 코드의 테스트 실패도 아니다.
+
+GitHub workflow나 required check를 optional로 바꾸지 않고 Cloudflare native 대체 경로를 추가했다. `nihongo-n3-d1-backup` Worker는 public route 없이 `nihongo-n3-d1-backup-workflow`만 제공하며 D1/R2 binding으로 canonical 일반 table 23개를 table별 SQL로 쓴다. OAuth state·일회용 login token과 FTS virtual table은 제외하고, FTS는 복원 때 canonical migration과 rebuild로 재생성한다. REST export API token과 Global API Key는 runtime secret에 저장하지 않았다.
+
+| 검증 | 결과 |
+| --- | --- |
+| Workflow instance | `manual-backup-2026-07-18T05-36-28-521`, `complete` |
+| R2 root | `backups/workflow/2026-07-18/2026-07-18T05-36-35-908Z` |
+| object | table SQL 23개 + `manifest.json` + `manifest.sha256` |
+| manifest SHA-256 | `487870e112bd3e0ad41466848bf25336d4800b3711ee738013a875af5603df43` |
+| local restore | canonical migration 9/9, 23 table row count, FK, FTS parity PASS |
+| R2 lifecycle | `backups-30d-expiry`, prefix `backups/`, 30일 |
+
+첫 restore drill은 row count 0인 `categories.sql`을 Wrangler에 전달하면서 빈 SQL 입력 오류가 발생했다. verifier를 완화하지 않고, 0건 manifest는 INSERT 부재와 checksum을 검증한 뒤 execute를 생략하고 1건 이상 manifest는 빈 파일을 실패시키도록 수정했다. 수정 후 전체 복원 드릴이 통과했다.
+
+동일 Worker 이름으로 잘못 생성됐던 실패 Workflow resource `nihongo-n3-d1-backup`은 제거하고 검증 완료된 `nihongo-n3-d1-backup-workflow`만 유지했다. 자동 schedule은 추가하지 않았다. 이 백업은 단일 transaction snapshot이 아니므로 승인된 read-only/maintenance 구간의 수동 실행과 매회 restore drill을 계속 요구한다. production API, D1 schema/data, Pages binding은 이 작업에서 변경하지 않았다.
+
+최종 로컬 관문은 audit advisory 0, OpenAPI drift 0, 전체 typecheck·unit·build, fresh D1 migration 9/9·manifest·FTS·FK, Chromium 69/69, WebKit 55/55를 통과했다. WebKit의 Chromium 전용 시각 회귀 14건은 기존 정책대로 skip했다. fresh audio 4,954건은 TD-08 warning으로 유지했고 verifier 기준을 낮추지 않았다.

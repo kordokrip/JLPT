@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "nihongo-n3-d1-backup",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "vars": {
+    "DATABASE_ID": "5a3ba67b-e5a5-4d5f-a73c-9bb7f4db9f68",
+    "DATABASE_NAME": "nihongo-n3-prod",
+    "BACKUP_PREFIX": "backups/workflow",
+    "RELEASE_SHA": "27c379fbeb1c7b6c818ee5c356906c8d9e9c901c"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nihongo-n3-prod",
+      "database_id": "5a3ba67b-e5a5-4d5f-a73c-9bb7f4db9f68",
+      "remote": true
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BACKUP_BUCKET",
+      "bucket_name": "nihongo-n3-reports"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "nihongo-n3-d1-backup-workflow",
+      "binding": "BACKUP_WORKFLOW",
+      "class_name": "D1BackupWorkflow",
+      "limits": {
+        "steps": 250
+      }
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

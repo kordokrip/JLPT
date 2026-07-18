@@ -6,7 +6,8 @@
   "main": "./src/schema.ts",
   "types": "./src/schema.ts",
   "exports": {
-    ".": "./src/schema.ts"
+    ".": "./src/schema.ts",
+    "./d1-tables": "./src/ops/d1-tables.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",

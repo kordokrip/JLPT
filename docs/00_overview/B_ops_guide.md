@@ -177,6 +177,8 @@ pnpm 9/10은 종료된 npm legacy audit endpoint 때문에 HTTP 410으로 실패
 
 GitHub billing annotation으로 job이 시작되지 않은 실패는 코드 실패와 구분하되, 성공으로 간주하지 않는다. billing을 해결한 뒤 같은 SHA에서 다시 실행한다.
 
+Backup은 GitHub Actions 외에 Cloudflare Workflow 수동 실행도 허용한다. 두 경로 모두 같은 release SHA를 manifest에 기록하고, R2 object checksum과 로컬 restore drill까지 통과해야 필수 check를 충족한다. Cloudflare 경로는 GitHub check를 optional로 바꾸는 우회가 아니라 Cloudflare 안에서 D1 binding -> Workflow -> R2 binding으로 실행하는 독립 운영 관문이다. 상세 절차는 [Cloudflare D1 백업 Workflow](./cloudflare-d1-backup-workflow.md)를 따른다.
+
 Workers/Pages production deploy는 workflow_dispatch와 `production` Environment approval로만 실행한다. push나 PR은 검증 또는 preview까지만 수행한다.
 
 2026-07-16 기준 `production` Environment는 `kordokrip` 필수 검토자와 `main` branch policy로 구성했다. 단독 관리자 저장소이므로 `prevent_self_review=false`지만, 승인 클릭과 확인문을 생략할 수는 없다. Environment가 승인되기 전에는 secret에 접근할 수 없다.
@@ -187,7 +189,8 @@ Cloudflare token은 용도별로 분리한다. D1 Read token을 범용 `CLOUDFLA
 | --- | --- | --- |
 | D1 inventory/cleanup dry-run | 대상 account D1 Read | 로컬 active·검증 완료 |
 | D1 migration/user cleanup execute `CLOUDFLARE_D1_WRITE_API_TOKEN` | 대상 account D1 Write | `production` Environment 등록 대기 |
-| Backup `CLOUDFLARE_BACKUP_API_TOKEN` | D1 export/read + reports bucket R2 Object Write/lifecycle | `production` Environment 등록 대기 |
+| GitHub Backup `CLOUDFLARE_BACKUP_API_TOKEN` | D1 export/read + reports bucket R2 Object Write/lifecycle | D1 export API 인증 `10000`으로 사용 중지 |
+| Cloudflare Workflow Backup | 배포 시 Workers Scripts Edit, 런타임은 D1/R2 binding | 배포·복원 검증 완료 |
 | Pages preview/production `CLOUDFLARE_PAGES_API_TOKEN` | Cloudflare Pages Edit | repository/`production` Environment 등록 대기 |
 | Workers production `CLOUDFLARE_WORKERS_API_TOKEN` | Workers Scripts Edit와 필요한 binding read | `production` Environment 등록 대기 |
 
@@ -203,6 +206,17 @@ pnpm -F @nihongo-n3/db d1:backup -- \
   --out=.artifacts/d1-backup \
   --allow-downtime
 ```
+
+GitHub D1 export API가 활성 scoped token에도 `10000 Authentication error`를 반환하면 같은 실패를 반복하지 않는다. Cloudflare Workflow 경로는 REST export token이나 Global API Key를 runtime secret으로 저장하지 않고 D1/R2 binding만 사용한다.
+
+```bash
+pnpm -F @nihongo-n3/d1-backup trigger
+pnpm -F @nihongo-n3/d1-backup instances
+pnpm -F @nihongo-n3/db d1:restore-drill -- \
+  --input=.artifacts/d1-backup-cloudflare
+```
+
+Cloudflare Workflow 백업은 여러 table을 하나의 SQLite transaction snapshot으로 읽지 않는다. 따라서 자동 schedule을 두지 않고 사람이 실제 read-only 또는 maintenance 상태를 확인한 뒤 실행한다. 각 table은 `before = exported = after`를 강제하고, 최종 유효성은 23개 allowlist·SHA-256·row count·FK·재구축 FTS parity를 확인하는 restore drill로 판정한다. D1 Time Travel은 별도의 기본 복구 수단으로 유지한다.
 
 ## 9. 배포 후 관측
 
