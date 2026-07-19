@@ -34,7 +34,7 @@ const en = {
     description: 'Choose JLPT Japanese or TOPIK Korean and keep assessment, study, review, and progress safely separated by track.',
     chooseTrack: 'Choose a language to study',
     jlptTitle: 'Japanese · JLPT',
-    jlptDescription: 'A structured path from scripts to N1',
+    jlptDescription: 'A structured path from scripts to N3',
     topikTitle: 'Korean · TOPIK',
     topikDescription: 'TOPIK I placement with English guidance',
     login: 'Log in',

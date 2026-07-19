@@ -426,6 +426,11 @@ latest, review, logout을 순서대로 실행했다. 시작 응답은 listening/
 0건을 확인했다. Google OAuth는 별도 preview callback과 secret 승인 전까지 의도적으로
 비활성 상태다.
 
+Pages branch alias를 iPhone 15와 1440×1000 viewport에서 다시 캡처해 빈 화면·겹침·가로
+overflow가 없음을 확인했다. 이 과정에서 실제 JLPT release가 N5~N3인데 Welcome 카드가
+N1까지 제공한다고 표시한 문구 불일치를 발견해 한국어·일본어·영어 모두 N3 기준으로
+교정했다. N2/N1은 DB 분포가 `n5-n1` 조건을 만족할 때만 기존 release gate로 노출한다.
+
 첫 원격 CodeQL 신규 경고 gate는 `seed-topik-preview.ts`의 PID 기반 OS temp 파일 생성을
 High로 차단했다. 임의 파일명을 제거하고 `mkdtempSync` 전용 디렉터리와 `wx` 배타 생성을
 사용하도록 수정했다. SHA `a1cf37580fd9d701564be1b71394b2b54811a4ac`에서 Audit

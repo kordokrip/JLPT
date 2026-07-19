@@ -34,7 +34,7 @@ const ja = {
     description: 'JLPT日本語またはTOPIK韓国語を選び、診断・学習・復習・進捗をトラックごとに安全に管理します。',
     chooseTrack: '学習する言語を選択',
     jlptTitle: '日本語 · JLPT',
-    jlptDescription: '文字の基礎からN1まで段階別に学習',
+    jlptDescription: '文字の基礎からN3まで段階別に学習',
     topikTitle: '韓国語 · TOPIK',
     topikDescription: 'TOPIK I診断と英語解説を中心に学習',
     login: 'ログイン',

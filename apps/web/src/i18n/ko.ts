@@ -35,7 +35,7 @@ const ko = {
     description: 'JLPT 일본어와 TOPIK 한국어를 선택해 진단, 학습, 복습, 진행 기록을 트랙별로 안전하게 관리합니다.',
     chooseTrack: '학습할 언어 선택',
     jlptTitle: '일본어 · JLPT',
-    jlptDescription: '문자 기초부터 N1까지 단계별 학습',
+    jlptDescription: '문자 기초부터 N3까지 단계별 학습',
     topikTitle: '한국어 · TOPIK',
     topikDescription: 'TOPIK I 진단과 영어 해설 중심 학습',
     login: '로그인',
