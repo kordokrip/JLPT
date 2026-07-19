@@ -8,14 +8,14 @@ on:
     branches:
       - main
     paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
+      - "apps/web/**"
+      - "packages/shared/**"
   pull_request:
     branches:
       - main
     paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
+      - "apps/web/**"
+      - "packages/shared/**"
   workflow_dispatch:
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.17.0"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,8 +46,9 @@ jobs:
       - name: Build web app
         run: pnpm -F @nihongo-n3/web build
         env:
-          # API 베이스 URL: GitHub Actions Variables(비밀이 아닌 값)로 등록
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          # PR은 Pages Function의 preview API binding만 사용한다. 값이 없으면
+          # same-origin proxy가 fail-closed 503을 반환하며 production으로 폴백하지 않는다.
+          VITE_API_URL: ${{ github.event_name == 'pull_request' && vars.PREVIEW_API_URL || (github.event_name != 'pull_request' && vars.VITE_API_URL) }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -59,9 +60,9 @@ jobs:
           retention-days: 1
 
   # ── PR Preview 배포 ────────────────────────────────────────────────────
-  # ⚠️  Preview 환경은 production D1을 절대 사용하지 않습니다.
-  # Cloudflare Pages → Settings → Environment variables → Preview 탭에서
-  # VITE_API_BASE_URL을 preview API URL로 별도 설정하세요.
+  # ⚠️  Preview 환경은 production API/D1을 절대 사용하지 않습니다.
+  # Cloudflare Pages → Settings → Variables and Secrets → Preview에서
+  # API_ORIGIN을 전용 preview Worker URL로 설정합니다.
   preview:
     name: Preview Deploy (PR)
     needs: build
@@ -99,6 +100,23 @@ jobs:
             --retry 5 --retry-delay 2 --retry-all-errors \
             --output /dev/null "$PREVIEW_URL/"
 
+      - name: Verify Preview API Isolation
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.pages-deployment-alias-url }}
+        run: |
+          STATUS=$(curl --silent --show-error \
+            --output /tmp/preview-api.json --write-out "%{http_code}" \
+            "$PREVIEW_URL/api/v1/tracks/topik-ko/status")
+          cat /tmp/preview-api.json
+          case "$STATUS" in
+            200|503) ;;
+            *) echo "Preview API isolation smoke failed: HTTP $STATUS"; exit 1 ;;
+          esac
+          if [ "$STATUS" = "503" ]; then
+            grep -q 'preview-api-not-configured' /tmp/preview-api.json || \
+              (echo "Preview did not fail closed with the expected problem response" && exit 1)
+          fi
+
       - name: Comment preview URL on PR
         uses: actions/github-script@v7
         env:
@@ -118,7 +136,7 @@ jobs:
                     `| 항목 | URL |\n` +
                     `|------|-----|\n` +
                     `| Preview | ${previewUrl} |\n\n` +
-                    `> ⚠️ Preview는 production D1과 **별개** 환경입니다.`,
+                    `> Preview는 production API/D1과 분리되며, 전용 API가 없으면 API 요청을 503으로 차단합니다.`,
             });
 
   # ── Production 배포 ───────────────────────────────────────────────────

@@ -87,10 +87,20 @@
 | 3 Dashboard·Placement UI | 로컬 검증 완료 | Chromium 87, WebKit 기능 57 통과 |
 | 4 Learn·Review·Progress | 로컬 검증 완료 | account×track API·IDB E2E leak 0 |
 | 5 i18n·접근성·오프라인·시각 회귀 | 로컬 검증 완료 | 4개 viewport, macOS/Linux baseline 통과 |
-| 6 Preview QA·수동 출시 | 대기 | preview 사용자 QA, JLPT 운영 회귀, 사람 승인 |
+| 6 Preview QA·수동 출시 | 진행 중 | 전용 Preview D1/Worker/Pages, 사용자 QA, JLPT 운영 회귀, 사람 승인 |
 
 production Worker, Pages, D1/R2에는 이 문서의 기능을 아직 적용하지 않는다. Phase 5 전체
 관문과 preview 사용자 QA가 끝나더라도 Phase 6 수동 승인을 별도로 받아야 한다.
+
+### Preview 격리 계약
+
+- Pages Preview는 `API_ORIGIN` runtime variable로 `nihongo-n3-api-topik-preview`만 호출한다.
+- 전용 API 주소가 없거나 올바른 HTTPS URL이 아니면 same-origin API proxy는 `503`과
+  `Retry-After`를 반환하고 운영 Worker로 폴백하지 않는다.
+- Preview Worker는 `nihongo-n3-topik-preview` D1만 바인딩한다. 운영
+  `nihongo-n3-prod`는 읽기·쓰기 모두 사용하지 않는다.
+- Google OAuth는 별도 callback URI 등록과 preview secret 승인 전까지 비활성화하며,
+  Phase 6 계정 QA는 격리된 이메일 계정으로 수행한다.
 
 ## 6. 2026-07-19 로컬 검증 증거
 
@@ -98,7 +108,7 @@ production Worker, Pages, D1/R2에는 이 문서의 기능을 아직 적용하�
 | --- | --- |
 | dependency audit | high 이상 알려진 취약점 0 |
 | OpenAPI | public 57/admin 7 paths, 2회 생성 SHA-256 동일 |
-| type/unit/build | 5 workspace typecheck, ops 8, DB 22, Web 66, API 96, Web·Worker build 통과 |
+| type/unit/build | 5 workspace typecheck, ops 8, DB 22, Web 70, API 96, Web·Worker build 통과 |
 | fresh D1 | migration 10/10, JLPT source 13, FTS·FK·중복·필수값 통과 |
 | TOPIK verifier | V2 24문항, 듣기/읽기 12/12, 선택지 위치별 정답 6개, manifest/checksum/FK 통과 |
 | Chromium | 전체 87/87 통과, 시각 회귀 30개 포함 |
@@ -108,3 +118,23 @@ production Worker, Pages, D1/R2에는 이 문서의 기능을 아직 적용하�
 fresh D1의 승인된 R2 오디오 미생성 4,954건은 기존 TD-08 warning이다. 검증 기준을
 낮추거나 TOPIK 완료 근거로 숨기지 않는다. production seed·D1 migration·Worker·Pages
 배포는 Phase 6 승인 전 수행하지 않는다.
+
+## 7. Phase 6 Preview 데이터 계층 증거
+
+2026-07-19에 APAC 전용 D1 `nihongo-n3-topik-preview`를 만들었다. 이 리소스는 운영
+Worker 설정이나 `nihongo-n3-prod` binding을 변경하지 않는다.
+
+| 관문 | 결과 |
+| --- | --- |
+| migration ledger | `0000`~`0009`, 10/10 적용 |
+| JLPT content | source 13, `content-v2-7ca032d813f56fc31d05`, row/checksum/provenance 일치 |
+| 검색·정합성 | vocab/sentence FTS parity, FK·중복·필수값 오류 0 |
+| TOPIK Placement V2 | 24문항, listening/reading 12/12, answer position 6/6/6/6 |
+| TOPIK manifest | `d75297dd8ca975dbc9089f61c91655df4f2aff0c4133da890e14d603221914ac` 일치 |
+| 브라우저 재검증 | Chromium 87/87, WebKit 57/57, 시각 30건은 WebKit 의도적 제외 |
+
+`topik:preview-seed`는 remote target 이름과 `ALLOW_TOPIK_PREVIEW_CHANGE=seed`를 함께
+검사한다. 다른 D1 이름이나 승인값이 없는 실행은 거부한다. 최초 account API token은 D1
+목록 권한이 없어 Cloudflare API `10000`으로 차단됐고, 이번 Preview 생성은 로컬 비밀파일의
+Global API Key로 수행했다. 값은 출력·artifact·Git에 남기지 않았다. 장기 운영 전에는
+Workers Scripts Write, D1 Edit, Pages Write만 가진 Preview 전용 API token으로 교체한다.

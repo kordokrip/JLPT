@@ -385,3 +385,32 @@ verifier의 blocking 조건으로 추가했다. TOPIK 해설 언어는 제품 AD
 fresh verifier의 R2 audio key 4,954건 warning은 TD-08로 유지했고 최소값을 낮추지 않았다.
 Phase 0~5는 로컬 release candidate 관문을 통과했지만 Phase 6 preview 사용자 QA와 사람
 승인이 남아 있다. 따라서 production D1/R2, Worker, Pages 배포는 수행하지 않았다.
+
+## 21. 2026-07-19 TOPIK Preview 운영 격리
+
+PR Preview의 Pages Function이 운영 Worker URL을 상수로 사용해, 새 frontend가 이전 운영
+API의 track status `401`을 받는 경로를 발견했다. Pages Preview에서는 명시적인
+`API_ORIGIN`이 없으면 `503 preview-api-not-configured`와 `Retry-After`를 반환하도록
+fail-closed 처리했다. 운영 Pages hostname만 기존 운영 Worker 기본값을 유지한다. 이 정책은
+4개 단위 회귀와 Preview workflow smoke로 고정했다.
+
+APAC에 전용 D1 `nihongo-n3-topik-preview`를 만들고 `0000`~`0009` migration 10개를
+처음부터 적용했다. JLPT source 13개 manifest seed와 TOPIK Placement V2를 순서대로 적재한
+뒤 두 검증기를 독립 실행했다.
+
+| 원격 Preview 관문 | 결과 |
+| --- | --- |
+| JLPT content manifest | 13/13 source, row/checksum/parser/provenance 일치 |
+| FTS·정합성 | vocab/sentence parity, FK·중복·필수값 오류 0 |
+| TOPIK V2 | 24문항, 듣기/읽기 12/12, 정답 위치 6/6/6/6 |
+| TOPIK checksum | manifest·source·parser version 모두 일치 |
+| 로컬 최종 게이트 | `verify:ci` PASS, Chromium 87/87, WebKit 57/57 |
+
+기존 수동 dev server를 Playwright가 재사용한 첫 Chromium 실행은 오래된 로컬 D1 때문에
+SRS/log route `500`을 냈다. 서버를 종료하고 E2E가 migration·seed를 포함한 격리 서버를
+직접 기동하도록 재실행하자 87/87이 통과해 코드 회귀와 테스트 환경 오염을 분리했다.
+
+일반 account API token은 D1 API에서 `10000 Authentication error`가 발생했다. 사용자가
+로컬 비밀파일에 둔 Global API Key로 Preview D1 작업만 수행했으며 값은 출력하거나 Git에
+포함하지 않았다. production D1/R2, Worker, Pages는 변경하지 않았다. 다음 단계는 같은
+커밋 SHA의 전용 Preview Worker와 Pages 배포, 이메일 QA 계정 smoke, 사용자 디자인 승인이다.
