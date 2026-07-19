@@ -209,6 +209,9 @@ name = "nihongo-n3-api-topik-preview"
 workers_dev = true
 logpush = true
 
+[env.topik-preview.triggers]
+crons = []
+
 [env.topik-preview.observability.logs]
 enabled = true
 head_sampling_rate = 1.0
