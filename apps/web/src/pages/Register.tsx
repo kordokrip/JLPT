@@ -26,7 +26,7 @@ export default function Register() {
   return (
     <main className="min-h-dvh bg-[var(--background)] px-5 py-8 text-foreground">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center">
-        <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT N3</Link>
+        <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT · TOPIK Study</Link>
         <section className="surface-card p-6">
           <h1 className="text-2xl font-semibold">회원가입</h1>
           <p className="mt-2 text-sm text-[var(--muted-foreground)]">비밀번호는 10자 이상이며 영문과 숫자를 포함해야 합니다.</p>

@@ -8,25 +8,29 @@ import { useUiStore }      from '../../stores/ui-store';
 import { IosInstallHint }  from '../IosInstallHint';
 import { useTranslation }  from 'react-i18next';
 import { useContentVersionInvalidation } from '../../hooks/useContentVersionInvalidation';
+import { useSettingsStore } from '../../stores/settings-store';
 
 export function RootLayout() {
   useContentVersionInvalidation();
   const isOnline = useUiStore((s) => s.isOnline);
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
+  const learningTrack = useSettingsStore((s) => s.learningTrack);
   const { t } = useTranslation();
 
   return (
     <div
       data-side-state={sideNavCollapsed ? 'collapsed' : 'expanded'}
+      data-learning-track={learningTrack}
       className="app-shell relative min-h-dvh overflow-x-clip bg-[var(--background)]"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 bg-no-repeat opacity-[0.055] dark:opacity-[0.13]"
+        className="pointer-events-none fixed inset-0 z-0 bg-no-repeat mix-blend-multiply dark:mix-blend-soft-light"
         style={{
-          backgroundImage: "url('/page-bg-bamboo.png')",
-          backgroundPosition: 'right max(1.25rem, env(safe-area-inset-right)) bottom max(4.75rem, env(safe-area-inset-bottom))',
-          backgroundSize: 'min(56vw, 520px) auto',
+          backgroundImage: "url('/page-bg-unified.png')",
+          backgroundPosition: 'right max(1rem, env(safe-area-inset-right)) bottom max(4.5rem, env(safe-area-inset-bottom))',
+          backgroundSize: 'min(68vw, 680px) auto',
+          opacity: 'var(--track-art-opacity)',
         }}
       />
       {/* 스크린리더용 건너뛰기 링크 */}

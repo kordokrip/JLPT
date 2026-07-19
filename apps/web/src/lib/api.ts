@@ -17,6 +17,10 @@ import {
   type JlptLevel,
   type LearningTrackId,
   type TrackStatusDto,
+  type TopikInstructionLanguage,
+  type TopikPlacementAttemptDto,
+  type TopikPlacementResultDto,
+  type TopikPlacementSubmitBody,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
 import type { components, paths } from '../types/api.js';
@@ -234,7 +238,52 @@ export const contentApi = {
 };
 
 export const tracksApi = {
-  status: (track: LearningTrackId) => api.get<TrackStatusDto>(`/tracks/${track}/status`),
+  status: async (track: LearningTrackId) => typedResult<TrackStatusDto>(
+    await typedApi.GET('/api/v1/tracks/{track}/status', {
+      params: { path: { track } },
+    }),
+  ),
+};
+
+export interface TopikPlacementLatestDto {
+  attempt_id: string;
+  score_total: number;
+  score_listening: number;
+  score_reading: number;
+  result_band: 'starter' | 'foundation' | 'ready';
+  completed_at: number;
+}
+
+export interface TopikPlacementReviewItemDto {
+  question_id: string;
+  section: 'listening' | 'reading';
+  prompt_ko: string;
+  prompt_en: string;
+  choices: string[];
+  selected_index: number;
+  answer_index: number;
+  explanation_en: string;
+  explanation_ko: string;
+}
+
+export const topikPlacementApi = {
+  start: async (instructionLanguage: TopikInstructionLanguage) => typedResult<TopikPlacementAttemptDto>(
+    await typedApi.POST('/api/v1/tracks/topik-ko/placement/attempts', {
+      body: { instruction_language: instructionLanguage },
+    }),
+  ),
+  submit: async (attemptId: string, answers: TopikPlacementSubmitBody['answers']) => typedResult<TopikPlacementResultDto>(
+    await typedApi.POST('/api/v1/tracks/topik-ko/placement/attempts/{attemptId}/submit', {
+      params: { path: { attemptId } },
+      body: { answers },
+    }),
+  ),
+  latest: async () => typedResult<TopikPlacementLatestDto | null>(
+    await typedApi.GET('/api/v1/tracks/topik-ko/placement/latest'),
+  ),
+  review: async () => typedResult<TopikPlacementReviewItemDto[]>(
+    await typedApi.GET('/api/v1/tracks/topik-ko/placement/review'),
+  ),
 };
 
 // SRS

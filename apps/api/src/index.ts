@@ -54,6 +54,7 @@ import { notificationsOA } from './routes/notifications-oa.js';
 import { aiOA } from './routes/ai-oa.js';
 import { authOA } from './routes/auth-oa.js';
 import { tracksOA } from './routes/tracks.js';
+import { topikPlacementOA } from './routes/topik-placement.js';
 import { adminSessionAuth } from './lib/auth-session.js';
 import { securityMiddleware } from './middleware/security.js';
 import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
@@ -156,6 +157,7 @@ const v1 = new OpenAPIHono<AppEnv>();
 v1.get('/ping', (c) => c.json({ data: { message: 'pong', version: '1.0.0' } }));
 v1.route('/', authOA);
 v1.route('/', tracksOA);
+v1.route('/', topikPlacementOA);
 
 // ── 공개 콘텐츠 라우트 (엣지 캐시 적용) ──────
 v1.use('/sources*', contentCacheMiddleware);
@@ -241,6 +243,7 @@ const openApiBase = {
     { name: 'AI', description: 'Workers AI 기반 자연어 학습 보조' },
     { name: 'Auth', description: '앱 세션 및 Google OAuth' },
     { name: 'Tracks', description: 'JLPT 일본어 및 TOPIK 한국어 학습 트랙' },
+    { name: 'TOPIK Placement', description: '자체 저작 TOPIK I 배치 진단' },
   ],
 } satisfies Parameters<typeof app.getOpenAPI31Document>[0];
 

@@ -28,7 +28,11 @@ const Welcome        = lazy(() => import('./pages/Welcome'));
 const Login          = lazy(() => import('./pages/Login'));
 const Register       = lazy(() => import('./pages/Register'));
 const AdminUsers     = lazy(() => import('./pages/AdminUsers'));
-const TopikFoundation = lazy(() => import('./pages/TopikFoundation'));
+const TopikDashboard  = lazy(() => import('./pages/TopikDashboard'));
+const TopikPlacement  = lazy(() => import('./pages/TopikPlacement'));
+const TopikLearn      = lazy(() => import('./pages/TopikLearn'));
+const TopikReview     = lazy(() => import('./pages/TopikReview'));
+const TopikProgress   = lazy(() => import('./pages/TopikProgress'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -60,6 +64,11 @@ function RequireJlptTrack() {
     : <Navigate to="/track/topik-ko" replace />;
 }
 
+function RequireTopikTrack() {
+  const learningTrack = useSettingsStore((state) => state.learningTrack);
+  return learningTrack === 'topik-ko' ? <Outlet /> : <Navigate to="/" replace />;
+}
+
 // ─────────────────────────────────────────────
 // 루트 라우터
 // ─────────────────────────────────────────────
@@ -73,7 +82,13 @@ export default function App() {
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
           <Route path="settings"         element={<Settings />} />
           <Route path="admin/users"  element={<AdminUsers />} />
-          <Route path="track/topik-ko" element={<TopikFoundation />} />
+          <Route element={<RequireTopikTrack />}>
+            <Route path="track/topik-ko" element={<TopikDashboard />} />
+            <Route path="track/topik-ko/placement" element={<TopikPlacement />} />
+            <Route path="track/topik-ko/learn" element={<TopikLearn />} />
+            <Route path="track/topik-ko/review" element={<TopikReview />} />
+            <Route path="track/topik-ko/progress" element={<TopikProgress />} />
+          </Route>
           <Route element={<RequireJlptTrack />}>
             <Route index          element={<Home />} />
             <Route path="review"  element={<Review />} />

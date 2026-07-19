@@ -15,5 +15,6 @@ export * from './audio-policy';
 export * from './audio-qa';
 export * from './study-plan-policy';
 export * from './jlpt-levels';
+export * from './learning-tracks';
 export type { QuizMode, QuizGenerateBody, QuizSubmitBody } from './api-schemas';
 export * from './fsrs';

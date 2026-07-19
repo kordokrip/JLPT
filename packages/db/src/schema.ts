@@ -577,7 +577,7 @@ export const quizQuestionBank = sqliteTable('quiz_question_bank', {
   modeLevelIdx: index('quiz_question_bank_mode_level_idx').on(t.mode, t.level),
 }));
 
-/** Unpublished, self-authored TOPIK placement QA bank. No public route consumes this yet. */
+/** Self-authored TOPIK placement QA bank. Rows remain hidden until isPublished is enabled. */
 export const topikPlacementQuestions = sqliteTable(
   'topik_placement_questions',
   {
@@ -598,6 +598,10 @@ export const topikPlacementQuestions = sqliteTable(
     authorReviewer: text('author_reviewer').notNull(),
     secondReviewer: text('second_reviewer').notNull(),
     reviewedAt: text('reviewed_at').notNull(),
+    bankVersion: text('bank_version').notNull().default('v1'),
+    audioScriptKo: text('audio_script_ko'),
+    audioR2Key: text('audio_r2_key'),
+    isPublished: integer('is_published', { mode: 'boolean' }).notNull().default(false),
     ...timestamps,
   },
   (t) => ({
@@ -607,6 +611,50 @@ export const topikPlacementQuestions = sqliteTable(
       t.section,
       t.difficulty,
     ),
+    releaseIdx: index('topik_placement_release_idx').on(
+      t.learningTrack,
+      t.bankVersion,
+      t.isPublished,
+      t.section,
+      t.difficulty,
+    ),
+  }),
+);
+
+export const topikPlacementAttempts = sqliteTable(
+  'topik_placement_attempts',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    bankVersion: text('bank_version').notNull(),
+    instructionLanguage: text('instruction_language', { enum: ['ko', 'en'] }).notNull().default('en'),
+    status: text('status', { enum: ['in_progress', 'completed'] }).notNull().default('in_progress'),
+    questionIdsJson: text('question_ids_json').notNull(),
+    scoreTotal: integer('score_total'),
+    scoreListening: integer('score_listening'),
+    scoreReading: integer('score_reading'),
+    resultBand: text('result_band', { enum: ['starter', 'foundation', 'ready'] }),
+    startedAt: integer('started_at').notNull().default(sql`(unixepoch())`),
+    completedAt: integer('completed_at'),
+  },
+  (t) => ({
+    userIdx: index('topik_placement_attempt_user_idx').on(t.userId, t.learningTrack, t.startedAt),
+  }),
+);
+
+export const topikPlacementResponses = sqliteTable(
+  'topik_placement_responses',
+  {
+    attemptId: text('attempt_id').notNull().references(() => topikPlacementAttempts.id, { onDelete: 'cascade' }),
+    questionId: text('question_id').notNull().references(() => topikPlacementQuestions.id, { onDelete: 'restrict' }),
+    selectedIndex: integer('selected_index').notNull(),
+    isCorrect: integer('is_correct', { mode: 'boolean' }).notNull(),
+    answeredAt: integer('answered_at').notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.attemptId, t.questionId] }),
+    questionIdx: index('topik_placement_response_question_idx').on(t.questionId, t.isCorrect),
   }),
 );
 
@@ -715,6 +763,12 @@ export type OauthLoginToken = typeof oauthLoginTokens.$inferSelect;
 export type NewOauthLoginToken = typeof oauthLoginTokens.$inferInsert;
 export type QuizQuestion = typeof quizQuestionBank.$inferSelect;
 export type NewQuizQuestion = typeof quizQuestionBank.$inferInsert;
+export type TopikPlacementQuestion = typeof topikPlacementQuestions.$inferSelect;
+export type NewTopikPlacementQuestion = typeof topikPlacementQuestions.$inferInsert;
+export type TopikPlacementAttempt = typeof topikPlacementAttempts.$inferSelect;
+export type NewTopikPlacementAttempt = typeof topikPlacementAttempts.$inferInsert;
+export type TopikPlacementResponse = typeof topikPlacementResponses.$inferSelect;
+export type NewTopikPlacementResponse = typeof topikPlacementResponses.$inferInsert;
 export type AudioGenerationLog = typeof audioGenerationLog.$inferSelect;
 export type NewAudioGenerationLog = typeof audioGenerationLog.$inferInsert;
 export type ReadingPassage = typeof readingPassages.$inferSelect;

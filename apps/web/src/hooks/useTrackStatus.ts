@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import {
   DEFAULT_JLPT_CONTENT_RELEASE,
   levelsForContentRelease,
+  type JlptLevel,
+  type JlptTrackStatusDto,
   type TrackStatusDto,
 } from '@nihongo-n3/shared';
 import { tracksApi } from '../lib/api';
 import { useSettingsStore } from '../stores/settings-store';
 
-const FALLBACK_JLPT_STATUS: TrackStatusDto = {
+const FALLBACK_JLPT_STATUS: JlptTrackStatusDto = {
   track: 'jlpt-ja',
   available: true,
   content_release: DEFAULT_JLPT_CONTENT_RELEASE,
@@ -31,7 +33,9 @@ export function useTrackStatus() {
   const status = query.data ?? (track === 'jlpt-ja' ? FALLBACK_JLPT_STATUS : undefined);
   // `available_levels` is produced from the database distribution by the API.
   // The fallback above still comes from the shared release policy for offline startup.
-  const levels = status?.available ? status.available_levels : [];
+  const levels: JlptLevel[] = status?.track === 'jlpt-ja' && status.available
+    ? status.available_levels
+    : [];
 
   return { ...query, status, levels };
 }

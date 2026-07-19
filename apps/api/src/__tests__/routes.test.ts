@@ -43,6 +43,8 @@ import rawOauthLearningTrackMigration from '../../../../packages/db/drizzle-v2/0
 import rawContentProvenanceHomophonesMigration from '../../../../packages/db/drizzle-v2/0007_content_provenance_homophones.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawTopikTrackMigration from '../../../../packages/db/drizzle-v2/0008_topik_track_content_and_learning_keys.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikPlacementV2Migration from '../../../../packages/db/drizzle-v2/0009_topik_placement_v2.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -51,7 +53,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -870,6 +872,70 @@ describe('Learning tracks', () => {
     expect(body.data.level).toBe(level);
     expect(body.data.questions).toHaveLength(1);
     expect(body.data.questions[0]?.prompt).toBe(`track-${level}`);
+  });
+});
+
+describe('TOPIK placement V2', () => {
+  it('publishes only a complete 12+12 bank, hides answers until submit, and prevents resubmission', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.batch([
+      db.prepare(
+        `INSERT INTO track_content_sources (learning_track, source_code, title, file_path, source_version, provenance_json)
+         VALUES ('topik-ko', 'TOPIK-PLACEMENT-V2', 'test placement', 'test/topik-v2', 'test', '{}')`,
+      ),
+      db.prepare(
+        `INSERT INTO track_exam_levels (learning_track, exam_level, sort_order, label_en, label_ko, sections_json)
+         VALUES ('topik-ko', 'TOPIK-I', 1, 'TOPIK I', 'TOPIK I', '["listening","reading"]')
+         ON CONFLICT(learning_track, exam_level) DO UPDATE SET sections_json = excluded.sections_json`,
+      ),
+    ]);
+    const questionStatements = Array.from({ length: 24 }, (_, index) => {
+      const section = index < 12 ? 'listening' : 'reading';
+      const id = `topik-placement-v2-test-${String(index + 1).padStart(3, '0')}`;
+      return db.prepare(
+        `INSERT INTO topik_placement_questions
+          (id, learning_track, exam_level, section, skill, difficulty, prompt_ko, prompt_en, gloss_en,
+           choices_json, answer_index, explanation_en, explanation_ko, source_code, author_reviewer,
+           second_reviewer, reviewed_at, bank_version, audio_script_ko, is_published)
+         VALUES (?, 'topik-ko', 'TOPIK-I', ?, 'test-skill', 1, ?, ?, 'test',
+                 '["정답","오답 1","오답 2","오답 3"]', 0, 'English explanation', '한국어 해설',
+                 'TOPIK-PLACEMENT-V2', 'author review', 'language review', '2026-07-19', 'v2', ?, 1)`,
+      ).bind(id, section, `${section} 질문 ${index + 1}`, `${section} question ${index + 1}`, section === 'listening' ? `한국어 듣기 문장 ${index + 1}입니다.` : null);
+    });
+    await db.batch(questionStatements);
+
+    const status = await json<{ data: { available: boolean; content_release: string; available_sections: string[] } }>('/api/v1/tracks/topik-ko/status');
+    expect(status.data).toMatchObject({ available: true, content_release: 'placement-preview', available_sections: ['listening', 'reading'] });
+
+    const cookie = await registerTestSession();
+    const headers = { 'Content-Type': 'application/json', Cookie: cookie };
+    const switched = await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) });
+    expect(switched.status).toBe(200);
+
+    const started = await fetch('/api/v1/tracks/topik-ko/placement/attempts', {
+      method: 'POST', headers, body: JSON.stringify({ instruction_language: 'en' }),
+    });
+    expect(started.status).toBe(201);
+    const startBody = await started.json<{ data: { id: string; questions: Array<{ id: string; section: string; audio: { kind: string } | null }> } }>();
+    expect(startBody.data.questions).toHaveLength(24);
+    expect(startBody.data.questions.filter((item) => item.section === 'listening')).toHaveLength(12);
+    expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'browser-fallback' });
+    expect(JSON.stringify(startBody)).not.toContain('answer_index');
+    expect(JSON.stringify(startBody)).not.toContain('explanation_en');
+
+    const answers = startBody.data.questions.map((question) => ({ question_id: question.id, selected_index: 0 }));
+    const submitted = await fetch(`/api/v1/tracks/topik-ko/placement/attempts/${startBody.data.id}/submit`, {
+      method: 'POST', headers, body: JSON.stringify({ answers }),
+    });
+    expect(submitted.status).toBe(200);
+    const result = await submitted.json<{ data: { score_total: number; score_listening: number; score_reading: number; result_band: string; answers: unknown[] } }>();
+    expect(result.data).toMatchObject({ score_total: 100, score_listening: 100, score_reading: 100, result_band: 'ready' });
+    expect(result.data.answers).toHaveLength(24);
+
+    const repeated = await fetch(`/api/v1/tracks/topik-ko/placement/attempts/${startBody.data.id}/submit`, {
+      method: 'POST', headers, body: JSON.stringify({ answers }),
+    });
+    expect(repeated.status).toBe(409);
   });
 });
 

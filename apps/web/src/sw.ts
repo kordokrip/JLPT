@@ -78,15 +78,15 @@ self.addEventListener('push', (event: PushEvent) => {
   try {
     data = event.data ? (event.data.json() as typeof data) : {};
   } catch {
-    data = { title: 'JLPT N3', body: event.data?.text() ?? '새 알림이 있습니다.' };
+    data = { title: 'JLPT · TOPIK Study', body: event.data?.text() ?? '새 학습 알림이 있습니다.' };
   }
 
-  const title   = data.title ?? 'JLPT N3 일본어 학습';
+  const title   = data.title ?? 'JLPT · TOPIK Study';
   const options: NotificationOptions = {
     body:   data.body   ?? '학습 알림이 도착했습니다.',
     icon:   data.icon   ?? '/pwa-192x192.png',
     badge:  data.badge  ?? '/pwa-192x192.png',
-    tag:    data.tag    ?? 'nihongo-notification',
+    tag:    data.tag    ?? 'language-study-notification',
     data:   { url: data.url ?? '/' },
     requireInteraction: false,
   };

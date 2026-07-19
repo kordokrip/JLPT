@@ -1,16 +1,16 @@
 # TOPIK 한국어능력시험 제품 확장 계획
 
-기준일: 2026-07-17 KST
-현재 단계: T1~T3 내부 구현 완료, 콘텐츠 미출시
+기준일: 2026-07-19 KST
+현재 단계: T1~T4 release candidate 구현, production 콘텐츠 미출시
 
 ## 목표와 비목표
 
 목표는 한 계정에서 일본어 JLPT와 한국어 TOPIK 중 학습 트랙을 선택하되, 진도·복습·퀴즈·오프라인 데이터가 섞이지 않는 구조를 만드는 것이다.
 
-현재 R3 foundation은 트랙 선택과 격리만 사용자에게 제공한다. T3 자체 저작 placement
-문제은행은 DB schema·manifest·검증에만 존재하며 공개 route, 온보딩 CTA, 채점 결과,
-레벨 판정, 학습 추천에는 아직 연결하지 않는다. 공식 점수 예측이나 공식 시험 대체도
-제공하지 않는다.
+현재 production의 R3 foundation은 트랙 선택과 격리만 제공한다. 기능 브랜치에는 T4 자체
+저작 Placement V2 24문항, 공개 명세 후보 route, Dashboard·Learn·Review·Progress UI가
+구현돼 있으나 production seed·Worker·Pages에는 아직 반영하지 않았다. 공식 점수 예측이나
+공식 시험 대체는 제공하지 않는다.
 
 ## 현재 구현
 
@@ -18,13 +18,15 @@
 - user와 OAuth state의 learning track
 - `/api/v1/tracks/:track/status`
 - first-entry track selection
-- TOPIK foundation-only page
+- track별 Dashboard·navigation registry와 TOPIK foundation lesson UI
 - user×track query/IDB/localStorage namespace
 - JLPT compatibility route guard
 - 세션 기반 server SRS·daily log·quiz attempt·self-check·sync delta track 격리
 - track-aware FSRS settings 및 optimizer candidate key
 - track별 source/exam level/seed run provenance schema
-- 자체 저작 TOPIK I placement 12문항과 local D1 manifest verifier
+- 자체 저작 TOPIK I placement V1 12문항과 V2 24문항의 local D1 manifest verifier
+- V2 응시·제출·최근 결과·오답 복습 OpenAPI route candidate
+- account×track IndexedDB 기초 단원 진행률
 
 ## 설계 원칙
 
@@ -72,20 +74,28 @@
 - 이 문제은행은 공개 seed와 public OpenAPI에 등록하지 않는다. T4에서 별도 API 계약과
   T5 수동 승인까지 통과해야 사용자에게 표시할 수 있다.
 
-### T4: API와 Web
+### T4: API와 Web - release candidate 구현
 
-- `/api/v1/tracks/topik-ko/...`
-- track-aware generated OpenAPI client
-- onboarding, browse, quiz, review, stats의 트랙별 화면
-- 영어 설명과 한국어 콘텐츠의 i18n 분리
+- `/api/v1/tracks/topik-ko/placement/...`의 시작·제출·최근 결과·오답 복습 route를
+  `createRoute()`와 public OpenAPI에 등록했다.
+- generated OpenAPI client로 track status와 placement wire DTO를 연결했다.
+- Welcome, Dashboard, Placement, Learn, Review, Progress를 TrackRegistry 내비게이션에
+  연결했다. TOPIK browse·일반 quiz·stats는 검수 콘텐츠와 집계 계약이 없어 아직 만들지 않는다.
+- 앱 UI 언어(한국어·영어·일본어)와 TOPIK 해설 언어(영어·한국어)를 분리했다.
+- Placement V2는 듣기 12문항과 읽기 12문항으로 구성하며, 제출 전 정답·해설·듣기 script를
+  노출하지 않는다.
 
-### T5: 검증과 출시
+### T5: 검증 완료, preview 사용자 승인 대기
 
-- 사용자×트랙×계정 조합 E2E
-- IndexedDB/cache/sync 격리
-- placement 결과 재현성과 추천 기준 QA
-- preview 사용자 테스트
-- JLPT와 독립적인 수동 승인 릴리스
+- 사용자×트랙×계정 조합과 IndexedDB/cache/sync 격리를 Chromium·WebKit E2E로 검증했다.
+- Placement V2 24문항은 듣기/읽기 12문항씩이며 정답 위치를 선택지 0~3에 각각 6개로
+  배분했다. 최초 교차검증에서 전 문항 정답이 첫 선택지였던 편향을 발견해 seed 전에
+  수정하고 verifier의 blocking 조건으로 고정했다.
+- 제출 전 wire response와 DOM에는 정답·해설·듣기 script가 없고, 제출 후 현재 사용자의
+  응시 결과와 오답 복습에서만 공개된다.
+- Chromium 전체 87개, WebKit 기능 57개, macOS·Linux Chromium 시각 baseline 각 30개가
+  통과했다. WebKit에서는 Chromium 전용 이미지 baseline 30개를 의도적으로 실행하지 않는다.
+- 남은 절차는 preview 사용자 테스트와 JLPT 운영 회귀 확인, 별도 사람 승인이다.
 
 ## 출시 관문
 
@@ -100,5 +110,6 @@
 ## 현재 의사결정
 
 R1과 R2 운영 관문, T4 API contract, T5 수동 승인이 모두 끝나기 전에는 TOPIK 문제은행을
-production branch의 공개 콘텐츠 seed나 사용자 route에 섞지 않는다. foundation과 T1~T3
-코드는 경계를 검증하기 위한 것이며 사용자에게 완성된 TOPIK 과정으로 홍보하지 않는다.
+production 콘텐츠 seed나 운영 사용자 route에 섞지 않는다. T4 기능 브랜치의 public spec은
+preview 검증용 출시 후보이며, production 배포 완료를 의미하지 않는다. 검수 범위가
+Placement와 6개 기초 단원에 한정되므로 완성된 TOPIK 과정으로 홍보하지 않는다.

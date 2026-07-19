@@ -45,6 +45,7 @@ export default function Settings() {
     lastSyncedAt,
     language, setLanguage,
     learningTrack,
+    instructionLanguages, setInstructionLanguage,
   } = useSettingsStore();
   const switchTrack = useAuthStore((s) => s.switchTrack);
 
@@ -67,6 +68,12 @@ export default function Settings() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (learningTrack === 'topik-ko' && instructionLanguages['topik-ko'] === 'ja') {
+      setInstructionLanguage('topik-ko', 'en');
+    }
+  }, [instructionLanguages, learningTrack, setInstructionLanguage]);
 
   const handlePushToggle = async () => {
     setPushLoading(true);
@@ -122,10 +129,10 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
+    <div className="mx-auto max-w-[880px] px-5 py-8 pb-24 sm:px-8 sm:py-12 lg:px-20">
       {/* 헤더 */}
       <div className="mb-10">
-        <h1 className="font-pretendard text-[40px] font-medium text-foreground leading-none mb-3">{t('settings.title')}</h1>
+        <h1 className="mb-3 font-pretendard text-3xl font-medium leading-none text-foreground sm:text-4xl">{t('settings.title')}</h1>
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)]">{t('settings.subtitle')}</p>
       </div>
 
@@ -136,6 +143,24 @@ export default function Settings() {
             options={SUPPORTED_LANGS.map(l => ({ value: l.code, label: l.native }))}
             value={language}
             onChange={handleLangChange}
+          />
+        </SettingRow>
+        <SettingRow label={t('settings.instructionLanguage')} sublabel={t('settings.instructionLanguageDesc')}>
+          <SegmentControl
+            options={learningTrack === 'topik-ko'
+              ? [
+                  { value: 'en', label: 'English' },
+                  { value: 'ko', label: '한국어' },
+                ]
+              : [
+                  { value: 'ko', label: '한국어' },
+                  { value: 'en', label: 'English' },
+                  { value: 'ja', label: '日本語' },
+                ]}
+            value={learningTrack === 'topik-ko' && instructionLanguages[learningTrack] === 'ja'
+              ? 'en'
+              : instructionLanguages[learningTrack]}
+            onChange={(value) => setInstructionLanguage(learningTrack, value)}
           />
         </SettingRow>
       </SettingSection>
@@ -272,12 +297,12 @@ export default function Settings() {
         )}
       </SettingSection>
 
-      <SettingSection title="계정" subtitle="">
-        <SettingRow label="학습 언어" sublabel="계정과 오프라인 학습 데이터가 트랙별로 분리됩니다.">
+      <SettingSection title={t('settings.account')} subtitle="">
+        <SettingRow label={t('settings.studyTrack')} sublabel={t('settings.studyTrackDesc')}>
           <SegmentControl
             options={[
-              { value: 'jlpt-ja', label: '일본어 · JLPT' },
-              { value: 'topik-ko', label: '한국어 · TOPIK' },
+              { value: 'jlpt-ja', label: t('settings.jlptTrack') },
+              { value: 'topik-ko', label: t('settings.topikTrack') },
             ]}
             value={learningTrack}
             onChange={(track) => {
@@ -287,14 +312,14 @@ export default function Settings() {
             }}
           />
         </SettingRow>
-        <SettingRow label={authUser?.email ?? '로그인 계정'} sublabel={authUser?.role === 'admin' ? '관리자 계정' : '일반 사용자'}>
+        <SettingRow label={authUser?.email ?? t('settings.loginAccount')} sublabel={authUser?.role === 'admin' ? t('settings.adminAccount') : t('settings.userAccount')}>
           <div className="flex flex-wrap gap-2">
             {authUser?.role === 'admin' && (
               <Link
                 to="/admin/users"
                 className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--border)] px-4 text-sm font-medium"
               >
-                회원 관리
+                {t('settings.manageUsers')}
               </Link>
             )}
             <button
@@ -304,7 +329,7 @@ export default function Settings() {
               }}
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 text-sm font-medium text-white"
             >
-              로그아웃
+              {t('settings.logout')}
             </button>
           </div>
         </SettingRow>

@@ -351,3 +351,37 @@ R1 기준선 위에 provenance·동음이의어 30쌍, DB 분포 기반 N2/N1 re
 | Pages | [29598980261](https://github.com/kordokrip/JLPT/actions/runs/29598980261) | failure | build 성공, preview token 미등록 |
 
 Pages 실패 로그는 Wrangler가 비대화형 환경의 `CLOUDFLARE_API_TOKEN`을 받지 못했다고 명시한다. workflow 우회나 optional 전환은 하지 않았고, 최소권한 Pages token 등록 전 병합·production 배포를 보류했다.
+
+## 20. 2026-07-19 통합 브랜드와 TOPIK T4/T5 release candidate
+
+제품명을 `JLPT · TOPIK Study`로 확정하고 일본·한국 학습 트랙을 한 시각 체계로 묶는 신규
+래스터 일러스트를 생성했다. `brand-hero`, 저대비 page background, sidebar mark, iOS/PWA
+아이콘, manifest screenshot을 같은 원본에서 용도별로 최적화했다. 기존 bamboo 배경과 임시
+favicon은 제거했다. Welcome은 full-bleed 브랜드 이미지 위에서 JLPT/TOPIK 트랙을 먼저
+선택하며, 인증 이후에는 track token을 사용하는 공통 shell과 반응형 navigation을 쓴다.
+
+`TrackRegistry`와 discriminated track status DTO를 shared 단일 소스로 만들고 public
+OpenAPI 57개/admin 7개 경로의 generated client를 갱신했다. TOPIK은 Dashboard,
+Placement, Learn, Review, Progress route를 제공하고 6개 자체 저작 기초 단원 진행률을
+account×track IndexedDB에 저장한다. 한국어 발음 fallback은 `ko-KR` voice를 한 번만
+재생하며 승인되지 않은 R2 경로를 만들지 않는다.
+
+`0009_topik_placement_v2.sql`은 응시·답안 모델을 추가하고, 자체 저작 V2 문제은행은 듣기
+12문항과 읽기 12문항으로 구성했다. 첫 교차검증에서 24문항 모두 첫 선택지가 정답인 편향을
+찾았다. 정답 위치를 0~3에 각각 6개로 재배치하고 이 분포를 manifest unit test와 local D1
+verifier의 blocking 조건으로 추가했다. TOPIK 해설 언어는 제품 ADR과 동일하게 영어·한국어로
+제한했으며 기존 로컬 `ja` 값은 영어로 보정한다.
+
+| 관문 | 결과 |
+| --- | --- |
+| dependency/OpenAPI | high 이상 취약점 0, public 57/admin 7, 생성 해시 2회 동일 |
+| Type/Unit/Build | 5 workspace typecheck, ops 8, DB 22, Web 66, API 96, Web·Worker build 통과 |
+| Fresh D1 | migration 10/10, source 13, FTS·FK·중복·필수값 통과 |
+| TOPIK V2 | 24문항, 듣기/읽기 12/12, 정답 위치 6/6/6/6, manifest/checksum/FK 통과 |
+| Chromium | 87/87 통과, macOS 시각 baseline 30개 포함 |
+| WebKit | 기능·반응형 57/57 통과, Chromium 전용 시각 30개 의도적 skip |
+| Linux 시각 교차검증 | Playwright 1.60 Ubuntu container baseline 30/30 통과 |
+
+fresh verifier의 R2 audio key 4,954건 warning은 TD-08로 유지했고 최소값을 낮추지 않았다.
+Phase 0~5는 로컬 release candidate 관문을 통과했지만 Phase 6 preview 사용자 QA와 사람
+승인이 남아 있다. 따라서 production D1/R2, Worker, Pages 배포는 수행하지 않았다.

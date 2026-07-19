@@ -16,23 +16,22 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       includeAssets: [
-        'favicon.ico',
         'favicon-16.png',
         'favicon-32.png',
         'apple-touch-icon.png',
         'masked-icon.svg',
         'brand-mark.png',
         'brand-hero.png',
-        'page-bg-bamboo.png',
+        'page-bg-unified.png',
       ],
       manifest: {
-        name: 'JLPT N3 일본어 학습',
-        short_name: '일본어 N3',
-        description: 'JLPT N3 오프라인 우선 일본어 학습 PWA',
+        name: 'JLPT · TOPIK Study',
+        short_name: 'JLPT·TOPIK',
+        description: 'JLPT 일본어와 TOPIK 한국어를 트랙별로 학습하는 오프라인 우선 PWA',
         id: '/',
         dir: 'ltr',
-        theme_color: '#080A08',
-        background_color: '#080A08',
+        theme_color: '#F7F0E2',
+        background_color: '#F7F0E2',
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui'],
         scope: '/',
@@ -47,13 +46,13 @@ export default defineConfig({
         ],
         shortcuts: [
           {
-            name: '오늘의 복습',
-            url: '/review',
+            name: '학습 홈',
+            url: '/',
             icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
           },
           {
-            name: '어휘 검색',
-            url: '/browse/vocab',
+            name: '학습 설정',
+            url: '/settings',
             icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
           },
         ],
@@ -64,7 +63,7 @@ export default defineConfig({
             type: 'image/png',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             form_factor: 'narrow' as any,
-            label: 'JLPT N3 모바일 화면',
+            label: 'JLPT · TOPIK Study 모바일 화면',
           },
           {
             src: 'screenshots/desktop.png',
@@ -72,7 +71,7 @@ export default defineConfig({
             type: 'image/png',
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             form_factor: 'wide' as any,
-            label: 'JLPT N3 데스크톱 화면',
+            label: 'JLPT · TOPIK Study 데스크톱 화면',
           },
         ],
         share_target: {

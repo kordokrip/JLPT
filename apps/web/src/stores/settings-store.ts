@@ -5,11 +5,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
 import type { SupportedLang } from '../i18n';
-import type { LearningTrackId } from '@nihongo-n3/shared';
+import {
+  LEARNING_TRACK_DEFINITIONS,
+  type InstructionLanguage,
+  type LearningTrackId,
+} from '@nihongo-n3/shared';
 
 interface SettingsState {
   learningTrack: LearningTrackId;
   setLearningTrack: (track: LearningTrackId) => void;
+  instructionLanguages: Record<LearningTrackId, InstructionLanguage>;
+  setInstructionLanguage: (track: LearningTrackId, language: InstructionLanguage) => void;
   // 언어
   language:    SupportedLang;
   setLanguage: (l: SupportedLang) => void;
@@ -48,6 +54,13 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       learningTrack: 'jlpt-ja',
       setLearningTrack: (learningTrack) => set({ learningTrack }),
+      instructionLanguages: {
+        'jlpt-ja': LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
+        'topik-ko': LEARNING_TRACK_DEFINITIONS['topik-ko'].defaultInstructionLanguage,
+      },
+      setInstructionLanguage: (track, language) => set((state) => ({
+        instructionLanguages: { ...state.instructionLanguages, [track]: language },
+      })),
       language:    'ko',
       setLanguage: (l) => set({ language: l }),
 
@@ -76,7 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 3,
+      version: 4,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>
@@ -84,6 +97,12 @@ export const useSettingsStore = create<SettingsState>()(
         return {
           ...state,
           ttsProvider: 'browser' as TtsProviderId,
+          instructionLanguages: {
+            'jlpt-ja': state.instructionLanguages?.['jlpt-ja']
+              ?? LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
+            'topik-ko': state.instructionLanguages?.['topik-ko']
+              ?? LEARNING_TRACK_DEFINITIONS['topik-ko'].defaultInstructionLanguage,
+          },
         };
       },
     },

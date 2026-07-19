@@ -444,13 +444,399 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                track: "jlpt-ja" | "topik-ko";
+                                track: "jlpt-ja";
                                 available: boolean;
                                 /** @enum {string} */
                                 content_release: "foundation-only" | "n5-n3" | "n5-n1";
                                 available_levels: ("N5" | "N4" | "N3" | "N2" | "N1")[];
                                 write_enabled: boolean;
+                            } | {
+                                /** @enum {string} */
+                                track: "topik-ko";
+                                available: boolean;
+                                /** @enum {string} */
+                                content_release: "foundation-only" | "placement-preview" | "topik-i";
+                                available_levels: ("TOPIK-I" | "TOPIK-II")[];
+                                available_sections: ("listening" | "reading")[];
+                                write_enabled: boolean;
                             };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/placement/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** TOPIK I 배치 진단 시작 */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @default en
+                         * @enum {string}
+                         */
+                        instruction_language?: "en" | "ko";
+                    };
+                };
+            };
+            responses: {
+                /** @description 정답을 제외한 진단 문항 */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                bank_version: string;
+                                /** @enum {string} */
+                                status: "in_progress" | "completed";
+                                /** @enum {string} */
+                                instruction_language: "en" | "ko";
+                                questions: {
+                                    id: string;
+                                    /** @enum {string} */
+                                    section: "listening" | "reading";
+                                    skill: string;
+                                    difficulty: number;
+                                    prompt_ko: string;
+                                    prompt_en: string;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        kind: "r2";
+                                        url: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        kind: "browser-fallback";
+                                        text_ko: string;
+                                    } | null;
+                                }[];
+                                started_at: number;
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 검수 문제은행 미출시 */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/placement/attempts/{attemptId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** TOPIK I 배치 진단 제출 및 채점 */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    attemptId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        answers: {
+                            question_id: string;
+                            selected_index: number;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description 채점과 학습 밴드 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                attempt_id: string;
+                                score_total: number;
+                                score_listening: number;
+                                score_reading: number;
+                                /** @enum {string} */
+                                result_band: "starter" | "foundation" | "ready";
+                                answers: {
+                                    question_id: string;
+                                    selected_index: number;
+                                    answer_index: number;
+                                    is_correct: boolean;
+                                    explanation_en: string;
+                                    explanation_ko: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description 누락·중복 답안 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 응시 기록 없음 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 이미 제출 또는 트랙 불일치 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/placement/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 최근 TOPIK 진단 결과 */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 최근 결과 또는 null */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                attempt_id: string;
+                                score_total: number;
+                                score_listening: number;
+                                score_reading: number;
+                                /** @enum {string} */
+                                result_band: "starter" | "foundation" | "ready";
+                                completed_at: number;
+                            } | null;
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/placement/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 최근 진단 오답 복습 */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 제출 완료 후 공개되는 최근 오답과 해설 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                question_id: string;
+                                /** @enum {string} */
+                                section: "listening" | "reading";
+                                prompt_ko: string;
+                                prompt_en: string;
+                                choices: string[];
+                                selected_index: number;
+                                answer_index: number;
+                                explanation_en: string;
+                                explanation_ko: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
                         };
                     };
                 };

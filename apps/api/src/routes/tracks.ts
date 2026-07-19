@@ -6,6 +6,9 @@ import {
   jlptLevelSchema,
   learningTrackIdSchema,
   levelsForContentRelease,
+  topikContentReleaseSchema,
+  topikExamLevelSchema,
+  topikSectionSchema,
 } from '@nihongo-n3/shared';
 
 import type { AppEnv } from '../types.js';
@@ -49,6 +52,24 @@ async function getReleasedLevels(db: AppEnv['Bindings']['DB']) {
   return { release, levels: levelsForContentRelease(release) };
 }
 
+async function getTopikRelease(db: AppEnv['Bindings']['DB']) {
+  try {
+    const result = await db.prepare(
+      `SELECT section, COUNT(*) AS count
+         FROM topik_placement_questions
+        WHERE learning_track = 'topik-ko' AND bank_version = 'v2' AND is_published = 1
+        GROUP BY section`,
+    ).all<{ section: string; count: number }>();
+    const counts = new Map((result.results ?? []).map((row) => [row.section, row.count]));
+    const available = (counts.get('listening') ?? 0) >= 12 && (counts.get('reading') ?? 0) >= 12;
+    return available
+      ? { available: true, contentRelease: 'placement-preview' as const, levels: ['TOPIK-I'] as const, sections: ['listening', 'reading'] as const }
+      : { available: false, contentRelease: 'foundation-only' as const, levels: [] as const, sections: [] as const };
+  } catch {
+    return { available: false, contentRelease: 'foundation-only' as const, levels: [] as const, sections: [] as const };
+  }
+}
+
 const route = createRoute({
   method: 'get',
   path: '/tracks/{track}/status',
@@ -63,13 +84,23 @@ const route = createRoute({
       content: {
         'application/json': {
           schema: z.object({
-            data: z.object({
-              track: learningTrackIdSchema,
-              available: z.boolean(),
-              content_release: contentReleaseSchema,
-              available_levels: z.array(jlptLevelSchema),
-              write_enabled: z.boolean(),
-            }),
+            data: z.discriminatedUnion('track', [
+              z.object({
+                track: z.literal('jlpt-ja'),
+                available: z.boolean(),
+                content_release: contentReleaseSchema,
+                available_levels: z.array(jlptLevelSchema),
+                write_enabled: z.boolean(),
+              }),
+              z.object({
+                track: z.literal('topik-ko'),
+                available: z.boolean(),
+                content_release: topikContentReleaseSchema,
+                available_levels: z.array(topikExamLevelSchema),
+                available_sections: z.array(topikSectionSchema),
+                write_enabled: z.boolean(),
+              }),
+            ]),
           }),
         },
       },
@@ -80,13 +111,15 @@ const route = createRoute({
 tracksOA.openapi(route, async (c) => {
   const { track } = c.req.valid('param');
   if (track === 'topik-ko') {
+    const release = await getTopikRelease(c.env.DB);
     return c.json({
       data: {
         track,
-        available: false,
-        content_release: 'foundation-only' as const,
-        available_levels: [],
-        write_enabled: false,
+        available: release.available,
+        content_release: release.contentRelease,
+        available_levels: [...release.levels],
+        available_sections: [...release.sections],
+        write_enabled: release.available,
       },
     });
   }

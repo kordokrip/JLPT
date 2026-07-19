@@ -12,7 +12,7 @@ export default function QuizListening() {
     const requested = searchParams.get('level');
     return isJlptLevel(requested) && levels.includes(requested)
       ? requested
-      : (levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels.at(-1) ?? DEFAULT_JLPT_LEVEL);
+      : (levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL);
   }, [levels, searchParams]);
 
   useEffect(() => {

@@ -11,6 +11,17 @@ import {
   type ContentRelease,
   type JlptLevel,
 } from './jlpt-levels';
+import {
+  LEARNING_TRACK_IDS,
+  TOPIK_CONTENT_RELEASES,
+  TOPIK_EXAM_LEVELS,
+  TOPIK_INSTRUCTION_LANGUAGES,
+  TOPIK_SECTIONS,
+  type LearningTrackId,
+  type TopikContentRelease,
+  type TopikExamLevel,
+  type TopikSection,
+} from './learning-tracks';
 
 // ─────────────────────────────────────────────
 // 공통
@@ -23,11 +34,13 @@ export const contentReleaseSchema = z.enum(
 );
 export type { ContentRelease } from './jlpt-levels';
 
-export const learningTrackIdSchema = z.enum(['jlpt-ja', 'topik-ko']);
-export type LearningTrackId = z.infer<typeof learningTrackIdSchema>;
+export const learningTrackIdSchema = z.enum(
+  [...LEARNING_TRACK_IDS] as [LearningTrackId, ...LearningTrackId[]],
+);
+export type { LearningTrackId } from './learning-tracks';
 
-export interface TrackStatusDto {
-  track: LearningTrackId;
+export interface JlptTrackStatusDto {
+  track: 'jlpt-ja';
   available: boolean;
   content_release: ContentRelease;
   available_levels: JlptLevel[];
@@ -35,11 +48,89 @@ export interface TrackStatusDto {
 }
 
 /** TOPIK content uses its own exam-level taxonomy; it is not a JLPT level alias. */
-export const topikExamLevelSchema = z.enum(['TOPIK-I', 'TOPIK-II']);
-export type TopikExamLevel = z.infer<typeof topikExamLevelSchema>;
+export const topikExamLevelSchema = z.enum(
+  [...TOPIK_EXAM_LEVELS] as [TopikExamLevel, ...TopikExamLevel[]],
+);
+export type { TopikExamLevel } from './learning-tracks';
 
-export const topikSectionSchema = z.enum(['vocabulary', 'grammar', 'reading', 'listening', 'writing']);
-export type TopikSection = z.infer<typeof topikSectionSchema>;
+export const topikContentReleaseSchema = z.enum(
+  [...TOPIK_CONTENT_RELEASES] as [TopikContentRelease, ...TopikContentRelease[]],
+);
+export type { TopikContentRelease } from './learning-tracks';
+
+export const topikSectionSchema = z.enum(
+  [...TOPIK_SECTIONS] as [TopikSection, ...TopikSection[]],
+);
+export type { TopikSection } from './learning-tracks';
+
+export interface TopikTrackStatusDto {
+  track: 'topik-ko';
+  available: boolean;
+  content_release: TopikContentRelease;
+  available_levels: TopikExamLevel[];
+  available_sections: TopikSection[];
+  write_enabled: boolean;
+}
+
+export type TrackStatusDto = JlptTrackStatusDto | TopikTrackStatusDto;
+
+export const topikPlacementAudioSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('r2'), url: z.string().min(1) }),
+  z.object({ kind: z.literal('browser-fallback'), text_ko: z.string().min(1) }),
+]);
+export type TopikPlacementAudioDto = z.infer<typeof topikPlacementAudioSchema>;
+
+export const topikPlacementQuestionSchema = z.object({
+  id: z.string().min(1),
+  section: topikSectionSchema,
+  skill: z.string().min(1),
+  difficulty: z.number().int().min(1).max(5),
+  prompt_ko: z.string().min(1),
+  prompt_en: z.string().min(1),
+  choices: z.array(z.string().min(1)).length(4),
+  audio: topikPlacementAudioSchema.nullable(),
+});
+export type TopikPlacementQuestionDto = z.infer<typeof topikPlacementQuestionSchema>;
+
+export const topikPlacementStartBodySchema = z.object({
+  instruction_language: z.enum([...TOPIK_INSTRUCTION_LANGUAGES]).default('en'),
+});
+export type TopikPlacementStartBody = z.infer<typeof topikPlacementStartBodySchema>;
+
+export const topikPlacementAttemptSchema = z.object({
+  id: z.string().min(1),
+  bank_version: z.string().min(1),
+  status: z.enum(['in_progress', 'completed']),
+  instruction_language: z.enum([...TOPIK_INSTRUCTION_LANGUAGES]),
+  questions: z.array(topikPlacementQuestionSchema),
+  started_at: z.number().int(),
+});
+export type TopikPlacementAttemptDto = z.infer<typeof topikPlacementAttemptSchema>;
+
+export const topikPlacementSubmitBodySchema = z.object({
+  answers: z.array(z.object({
+    question_id: z.string().min(1),
+    selected_index: z.number().int().min(0).max(3),
+  })).min(1).max(100),
+});
+export type TopikPlacementSubmitBody = z.infer<typeof topikPlacementSubmitBodySchema>;
+
+export const topikPlacementResultSchema = z.object({
+  attempt_id: z.string().min(1),
+  score_total: z.number().int().min(0).max(100),
+  score_listening: z.number().int().min(0).max(100),
+  score_reading: z.number().int().min(0).max(100),
+  result_band: z.enum(['starter', 'foundation', 'ready']),
+  answers: z.array(z.object({
+    question_id: z.string().min(1),
+    selected_index: z.number().int().min(0).max(3),
+    answer_index: z.number().int().min(0).max(3),
+    is_correct: z.boolean(),
+    explanation_en: z.string().min(1),
+    explanation_ko: z.string().min(1),
+  })),
+});
+export type TopikPlacementResultDto = z.infer<typeof topikPlacementResultSchema>;
 
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 

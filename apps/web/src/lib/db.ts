@@ -147,6 +147,13 @@ export interface LocalMeta {
   updated_at: string;
 }
 
+export interface TopikLearningProgress {
+  id?: number;
+  scope_id: string;
+  unit_id: string;
+  completed_at: string;
+}
+
 // ─────────────────────────────────────────────
 // 유틸 — 로컬 userId namespace
 // ─────────────────────────────────────────────
@@ -207,6 +214,7 @@ class NihongoDb extends Dexie {
 
   // 로컬 메타데이터
   meta!: EntityTable<LocalMeta, 'key'>;
+  topik_progress!: EntityTable<TopikLearningProgress, 'id'>;
 
   constructor() {
     super('nihongo-n3');
@@ -253,6 +261,10 @@ class NihongoDb extends Dexie {
       await tx.table<SyncQueueItem, number>('sync_queue').toCollection().modify((item) => {
         item.user_id ??= localUserIdFor(LOCAL_USER, 'jlpt-ja');
       });
+    });
+
+    this.version(3).stores({
+      topik_progress: '++id, &[scope_id+unit_id], scope_id, completed_at',
     });
   }
 }

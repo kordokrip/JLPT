@@ -45,7 +45,7 @@ export function contentReleaseForAvailableLevels(levels: Iterable<unknown>): Con
 
 export function highestReleasedJlptLevel(release: ContentRelease): JlptLevel {
   const levels = RELEASE_LEVELS[release];
-  return levels.at(-1) ?? DEFAULT_JLPT_LEVEL;
+  return levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
 }
 
 /**

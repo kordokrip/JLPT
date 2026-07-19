@@ -28,7 +28,7 @@ export function useQuizRoute() {
 export function useQuizSession(mode: QuizMode) {
   const navigate = useNavigate();
   const { levels } = useTrackStatus();
-  const highestLevel = levels.at(-1) ?? DEFAULT_JLPT_LEVEL;
+  const highestLevel = levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
   const [level, setLevel] = useState<JlptLevel>(highestLevel);
   const [count, setCount] = useState(5);
   const [quizId, setQuizId] = useState<number | null>(null);

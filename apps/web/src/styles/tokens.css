@@ -1,7 +1,6 @@
 /**
- * Design Tokens — JLPT N3 학습 PWA
- * Extracted from _design/default_shadcn_theme.css and adapted for Japanese learning app.
- * Primary accent: Japanese red (#B91C1C), background: warm cream (#FAFAF7)
+ * Design Tokens — JLPT · TOPIK language learning PWA
+ * Shared neutral surfaces with track-aware accents.
  */
 
 :root {
@@ -9,6 +8,15 @@
   --color-primary:     #B91C1C;  /* 일본어 빨강 */
   --color-primary-fg:  #FFFFFF;
   --color-primary-hover: #991B1B;
+  --brand-vermilion: #C9362B;
+  --brand-indigo: #183A5A;
+  --brand-jade: #557B68;
+  --brand-ivory: #F7F0E2;
+  --brand-charcoal: #222629;
+  --track-accent: var(--brand-vermilion);
+  --track-secondary: var(--brand-indigo);
+  --track-soft: #F7E7E2;
+  --track-art-opacity: 0.055;
 
   /* ── Figma Make 디자인 토큰 (주색 · 와비사비) ─── */
   --accent:            #C8332B;  /* 주색 朱色 */
@@ -76,7 +84,7 @@
   --sidebar-width: 14rem;    /* 224px SideNav */
   --radius:        0.625rem;
   --radius-sm:     0.375rem;
-  --radius-md:     0.75rem;
+  --radius-md:     0.5rem;
   --radius-lg:     1rem;
   --radius-xl:     1.25rem;
   --touch-target:  44px;
@@ -107,6 +115,24 @@
   --transition-fast: 120ms ease;
   --transition-base: 200ms ease;
   --transition-smooth: 220ms cubic-bezier(.2,.8,.2,1);
+}
+
+[data-learning-track='jlpt-ja'] {
+  --track-accent: #C8332B;
+  --track-secondary: #315A78;
+  --track-soft: #FBEAE8;
+  --accent: var(--track-accent);
+  --accent-soft: var(--track-soft);
+  --ring: color-mix(in srgb, var(--track-accent) 34%, transparent);
+}
+
+[data-learning-track='topik-ko'] {
+  --track-accent: #1F4E70;
+  --track-secondary: #C9362B;
+  --track-soft: #E6EEF3;
+  --accent: var(--track-accent);
+  --accent-soft: var(--track-soft);
+  --ring: color-mix(in srgb, var(--track-accent) 34%, transparent);
 }
 
 /* ── 다크 모드 ──────────────────────────────────── */
@@ -140,4 +166,18 @@
   --shadow-lg:  0 8px 24px rgba(0,0,0,.5);
   --shadow-soft: 0 12px 34px rgba(0,0,0,.28);
   --shadow-float: 0 18px 48px rgba(0,0,0,.38);
+}
+
+.dark [data-learning-track='jlpt-ja'] {
+  --track-soft: #3D2320;
+  --accent-soft: var(--track-soft);
+  --track-art-opacity: 0.13;
+}
+
+.dark [data-learning-track='topik-ko'] {
+  --track-accent: #74A6C5;
+  --track-secondary: #E66A5D;
+  --track-soft: #1C3445;
+  --accent-soft: var(--track-soft);
+  --track-art-opacity: 0.11;
 }

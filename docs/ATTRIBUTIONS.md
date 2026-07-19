@@ -42,14 +42,15 @@
 
 ## TOPIK 자체 저작 콘텐츠
 
-`docs/07_topik/T3_placement_bank_v1.md`와
-`packages/db/src/seed/topik-placement-bank.ts`의 TOPIK I placement 문항은 프로젝트가
+`docs/07_topik/T3_placement_bank_v1.md`, `docs/07_topik/T4_placement_bank_v2.md`와
+`packages/db/src/seed/topik-placement-bank*.ts`의 TOPIK I placement 문항은 프로젝트가
 자체 저작한 내부 검증용 콘텐츠입니다. `track_content_sources`와
 `track_content_seed_sources`에는 source code, 원천 문서 checksum, 작성 검수자, 2차 언어
 검수자, 최종 검토일을 함께 저장합니다. 이 자료는 공식 TOPIK 기출문항, 정답지, 음원,
-점수 환산표를 복제하거나 대체하지 않으며, 현재 공개 API와 사용자 화면에 노출하지
-않습니다. 공개 전에는 `TOPIK_PRODUCT_EXPANSION_PLAN_2026.md`의 provenance·정답·해설·FK·E2E
-관문 및 별도 수동 승인을 충족해야 합니다.
+점수 환산표를 복제하거나 대체하지 않습니다. V2 24문항용 route와 화면은 기능 브랜치에
+구현됐지만 production seed와 사용자 서비스에는 아직 노출하지 않았습니다. 공개 전에는
+`TOPIK_PRODUCT_EXPANSION_PLAN_2026.md`의 provenance·정답·해설·FK·E2E 관문 및 별도 수동
+승인을 충족해야 합니다.
 
 ## 오디오
 
@@ -57,4 +58,9 @@
 
 ## 시각 자산
 
-`apps/web/public/brand-hero.png`, `brand-mark.png`, `page-bg-bamboo.png`와 파생 아이콘은 프로젝트 소유자가 제공한 자산이다. 원저작물의 재배포·상업 이용 권한 증빙은 운영 공개 범위를 확대하기 전에 별도로 보관해야 한다. 권리 확인 전에는 이 파일을 제3자용 데이터셋이나 템플릿으로 재배포하지 않는다.
+`apps/web/public/brand-hero.png`, `page-bg-unified.png`, `brand-mark.png`와 PWA·favicon 파생
+아이콘은 사용자가 제공한 한국·일본 주제 참고 이미지의 특성을 바탕으로 2026-07-19에
+OpenAI 이미지 생성 도구로 새로 제작한 프로젝트 전용 래스터 자산이다. 참고 이미지의
+워터마크, 문구 또는 구성을 복제해 포함하지 않는다. 입력 참고 이미지의 출처·이용 권한과
+생성 결과의 서비스 약관 증빙은 운영 공개 범위를 확대하기 전에 프로젝트 소유자가 별도
+보관해야 한다. 이 파일을 제3자용 데이터셋이나 템플릿으로 재배포하지 않는다.
