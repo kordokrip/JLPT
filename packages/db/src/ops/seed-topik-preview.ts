@@ -57,10 +57,16 @@ function count(sql: string): number {
 }
 
 const plan = buildTopikPlacementV2SeedPlan();
-const sqlPath = path.join(os.tmpdir(), `topik-preview-seed-${process.pid}.sql`);
+const tempDir = fs.mkdtempSync(
+  path.join(os.tmpdir(), "nihongo-topik-preview-seed-"),
+);
+const sqlPath = path.join(tempDir, "seed.sql");
 
 try {
-  fs.writeFileSync(sqlPath, `${plan.statements.join("\n\n")}\n`, "utf8");
+  fs.writeFileSync(sqlPath, `${plan.statements.join("\n\n")}\n`, {
+    encoding: "utf8",
+    flag: "wx",
+  });
   executeSqlFile(target, sqlPath);
 
   addCheck(
@@ -172,5 +178,5 @@ try {
   console.log(`TOPIK preview verification report: ${reportPath}`);
   if (!report.passed) process.exitCode = 1;
 } finally {
-  fs.rmSync(sqlPath, { force: true });
+  fs.rmSync(tempDir, { force: true, recursive: true });
 }
