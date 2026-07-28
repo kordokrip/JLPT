@@ -14,9 +14,10 @@ import app, {
   getAdminOpenApiDocument,
   getPublicOpenApiDocument,
   INTERNAL_ROUTE_EXCEPTIONS,
-} from '../index.js';
+} from '../app.js';
 import { audioContentHash, buildImmutableAudioKey } from '../jobs/generate-audio.js';
 import { receiver as observabilityReceiver } from '../observability-receiver.js';
+import { isSideEffectingRequest } from '../middleware/maintenance.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -45,6 +46,18 @@ import rawContentProvenanceHomophonesMigration from '../../../../packages/db/dri
 import rawTopikTrackMigration from '../../../../packages/db/drizzle-v2/0008_topik_track_content_and_learning_keys.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawTopikPlacementV2Migration from '../../../../packages/db/drizzle-v2/0009_topik_placement_v2.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikOfficialReferenceMigration from '../../../../packages/db/drizzle-v2/0010_topik_official_reference_data.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikJapanesePlacementMigration from '../../../../packages/db/drizzle-v2/0011_topik_japanese_placement_and_practice.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentReleaseContractMigration from '../../../../packages/db/drizzle-v2/0012_content_release_contract.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentReleaseControlPlaneMigration from '../../../../packages/db/drizzle-v2/0013_content_release_control_plane.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentReleaseReviewSignoffsMigration from '../../../../packages/db/drizzle-v2/0014_content_release_review_signoffs.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawAiLearningAssistanceMigration from '../../../../packages/db/drizzle-v2/0015_ai_learning_assistance_foundation.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -53,7 +66,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -491,6 +504,12 @@ describe('Read-only cutover mode', () => {
     expect(res.status).toBe(200);
   });
 
+  it('blocks router-local write paths as well as mounted API paths', () => {
+    expect(isSideEffectingRequest('POST', '/auth/login')).toBe(true);
+    expect(isSideEffectingRequest('GET', '/auth/google/start')).toBe(true);
+    expect(isSideEffectingRequest('POST', '/ai/translate')).toBe(false);
+  });
+
   it('blocks database-changing commands with retry metadata', async () => {
     const res = await fetchWithEnv('/api/v1/auth/login', readOnlyEnv, {
       method: 'POST',
@@ -679,7 +698,7 @@ describe('App auth', () => {
     expect(cleared).toContain('Secure');
   });
 
-  it('starts Google OAuth with the configured Worker callback in production', async () => {
+  it('starts Google OAuth with the configured Pages callback in production', async () => {
     const productionEnv = {
       ...env,
       ENVIRONMENT: 'production',
@@ -687,7 +706,7 @@ describe('App auth', () => {
       APP_ORIGIN: 'https://nihongo-n3.pages.dev',
       GOOGLE_CLIENT_ID: 'google-client-id',
       GOOGLE_CLIENT_SECRET: 'google-client-secret',
-      GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
+      GOOGLE_REDIRECT_URI: 'https://nihongo-n3.pages.dev/api/v1/auth/google/callback',
     };
     const res = await app.fetch(
       new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko', {
@@ -702,14 +721,14 @@ describe('App auth', () => {
     expect(cookie).toContain('SameSite=Lax');
     const location = res.headers.get('location') ?? '';
     expect(location).toContain('https://accounts.google.com/o/oauth2/v2/auth');
-    expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback');
+    expect(decodeURIComponent(location)).toContain('redirect_uri=https://nihongo-n3.pages.dev/api/v1/auth/google/callback');
     const stateRow = await (env as typeof env & { DB: D1Database }).DB.prepare(
       `SELECT learning_track FROM oauth_states ORDER BY created_at DESC LIMIT 1`,
     ).first<{ learning_track: string }>();
     expect(stateRow?.learning_track).toBe('topik-ko');
   });
 
-  it('completes Google OAuth through the cross-origin bridge and keeps the requested track', async () => {
+  it('completes Google OAuth on the Pages origin and keeps the requested track', async () => {
     const productionEnv = {
       ...env,
       ENVIRONMENT: 'production',
@@ -717,7 +736,7 @@ describe('App auth', () => {
       APP_ORIGIN: 'https://nihongo-n3.pages.dev',
       GOOGLE_CLIENT_ID: 'google-client-id',
       GOOGLE_CLIENT_SECRET: 'google-client-secret',
-      GOOGLE_REDIRECT_URI: 'https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback',
+      GOOGLE_REDIRECT_URI: 'https://nihongo-n3.pages.dev/api/v1/auth/google/callback',
     };
     const start = await app.fetch(
       new Request('https://nihongo-n3.pages.dev/api/v1/auth/google/start?track=topik-ko'),
@@ -747,29 +766,21 @@ describe('App auth', () => {
     try {
       const callback = await app.fetch(
         new Request(
-          `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
+          `https://nihongo-n3.pages.dev/api/v1/auth/google/callback?code=test-code&state=${encodeURIComponent(state)}`,
           { headers: { Cookie: oauthCookie } },
         ),
         productionEnv,
         createExecutionContext(),
       );
       expect(callback.status).toBe(302);
-      const bridgeLocation = new URL(callback.headers.get('location') ?? 'https://invalid.test');
-      expect(bridgeLocation.origin).toBe('https://nihongo-n3.pages.dev');
-      expect(bridgeLocation.pathname).toBe('/api/v1/auth/complete');
-
-      const complete = await app.fetch(
-        new Request(bridgeLocation),
-        productionEnv,
-        createExecutionContext(),
-      );
-      expect(complete.status).toBe(302);
-      const sessionCookie = complete.headers.get('set-cookie') ?? '';
+      expect(callback.headers.get('location')).toBe('https://nihongo-n3.pages.dev');
+      const sessionCookie = (callback.headers.get('set-cookie') ?? '')
+        .match(/__Host-n3_session=[^;]+/)?.[0] ?? '';
       expect(sessionCookie).toContain('__Host-n3_session=');
 
       const me = await app.fetch(
         new Request('https://nihongo-n3.pages.dev/api/v1/auth/me', {
-          headers: { Cookie: sessionCookie.split(';')[0] ?? '' },
+          headers: { Cookie: sessionCookie },
         }),
         productionEnv,
         createExecutionContext(),
@@ -894,18 +905,18 @@ describe('TOPIK placement V2', () => {
       const id = `topik-placement-v2-test-${String(index + 1).padStart(3, '0')}`;
       return db.prepare(
         `INSERT INTO topik_placement_questions
-          (id, learning_track, exam_level, section, skill, difficulty, prompt_ko, prompt_en, gloss_en,
-           choices_json, answer_index, explanation_en, explanation_ko, source_code, author_reviewer,
+          (id, learning_track, exam_level, section, skill, difficulty, prompt_ko, prompt_ja, prompt_en, gloss_en,
+           choices_json, answer_index, explanation_en, explanation_ko, explanation_ja, source_code, author_reviewer,
            second_reviewer, reviewed_at, bank_version, audio_script_ko, is_published)
-         VALUES (?, 'topik-ko', 'TOPIK-I', ?, 'test-skill', 1, ?, ?, 'test',
-                 '["정답","오답 1","오답 2","오답 3"]', 0, 'English explanation', '한국어 해설',
+         VALUES (?, 'topik-ko', 'TOPIK-I', ?, 'test-skill', 1, ?, ?, ?, 'test',
+                 '["정답","오답 1","오답 2","오답 3"]', 0, 'English explanation', '한국어 해설', '日本語の解説',
                  'TOPIK-PLACEMENT-V2', 'author review', 'language review', '2026-07-19', 'v2', ?, 1)`,
-      ).bind(id, section, `${section} 질문 ${index + 1}`, `${section} question ${index + 1}`, section === 'listening' ? `한국어 듣기 문장 ${index + 1}입니다.` : null);
+      ).bind(id, section, `${section} 질문 ${index + 1}`, `${section} 日本語の質問 ${index + 1}`, `${section} question ${index + 1}`, section === 'listening' ? `한국어 듣기 문장 ${index + 1}입니다.` : null);
     });
     await db.batch(questionStatements);
 
     const status = await json<{ data: { available: boolean; content_release: string; available_sections: string[] } }>('/api/v1/tracks/topik-ko/status');
-    expect(status.data).toMatchObject({ available: true, content_release: 'placement-preview', available_sections: ['listening', 'reading'] });
+    expect(status.data).toMatchObject({ available: true, content_release: 'placement-v2', available_sections: ['listening', 'reading'] });
 
     const cookie = await registerTestSession();
     const headers = { 'Content-Type': 'application/json', Cookie: cookie };
@@ -913,13 +924,15 @@ describe('TOPIK placement V2', () => {
     expect(switched.status).toBe(200);
 
     const started = await fetch('/api/v1/tracks/topik-ko/placement/attempts', {
-      method: 'POST', headers, body: JSON.stringify({ instruction_language: 'en' }),
+      method: 'POST', headers, body: JSON.stringify({ instruction_language: 'ja' }),
     });
     expect(started.status).toBe(201);
-    const startBody = await started.json<{ data: { id: string; questions: Array<{ id: string; section: string; audio: { kind: string } | null }> } }>();
+    const startBody = await started.json<{ data: { instruction_language: string; id: string; questions: Array<{ id: string; section: string; prompt_ja: string; audio: { kind: string } | null }> } }>();
+    expect(startBody.data.instruction_language).toBe('ja');
     expect(startBody.data.questions).toHaveLength(24);
     expect(startBody.data.questions.filter((item) => item.section === 'listening')).toHaveLength(12);
     expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'browser-fallback' });
+    expect(startBody.data.questions[0]?.prompt_ja).toContain('日本語');
     expect(JSON.stringify(startBody)).not.toContain('answer_index');
     expect(JSON.stringify(startBody)).not.toContain('explanation_en');
 
@@ -936,6 +949,159 @@ describe('TOPIK placement V2', () => {
       method: 'POST', headers, body: JSON.stringify({ answers }),
     });
     expect(repeated.status).toBe(409);
+  });
+});
+
+describe('TOPIK self-authored practice bank', () => {
+  it('keeps answers private until a learner explicitly opens a reviewed solution', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.batch([
+      db.prepare(
+        `INSERT INTO track_content_sources (learning_track, source_code, title, file_path, source_version, provenance_json)
+         VALUES ('topik-ko', 'TOPIK-PRACTICE-V1', 'test practice', 'test/topik-practice', 'test', '{}')
+         ON CONFLICT(learning_track, source_code) DO UPDATE SET source_version = excluded.source_version`,
+      ),
+      db.prepare(
+        `INSERT INTO track_exam_levels (learning_track, exam_level, sort_order, label_en, label_ko, sections_json)
+         VALUES ('topik-ko', 'TOPIK-II', 2, 'TOPIK II', 'TOPIK II', '["listening","writing","reading"]')
+         ON CONFLICT(learning_track, exam_level) DO UPDATE SET sections_json = excluded.sections_json`,
+      ),
+      db.prepare(
+        `INSERT INTO topik_practice_questions
+          (id, learning_track, exam_level, section, question_type, skill, difficulty, prompt_ko, prompt_ja, prompt_en,
+           choices_json, answer_index, explanation_ko, explanation_ja, explanation_en, source_code, author_reviewer,
+           second_reviewer, reviewed_at, bank_version, is_published)
+         VALUES ('topik-practice-test-001', 'topik-ko', 'TOPIK-II', 'reading', 'choice', 'test', 3,
+           '한국어 질문', '日本語の質問', 'English question', '["정답","오답 1","오답 2","오답 3"]', 0,
+           '한국어 해설', '日本語の解説', 'English explanation', 'TOPIK-PRACTICE-V1', 'author', 'reviewer', '2026-07-20', 'v1', 1)`,
+      ),
+    ]);
+
+    const cookie = await registerTestSession();
+    const headers = { Cookie: cookie };
+    const switched = await fetch('/api/v1/auth/track', { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ track: 'topik-ko' }) });
+    expect(switched.status).toBe(200);
+
+    const listed = await fetch('/api/v1/tracks/topik-ko/practice?exam_level=TOPIK-II&section=reading', { headers });
+    expect(listed.status).toBe(200);
+    const listBody = await listed.json<{ data: { questions: Array<{ id: string; prompt_ja: string }> } }>();
+    expect(listBody.data.questions).toHaveLength(1);
+    expect(listBody.data.questions[0]?.prompt_ja).toBe('日本語の質問');
+    expect(JSON.stringify(listBody)).not.toContain('answer_index');
+    expect(JSON.stringify(listBody)).not.toContain('explanation_ja');
+
+    const solution = await fetch('/api/v1/tracks/topik-ko/practice/questions/topik-practice-test-001/solution', { headers });
+    expect(solution.status).toBe(200);
+    const solutionBody = await solution.json<{ data: { answer_index: number; explanation_ja: string; question_type: string } }>();
+    expect(solutionBody.data).toMatchObject({
+      question_id: 'topik-practice-test-001',
+      question_type: 'choice',
+      answer_index: 0,
+      explanation_ja: '日本語の解説',
+    });
+  });
+});
+
+describe('TOPIK release-controlled curriculum contract', () => {
+  it('returns published items only and never serializes answers or explanations', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const releaseId = 'topik-release-contract-api-test';
+    const checksum = 'a'.repeat(64);
+    await db.batch([
+      db.prepare(`INSERT INTO content_releases (id, learning_track, content_version, release_state, manifest_sha256, parser_version) VALUES (?, 'topik-ko', 'api-contract-v1', 'draft', ?, 'test-parser')`).bind(releaseId, checksum),
+      db.prepare(`INSERT INTO content_release_sources (release_id, source_code, source_type, source_url, retrieved_at, source_sha256, license_id, license_url, allowed_use, attribution_text, author, first_reviewer, second_reviewer, reviewed_at, first_review_status, first_reviewed_at, second_review_status, second_reviewed_at) VALUES (?, 'API-CONTRACT-TEST', 'fixture', 'https://example.invalid/api-contract', '2026-07-27', ?, 'LicenseRef-local-test-fixture', 'https://example.invalid/license', 'test-fixture-only', 'API contract fixture', 'author', 'reviewer-a', 'reviewer-b', '2026-07-27', 'signed', '2026-07-27', 'signed', '2026-07-27')`).bind(releaseId, checksum),
+      db.prepare(`INSERT INTO topik_curriculum_units (id, release_id, learning_track, stable_ref, exam_level, exam_band, section, title_ko, title_ja, title_en, instruction_languages_json) VALUES ('topik-release-contract-unit', ?, 'topik-ko', 'topik.unit.api.contract', 'TOPIK-I', 'beginner', 'reading', '검증', '検証', 'Verification', '["ko","ja","en"]')`).bind(releaseId),
+      db.prepare(`INSERT INTO topik_content_items (id, release_id, unit_id, learning_track, stable_ref, exam_level, exam_band, section, item_kind, skill, difficulty, prompt_ko, prompt_ja, prompt_en, answer_payload_json, explanation_ko, explanation_ja, explanation_en, source_code) VALUES ('topik-release-contract-item', ?, 'topik-release-contract-unit', 'topik-ko', 'topik.item.api.contract', 'TOPIK-I', 'beginner', 'reading', 'practice', 'contract', 1, '한국어 공개 질문', '日本語の公開質問', 'English public prompt', '{"answer":"private"}', '비공개 해설', '非公開解説', 'Private explanation', 'API-CONTRACT-TEST')`).bind(releaseId),
+    ]);
+
+    const cookie = await registerTestSession();
+    const headers = { Cookie: cookie };
+    const switched = await fetch('/api/v1/auth/track', { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ track: 'topik-ko' }) });
+    expect(switched.status).toBe(200);
+
+    const draft = await fetch('/api/v1/tracks/topik-ko/content?exam_level=TOPIK-I&section=reading', { headers });
+    expect(draft.status).toBe(503);
+
+    for (const state of ['automated_checked', 'human_reviewed', 'preview', 'approved']) {
+      await db.prepare(`UPDATE content_releases SET release_state = ?, published_at = CASE WHEN ? = 'published' THEN unixepoch() ELSE published_at END WHERE id = ?`).bind(state, state, releaseId).run();
+    }
+    await db.batch(['G0', 'G1', 'G2', 'G3', 'G4'].map((gate) =>
+      db.prepare(`INSERT INTO content_release_gate_evidence (release_id, gate, gate_state, artifact_key, artifact_sha256, recorded_by) VALUES (?, ?, 'passed', ?, ?, 'system')`)
+        .bind(releaseId, gate, `evidence/report/v1/${releaseId}/${checksum}/artifact.json`, checksum),
+    ));
+    await db.prepare(`UPDATE content_releases SET release_state = 'published', published_at = unixepoch() WHERE id = ?`).bind(releaseId).run();
+    const published = await fetch('/api/v1/tracks/topik-ko/content?exam_level=TOPIK-I&section=reading', { headers });
+    expect(published.status).toBe(200);
+    const body = await published.json<{ data: { content_release: string; items: Array<{ id: string; prompt_ja: string }> } }>();
+    expect(body.data).toMatchObject({ content_release: 'api-contract-v1' });
+    expect(body.data.items).toHaveLength(1);
+    expect(body.data.items[0]?.prompt_ja).toBe('日本語の公開質問');
+    expect(JSON.stringify(body)).not.toContain('private');
+    expect(JSON.stringify(body)).not.toContain('해설');
+
+    await db.prepare(`UPDATE content_releases SET release_state = 'withdrawn', withdrawn_at = unixepoch() WHERE id = ?`).bind(releaseId).run();
+    const withdrawn = await fetch('/api/v1/tracks/topik-ko/content?exam_level=TOPIK-I&section=reading', { headers });
+    expect(withdrawn.status).toBe(503);
+  });
+});
+
+
+describe('TOPIK official reference', () => {
+  it('returns the public format and aggregate statistics without official item content', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const sourceCode = 'TOPIK-NIIED-APPLICANTS-2023';
+    await db.prepare(
+      `INSERT INTO track_content_sources (learning_track, source_code, title, file_path, source_version, provenance_json)
+       VALUES ('topik-ko', ?, 'NIIED TOPIK public statistics', 'docs/test.csv', '2023-12-31', '{}')
+       ON CONFLICT(learning_track, source_code) DO UPDATE SET source_version = excluded.source_version`,
+    ).bind(sourceCode).run();
+
+    const blueprints = [
+      ['topik-i-pbt-listening', 'TOPIK-I', 'listening', 30, 100, 200, 1, 2],
+      ['topik-i-pbt-reading', 'TOPIK-I', 'reading', 40, 100, 200, 1, 2],
+      ['topik-ii-pbt-listening', 'TOPIK-II', 'listening', 50, 100, 300, 3, 6],
+      ['topik-ii-pbt-writing', 'TOPIK-II', 'writing', 4, 100, 300, 3, 6],
+      ['topik-ii-pbt-reading', 'TOPIK-II', 'reading', 50, 100, 300, 3, 6],
+    ] as const;
+    await db.batch(blueprints.map(([id, examLevel, section, questionCount, sectionScore, totalScore, gradeMin, gradeMax]) => db.prepare(
+      `INSERT INTO topik_exam_blueprints
+        (id, learning_track, exam_level, delivery_mode, section, question_count, section_score, total_score,
+         grade_min, grade_max, source_code, source_url, source_version)
+       VALUES (?, 'topik-ko', ?, 'PBT', ?, ?, ?, ?, ?, ?, ?, 'https://www.data.go.kr/data/15067926/fileData.do', '2023-12-31')
+       ON CONFLICT(id) DO UPDATE SET question_count = excluded.question_count`,
+    ).bind(id, examLevel, section, questionCount, sectionScore, totalScore, gradeMin, gradeMax, sourceCode)));
+    await db.batch([
+      db.prepare(
+        `INSERT INTO topik_official_statistics
+          (learning_track, source_code, country_name_ko, exam_level, age_band, applicant_count, source_row)
+         VALUES ('topik-ko', ?, '테스트', 'TOPIK-I', '20s', 70, 2)
+         ON CONFLICT(learning_track, source_code, country_name_ko, exam_level, age_band) DO UPDATE SET applicant_count = excluded.applicant_count`,
+      ).bind(sourceCode),
+      db.prepare(
+        `INSERT INTO topik_official_statistics
+          (learning_track, source_code, country_name_ko, exam_level, age_band, applicant_count, source_row)
+         VALUES ('topik-ko', ?, '테스트', 'TOPIK-II', '20s', 100, 2)
+         ON CONFLICT(learning_track, source_code, country_name_ko, exam_level, age_band) DO UPDATE SET applicant_count = excluded.applicant_count`,
+      ).bind(sourceCode),
+    ]);
+
+    const response = await fetch('/api/v1/tracks/topik-ko/official-reference');
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      data: {
+        source: { code: string; statistics_rows: number };
+        blueprints: Array<{ section: string; question_count: number }>;
+        applicant_totals: Array<{ exam_level: string; applicants: number }>;
+      };
+    }>();
+    expect(body.data.source).toMatchObject({ code: sourceCode, statistics_rows: 2 });
+    expect(body.data.blueprints).toHaveLength(5);
+    expect(body.data.blueprints.map((item) => item.question_count)).toEqual([30, 40, 50, 4, 50]);
+    expect(body.data.applicant_totals).toEqual([
+      { exam_level: 'TOPIK-I', applicants: 70 },
+      { exam_level: 'TOPIK-II', applicants: 100 },
+    ]);
+    expect(JSON.stringify(body)).not.toMatch(/answer|question_id|audio/i);
   });
 });
 
@@ -1021,6 +1187,14 @@ describe('R2 audio policy', () => {
     expect(response.headers.get('x-audio-provider')).toBe('google');
     expect(response.headers.get('x-audio-model')).toBe('ja-JP-Neural2-B');
     expect(response.headers.get('x-audio-version')).toBe('google-neural2-v1');
+
+    await assets.put('audio/qa/ko/google/1.wav', new Uint8Array([82, 73, 70, 70]), {
+      httpMetadata: { contentType: 'audio/wav' },
+      customMetadata: { provider: 'google', model: 'ko-KR-Neural2-A', audioVersion: 'google-neural2-v1' },
+    });
+    const korean = await fetch('/api/v1/audio/audio/qa/ko/google/1.wav', { method: 'HEAD' });
+    expect(korean.status).toBe(200);
+    expect(korean.headers.get('x-audio-model')).toBe('ko-KR-Neural2-A');
   });
 });
 
@@ -1147,6 +1321,78 @@ describe('POST /api/v1/ai/translate', () => {
       body: JSON.stringify({ text: '', target: 'ja' }),
     });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('AI learning-assistance routes', () => {
+  it('keeps admin lint deterministic and blocks unlicensed official-reference drafts', async () => {
+    const cookie = await registerTestSession('admin');
+    const res = await fetch('/admin/ai/content-lint', {
+      method: 'POST',
+      headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        learning_track: 'topik-ko',
+        release_id: 'topik-ai-admin-lint',
+        source: { source_type: 'official-reference', source_url: 'https://example.invalid/reference', license_id: '', allowed_use: '' },
+        items: [{
+          stable_ref: 'topik.ai.lint.001', prompt_ko: '한국어 문항', prompt_ja: '', prompt_en: 'English prompt',
+          explanation_ko: '짧음', explanation_ja: '日本語の説明', explanation_en: 'English explanation', distractors: ['가', '가'],
+        }],
+      }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json<{ data: { blocking: boolean; provider: string; issues: Array<{ code: string }> } }>();
+    expect(body.data.blocking).toBe(true);
+    expect(body.data.provider).toBe('deterministic-policy');
+    expect(body.data.issues.map((entry) => entry.code)).toContain('prohibited_source');
+  });
+
+  it('returns only an approved fallback for a published TOPIK item while the AI feature flag is off', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const releaseId = 'topik-ai-helper-release';
+    const checksum = 'b'.repeat(64);
+    await db.batch([
+      db.prepare(`INSERT INTO content_releases (id, learning_track, content_version, release_state, manifest_sha256, parser_version) VALUES (?, 'topik-ko', 'ai-helper-v1', 'draft', ?, 'test-parser')`).bind(releaseId, checksum),
+      db.prepare(`INSERT INTO content_release_sources (release_id, source_code, source_type, source_url, retrieved_at, source_sha256, license_id, license_url, allowed_use, attribution_text, author, first_reviewer, second_reviewer, reviewed_at, first_review_status, first_reviewed_at, second_review_status, second_reviewed_at) VALUES (?, 'AI-HELPER-TEST', 'fixture', 'https://example.invalid/ai-helper', '2026-07-28', ?, 'LicenseRef-local-test-fixture', 'https://example.invalid/license', 'test-fixture-only', 'AI helper fixture', 'author', 'reviewer-a', 'reviewer-b', '2026-07-28', 'signed', '2026-07-28', 'signed', '2026-07-28')`).bind(releaseId, checksum),
+      db.prepare(`INSERT INTO topik_curriculum_units (id, release_id, learning_track, stable_ref, exam_level, exam_band, section, title_ko, title_ja, title_en, instruction_languages_json) VALUES ('topik-ai-helper-unit', ?, 'topik-ko', 'topik.unit.ai.helper', 'TOPIK-II', 'intermediate', 'writing', '쓰기', '作文', 'Writing', '["ko","ja","en"]')`).bind(releaseId),
+      db.prepare(`INSERT INTO topik_content_items (id, release_id, unit_id, learning_track, stable_ref, exam_level, exam_band, section, item_kind, skill, difficulty, prompt_ko, prompt_ja, prompt_en, answer_payload_json, explanation_ko, explanation_ja, explanation_en, source_code) VALUES ('topik-ai-helper-item', ?, 'topik-ai-helper-unit', 'topik-ko', 'topik.item.ai.helper', 'TOPIK-II', 'intermediate', 'writing', 'writing', 'writing', 2, '승인된 질문', '承認済みの質問', 'Approved prompt', '{"answer":"private"}', '승인된 해설', '承認済みの解説', 'Approved explanation', 'AI-HELPER-TEST')`).bind(releaseId),
+    ]);
+    for (const state of ['automated_checked', 'human_reviewed', 'preview', 'approved']) {
+      await db.prepare(`UPDATE content_releases SET release_state = ? WHERE id = ?`).bind(state, releaseId).run();
+    }
+    await db.batch(['G0', 'G1', 'G2', 'G3', 'G4'].map((gate) =>
+      db.prepare(`INSERT INTO content_release_gate_evidence (release_id, gate, gate_state, artifact_key, artifact_sha256, recorded_by) VALUES (?, ?, 'passed', ?, ?, 'system')`)
+        .bind(releaseId, gate, `evidence/report/v1/${releaseId}/${checksum}/artifact.json`, checksum),
+    ));
+    await db.prepare(`UPDATE content_releases SET release_state = 'published', published_at = unixepoch() WHERE id = ?`).bind(releaseId).run();
+
+    const cookie = await registerTestSession();
+    const headers = { Cookie: cookie, 'Content-Type': 'application/json' };
+    await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) });
+    const explanation = await fetch('/api/v1/tracks/topik-ko/ai/explanation', {
+      method: 'POST', headers, body: JSON.stringify({ item_id: 'topik-ai-helper-item', instruction_language: 'ja' }),
+    });
+    expect(explanation.status).toBe(200);
+    const body = await explanation.json<{ data: { mode: string; summary: string } }>();
+    expect(body.data.mode).toBe('approved_fallback');
+    expect(body.data.summary).toContain('承認済み');
+    expect(JSON.stringify(body)).not.toContain('private');
+
+    const writing = await fetch('/api/v1/tracks/topik-ko/ai/writing-feedback', {
+      method: 'POST', headers, body: JSON.stringify({ item_id: 'topik-ai-helper-item', response_text: '저는 오늘 한국어를 공부하고 내일도 연습하겠습니다.', instruction_language: 'ja' }),
+    });
+    expect(writing.status).toBe(503);
+  });
+
+  it('blocks writing input with PII before it can reach a provider', async () => {
+    const cookie = await registerTestSession();
+    const headers = { Cookie: cookie, 'Content-Type': 'application/json' };
+    await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) });
+    const res = await fetch('/api/v1/tracks/topik-ko/ai/writing-feedback', {
+      method: 'POST', headers,
+      body: JSON.stringify({ item_id: 'unknown', response_text: '연락처는 learner@example.com 입니다. 한국어를 공부합니다.', instruction_language: 'ja' }),
+    });
+    expect(res.status).toBe(422);
   });
 });
 
