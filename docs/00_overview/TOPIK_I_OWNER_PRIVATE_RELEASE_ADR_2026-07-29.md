@@ -1,11 +1,11 @@
-# ADR — TOPIK I owner-private release v2
+# ADR — TOPIK I owner-private release v3
 
 기준일: 2026-07-29 KST
 상태: Phase 1 local implementation
 
 ## 결정
 
-`topik-i-self-authored-preview-v1`은 변경하지 않는다. 자체 저작 TOPIK I 2 unit/4 item의 동일 학습 payload를 새 immutable `topik-i-self-authored-owner-private-v2`로 생성한다.
+`topik-i-self-authored-preview-v1`과 Preview에 남은 unclaimed v2는 변경하지 않는다. 자체 저작 TOPIK I 2 unit/4 item의 동일 학습 payload를 새 immutable `topik-i-self-authored-owner-private-v3`로 생성한다. v2의 legacy source `allowed_use`가 owner-private remote seed와 모순된다는 점을 발견했으므로, v2를 수정하거나 claim하지 않고 v3의 source record에 owner-private 전용 제한을 명시한다.
 
 이 candidate는 public `published` lifecycle을 사용하지 않는다. owner-private policy에는 `author-ksh`의 자체 저작·공식 TOPIK 비복제·비공개 사용·4 item self-review attestation hash와 날짜만 둔다. owner의 D1 user ID는 seed, manifest, R2 evidence, log에 넣지 않는다.
 

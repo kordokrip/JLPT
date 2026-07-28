@@ -7,7 +7,10 @@ import {
   type TopikIPreviewUnit,
 } from './topik-i-preview-candidate.js';
 
-export const TOPIK_I_OWNER_PRIVATE_RELEASE_ID = 'topik-i-self-authored-owner-private-v2';
+// v2 was seeded to Preview with a legacy source `allowed_use` value that
+// contradicted owner-private use. Preserve it as an unclaimed draft and issue a
+// new immutable candidate rather than altering its source record or manifest.
+export const TOPIK_I_OWNER_PRIVATE_RELEASE_ID = 'topik-i-self-authored-owner-private-v3';
 export const TOPIK_I_OWNER_PRIVATE_OWNER_REF = 'author-ksh';
 export const TOPIK_I_OWNER_PRIVATE_ATTESTED_AT = '2026-07-29';
 export const TOPIK_I_OWNER_PRIVATE_CLAIM_METHOD = 'authenticated_admin_session' as const;
@@ -34,7 +37,7 @@ export interface TopikIOwnerPrivateCandidate {
     publicPublishProhibited: true;
   };
   manifest: {
-    schemaVersion: 'topik-i-owner-private-manifest-v2';
+    schemaVersion: 'topik-i-owner-private-manifest-v3';
     inputSha256: string;
     manifestSha256: string;
     sourceCode: string;
@@ -84,21 +87,22 @@ export function topikItemLearningPayloadSha256(item: TopikIPreviewItem): string 
 
 export function loadTopikIOwnerPrivateCandidate(): TopikIOwnerPrivateCandidate {
   const base = loadTopikIPreviewCandidate();
-  const unitIdByBaseId = new Map(base.units.map((unit, index) => [unit.id, `topik-i-owner-private-v2-unit-${index + 1}`]));
+  const unitIdByBaseId = new Map(base.units.map((unit, index) => [unit.id, `topik-i-owner-private-v3-unit-${index + 1}`]));
   const units = base.units.map((unit, index) => ({
     ...unit,
     id: unitIdByBaseId.get(unit.id)!,
-    stableRef: `topik.i.owner-private.v2.unit.${index + 1}`,
+    stableRef: `topik.i.owner-private.v3.unit.${index + 1}`,
   }));
   const items = base.items.map((item, index) => ({
     ...item,
-    id: `topik-i-owner-private-v2-item-${index + 1}`,
+    id: `topik-i-owner-private-v3-item-${index + 1}`,
     unitId: unitIdByBaseId.get(item.unitId)!,
-    stableRef: `topik.i.owner-private.v2.item.${index + 1}`,
+    stableRef: `topik.i.owner-private.v3.item.${index + 1}`,
   }));
   const provenance: ContentReleaseProvenance = {
     ...base.provenance,
-    sourceCode: 'TOPIK-I-SELF-AUTHORED-OWNER-PRIVATE-V2',
+    sourceCode: 'TOPIK-I-SELF-AUTHORED-OWNER-PRIVATE-V3',
+    allowedUse: 'owner-private only; public delivery prohibited; authenticated owner-session claim required',
     author: TOPIK_I_OWNER_PRIVATE_OWNER_REF,
     // These satisfy legacy non-null columns only. They are explicit non-signing
     // sentinels and remain pending, so they cannot pass a public human-review gate.
@@ -135,11 +139,11 @@ export function loadTopikIOwnerPrivateCandidate(): TopikIOwnerPrivateCandidate {
     items,
   }));
   const manifestWithoutHash = {
-    schemaVersion: 'topik-i-owner-private-manifest-v2' as const,
+    schemaVersion: 'topik-i-owner-private-manifest-v3' as const,
     inputSha256,
     sourceCode: provenance.sourceCode,
     contentVersion: TOPIK_I_OWNER_PRIVATE_RELEASE_ID,
-    parserVersion: 'topik-i-owner-private-parser-v2',
+    parserVersion: 'topik-i-owner-private-parser-v3',
     reviewState: 'owner-attested-private-not-public' as const,
     expectedRows: { units: units.length, items: items.length, bySection },
     itemPayloadSha256,

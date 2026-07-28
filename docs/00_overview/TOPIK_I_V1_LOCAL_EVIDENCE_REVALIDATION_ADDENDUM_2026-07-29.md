@@ -35,7 +35,7 @@ workspace duplicate, package-local artifact, Git reflog 및 unreachable blob을
 3. v1은 public G0~G5 판정, `human_reviewed`, `published`, preview promotion 또는
    owner-private claim의 근거로 사용하지 않는다. 따라서 원본 local report의
    부재가 production exposure를 허용하지 않는다.
-4. owner-private v2는 독립 release ID·manifest·local verifier report를 사용한다.
+4. owner-private v3는 독립 release ID·manifest·local verifier report를 사용한다. Preview에 남은 v2는 unclaimed draft로 보존하며 source metadata를 수정하거나 claim하지 않는다.
    v1 evidence를 상속하거나 수정하지 않는다.
 5. 향후 v1을 다시 다루려면 새 immutable candidate와 현재 public review/gate
    절차를 사용한다. 이 addendum은 reviewer sign-off나 public gate를 대체하지 않는다.

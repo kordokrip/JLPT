@@ -14,7 +14,7 @@
 - `published` 상태를 private 용도로 사용하거나 public API query를 바꿔 모든 로그인 사용자에게 노출
 - client-side hidden route, URL 난독화, Service Worker cache만으로 접근 제어를 주장
 
-정상 구현은 **새 immutable v2 candidate + 별도 owner-private publication/access record + Worker 서버 측 owner check**다. public lifecycle은 그대로 남고, v2의 `release_state`는 `draft` 또는 `automated_checked`에 머물 수 있다. private publication은 public `published`가 아니다.
+정상 구현은 **새 immutable owner-private candidate + 별도 owner-private publication/access record + Worker 서버 측 owner check**다. public lifecycle은 그대로 남고, candidate의 `release_state`는 `draft` 또는 `automated_checked`에 머물 수 있다. private publication은 public `published`가 아니다. source의 `allowed_use`는 owner-private use와 모순되지 않게 명시하며, 이미 생성된 candidate를 고치지 않고 새 ID·manifest를 발급한다.
 
 ## 현재 구현에서 확인된 제약
 

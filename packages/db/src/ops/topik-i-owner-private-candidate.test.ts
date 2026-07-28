@@ -8,7 +8,7 @@ import {
 } from '../seed/topik-i-owner-private-candidate.js';
 import { loadTopikIPreviewCandidate } from '../seed/topik-i-preview-candidate.js';
 
-test('owner-private TOPIK I v2 is new immutable metadata over unchanged four-item learning material', () => {
+test('owner-private TOPIK I v3 is new immutable metadata over unchanged four-item learning material', () => {
   const v1 = loadTopikIPreviewCandidate();
   const v2 = loadTopikIOwnerPrivateCandidate();
 
@@ -18,6 +18,8 @@ test('owner-private TOPIK I v2 is new immutable metadata over unchanged four-ite
   assert.equal(v2.provenance.firstReviewStatus, 'pending');
   assert.equal(v2.provenance.secondReviewStatus, 'pending');
   assert.notEqual(v2.provenance.firstReviewer, v2.provenance.secondReviewer);
+  assert.match(v2.provenance.allowedUse, /^owner-private only;/);
+  assert.doesNotMatch(v2.provenance.allowedUse, /human sign-off|remote seed before/i);
   assert.equal(v2.units.length, 2);
   assert.equal(v2.items.length, 4);
   assert.deepEqual(
