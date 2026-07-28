@@ -300,6 +300,39 @@ export const topikPracticeApi = {
     api.get<TopikPracticeSolutionDto>(`/tracks/topik-ko/practice/questions/${encodeURIComponent(questionId)}/solution`),
 };
 
+export interface OwnerPrivateTopikSolutionDto {
+  item_id: string;
+  answer_payload: unknown;
+  explanation_ko: string;
+  explanation_ja: string;
+  explanation_en: string;
+}
+
+/** Owner-private endpoints are always requested with browser and PWA caching disabled. */
+export const ownerPrivateTopikApi = {
+  claim: (releaseId: string, manifestSha256: string) =>
+    api.post<{ release_id: string; state: 'owner_published' }>('/admin/topik-owner-private/claims', {
+      release_id: releaseId,
+      manifest_sha256: manifestSha256,
+    }),
+  withdraw: (releaseId: string, manifestSha256: string) =>
+    api.post<{ state: 'withdrawn' }>(`/admin/topik-owner-private/releases/${encodeURIComponent(releaseId)}/withdraw`, {
+      manifest_sha256: manifestSha256,
+    }),
+  list: (examLevel: 'TOPIK-I' | 'TOPIK-II', section: 'listening' | 'writing' | 'reading') =>
+    api.get<TopikReleasedContentListDto>(
+      '/tracks/topik-ko/owner-private/content',
+      { exam_level: examLevel, section },
+      { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } },
+    ),
+  solution: (itemId: string) =>
+    api.get<OwnerPrivateTopikSolutionDto>(
+      `/tracks/topik-ko/owner-private/content/${encodeURIComponent(itemId)}/solution`,
+      undefined,
+      { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } },
+    ),
+};
+
 // SRS
 export const srsApi = {
   init: (item_type: ItemType, item_ids: number[]) =>

@@ -58,6 +58,8 @@ import rawContentReleaseControlPlaneMigration from '../../../../packages/db/driz
 import rawContentReleaseReviewSignoffsMigration from '../../../../packages/db/drizzle-v2/0014_content_release_review_signoffs.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawAiLearningAssistanceMigration from '../../../../packages/db/drizzle-v2/0015_ai_learning_assistance_foundation.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikOwnerPrivatePublicationMigration from '../../../../packages/db/drizzle-v2/0016_topik_owner_private_publication.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -66,7 +68,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -1045,6 +1047,105 @@ describe('TOPIK release-controlled curriculum contract', () => {
   });
 });
 
+describe('TOPIK owner-private publication', () => {
+  it('binds a draft v2 release only to the current admin session and never exposes it publicly or through cacheable responses', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const releaseId = 'topik-owner-private-api-v2';
+    const manifestSha256 = 'b'.repeat(64);
+    const sourceSha256 = 'c'.repeat(64);
+    await db.batch([
+      db.prepare(`INSERT INTO content_releases (id, learning_track, content_version, release_state, manifest_sha256, parser_version) VALUES (?, 'topik-ko', 'topik-owner-private-api-v2', 'draft', ?, 'test-owner-private-parser')`).bind(releaseId, manifestSha256),
+      db.prepare(`INSERT INTO content_release_sources (release_id, source_code, source_type, source_url, retrieved_at, source_sha256, license_id, license_url, allowed_use, attribution_text, author, first_reviewer, second_reviewer, reviewed_at, first_review_status, second_review_status) VALUES (?, 'TOPIK-OWNER-PRIVATE-API', 'self-authored', 'https://example.invalid/owner-private', '2026-07-29', ?, 'LicenseRef-owner-private', 'https://example.invalid/license', 'owner-private-only', 'Owner-private API fixture', 'author-ksh', 'owner-private-no-human-review-a', 'owner-private-no-human-review-b', '2026-07-29', 'pending', 'pending')`).bind(releaseId, sourceSha256),
+      db.prepare(`INSERT INTO topik_curriculum_units (id, release_id, learning_track, stable_ref, exam_level, exam_band, section, title_ko, title_ja, title_en, instruction_languages_json) VALUES ('topik-owner-private-api-unit', ?, 'topik-ko', 'topik.owner-private.api.unit', 'TOPIK-I', 'beginner', 'reading', '비공개 검증', '非公開検証', 'Private verification', '["ko","ja","en"]')`).bind(releaseId),
+      db.prepare(`INSERT INTO topik_content_items (id, release_id, unit_id, learning_track, stable_ref, exam_level, exam_band, section, item_kind, skill, difficulty, prompt_ko, prompt_ja, prompt_en, answer_payload_json, explanation_ko, explanation_ja, explanation_en, source_code) VALUES ('topik-owner-private-api-item-1', ?, 'topik-owner-private-api-unit', 'topik-ko', 'topik.owner-private.api.item.1', 'TOPIK-I', 'beginner', 'reading', 'practice', 'owner-private', 1, '비공개 한국어 질문', '非公開日本語質問', 'Private English prompt', '{"answer":"private"}', '비공개 한국어 해설', '非公開日本語解説', 'Private English explanation', 'TOPIK-OWNER-PRIVATE-API')`).bind(releaseId),
+      db.prepare(`INSERT INTO content_release_private_policies (release_id, manifest_sha256, owner_ref, owner_attested_at, attestation_sha256, claim_method, public_publish_prohibited) VALUES (?, ?, 'author-ksh', '2026-07-29', ?, 'authenticated_admin_session', 1)`).bind(releaseId, manifestSha256, 'd'.repeat(64)),
+    ]);
+    const ownerCookie = await registerTestSession('admin');
+    const otherCookie = await registerTestSession('user');
+    const topikHeaders = (cookie: string) => ({ Cookie: cookie, 'Content-Type': 'application/json' });
+    for (const cookie of [ownerCookie, otherCookie]) {
+      const switched = await fetch('/api/v1/auth/track', {
+        method: 'PATCH',
+        headers: topikHeaders(cookie),
+        body: JSON.stringify({ track: 'topik-ko' }),
+      });
+      expect(switched.status).toBe(200);
+    }
+
+    const unauthenticated = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
+    });
+    expect(unauthenticated.status).toBe(401);
+
+    const nonAdminClaim = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: topikHeaders(otherCookie),
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
+    });
+    expect(nonAdminClaim.status).toBe(403);
+
+    const injectedUserId = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: topikHeaders(ownerCookie),
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256, owner_user_id: 'other-user' }),
+    });
+    expect(injectedUserId.status).toBe(400);
+
+    const changedManifest = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: topikHeaders(ownerCookie),
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: '0'.repeat(64) }),
+    });
+    expect(changedManifest.status).toBe(409);
+
+    const claimed = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: topikHeaders(ownerCookie),
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
+    });
+    expect(claimed.status).toBe(201);
+    expect(claimed.headers.get('cache-control')).toContain('no-store');
+    expect(JSON.stringify(await claimed.json())).not.toContain('owner_user_id');
+
+    const duplicateClaim = await fetch('/api/v1/admin/topik-owner-private/claims', {
+      method: 'POST', headers: topikHeaders(ownerCookie),
+      body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
+    });
+    expect(duplicateClaim.status).toBe(409);
+
+    const ownerContent = await fetch('/api/v1/tracks/topik-ko/owner-private/content?exam_level=TOPIK-I&section=reading', {
+      headers: { Cookie: ownerCookie },
+    });
+    expect(ownerContent.status).toBe(200);
+    expect(ownerContent.headers.get('cache-control')).toContain('no-store');
+    expect(ownerContent.headers.get('vary')).toContain('Cookie');
+    const ownerBody = await ownerContent.json<{ data: { items: Array<{ id: string; prompt_ja: string }> } }>();
+    expect(ownerBody.data.items).toHaveLength(1);
+    expect(JSON.stringify(ownerBody)).not.toContain('answer_payload');
+    expect(JSON.stringify(ownerBody)).not.toContain('explanation_ja');
+
+    const ownerSolution = await fetch(`/api/v1/tracks/topik-ko/owner-private/content/${ownerBody.data.items[0]!.id}/solution`, { headers: { Cookie: ownerCookie } });
+    expect(ownerSolution.status).toBe(200);
+    expect(JSON.stringify(await ownerSolution.json())).toContain('answer_payload');
+
+    const otherContent = await fetch('/api/v1/tracks/topik-ko/owner-private/content?exam_level=TOPIK-I&section=reading', {
+      headers: { Cookie: otherCookie },
+    });
+    expect(otherContent.status).toBe(404);
+    expect(JSON.stringify(await otherContent.json())).not.toContain(releaseId);
+    const otherSolution = await fetch(`/api/v1/tracks/topik-ko/owner-private/content/${ownerBody.data.items[0]!.id}/solution`, { headers: { Cookie: otherCookie } });
+    expect(otherSolution.status).toBe(404);
+    expect(JSON.stringify(await otherSolution.json())).not.toContain('answer_payload');
+
+    const publicContent = await fetch('/api/v1/tracks/topik-ko/content?exam_level=TOPIK-I&section=reading', { headers: { Cookie: ownerCookie } });
+    expect(JSON.stringify(await publicContent.json())).not.toContain(releaseId);
+    await expect(db.prepare(`UPDATE topik_content_items SET prompt_ko = 'mutated' WHERE release_id = ?`).bind(releaseId).run()).rejects.toThrow();
+
+    const withdrawn = await fetch(`/api/v1/admin/topik-owner-private/releases/${releaseId}/withdraw`, {
+      method: 'POST', headers: topikHeaders(ownerCookie), body: JSON.stringify({ manifest_sha256: manifestSha256 }),
+    });
+    expect(withdrawn.status).toBe(200);
+    const afterWithdrawal = await fetch('/api/v1/tracks/topik-ko/owner-private/content?exam_level=TOPIK-I&section=reading', { headers: { Cookie: ownerCookie } });
+    expect(afterWithdrawal.status).toBe(404);
+  });
+});
 
 describe('TOPIK official reference', () => {
   it('returns the public format and aggregate statistics without official item content', async () => {

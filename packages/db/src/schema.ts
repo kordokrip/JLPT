@@ -629,6 +629,42 @@ export const users = sqliteTable('users', {
   ...timestamps,
 });
 
+/**
+ * Owner-private policy records contain only the attestation reference and hash.
+ * They deliberately do not contain an account subject; that subject is captured
+ * only by an authenticated admin-session claim in the Worker.
+ */
+export const contentReleasePrivatePolicies = sqliteTable(
+  'content_release_private_policies',
+  {
+    releaseId: text('release_id').primaryKey().references(() => contentReleases.id, { onDelete: 'restrict' }),
+    manifestSha256: text('manifest_sha256').notNull(),
+    ownerRef: text('owner_ref').notNull(),
+    ownerAttestedAt: text('owner_attested_at').notNull(),
+    attestationSha256: text('attestation_sha256').notNull(),
+    claimMethod: text('claim_method', { enum: ['authenticated_admin_session'] }).notNull(),
+    publicPublishProhibited: integer('public_publish_prohibited', { mode: 'boolean' }).notNull().default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+);
+
+/**
+ * A one-owner private publication. `ownerUserId` is never seeded or included in
+ * evidence; the claim endpoint binds it from the authenticated admin session.
+ */
+export const contentReleasePrivatePublications = sqliteTable(
+  'content_release_private_publications',
+  {
+    releaseId: text('release_id').primaryKey().references(() => contentReleases.id, { onDelete: 'restrict' }),
+    ownerUserId: text('owner_user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+    manifestSha256: text('manifest_sha256').notNull(),
+    privateState: text('private_state', { enum: ['owner_published', 'withdrawn'] }).notNull().default('owner_published'),
+    claimedAt: integer('claimed_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    withdrawnAt: integer('withdrawn_at', { mode: 'timestamp' }),
+  },
+  (t) => ({ ownerStateIdx: index('content_release_private_publications_owner_state_idx').on(t.ownerUserId, t.privateState) }),
+);
+
 export const authSessions = sqliteTable('auth_sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

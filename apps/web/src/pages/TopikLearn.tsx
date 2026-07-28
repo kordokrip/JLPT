@@ -8,12 +8,15 @@ import { useDataScope } from '../hooks/useDataScope';
 import { topikPracticeApi } from '../lib/api';
 import { useSettingsStore } from '../stores/settings-store';
 import { AiAssistanceNotice } from '../components/feature/AiAssistanceNotice';
+import { OwnerPrivateTopikPanel } from '../features/topik/OwnerPrivateTopikPanel';
+import { useAuthStore } from '../stores/auth-store';
 import { useTranslation } from 'react-i18next';
 import type { TopikPracticeSolutionDto } from '@nihongo-n3/shared';
 
 export default function TopikLearn() {
   const { t } = useTranslation();
   const progress = useTopikLearningProgress();
+  const authUser = useAuthStore((state) => state.user);
   const audio = useKoreanAudio();
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
@@ -129,6 +132,7 @@ export default function TopikLearn() {
           {practice.data && practice.data.questions.length === 0 && <div className="surface-panel p-5"><p className="font-bold">{t('topik.practice.emptyTitle')}</p><p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">{t('topik.practice.emptyDescription')}</p></div>}
         </div>
       </section>
+      {authUser?.role === 'admin' && <OwnerPrivateTopikPanel />}
     </div>
   );
 }

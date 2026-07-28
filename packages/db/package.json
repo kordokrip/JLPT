@@ -35,6 +35,7 @@
     "topik:seed": "tsx src/ops/seed-topik-placement.ts",
     "topik:preview-seed": "tsx src/ops/seed-topik-preview.ts",
     "topik:preview:candidate:verify": "tsx src/ops/verify-topik-i-preview-candidate.ts",
+    "topik:owner-private:candidate:verify": "tsx src/ops/verify-topik-i-owner-private-candidate.ts",
     "topik:practice:seed": "tsx src/ops/seed-topik-practice.ts",
     "topik:practice:verify": "tsx src/ops/verify-topik-practice.ts",
     "topik:practice:verify:remote": "tsx src/ops/verify-topik-practice.ts --remote --database=nihongo-n3-prod-v2",

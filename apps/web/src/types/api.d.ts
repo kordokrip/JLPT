@@ -1245,6 +1245,195 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tracks/topik-ko/owner-private/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 현재 claim owner에게만 owner-private TOPIK 항목 조회 */
+        get: {
+            parameters: {
+                query: {
+                    exam_level: "TOPIK-I" | "TOPIK-II";
+                    section: "listening" | "writing" | "reading";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description owner-private 항목. 답·해설·owner metadata 없음 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                content_release: string;
+                                /** @enum {string} */
+                                exam_level: "TOPIK-I" | "TOPIK-II";
+                                /** @enum {string} */
+                                section: "listening" | "writing" | "reading";
+                                items: {
+                                    id: string;
+                                    stable_ref: string;
+                                    content_release: string;
+                                    /** @enum {string} */
+                                    exam_level: "TOPIK-I" | "TOPIK-II";
+                                    /** @enum {string} */
+                                    exam_band: "beginner" | "intermediate" | "advanced";
+                                    /** @enum {string} */
+                                    section: "listening" | "writing" | "reading";
+                                    /** @enum {string} */
+                                    item_kind: "lesson" | "vocab" | "grammar" | "character" | "listening" | "reading" | "writing" | "practice";
+                                    skill: string;
+                                    difficulty: number;
+                                    prompt_ko: string;
+                                    prompt_ja: string;
+                                    prompt_en: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 콘텐츠 없음 또는 접근 불가 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/owner-private/content/{itemId}/solution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 현재 claim owner에게만 owner-private TOPIK 정답·해설 조회 */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description owner-private 정답·해설 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                item_id: string;
+                                answer_payload?: unknown;
+                                explanation_ko: string;
+                                explanation_ja: string;
+                                explanation_en: string;
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 콘텐츠 없음 또는 접근 불가 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources": {
         parameters: {
             query?: never;

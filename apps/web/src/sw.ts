@@ -17,6 +17,7 @@ import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import {
   CacheFirst,
+  NetworkOnly,
   StaleWhileRevalidate,
   NetworkFirst,
 } from 'workbox-strategies';
@@ -42,6 +43,14 @@ registerRoute(
 );
 
 // ── Runtime Caching ──────────────────────────────────────────────────
+
+// Owner-private release responses are authentication-bound. Never place them
+// in the Service Worker cache, even if a future broad API caching rule appears.
+registerRoute(
+  ({ url }) => url.pathname.includes('/api/v1/tracks/topik-ko/owner-private/')
+    || url.pathname.includes('/api/v1/admin/topik-owner-private/'),
+  new NetworkOnly(),
+);
 
 // 오디오 파일: CacheFirst, 30일, 500개
 registerRoute(

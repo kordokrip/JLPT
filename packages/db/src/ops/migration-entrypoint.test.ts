@@ -17,8 +17,10 @@ test('content release migrations use the drizzle-v2 entrypoint only', () => {
   assert.ok(fs.existsSync(path.join(root, 'packages/db/drizzle-v2/0013_content_release_control_plane.sql')));
   assert.ok(fs.existsSync(path.join(root, 'packages/db/drizzle-v2/0014_content_release_review_signoffs.sql')));
   assert.ok(fs.existsSync(path.join(root, 'packages/db/drizzle-v2/0015_ai_learning_assistance_foundation.sql')));
+  assert.ok(fs.existsSync(path.join(root, 'packages/db/drizzle-v2/0016_topik_owner_private_publication.sql')));
   assert.equal(fs.existsSync(path.join(root, 'packages/db/drizzle/0012_content_release_contract.sql')), false);
   assert.equal(fs.existsSync(path.join(root, 'packages/db/drizzle/0013_content_release_control_plane.sql')), false);
   assert.equal(fs.existsSync(path.join(root, 'packages/db/drizzle/0014_content_release_review_signoffs.sql')), false);
   assert.equal(fs.existsSync(path.join(root, 'packages/db/drizzle/0015_ai_learning_assistance_foundation.sql')), false);
+  assert.equal(fs.existsSync(path.join(root, 'packages/db/drizzle/0016_topik_owner_private_publication.sql')), false);
 });
