@@ -62,6 +62,32 @@ describe("Pages API proxy isolation", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it("keeps session cache variation while removing the proxy-only Origin variation", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("unauthorized", {
+      status: 401,
+      headers: {
+        "access-control-allow-origin": "https://feature-topik.nihongo-n3.pages.dev",
+        "access-control-allow-credentials": "true",
+        "cache-control": "private, no-store",
+        vary: "Cookie, Origin",
+      },
+    })));
+
+    const response = await onRequest({
+      request: new Request(
+        "https://feature-topik.nihongo-n3.pages.dev/api/v1/tracks/topik-ko/owner-private/content?exam_level=TOPIK-I&section=reading",
+      ),
+      env: {
+        API_ORIGIN: "https://nihongo-n3-api-topik-preview.kordokrip.workers.dev",
+      },
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("vary")).toBe("Cookie");
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
   it("rejects an insecure non-local configured origin", () => {
     expect(
       resolveApiOrigin(

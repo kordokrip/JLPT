@@ -64,7 +64,14 @@ export async function onRequest({ request, env = {} }) {
   const responseHeaders = new Headers(response.headers);
   responseHeaders.delete("access-control-allow-origin");
   responseHeaders.delete("access-control-allow-credentials");
-  responseHeaders.delete("vary");
+  const vary = responseHeaders.get("vary");
+  if (vary) {
+    const forwardedVary = [...new Set(
+      vary.split(",").map((value) => value.trim()).filter((value) => value && value.toLowerCase() !== "origin"),
+    )];
+    if (forwardedVary.length > 0) responseHeaders.set("vary", forwardedVary.join(", "));
+    else responseHeaders.delete("vary");
+  }
   if (sourceUrl.pathname.startsWith("/api/v1/auth/")) {
     responseHeaders.set("cache-control", "no-store");
   }
