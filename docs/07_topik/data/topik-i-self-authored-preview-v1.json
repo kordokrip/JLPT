@@ -1,0 +1,142 @@
+{
+  "schema_version": "topik-i-preview-input-v1",
+  "release": {
+    "id": "topik-i-self-authored-preview-v1",
+    "learning_track": "topik-ko",
+    "content_version": "topik-i-self-authored-preview-v1",
+    "release_state": "draft",
+    "parser_version": "topik-i-preview-parser-v1"
+  },
+  "source": {
+    "source_code": "TOPIK-I-SELF-AUTHORED-PREVIEW-V1",
+    "source_type": "self-authored",
+    "source_url": "https://github.com/kordokrip/JLPT/blob/feature/topik-product-expansion/docs/07_topik/data/topik-i-self-authored-preview-v1.json",
+    "retrieved_at": "2026-07-27",
+    "license_id": "LicenseRef-nihongo-n3-topik-original",
+    "license_url": "https://github.com/kordokrip/JLPT/blob/feature/topik-product-expansion/docs/ATTRIBUTIONS.md#topik-자체-저작-콘텐츠",
+    "allowed_use": "draft-only; no learner delivery or remote seed before two human sign-offs",
+    "attribution_text": "JLPT · TOPIK Study self-authored TOPIK I preview candidate. It does not reproduce official TOPIK questions, answers, or audio.",
+    "author": "draft-author-unassigned",
+    "first_reviewer": "pending-human-reviewer-1",
+    "second_reviewer": "pending-human-reviewer-2",
+    "inventory_checked_at": "2026-07-27",
+    "first_review_status": "pending",
+    "second_review_status": "pending"
+  },
+  "units": [
+    {
+      "id": "topik-i-preview-unit-listening-v1",
+      "stable_ref": "topik.i.preview.listening.daily-life.v1",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "listening",
+      "title_ko": "일상 듣기 핵심어",
+      "title_ja": "日常リスニングのキーワード",
+      "title_en": "Daily listening keywords",
+      "instruction_languages": ["ko", "ja", "en"]
+    },
+    {
+      "id": "topik-i-preview-unit-reading-v1",
+      "stable_ref": "topik.i.preview.reading.daily-life.v1",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "reading",
+      "title_ko": "일상 읽기 핵심어",
+      "title_ja": "日常リーディングのキーワード",
+      "title_en": "Daily reading keywords",
+      "instruction_languages": ["ko", "ja", "en"]
+    }
+  ],
+  "items": [
+    {
+      "id": "topik-i-preview-listening-001",
+      "unit_id": "topik-i-preview-unit-listening-v1",
+      "stable_ref": "topik.i.preview.listening.place.001",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "listening",
+      "item_kind": "practice",
+      "skill": "place",
+      "difficulty": 1,
+      "prompt_ko": "짧은 말을 듣고 사람이 가는 곳을 고르세요.",
+      "prompt_ja": "短い会話を聞いて、人が行く場所を選んでください。",
+      "prompt_en": "Listen to the short statement and choose where the person is going.",
+      "answer_payload": {
+        "kind": "choice",
+        "audio_script_ko": "오늘은 책을 빌리러 도서관에 가요.",
+        "choices": ["도서관", "공원", "약국", "시장"],
+        "answer_index": 0
+      },
+      "explanation_ko": "책을 빌리는 곳은 도서관입니다.",
+      "explanation_ja": "本を借りる場所は図書館です。",
+      "explanation_en": "A library is the place to borrow books."
+    },
+    {
+      "id": "topik-i-preview-listening-002",
+      "unit_id": "topik-i-preview-unit-listening-v1",
+      "stable_ref": "topik.i.preview.listening.time.002",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "listening",
+      "item_kind": "practice",
+      "skill": "time",
+      "difficulty": 1,
+      "prompt_ko": "짧은 말을 듣고 약속 시간을 고르세요.",
+      "prompt_ja": "短い会話を聞いて、約束の時間を選んでください。",
+      "prompt_en": "Listen to the short statement and choose the meeting time.",
+      "answer_payload": {
+        "kind": "choice",
+        "audio_script_ko": "수업이 끝난 후 세 시에 카페에서 만나요.",
+        "choices": ["오후 세 시", "오전 세 시", "오후 다섯 시", "오전 아홉 시"],
+        "answer_index": 0
+      },
+      "explanation_ko": "수업 후 세 시에 만나자고 했습니다.",
+      "explanation_ja": "授業の後、3時に会うと言っています。",
+      "explanation_en": "The statement says to meet at three after class."
+    },
+    {
+      "id": "topik-i-preview-reading-001",
+      "unit_id": "topik-i-preview-unit-reading-v1",
+      "stable_ref": "topik.i.preview.reading.notice.001",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "reading",
+      "item_kind": "practice",
+      "skill": "notice",
+      "difficulty": 1,
+      "prompt_ko": "안내문을 읽고 맞는 내용을 고르세요.\n\n오늘 카페는 오후 두 시에 엽니다.",
+      "prompt_ja": "案内を読んで、正しい内容を選んでください。\n\n今日、カフェは午後2時に開店します。",
+      "prompt_en": "Read the notice and choose the correct statement.\n\nThe cafe opens at 2 p.m. today.",
+      "answer_payload": {
+        "kind": "choice",
+        "choices": ["카페는 오후 두 시에 엽니다", "카페는 오전 두 시에 엽니다", "카페는 오늘 쉽니다", "카페는 저녁에만 엽니다"],
+        "answer_index": 0
+      },
+      "explanation_ko": "안내문에 오후 두 시에 연다고 적혀 있습니다.",
+      "explanation_ja": "案内には午後2時に開店すると書かれています。",
+      "explanation_en": "The notice explicitly states that the cafe opens at 2 p.m."
+    },
+    {
+      "id": "topik-i-preview-reading-002",
+      "unit_id": "topik-i-preview-unit-reading-v1",
+      "stable_ref": "topik.i.preview.reading.daily-routine.002",
+      "exam_level": "TOPIK-I",
+      "exam_band": "beginner",
+      "section": "reading",
+      "item_kind": "practice",
+      "skill": "daily-routine",
+      "difficulty": 2,
+      "prompt_ko": "문장을 읽고 빈칸에 알맞은 말을 고르세요.\n\n저는 아침에 물을 ___ .",
+      "prompt_ja": "文を読んで、空欄に入る自然な言葉を選んでください。\n\n저는 아침에 물을 ___ .",
+      "prompt_en": "Read the sentence and choose the natural completion.\n\n저는 아침에 물을 ___ .",
+      "answer_payload": {
+        "kind": "choice",
+        "choices": ["마셔요", "마셨어요", "마실까요", "마시고"],
+        "answer_index": 0
+      },
+      "explanation_ko": "매일 하는 습관을 현재형으로 말하면 마셔요가 자연스럽습니다.",
+      "explanation_ja": "毎日する習慣を現在形で言うので、마셔요が自然です。",
+      "explanation_en": "마셔요 is the natural present-tense form for a daily routine."
+    }
+  ]
+}
