@@ -11,6 +11,11 @@ import {
   TOPIK_PLACEMENT_V2_QUESTIONS,
   validateTopikPlacementV2Bank,
 } from '../seed/topik-placement-bank-v2.js';
+import {
+  buildTopikPracticeSeedPlan,
+  TOPIK_PRACTICE_QUESTIONS,
+  validateTopikPracticeBank,
+} from '../seed/topik-practice-bank.js';
 
 test('TOPIK placement bank has complete provenance and answer fields', () => {
   assert.deepEqual(validateTopikPlacementBank(), []);
@@ -34,6 +39,18 @@ test('TOPIK placement V2 manifest is deterministic', () => {
   assert.equal(first.manifest.questions.expectedRows, 24);
   assert.equal(first.manifest.manifestSha256, second.manifest.manifestSha256);
   assert.equal(first.manifest.contentVersion, second.manifest.contentVersion);
+});
+
+test('TOPIK I/II practice bank has verified multilingual coverage', () => {
+  assert.deepEqual(validateTopikPracticeBank(), []);
+  assert.equal(TOPIK_PRACTICE_QUESTIONS.length, 28);
+  assert.equal(TOPIK_PRACTICE_QUESTIONS.filter((item) => item.examLevel === 'TOPIK-I' && item.section === 'listening').length, 6);
+  assert.equal(TOPIK_PRACTICE_QUESTIONS.filter((item) => item.examLevel === 'TOPIK-II' && item.section === 'writing').length, 4);
+  assert.ok(TOPIK_PRACTICE_QUESTIONS.every((item) => item.promptJa.length > 0 && item.explanationJa.length > 0));
+  const first = buildTopikPracticeSeedPlan();
+  const second = buildTopikPracticeSeedPlan();
+  assert.equal(first.manifest.questions.expectedRows, 28);
+  assert.equal(first.manifest.manifestSha256, second.manifest.manifestSha256);
 });
 
 test('TOPIK placement manifest is deterministic and matches the question bank', () => {

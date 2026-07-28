@@ -32,7 +32,7 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
           </section>
         </div>
         {model.error && <p role="alert" className="mt-5 rounded-[var(--radius-md)] border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/30 dark:text-red-200">{model.error}</p>}
-        <button type="button" disabled={model.loading} onClick={() => void model.start()} className="mt-6 min-h-12 rounded-[var(--radius-md)] bg-[var(--accent)] px-6 font-bold text-white disabled:opacity-60">
+        <button type="button" disabled={model.loading} onClick={() => void model.start()} className="mt-6 touch-target rounded-[var(--radius-md)] bg-[var(--accent)] px-6 font-bold text-white disabled:opacity-60">
           {model.loading ? t('topik.placement.preparing') : t('topik.placement.start')}
         </button>
       </div>
@@ -41,7 +41,9 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
 
   const question = model.currentQuestion;
   if (!question) return null;
-  const prompt = model.instructionLanguage === 'ko' ? question.prompt_ko : question.prompt_en;
+  const prompt = model.instructionLanguage === 'ko'
+    ? question.prompt_ko
+    : model.instructionLanguage === 'ja' ? question.prompt_ja : question.prompt_en;
 
   return (
     <div className="app-page max-w-[800px]">
@@ -73,6 +75,7 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
             <span className="text-xs text-[var(--muted-foreground)]">
               {question.audio?.kind === 'r2' ? t('topik.placement.reviewedAudio') : t('topik.placement.browserAudio')}
             </span>
+            {audio.error && <p role="alert" className="w-full text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
           </div>
         )}
 
@@ -85,7 +88,7 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
               aria-checked={model.selectedIndex === choiceIndex}
               key={choice}
               onClick={() => model.select(choiceIndex)}
-              className={`min-h-12 rounded-[var(--radius-md)] border px-4 py-3 text-left font-semibold ${
+              className={`touch-target rounded-[var(--radius-md)] border px-4 py-3 text-left font-semibold ${
                 model.selectedIndex === choiceIndex
                   ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
                   : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--accent)]'

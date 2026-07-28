@@ -8,7 +8,7 @@ const config = path.resolve(root, 'apps/api/wrangler.toml');
 
 if (!database) throw new Error('--database=<blue-green target database> is required');
 if (process.env['ALLOW_PRODUCTION_CHANGE'] !== 'migrations') {
-  throw new Error('set ALLOW_PRODUCTION_CHANGE=migrations after CI and environment approval');
+  throw new Error('set ALLOW_PRODUCTION_CHANGE=migrations after local verification and a Cloudflare maintenance review');
 }
 
 execFileSync('pnpm', [

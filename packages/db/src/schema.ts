@@ -112,6 +112,292 @@ export const trackContentSeedSources = sqliteTable(
   }),
 );
 
+/** Immutable, review-gated release ledger shared by track-specific content. */
+export const contentReleases = sqliteTable(
+  'content_releases',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    contentVersion: text('content_version').notNull(),
+    releaseState: text('release_state', {
+      enum: ['draft', 'automated_checked', 'human_reviewed', 'preview', 'approved', 'published', 'withdrawn'],
+    }).notNull().default('draft'),
+    manifestSha256: text('manifest_sha256').notNull(),
+    parserVersion: text('parser_version').notNull(),
+    publishedAt: integer('published_at'),
+    withdrawnAt: integer('withdrawn_at'),
+    ...timestamps,
+  },
+  (t) => ({
+    trackVersionUk: uniqueIndex('content_releases_track_version_uk').on(t.learningTrack, t.contentVersion),
+    stateIdx: index('content_releases_state_idx').on(t.learningTrack, t.releaseState),
+  }),
+);
+
+/** Provenance required before a release can advance beyond automated checks. */
+export const contentReleaseSources = sqliteTable(
+  'content_release_sources',
+  {
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }),
+    sourceCode: text('source_code').notNull(),
+    sourceType: text('source_type', { enum: ['self-authored', 'licensed-external', 'official-reference', 'fixture'] }).notNull(),
+    sourceUrl: text('source_url').notNull(),
+    retrievedAt: text('retrieved_at').notNull(),
+    sourceSha256: text('source_sha256').notNull(),
+    licenseId: text('license_id').notNull(),
+    licenseUrl: text('license_url').notNull(),
+    allowedUse: text('allowed_use').notNull(),
+    attributionText: text('attribution_text').notNull(),
+    author: text('author').notNull(),
+    firstReviewer: text('first_reviewer').notNull(),
+    secondReviewer: text('second_reviewer').notNull(),
+    reviewedAt: text('reviewed_at').notNull(),
+    firstReviewStatus: text('first_review_status', { enum: ['pending', 'signed'] }).notNull().default('pending'),
+    firstReviewedAt: text('first_reviewed_at'),
+    secondReviewStatus: text('second_review_status', { enum: ['pending', 'signed'] }).notNull().default('pending'),
+    secondReviewedAt: text('second_reviewed_at'),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.releaseId, t.sourceCode] }) }),
+);
+
+/** Local release-control work references. Queue payloads contain no content body. */
+export const contentReleaseJobs = sqliteTable(
+  'content_release_jobs',
+  {
+    id: text('id').primaryKey(),
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }),
+    jobKind: text('job_kind', { enum: ['ingest', 'validate', 'ai_draft', 'qa', 'human_approval', 'preview_candidate'] }).notNull(),
+    jobState: text('job_state', { enum: ['queued', 'processing', 'succeeded', 'waiting_for_approval', 'retryable_failed', 'failed', 'poisoned', 'cancelled'] }).notNull().default('queued'),
+    artifactKey: text('artifact_key').notNull(),
+    artifactSha256: text('artifact_sha256').notNull(),
+    idempotencyKey: text('idempotency_key').notNull(),
+    queueAttempts: integer('queue_attempts').notNull().default(0),
+    workflowInstanceId: text('workflow_instance_id'),
+    errorCode: text('error_code'),
+    ...timestamps,
+  },
+  (t) => ({
+    idempotencyUk: uniqueIndex('content_release_jobs_idempotency_uk').on(t.idempotencyKey),
+    releaseStateIdx: index('content_release_jobs_release_state_idx').on(t.releaseId, t.jobState),
+  }),
+);
+
+/** Immutable evidence for production gates G0-G4. */
+export const contentReleaseGateEvidence = sqliteTable(
+  'content_release_gate_evidence',
+  {
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }),
+    gate: text('gate', { enum: ['G0', 'G1', 'G2', 'G3', 'G4'] }).notNull(),
+    gateState: text('gate_state', { enum: ['passed', 'failed'] }).notNull(),
+    artifactKey: text('artifact_key').notNull(),
+    artifactSha256: text('artifact_sha256').notNull(),
+    recordedBy: text('recorded_by', { enum: ['system', 'operator'] }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.releaseId, t.gate] }) }),
+);
+
+/** An approved release can become a preview candidate but is never auto-published. */
+export const contentReleasePreviewCandidates = sqliteTable(
+  'content_release_preview_candidates',
+  {
+    id: text('id').primaryKey(),
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }).unique(),
+    candidateState: text('candidate_state', { enum: ['created', 'ready', 'withdrawn'] }).notNull().default('created'),
+    manifestKey: text('manifest_key').notNull(),
+    manifestSha256: text('manifest_sha256').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    readyAt: integer('ready_at', { mode: 'timestamp' }),
+    withdrawnAt: integer('withdrawn_at', { mode: 'timestamp' }),
+  },
+);
+
+/** DLQ record with references and error code only; no message body or PII. */
+export const contentReleasePoisonReports = sqliteTable(
+  'content_release_poison_reports',
+  {
+    id: text('id').primaryKey(),
+    jobId: text('job_id').notNull().references(() => contentReleaseJobs.id, { onDelete: 'cascade' }),
+    queueName: text('queue_name').notNull(),
+    messageId: text('message_id').notNull(),
+    idempotencyKey: text('idempotency_key').notNull(),
+    attempts: integer('attempts').notNull(),
+    reasonCode: text('reason_code').notNull(),
+    artifactKey: text('artifact_key').notNull(),
+    artifactSha256: text('artifact_sha256').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ queueMessageUk: uniqueIndex('content_release_poison_reports_queue_message_uk').on(t.queueName, t.messageId) }),
+);
+
+/** TOPIK curriculum units remain separate from JLPT levels and source tables. */
+export const topikCurriculumUnits = sqliteTable(
+  'topik_curriculum_units',
+  {
+    id: text('id').primaryKey(),
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'restrict' }),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    stableRef: text('stable_ref').notNull(),
+    examLevel: text('exam_level', { enum: ['TOPIK-I', 'TOPIK-II'] }).notNull(),
+    examBand: text('exam_band', { enum: ['beginner', 'intermediate', 'advanced'] }).notNull(),
+    section: text('section', { enum: ['listening', 'writing', 'reading'] }).notNull(),
+    titleKo: text('title_ko').notNull(),
+    titleJa: text('title_ja').notNull(),
+    titleEn: text('title_en').notNull(),
+    instructionLanguagesJson: text('instruction_languages_json').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    releaseStableUk: uniqueIndex('topik_curriculum_units_release_stable_uk').on(t.releaseId, t.stableRef),
+    releaseSectionIdx: index('topik_curriculum_units_release_section_idx').on(t.releaseId, t.examLevel, t.section),
+  }),
+);
+
+/** Release-controlled TOPIK items. Sensitive answer material is never public by default. */
+export const topikContentItems = sqliteTable(
+  'topik_content_items',
+  {
+    id: text('id').primaryKey(),
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'restrict' }),
+    unitId: text('unit_id').notNull().references(() => topikCurriculumUnits.id, { onDelete: 'restrict' }),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    stableRef: text('stable_ref').notNull(),
+    examLevel: text('exam_level', { enum: ['TOPIK-I', 'TOPIK-II'] }).notNull(),
+    examBand: text('exam_band', { enum: ['beginner', 'intermediate', 'advanced'] }).notNull(),
+    section: text('section', { enum: ['listening', 'writing', 'reading'] }).notNull(),
+    itemKind: text('item_kind', { enum: ['lesson', 'vocab', 'grammar', 'character', 'listening', 'reading', 'writing', 'practice'] }).notNull(),
+    skill: text('skill').notNull(),
+    difficulty: integer('difficulty').notNull(),
+    promptKo: text('prompt_ko').notNull(),
+    promptJa: text('prompt_ja').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    answerPayloadJson: text('answer_payload_json').notNull(),
+    explanationKo: text('explanation_ko').notNull(),
+    explanationJa: text('explanation_ja').notNull(),
+    explanationEn: text('explanation_en').notNull(),
+    sourceCode: text('source_code').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    releaseStableUk: uniqueIndex('topik_content_items_release_stable_uk').on(t.releaseId, t.stableRef),
+    releaseLookupIdx: index('topik_content_items_release_lookup_idx').on(t.releaseId, t.examLevel, t.section, t.itemKind, t.difficulty),
+  }),
+);
+
+/** Pseudonymous AI counters only. No email, IP, prompt, completion, or answer text. */
+export const aiAssistanceUsageWindows = sqliteTable(
+  'ai_assistance_usage_windows',
+  {
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    feature: text('feature', { enum: ['content_lint', 'content_draft', 'grounded_explanation', 'topik_writing_feedback'] }).notNull(),
+    userBucket: text('user_bucket').notNull(),
+    windowKind: text('window_kind', { enum: ['minute', 'day', 'month'] }).notNull(),
+    windowKey: text('window_key').notNull(),
+    requestCount: integer('request_count').notNull().default(0),
+    estimatedCostMicrousd: integer('estimated_cost_microusd').notNull().default(0),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.learningTrack, t.feature, t.userBucket, t.windowKind, t.windowKey] }),
+    expiryIdx: index('ai_assistance_usage_window_expiry_idx').on(t.windowKind, t.windowKey, t.updatedAt),
+  }),
+);
+
+export const aiAssistanceCircuitBreakers = sqliteTable(
+  'ai_assistance_circuit_breakers',
+  {
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    feature: text('feature', { enum: ['content_lint', 'content_draft', 'grounded_explanation', 'topik_writing_feedback'] }).notNull(),
+    consecutiveFailures: integer('consecutive_failures').notNull().default(0),
+    openedUntil: integer('opened_until'),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.learningTrack, t.feature] }) }),
+);
+
+export const aiAssistanceAuditEvents = sqliteTable(
+  'ai_assistance_audit_events',
+  {
+    id: text('id').primaryKey(),
+    requestId: text('request_id').notNull().unique(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    releaseId: text('release_id').references(() => contentReleases.id, { onDelete: 'set null' }),
+    feature: text('feature', { enum: ['content_lint', 'content_draft', 'grounded_explanation', 'topik_writing_feedback'] }).notNull(),
+    promptVersion: text('prompt_version').notNull(),
+    provider: text('provider', { enum: ['disabled', 'workers-ai', 'ai-gateway', 'fallback'] }).notNull(),
+    model: text('model'),
+    userBucket: text('user_bucket').notNull(),
+    outcome: text('outcome', { enum: ['success', 'fallback', 'blocked', 'disabled', 'invalid_output', 'provider_error'] }).notNull(),
+    inputChars: integer('input_chars').notNull().default(0),
+    outputChars: integer('output_chars').notNull().default(0),
+    estimatedCostMicrousd: integer('estimated_cost_microusd').notNull().default(0),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ expiryIdx: index('ai_assistance_audit_expiry_idx').on(t.expiresAt) }),
+);
+
+/** Optional saved feedback contains a hash and sanitized rubric only, never raw writing. */
+export const aiWritingFeedbackRecords = sqliteTable(
+  'ai_writing_feedback_records',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'restrict' }),
+    itemId: text('item_id').notNull().references(() => topikContentItems.id, { onDelete: 'restrict' }),
+    inputSha256: text('input_sha256').notNull(),
+    feedbackJson: text('feedback_json').notNull(),
+    promptVersion: text('prompt_version').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ userExpiryIdx: index('ai_writing_feedback_user_expiry_idx').on(t.userId, t.learningTrack, t.expiresAt) }),
+);
+
+/** Official TOPIK test-format reference, kept separate from self-authored learning questions. */
+export const topikExamBlueprints = sqliteTable(
+  'topik_exam_blueprints',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    examLevel: text('exam_level').notNull(),
+    deliveryMode: text('delivery_mode').notNull(),
+    section: text('section').notNull(),
+    questionCount: integer('question_count').notNull(),
+    sectionScore: integer('section_score').notNull(),
+    totalScore: integer('total_score').notNull(),
+    gradeMin: integer('grade_min').notNull(),
+    gradeMax: integer('grade_max').notNull(),
+    sourceCode: text('source_code').notNull(),
+    sourceUrl: text('source_url').notNull(),
+    sourceVersion: text('source_version').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    levelIdx: index('topik_exam_blueprint_level_idx').on(t.learningTrack, t.examLevel, t.deliveryMode),
+  }),
+);
+
+/** Aggregate public applicant data. No individual score, answer, or identity is stored. */
+export const topikOfficialStatistics = sqliteTable(
+  'topik_official_statistics',
+  {
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    sourceCode: text('source_code').notNull(),
+    countryNameKo: text('country_name_ko').notNull(),
+    examLevel: text('exam_level').notNull(),
+    ageBand: text('age_band').notNull(),
+    applicantCount: integer('applicant_count').notNull(),
+    sourceRow: integer('source_row').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.learningTrack, t.sourceCode, t.countryNameKo, t.examLevel, t.ageBand] }),
+    levelIdx: index('topik_official_statistics_level_idx').on(t.learningTrack, t.sourceCode, t.examLevel, t.ageBand),
+  }),
+);
+
 export const categories = sqliteTable(
   'categories',
   {
@@ -588,12 +874,14 @@ export const topikPlacementQuestions = sqliteTable(
     skill: text('skill').notNull(),
     difficulty: integer('difficulty').notNull(),
     promptKo: text('prompt_ko').notNull(),
+    promptJa: text('prompt_ja').notNull(),
     promptEn: text('prompt_en').notNull(),
     glossEn: text('gloss_en').notNull(),
     choicesJson: text('choices_json').notNull(),
     answerIndex: integer('answer_index').notNull(),
     explanationEn: text('explanation_en').notNull(),
     explanationKo: text('explanation_ko').notNull(),
+    explanationJa: text('explanation_ja').notNull(),
     sourceCode: text('source_code').notNull(),
     authorReviewer: text('author_reviewer').notNull(),
     secondReviewer: text('second_reviewer').notNull(),
@@ -628,7 +916,7 @@ export const topikPlacementAttempts = sqliteTable(
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
     bankVersion: text('bank_version').notNull(),
-    instructionLanguage: text('instruction_language', { enum: ['ko', 'en'] }).notNull().default('en'),
+    instructionLanguage: text('instruction_language', { enum: ['ko', 'en', 'ja'] }).notNull().default('en'),
     status: text('status', { enum: ['in_progress', 'completed'] }).notNull().default('in_progress'),
     questionIdsJson: text('question_ids_json').notNull(),
     scoreTotal: integer('score_total'),
@@ -655,6 +943,51 @@ export const topikPlacementResponses = sqliteTable(
   (t) => ({
     pk: primaryKey({ columns: [t.attemptId, t.questionId] }),
     questionIdx: index('topik_placement_response_question_idx').on(t.questionId, t.isCorrect),
+  }),
+);
+
+/**
+ * Self-authored TOPIK I/II learning questions. They are intentionally separate
+ * from official format/statistics references and never contain official items.
+ */
+export const topikPracticeQuestions = sqliteTable(
+  'topik_practice_questions',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['topik-ko'] }).notNull().default('topik-ko'),
+    examLevel: text('exam_level', { enum: ['TOPIK-I', 'TOPIK-II'] }).notNull(),
+    section: text('section', { enum: ['listening', 'writing', 'reading'] }).notNull(),
+    questionType: text('question_type', { enum: ['choice', 'writing'] }).notNull(),
+    skill: text('skill').notNull(),
+    difficulty: integer('difficulty').notNull(),
+    promptKo: text('prompt_ko').notNull(),
+    promptJa: text('prompt_ja').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    choicesJson: text('choices_json').notNull().default('[]'),
+    answerIndex: integer('answer_index'),
+    explanationKo: text('explanation_ko').notNull(),
+    explanationJa: text('explanation_ja').notNull(),
+    explanationEn: text('explanation_en').notNull(),
+    sampleAnswerKo: text('sample_answer_ko'),
+    sampleAnswerJa: text('sample_answer_ja'),
+    sampleAnswerEn: text('sample_answer_en'),
+    audioScriptKo: text('audio_script_ko'),
+    audioR2Key: text('audio_r2_key'),
+    sourceCode: text('source_code').notNull(),
+    authorReviewer: text('author_reviewer').notNull(),
+    secondReviewer: text('second_reviewer').notNull(),
+    reviewedAt: text('reviewed_at').notNull(),
+    bankVersion: text('bank_version').notNull(),
+    isPublished: integer('is_published', { mode: 'boolean' }).notNull().default(false),
+    ...timestamps,
+  },
+  (t) => ({
+    releaseIdx: index('topik_practice_release_idx').on(
+      t.learningTrack, t.bankVersion, t.isPublished, t.examLevel, t.section, t.difficulty,
+    ),
+    promptUk: uniqueIndex('topik_practice_prompt_uk').on(
+      t.learningTrack, t.examLevel, t.section, t.promptKo,
+    ),
   }),
 );
 
@@ -743,6 +1076,24 @@ export type ContentSeedRun = typeof contentSeedRuns.$inferSelect;
 export type NewContentSeedRun = typeof contentSeedRuns.$inferInsert;
 export type ContentSeedSource = typeof contentSeedSources.$inferSelect;
 export type NewContentSeedSource = typeof contentSeedSources.$inferInsert;
+export type ContentRelease = typeof contentReleases.$inferSelect;
+export type NewContentRelease = typeof contentReleases.$inferInsert;
+export type ContentReleaseJob = typeof contentReleaseJobs.$inferSelect;
+export type NewContentReleaseJob = typeof contentReleaseJobs.$inferInsert;
+export type ContentReleaseGateEvidence = typeof contentReleaseGateEvidence.$inferSelect;
+export type NewContentReleaseGateEvidence = typeof contentReleaseGateEvidence.$inferInsert;
+export type ContentReleasePreviewCandidate = typeof contentReleasePreviewCandidates.$inferSelect;
+export type NewContentReleasePreviewCandidate = typeof contentReleasePreviewCandidates.$inferInsert;
+export type ContentReleasePoisonReport = typeof contentReleasePoisonReports.$inferSelect;
+export type NewContentReleasePoisonReport = typeof contentReleasePoisonReports.$inferInsert;
+export type AiAssistanceUsageWindow = typeof aiAssistanceUsageWindows.$inferSelect;
+export type NewAiAssistanceUsageWindow = typeof aiAssistanceUsageWindows.$inferInsert;
+export type AiAssistanceCircuitBreaker = typeof aiAssistanceCircuitBreakers.$inferSelect;
+export type NewAiAssistanceCircuitBreaker = typeof aiAssistanceCircuitBreakers.$inferInsert;
+export type AiAssistanceAuditEvent = typeof aiAssistanceAuditEvents.$inferSelect;
+export type NewAiAssistanceAuditEvent = typeof aiAssistanceAuditEvents.$inferInsert;
+export type AiWritingFeedbackRecord = typeof aiWritingFeedbackRecords.$inferSelect;
+export type NewAiWritingFeedbackRecord = typeof aiWritingFeedbackRecords.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type SrsCard = typeof srsCards.$inferSelect;
@@ -769,6 +1120,8 @@ export type TopikPlacementAttempt = typeof topikPlacementAttempts.$inferSelect;
 export type NewTopikPlacementAttempt = typeof topikPlacementAttempts.$inferInsert;
 export type TopikPlacementResponse = typeof topikPlacementResponses.$inferSelect;
 export type NewTopikPlacementResponse = typeof topikPlacementResponses.$inferInsert;
+export type TopikPracticeQuestion = typeof topikPracticeQuestions.$inferSelect;
+export type NewTopikPracticeQuestion = typeof topikPracticeQuestions.$inferInsert;
 export type AudioGenerationLog = typeof audioGenerationLog.$inferSelect;
 export type NewAudioGenerationLog = typeof audioGenerationLog.$inferInsert;
 export type ReadingPassage = typeof readingPassages.$inferSelect;

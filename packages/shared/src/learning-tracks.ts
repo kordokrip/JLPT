@@ -6,18 +6,47 @@ export type TopikExamLevel = (typeof TOPIK_EXAM_LEVELS)[number];
 
 export const TOPIK_CONTENT_RELEASES = [
   'foundation-only',
-  'placement-preview',
+  'placement-v2',
   'topik-i',
+  'topik-i-ii',
 ] as const;
 export type TopikContentRelease = (typeof TOPIK_CONTENT_RELEASES)[number];
 
-export const TOPIK_SECTIONS = ['listening', 'reading'] as const;
+export const TOPIK_SECTIONS = ['listening', 'writing', 'reading'] as const;
 export type TopikSection = (typeof TOPIK_SECTIONS)[number];
+
+/** Immutable content-release lifecycle. A published release may only be withdrawn. */
+export const CONTENT_PUBLISH_STATES = [
+  'draft',
+  'automated_checked',
+  'human_reviewed',
+  'preview',
+  'approved',
+  'published',
+  'withdrawn',
+] as const;
+export type ContentPublishState = (typeof CONTENT_PUBLISH_STATES)[number];
+
+/** TOPIK bands are independent of JLPT N-levels. */
+export const TOPIK_EXAM_BANDS = ['beginner', 'intermediate', 'advanced'] as const;
+export type TopikExamBand = (typeof TOPIK_EXAM_BANDS)[number];
+
+export const TOPIK_CONTENT_ITEM_KINDS = [
+  'lesson',
+  'vocab',
+  'grammar',
+  'character',
+  'listening',
+  'reading',
+  'writing',
+  'practice',
+] as const;
+export type TopikContentItemKind = (typeof TOPIK_CONTENT_ITEM_KINDS)[number];
 
 export const INSTRUCTION_LANGUAGES = ['ko', 'en', 'ja'] as const;
 export type InstructionLanguage = (typeof INSTRUCTION_LANGUAGES)[number];
 
-export const TOPIK_INSTRUCTION_LANGUAGES = ['en', 'ko'] as const;
+export const TOPIK_INSTRUCTION_LANGUAGES = ['en', 'ko', 'ja'] as const;
 export type TopikInstructionLanguage = (typeof TOPIK_INSTRUCTION_LANGUAGES)[number];
 
 export interface LearningTrackDefinition {

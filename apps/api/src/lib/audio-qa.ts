@@ -1,9 +1,9 @@
 import type { Env } from '../types.js';
-import { AUDIO_QA_SAMPLES } from './audio-qa-samples.js';
+import { AUDIO_QA_SAMPLES, AUDIO_QA_KOREAN_SAMPLES, type AudioQaLanguage } from '@nihongo-n3/shared';
 import { createTtsAdapter, getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from './tts/index.js';
 
 export type AudioQaProvider = Extract<TtsProviderId, 'cloudflare' | 'google' | 'voicevox'>;
-export type AudioQaKey = { provider: AudioQaProvider; index: number };
+export type AudioQaKey = { provider: AudioQaProvider; index: number; language: AudioQaLanguage };
 
 export type AudioQaWarmupResult = {
   provider: AudioQaProvider;
@@ -29,20 +29,25 @@ export function parseAudioQaProvider(value: string): AudioQaProvider | null {
 }
 
 export function parseAudioQaKey(key: string): AudioQaKey | null {
-  const match = key.match(/^audio\/qa\/([^/]+)\/(\d+)\.wav$/);
+  const match = key.match(/^audio\/qa\/(?:([a-z]{2})\/)?([^/]+)\/(\d+)\.wav$/);
   if (!match) return null;
-  const provider = parseAudioQaProvider(match[1] as string);
-  const index = Number(match[2]);
-  if (!provider || !isValidAudioQaIndex(index)) return null;
-  return { provider, index };
+  const language = (match[1] || 'ja') as AudioQaLanguage;
+  const provider = parseAudioQaProvider(match[2] as string);
+  const index = Number(match[3]);
+  if ((language !== 'ja' && language !== 'ko') || !provider || !isValidAudioQaIndex(index, language)) return null;
+  return { provider, index, language };
 }
 
-export function isValidAudioQaIndex(index: number): boolean {
-  return Number.isInteger(index) && index >= 1 && index <= AUDIO_QA_SAMPLES.length;
+function samplesFor(language: AudioQaLanguage): readonly string[] {
+  return language === 'ko' ? AUDIO_QA_KOREAN_SAMPLES : AUDIO_QA_SAMPLES;
 }
 
-export function buildAudioQaKey(provider: AudioQaProvider, index: number): string {
-  return `audio/qa/${provider}/${index}.wav`;
+export function isValidAudioQaIndex(index: number, language: AudioQaLanguage = 'ja'): boolean {
+  return Number.isInteger(index) && index >= 1 && index <= samplesFor(language).length;
+}
+
+export function buildAudioQaKey(provider: AudioQaProvider, index: number, language: AudioQaLanguage = 'ja'): string {
+  return language === 'ja' ? `audio/qa/${provider}/${index}.wav` : `audio/qa/${language}/${provider}/${index}.wav`;
 }
 
 export function shouldRegenerateQaAudio(
@@ -61,14 +66,15 @@ async function generateQaAudioObject(
   env: Env,
   provider: AudioQaProvider,
   index: number,
+  language: AudioQaLanguage,
 ): Promise<R2ObjectBody | null> {
-  const text = AUDIO_QA_SAMPLES[index - 1];
+  const text = samplesFor(language)[index - 1];
   if (!text) return null;
 
-  const providerInfo = getTtsProviderInfo(env, provider);
-  const key = buildAudioQaKey(provider, index);
+  const providerInfo = getTtsProviderInfo(env, provider, language);
+  const key = buildAudioQaKey(provider, index, language);
   const tts = createTtsAdapter(env, provider);
-  const audioBuffer = await tts.generateAudio({ text, lang: 'ja' });
+  const audioBuffer = await tts.generateAudio({ text, lang: language });
   const contentType = detectAudioContentType(audioBuffer);
   await env.ASSETS.put(key, audioBuffer, {
     httpMetadata: {
@@ -81,7 +87,7 @@ async function generateQaAudioObject(
       source: 'qa',
       provider: providerInfo.provider,
       model: providerInfo.model,
-      lang: 'ja',
+      lang: language,
       audioVersion: providerInfo.audioVersion,
       contentType,
       createdAt: new Date().toISOString(),
@@ -93,22 +99,27 @@ async function generateQaAudioObject(
 export async function warmupAudioQa(
   env: Env,
   provider: AudioQaProvider,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; language?: AudioQaLanguage } = {},
 ): Promise<AudioQaWarmupResult[]> {
+  const language = options.language ?? 'ja';
+  const samples = samplesFor(language);
+  if (provider === 'voicevox' && language !== 'ja') {
+    return samples.map((_, index) => ({ provider, index: index + 1, key: buildAudioQaKey(provider, index + 1, language), status: 'skipped', error: 'VOICEVOX QA는 일본어만 지원합니다' }));
+  }
   if (provider === 'voicevox' && !getVoicevoxUrl(env).trim()) {
-    return AUDIO_QA_SAMPLES.map((_, index) => ({
+    return samples.map((_, index) => ({
       provider,
       index: index + 1,
-      key: buildAudioQaKey(provider, index + 1),
+      key: buildAudioQaKey(provider, index + 1, language),
       status: 'skipped',
       error: 'VOICEVOX_URL 이 설정되지 않았습니다',
     }));
   }
 
-  const providerInfo = getTtsProviderInfo(env, provider);
+  const providerInfo = getTtsProviderInfo(env, provider, language);
   const results: AudioQaWarmupResult[] = [];
-  for (let i = 1; i <= AUDIO_QA_SAMPLES.length; i++) {
-    const key = buildAudioQaKey(provider, i);
+  for (let i = 1; i <= samples.length; i++) {
+    const key = buildAudioQaKey(provider, i, language);
     try {
       const existing = options.force ? null : await env.ASSETS.head(key);
       if (existing && !shouldRegenerateQaAudio(existing, providerInfo)) {
@@ -125,7 +136,7 @@ export async function warmupAudioQa(
         continue;
       }
 
-      const object = await generateQaAudioObject(env, provider, i);
+      const object = await generateQaAudioObject(env, provider, i, language);
       const result: AudioQaWarmupResult = {
         provider,
         index: i,

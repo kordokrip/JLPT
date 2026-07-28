@@ -44,6 +44,87 @@ test.describe('SRS 복습 플로우', () => {
       .toBeVisible({ timeout: 10_000 });
   });
 
+  test('복습 발음은 일본어 browser voice만 사용한다', async ({ page }) => {
+    const serverAudioRequests: string[] = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith('/api/v1/audio/')) {
+        serverAudioRequests.push(request.url());
+      }
+    });
+    await page.addInitScript(() => {
+      const spoken: Array<{ lang: string; voice: string | null }> = [];
+      Object.defineProperty(window, '__reviewPronunciationForTest', {
+        value: spoken,
+        configurable: true,
+      });
+
+      class FakeSpeechSynthesisUtterance {
+        lang = '';
+        rate = 1;
+        pitch = 1;
+        volume = 1;
+        voice: SpeechSynthesisVoice | null = null;
+        onstart: (() => void) | null = null;
+        onend: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+
+        constructor(_text: string) {}
+      }
+
+      const googleJapanese = {
+        default: false,
+        lang: 'ja-JP',
+        localService: false,
+        name: 'Google 日本語',
+        voiceURI: 'google-ja-jp',
+      } as SpeechSynthesisVoice;
+      const german = {
+        default: true,
+        lang: 'de-DE',
+        localService: true,
+        name: 'Deutsch',
+        voiceURI: 'de-de',
+      } as SpeechSynthesisVoice;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: FakeSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          cancel: () => undefined,
+          getVoices: () => [german, googleJapanese],
+          speak: (utterance: FakeSpeechSynthesisUtterance) => {
+            spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
+            utterance.onstart?.();
+            utterance.onend?.();
+          },
+        },
+      });
+    });
+
+    await page.goto('/review');
+    if (!(await ensureReviewCard(page))) {
+      test.skip();
+      return;
+    }
+
+    await page.getByRole('button', { name: /발음 재생|Play pronunciation|発音を再生/ }).first().click();
+    await expect.poll(async () => page.evaluate(() => (
+      window as unknown as { __reviewPronunciationForTest: unknown[] }
+    ).__reviewPronunciationForTest.length)).toBe(1);
+    const spoken = await page.evaluate(() => (
+      window as unknown as {
+        __reviewPronunciationForTest: Array<{ lang: string; voice: string | null }>;
+      }
+    ).__reviewPronunciationForTest);
+
+    expect(spoken[0]).toEqual({ lang: 'ja-JP', voice: 'google-ja-jp' });
+    expect(serverAudioRequests, 'legacy R2 audio must not be requested').toEqual([]);
+  });
+
   test('카드가 있으면 Space 키로 답안을 표시한다', async ({ page }) => {
     await page.goto('/review');
     await page.waitForLoadState('networkidle', { timeout: 15_000 });

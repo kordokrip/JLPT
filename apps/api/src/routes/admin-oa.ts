@@ -93,6 +93,7 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
             schema: z.object({
               provider: z.enum(['cloudflare', 'google', 'voicevox']).optional(),
               force: z.boolean().optional(),
+              language: z.enum(['ja', 'ko']).optional(),
             }),
           },
         },

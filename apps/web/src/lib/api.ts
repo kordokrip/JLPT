@@ -17,10 +17,14 @@ import {
   type JlptLevel,
   type LearningTrackId,
   type TrackStatusDto,
+  type TopikOfficialReferenceDto,
   type TopikInstructionLanguage,
   type TopikPlacementAttemptDto,
   type TopikPlacementResultDto,
   type TopikPlacementSubmitBody,
+  type TopikPracticeListDto,
+  type TopikPracticeSolutionDto,
+  type TopikReleasedContentListDto,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
 import type { components, paths } from '../types/api.js';
@@ -258,20 +262,19 @@ export interface TopikPlacementReviewItemDto {
   question_id: string;
   section: 'listening' | 'reading';
   prompt_ko: string;
+  prompt_ja: string;
   prompt_en: string;
   choices: string[];
   selected_index: number;
   answer_index: number;
   explanation_en: string;
   explanation_ko: string;
+  explanation_ja: string;
 }
 
 export const topikPlacementApi = {
-  start: async (instructionLanguage: TopikInstructionLanguage) => typedResult<TopikPlacementAttemptDto>(
-    await typedApi.POST('/api/v1/tracks/topik-ko/placement/attempts', {
-      body: { instruction_language: instructionLanguage },
-    }),
-  ),
+  start: (instructionLanguage: TopikInstructionLanguage) =>
+    api.post<TopikPlacementAttemptDto>('/tracks/topik-ko/placement/attempts', { instruction_language: instructionLanguage }),
   submit: async (attemptId: string, answers: TopikPlacementSubmitBody['answers']) => typedResult<TopikPlacementResultDto>(
     await typedApi.POST('/api/v1/tracks/topik-ko/placement/attempts/{attemptId}/submit', {
       params: { path: { attemptId } },
@@ -284,6 +287,17 @@ export const topikPlacementApi = {
   review: async () => typedResult<TopikPlacementReviewItemDto[]>(
     await typedApi.GET('/api/v1/tracks/topik-ko/placement/review'),
   ),
+};
+
+export const topikOfficialReferenceApi = {
+  get: () => api.get<TopikOfficialReferenceDto>('/tracks/topik-ko/official-reference'),
+};
+
+export const topikPracticeApi = {
+  list: (examLevel: 'TOPIK-I' | 'TOPIK-II', section: 'listening' | 'writing' | 'reading') =>
+    api.get<TopikPracticeListDto>('/tracks/topik-ko/practice', { exam_level: examLevel, section }),
+  solution: (questionId: string) =>
+    api.get<TopikPracticeSolutionDto>(`/tracks/topik-ko/practice/questions/${encodeURIComponent(questionId)}/solution`),
 };
 
 // SRS

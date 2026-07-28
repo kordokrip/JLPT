@@ -11,6 +11,7 @@ import Dexie, { type EntityTable } from 'dexie';
 import type {
   GrammarContentItem,
   KanjiContentItem,
+  TopikPracticeListDto,
   VocabContentItem,
   LearningTrackId,
 } from '@nihongo-n3/shared';
@@ -154,6 +155,19 @@ export interface TopikLearningProgress {
   completed_at: string;
 }
 
+/** Public practice prompts are scoped by account and learning track. */
+export interface TopikPracticeCache {
+  id: string;
+  scope_id: string;
+  /** Server release state that selected this public practice bank. */
+  content_release: string;
+  exam_level: 'TOPIK-I' | 'TOPIK-II';
+  section: 'listening' | 'writing' | 'reading';
+  bank_version: string;
+  fetched_at: string;
+  payload: TopikPracticeListDto;
+}
+
 // ─────────────────────────────────────────────
 // 유틸 — 로컬 userId namespace
 // ─────────────────────────────────────────────
@@ -215,6 +229,7 @@ class NihongoDb extends Dexie {
   // 로컬 메타데이터
   meta!: EntityTable<LocalMeta, 'key'>;
   topik_progress!: EntityTable<TopikLearningProgress, 'id'>;
+  topik_practice_cache!: EntityTable<TopikPracticeCache, 'id'>;
 
   constructor() {
     super('nihongo-n3');
@@ -265,6 +280,16 @@ class NihongoDb extends Dexie {
 
     this.version(3).stores({
       topik_progress: '++id, &[scope_id+unit_id], scope_id, completed_at',
+    });
+
+    this.version(4).stores({
+      topik_practice_cache: '&id, scope_id, [scope_id+exam_level+section], fetched_at',
+    });
+
+    // A practice prompt cache must not survive a TOPIK content-release change.
+    // Older v4 entries remain harmless but are no longer addressed by the v5 key.
+    this.version(5).stores({
+      topik_practice_cache: '&id, scope_id, content_release, [scope_id+content_release+exam_level+section], fetched_at',
     });
   }
 }

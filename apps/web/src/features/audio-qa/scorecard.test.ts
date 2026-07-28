@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUDIO_QA_SAMPLES } from '@nihongo-n3/shared';
+import { audioQaSamples } from '@nihongo-n3/shared';
 import {
   AUDIO_QA_CRITERIA,
   AUDIO_QA_PROVIDERS,
@@ -19,7 +19,7 @@ describe('audio QA scorecard', () => {
     expect(isAudioQaScorecardComplete(scorecard)).toBe(false);
 
     for (const provider of AUDIO_QA_PROVIDERS) {
-      AUDIO_QA_SAMPLES.forEach((_, sampleIndex) => {
+      audioQaSamples('ja').forEach((_, sampleIndex) => {
         scorecard.ratings[audioQaRatingKey(provider, sampleIndex)] = {
           candidate: { provider, model: `${provider}-model`, voice: `${provider}-voice`, version: 'v1' },
           scores: Object.fromEntries(AUDIO_QA_CRITERIA.map(({ id }) => [id, 4])),
@@ -52,5 +52,21 @@ describe('audio QA scorecard', () => {
 
     expect(markdown).toContain(String.raw`QA\\Lead \| reviewer`);
     expect(markdown).toContain('desktop<br>WebKit');
+  });
+
+  it('uses a separate 30-sample provider matrix for Korean QA', () => {
+    const scorecard = createAudioQaScorecard({ language: 'ko', browser: 'Chrome', evaluatedOn: '2026-07-20' });
+    scorecard.evaluator = 'QA evaluator';
+    scorecard.device = 'Android';
+    for (const provider of ['browser', 'cloudflare', 'google'] as const) {
+      audioQaSamples('ko').forEach((_, sampleIndex) => {
+        scorecard.ratings[audioQaRatingKey(provider, sampleIndex)] = {
+          candidate: { provider, model: `${provider}-model`, voice: `${provider}-voice`, version: 'v1' },
+          scores: Object.fromEntries(AUDIO_QA_CRITERIA.map(({ id }) => [id, 4])), notes: '', playedAt: '2026-07-20T00:00:00.000Z',
+        };
+      });
+    }
+    expect(isAudioQaScorecardComplete(scorecard)).toBe(true);
+    expect(audioQaScorecardMarkdown(scorecard)).toContain('한국어 오디오 30문장 청감표');
   });
 });

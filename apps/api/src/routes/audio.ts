@@ -19,6 +19,7 @@ import {
   parseAudioQaProvider,
   type AudioQaProvider,
 } from '../lib/audio-qa.js';
+import type { AudioQaLanguage } from '@nihongo-n3/shared';
 const audio = new Hono<AppEnv>();
 
 const CACHE_CONTROL = 'public, max-age=2592000, immutable';
@@ -55,8 +56,9 @@ async function serveQaAudio(
   c: Context<AppEnv>,
   provider: AudioQaProvider,
   index: number,
+  language: AudioQaLanguage = 'ja',
 ): Promise<Response> {
-  const key = buildAudioQaKey(provider, index);
+  const key = buildAudioQaKey(provider, index, language);
   const r2obj = await c.env.ASSETS.get(key);
   if (!r2obj) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
 
@@ -78,8 +80,9 @@ async function serveQaAudioHead(
   c: Context<AppEnv>,
   provider: AudioQaProvider,
   index: number,
+  language: AudioQaLanguage = 'ja',
 ): Promise<Response> {
-  const key = buildAudioQaKey(provider, index);
+  const key = buildAudioQaKey(provider, index, language);
   const object = await c.env.ASSETS.head(key);
   if (!object) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
 
@@ -106,6 +109,17 @@ audio.on('HEAD', '/audio/qa/:provider/:file', async (c) => {
   return serveQaAudioHead(c, provider, index);
 });
 
+audio.on('HEAD', '/audio/qa/:language/:provider/:file', async (c) => {
+  const language = c.req.param('language') as AudioQaLanguage;
+  const provider = parseAudioQaProvider(c.req.param('provider'));
+  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
+  const index = fileMatch ? Number(fileMatch[1]) : NaN;
+  if ((language !== 'ja' && language !== 'ko') || !provider || !isValidAudioQaIndex(index, language)) {
+    return badRequest(c, 'QA 오디오 language, provider 또는 index가 올바르지 않습니다');
+  }
+  return serveQaAudioHead(c, provider, index, language);
+});
+
 // ── GET /audio/qa/:provider/:file ───────
 audio.get('/audio/qa/:provider/:file', async (c) => {
   const provider = parseAudioQaProvider(c.req.param('provider'));
@@ -118,12 +132,23 @@ audio.get('/audio/qa/:provider/:file', async (c) => {
   return serveQaAudio(c, provider, index);
 });
 
+audio.get('/audio/qa/:language/:provider/:file', async (c) => {
+  const language = c.req.param('language') as AudioQaLanguage;
+  const provider = parseAudioQaProvider(c.req.param('provider'));
+  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
+  const index = fileMatch ? Number(fileMatch[1]) : NaN;
+  if ((language !== 'ja' && language !== 'ko') || !provider || !isValidAudioQaIndex(index, language)) {
+    return badRequest(c, 'QA 오디오 language, provider 또는 index가 올바르지 않습니다');
+  }
+  return serveQaAudio(c, provider, index, language);
+});
+
 // ── GET /audio/:key ───────────────────────────
 audio.get('/audio/:key{.+}', async (c) => {
   const key = c.req.param('key');
   if (!key) return badRequest(c, '오디오 키가 없습니다');
   const qaKey = parseAudioQaKey(key);
-  if (qaKey) return serveQaAudio(c, qaKey.provider, qaKey.index);
+  if (qaKey) return serveQaAudio(c, qaKey.provider, qaKey.index, qaKey.language);
   if (key.startsWith('audio/qa/')) return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
 
   const rangeHeader = c.req.header('range');

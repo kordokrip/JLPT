@@ -17,8 +17,10 @@ export class GoogleCloudTts implements TtsAdapter {
   constructor(private readonly apiKey: string) {}
 
   async generateAudio(opts: TtsOptions): Promise<ArrayBuffer> {
-    const voice = opts.voice ?? (opts.lang === 'ja' ? 'ja-JP-Neural2-B' : 'en-US-Neural2-A');
-    const languageCode = opts.lang === 'ja' ? 'ja-JP' : 'en-US';
+    const languageCode = opts.lang === 'ja' ? 'ja-JP' : opts.lang === 'ko' ? 'ko-KR' : 'en-US';
+    const voice = opts.voice ?? (opts.lang === 'ja'
+      ? 'ja-JP-Neural2-B'
+      : opts.lang === 'ko' ? 'ko-KR-Neural2-A' : 'en-US-Neural2-A');
 
     const body = {
       input: { text: opts.text },

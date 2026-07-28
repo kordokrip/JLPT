@@ -455,11 +455,89 @@ export interface paths {
                                 track: "topik-ko";
                                 available: boolean;
                                 /** @enum {string} */
-                                content_release: "foundation-only" | "placement-preview" | "topik-i";
+                                content_release: "foundation-only" | "placement-v2" | "topik-i" | "topik-i-ii";
                                 available_levels: ("TOPIK-I" | "TOPIK-II")[];
-                                available_sections: ("listening" | "reading")[];
+                                available_sections: ("listening" | "writing" | "reading")[];
                                 write_enabled: boolean;
                             };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/official-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * TOPIK 공식 공개 통계 및 시험 구조 참고 정보
+         * @description 국립국제교육원 공개 통계와 시험 구조만 반환합니다. 공식 문항, 정답, 음원, 개인 응시 기록은 포함하지 않습니다.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description TOPIK I/II 시험 구조와 공개 통계 집계 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                source: {
+                                    code: string;
+                                    title: string;
+                                    /** Format: uri */
+                                    source_url: string;
+                                    source_version: string;
+                                    statistics_rows: number;
+                                };
+                                blueprints: {
+                                    /** @enum {string} */
+                                    exam_level: "TOPIK-I" | "TOPIK-II";
+                                    delivery_mode: string;
+                                    /** @enum {string} */
+                                    section: "listening" | "writing" | "reading";
+                                    question_count: number;
+                                    section_score: number;
+                                    total_score: number;
+                                    grade_min: number;
+                                    grade_max: number;
+                                }[];
+                                applicant_totals: {
+                                    /** @enum {string} */
+                                    exam_level: "TOPIK-I" | "TOPIK-II";
+                                    applicants: number;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description 공식 공개 참조 데이터가 아직 적재되지 않음 */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            detail: string;
                         };
                     };
                 };
@@ -497,7 +575,7 @@ export interface paths {
                          * @default en
                          * @enum {string}
                          */
-                        instruction_language?: "en" | "ko";
+                        instruction_language?: "en" | "ko" | "ja";
                     };
                 };
             };
@@ -515,14 +593,15 @@ export interface paths {
                                 /** @enum {string} */
                                 status: "in_progress" | "completed";
                                 /** @enum {string} */
-                                instruction_language: "en" | "ko";
+                                instruction_language: "en" | "ko" | "ja";
                                 questions: {
                                     id: string;
                                     /** @enum {string} */
-                                    section: "listening" | "reading";
+                                    section: "listening" | "writing" | "reading";
                                     skill: string;
                                     difficulty: number;
                                     prompt_ko: string;
+                                    prompt_ja: string;
                                     prompt_en: string;
                                     choices: string[];
                                     audio: {
@@ -638,6 +717,7 @@ export interface paths {
                                     is_correct: boolean;
                                     explanation_en: string;
                                     explanation_ko: string;
+                                    explanation_ja: string;
                                 }[];
                             };
                         };
@@ -804,18 +884,333 @@ export interface paths {
                                 /** @enum {string} */
                                 section: "listening" | "reading";
                                 prompt_ko: string;
+                                prompt_ja: string;
                                 prompt_en: string;
                                 choices: string[];
                                 selected_index: number;
                                 answer_index: number;
                                 explanation_en: string;
                                 explanation_ko: string;
+                                explanation_ja: string;
                             }[];
                         };
                     };
                 };
                 /** @description 인증 필요 */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/practice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 자체 저작 TOPIK I/II 학습 문항 조회
+         * @description 공식 TOPIK 문항·정답·음원이 아닌, 출처와 이중 검수를 기록한 자체 저작 학습 문항만 반환합니다. 정답과 해설은 포함하지 않습니다.
+         */
+        get: {
+            parameters: {
+                query: {
+                    exam_level: "TOPIK-I" | "TOPIK-II";
+                    section: "listening" | "writing" | "reading";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 정답을 제외한 연습 문항 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                bank_version: string;
+                                /** @enum {string} */
+                                exam_level: "TOPIK-I" | "TOPIK-II";
+                                /** @enum {string} */
+                                section: "listening" | "writing" | "reading";
+                                questions: {
+                                    id: string;
+                                    /** @enum {string} */
+                                    exam_level: "TOPIK-I" | "TOPIK-II";
+                                    /** @enum {string} */
+                                    section: "listening" | "writing" | "reading";
+                                    /** @enum {string} */
+                                    question_type: "choice" | "writing";
+                                    skill: string;
+                                    difficulty: number;
+                                    prompt_ko: string;
+                                    prompt_ja: string;
+                                    prompt_en: string;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        kind: "r2";
+                                        url: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        kind: "browser-fallback";
+                                        text_ko: string;
+                                    } | null;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 검수 문제은행 미출시 */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 출시된 TOPIK 커리큘럼 항목 조회
+         * @description immutable content release가 published 상태인 TOPIK 항목만 반환합니다. 정답, 해설, source provenance, reviewer 정보는 포함하지 않습니다.
+         */
+        get: {
+            parameters: {
+                query: {
+                    exam_level: "TOPIK-I" | "TOPIK-II";
+                    section: "listening" | "writing" | "reading";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 출시된 TOPIK 공개 항목 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                content_release: string;
+                                /** @enum {string} */
+                                exam_level: "TOPIK-I" | "TOPIK-II";
+                                /** @enum {string} */
+                                section: "listening" | "writing" | "reading";
+                                items: {
+                                    id: string;
+                                    stable_ref: string;
+                                    content_release: string;
+                                    /** @enum {string} */
+                                    exam_level: "TOPIK-I" | "TOPIK-II";
+                                    /** @enum {string} */
+                                    exam_band: "beginner" | "intermediate" | "advanced";
+                                    /** @enum {string} */
+                                    section: "listening" | "writing" | "reading";
+                                    /** @enum {string} */
+                                    item_kind: "lesson" | "vocab" | "grammar" | "character" | "listening" | "reading" | "writing" | "practice";
+                                    skill: string;
+                                    difficulty: number;
+                                    prompt_ko: string;
+                                    prompt_ja: string;
+                                    prompt_en: string;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 해당 영역의 published release 없음 */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/practice/questions/{questionId}/solution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 자체 저작 TOPIK 학습 문항의 해설 확인
+         * @description 학습자가 해설 확인을 선택한 경우에만 자체 저작 정답·해설·쓰기 예시를 반환합니다.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    questionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 자체 저작 해설 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                question_id: string;
+                                /** @enum {string} */
+                                question_type: "choice" | "writing";
+                                answer_index: number | null;
+                                explanation_ko: string;
+                                explanation_ja: string;
+                                explanation_en: string;
+                                sample_answer_ko: string | null;
+                                sample_answer_ja: string | null;
+                                sample_answer_en: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 문항 없음 */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1679,6 +2074,105 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audio/qa/{language}/{provider}/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 언어별 고정 샘플 TTS QA 오디오 */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    language: "ja" | "ko";
+                    provider: "cloudflare" | "google" | "voicevox";
+                    file: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description QA 샘플 오디오 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "audio/wav": string;
+                        "audio/mpeg": string;
+                    };
+                };
+                /** @description 잘못된 요청 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 승인된 QA 배치가 아직 R2에 없음 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /** 언어별 고정 샘플 TTS QA 메타데이터 */
+        head: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    language: "ja" | "ko";
+                    provider: "cloudflare" | "google" | "voicevox";
+                    file: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description QA provider/model/version 메타데이터 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description 잘못된 요청 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 승인된 QA 배치가 아직 R2에 없음 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
         patch?: never;
         trace?: never;
     };
@@ -3045,6 +3539,330 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/ai/explanation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * published TOPIK 콘텐츠 기반 학습 해설 보조
+         * @description published release의 승인된 prompt·해설만 context로 사용합니다. 정답을 변경하거나 공식 점수·합격을 예측하지 않습니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        item_id: string;
+                        /**
+                         * @default ja
+                         * @enum {string}
+                         */
+                        instruction_language?: "ko" | "ja" | "en";
+                    };
+                };
+            };
+            responses: {
+                /** @description grounded explanation or approved fallback */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                summary: string;
+                                study_points: string[];
+                                citation_stable_ref: string;
+                                prompt_version: string;
+                                /** @enum {string} */
+                                mode: "ai_grounded" | "approved_fallback";
+                                notice?: string;
+                            };
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description published item not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description usage limit */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/ai/writing-feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * TOPIK II 쓰기 형성 피드백
+         * @description 공식 채점이나 합격 예측을 하지 않습니다. 원문은 gateway log·cache·R2 evidence에 저장하지 않고, 저장 동의 시에도 hash와 구조화된 피드백만 30일 보관합니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        item_id: string;
+                        /**
+                         * @default ja
+                         * @enum {string}
+                         */
+                        instruction_language?: "ko" | "ja" | "en";
+                        response_text: string;
+                        /** @default false */
+                        store_feedback?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description formative feedback */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                disclaimer: string;
+                                rubric: {
+                                    task_response: number;
+                                    organization: number;
+                                    grammar: number;
+                                    vocabulary: number;
+                                };
+                                strengths: string[];
+                                next_steps: string[];
+                                requires_human_review: boolean;
+                                /** @enum {string} */
+                                human_escalation_path: "/support/writing-feedback";
+                                prompt_version: string;
+                                /** @enum {string} */
+                                mode: "ai_formative" | "safe_fallback";
+                                stored: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description published writing item not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description PII detected */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description usage limit */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description feature disabled */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        /** 저장 동의한 TOPIK 쓰기 피드백 삭제 */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                deleted: number;
+                            };
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;

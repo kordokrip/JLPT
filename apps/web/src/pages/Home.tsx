@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useDueCards, useSrsStats } from '../hooks/useSRS';
 import { useTrackStatus } from '../hooks/useTrackStatus';
 import { StreakBadge } from '../components/feature/StreakBadge';
+import { LearningTrackSwitch } from '../components/feature/LearningTrackSwitch';
 import { Button, Card, Progress } from '../components/ui';
 
 type DayKey = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
@@ -64,6 +65,8 @@ export default function Home() {
           <StreakBadge />
         </div>
       </header>
+
+      <LearningTrackSwitch />
 
       <Card elevated className="mb-5 overflow-hidden border-[var(--accent-soft)]">
         <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">

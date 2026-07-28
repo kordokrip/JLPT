@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "build": "wrangler deploy --dry-run --env=\"\"",
-    "deploy": "wrangler deploy --env=\"\"",
+    "build": "wrangler deploy --dry-run --config wrangler.toml --env=\"\"",
+    "deploy": "wrangler deploy --config wrangler.toml --env=\"\"",
     "deploy:observability-receiver": "wrangler deploy --config wrangler.observability-receiver.toml",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

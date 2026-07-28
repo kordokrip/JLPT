@@ -63,7 +63,7 @@ export function createTtsAdapter(env: TtsEnv, providerOverride?: TtsProviderId):
   }
 }
 
-export function getTtsProviderInfo(env: TtsEnv, providerOverride?: TtsProviderId): TtsProviderInfo {
+export function getTtsProviderInfo(env: TtsEnv, providerOverride?: TtsProviderId, language: 'ja' | 'ko' | 'en' = 'ja'): TtsProviderInfo {
   const provider = normalizeProvider(providerOverride ?? env.TTS_PROVIDER);
   if (provider === 'voicevox') {
     const speaker = parseOptionalNumber(env.VOICEVOX_SPEAKER) ?? 3;
@@ -76,7 +76,10 @@ export function getTtsProviderInfo(env: TtsEnv, providerOverride?: TtsProviderId
   if (provider === 'style-bert-vits2') {
     return { provider, model: 'style-bert-vits2:self-hosted', audioVersion: 'style-bert-vits2-v1' };
   }
-  if (provider === 'google') return { provider, model: 'ja-JP-Neural2-B', audioVersion: 'google-neural2-v1' };
+  if (provider === 'google') {
+    const model = language === 'ja' ? 'ja-JP-Neural2-B' : language === 'ko' ? 'ko-KR-Neural2-A' : 'en-US-Neural2-A';
+    return { provider, model, audioVersion: 'google-neural2-v1' };
+  }
   if (provider === 'azure') return { provider, model: 'azure-tts', audioVersion: 'azure-v1' };
   return { provider: 'cloudflare', model: CLOUDFLARE_MELOTTS_MODEL, audioVersion: 'melotts-v2' };
 }

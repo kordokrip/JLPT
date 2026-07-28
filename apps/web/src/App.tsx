@@ -31,6 +31,7 @@ const AdminUsers     = lazy(() => import('./pages/AdminUsers'));
 const TopikDashboard  = lazy(() => import('./pages/TopikDashboard'));
 const TopikPlacement  = lazy(() => import('./pages/TopikPlacement'));
 const TopikLearn      = lazy(() => import('./pages/TopikLearn'));
+const TopikCharacterTrainer = lazy(() => import('./pages/TopikCharacterTrainer'));
 const TopikReview     = lazy(() => import('./pages/TopikReview'));
 const TopikProgress   = lazy(() => import('./pages/TopikProgress'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="track/topik-ko" element={<TopikDashboard />} />
             <Route path="track/topik-ko/placement" element={<TopikPlacement />} />
             <Route path="track/topik-ko/learn" element={<TopikLearn />} />
+            <Route path="track/topik-ko/characters" element={<TopikCharacterTrainer />} />
             <Route path="track/topik-ko/review" element={<TopikReview />} />
             <Route path="track/topik-ko/progress" element={<TopikProgress />} />
           </Route>

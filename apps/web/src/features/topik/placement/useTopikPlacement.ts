@@ -5,7 +5,7 @@ import { useSettingsStore } from '../../../stores/settings-store';
 
 export function useTopikPlacement() {
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
-  const instructionLanguage = configuredInstructionLanguage === 'ko' ? 'ko' : 'en';
+  const instructionLanguage = configuredInstructionLanguage;
   const [attempt, setAttempt] = useState<TopikPlacementAttemptDto | null>(null);
   const [result, setResult] = useState<TopikPlacementResultDto | null>(null);
   const [index, setIndex] = useState(0);

@@ -17,7 +17,19 @@ export default defineConfig({
       wrangler: { configPath: './wrangler.test.toml' },
       miniflare: {
         d1Databases: ['DB'],
-        r2Buckets: ['ASSETS', 'REPORTS'],
+        r2Buckets: ['ASSETS', 'REPORTS', 'CONTENT_EVIDENCE'],
+        queueProducers: ['CONTENT_RELEASE_QUEUE', 'CONTENT_RELEASE_DLQ'],
+        queueConsumers: [
+          'nihongo-n3-content-release-test',
+          'nihongo-n3-content-release-test-dlq',
+        ],
+        workflows: {
+          CONTENT_RELEASE_WORKFLOW: {
+            name: 'nihongo-n3-content-release-test',
+            className: 'ContentReleaseWorkflow',
+            stepLimit: 12,
+          },
+        },
       },
     }),
   ],

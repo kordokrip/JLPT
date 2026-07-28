@@ -22,18 +22,18 @@ test.describe('TOPIK product flow', () => {
           id: ATTEMPT_ID,
           bank_version: 'v2',
           status: 'in_progress',
-          instruction_language: 'en',
+          instruction_language: 'ja',
           started_at: 1_768_000_000,
           questions: [
             {
               id: 'listen-1', section: 'listening', skill: 'detail', difficulty: 1,
-              prompt_ko: '여자는 어디에 갑니까?', prompt_en: 'Where is the woman going?',
+              prompt_ko: '여자는 어디에 갑니까?', prompt_ja: '女性はどこへ行きますか。', prompt_en: 'Where is the woman going?',
               choices: ['학교', '은행', '병원', '시장'],
               audio: { kind: 'browser-fallback', text_ko: '여자는 은행에 갑니다.' },
             },
             {
               id: 'read-1', section: 'reading', skill: 'notice', difficulty: 1,
-              prompt_ko: '오늘 문을 닫는 곳은 어디입니까?', prompt_en: 'Which place is closed today?',
+              prompt_ko: '오늘 문을 닫는 곳은 어디입니까?', prompt_ja: '今日閉まっている場所はどこですか。', prompt_en: 'Which place is closed today?',
               choices: ['도서관', '우체국', '약국', '식당'], audio: null,
             },
           ],
@@ -60,13 +60,25 @@ test.describe('TOPIK product flow', () => {
     await expect(page.locator('a[href="/track/topik-ko/learn"]').first()).toBeVisible();
     await expect(page.locator('a[href="/browse/vocab"]')).toHaveCount(0);
 
+    await page.goto('/settings');
+    await page.getByRole('button', { name: '日本語' }).last().click();
+
     await page.goto('/track/topik-ko/learn');
     await page.getByRole('button', { name: /안녕하세요\? 재생|Play 안녕하세요\?|안녕하세요\?を再生/ }).click();
     await page.getByRole('button', { name: /완료로 표시|Mark complete|完了にする/ }).first().click();
     await expect(page.getByRole('button', { name: /미완료로 변경|Mark incomplete|未完了に戻す/ }).first()).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('radio', { name: /은행/ }).last().click();
+    await page.getByRole('button', { name: /해설 확인|Show explanation|解説を見る/ }).click();
+    await expect(page.getByText(/聞き取り文で、銀行へ行くと言っています/)).toBeVisible();
+    await page.getByRole('tab', { name: 'TOPIK II' }).click();
+    await page.getByRole('tab', { name: /쓰기|Writing|書き/ }).click();
+    await page.getByRole('textbox', { name: /쓰기 답안|Writing response|作文の回答/ }).fill('주말에 친구를 만납니다.');
+    await page.getByRole('button', { name: /해설 확인|Show explanation|解説を見る/ }).click();
+    await expect(page.getByText(/週末の計画を二文で書けばよい問題です/)).toBeVisible();
 
     await page.goto('/track/topik-ko/placement');
     await page.getByRole('button', { name: /진단 시작|Start placement|診断を始める/ }).click();
+    await expect(page.getByText('女性はどこへ行きますか。')).toBeVisible();
     await expect(page.getByText('여자는 은행에 갑니다.')).toHaveCount(0);
     await expect(page.getByText(/한국어 브라우저 음성 대체 재생|Korean browser voice fallback|韓国語ブラウザー音声/)).toBeVisible();
     await page.getByRole('button', { name: /한국어 음성 재생|Play Korean audio|韓国語音声を再生/ }).click();

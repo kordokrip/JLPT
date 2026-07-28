@@ -16,15 +16,15 @@ export default function Welcome() {
   const setLearningTrack = useSettingsStore((state) => state.setLearningTrack);
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-[#F7F0E2] text-[#222629] dark:bg-[#171B1D] dark:text-[#FFF8EC]">
+    <main className="min-h-dvh overflow-x-hidden bg-[var(--background)] text-foreground">
       <section className="relative flex min-h-[86dvh] items-center overflow-hidden border-b border-black/10 dark:border-white/10">
         <img
-          src="/brand-hero.png"
+          src="/brand-hero-eastasia-v2.png"
           alt={t('welcome.heroAlt')}
           className="absolute inset-0 h-full w-full object-cover object-[62%_50%] opacity-45 dark:opacity-25 lg:object-right"
           draggable={false}
         />
-        <div className="absolute inset-y-0 left-0 w-full bg-[rgba(247,240,226,0.84)] dark:bg-[rgba(23,27,29,0.84)] lg:w-[58%]" aria-hidden="true" />
+        <div className="absolute inset-y-0 left-0 w-full bg-[rgba(247,243,234,0.9)] dark:bg-[rgba(17,17,16,0.9)] lg:w-[60%]" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
           <div className="max-w-[680px]">
@@ -35,15 +35,15 @@ export default function Welcome() {
                 className="h-14 w-14 rounded-[var(--radius-md)] border border-black/10 object-cover shadow-[var(--shadow-soft)] sm:h-16 sm:w-16"
               />
               <div>
-                <p className="text-sm font-black text-[#C9362B]">JLPT · TOPIK Study</p>
-                <p className="mt-1 text-xs font-bold uppercase text-[#557B68] dark:text-[#9BC3AE]">Language Study OS</p>
+                <p className="text-sm font-black text-[var(--brand-vermilion)]">JLPT · TOPIK Study</p>
+                <p className="mt-1 text-xs font-bold uppercase text-[var(--brand-indigo)] dark:text-[#9BC3AE]">East Asian Language Studio</p>
               </div>
             </div>
 
             <h1 className="mt-8 max-w-[620px] break-keep text-4xl font-black leading-[1.08] sm:text-5xl lg:text-6xl">
               {t('welcome.title')}
             </h1>
-            <p className="mt-5 max-w-[600px] break-keep text-base leading-7 text-[#4E5558] dark:text-[#D8D1C4] sm:text-lg">
+            <p className="mt-5 max-w-[600px] break-keep text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
               {t('welcome.description')}
             </p>
 
@@ -66,10 +66,10 @@ export default function Welcome() {
             </fieldset>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link to="/login" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[#C9362B] px-7 text-base font-bold text-white shadow-[var(--shadow-soft)] hover:bg-[#A92C24]">
+              <Link to="/login" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-7 text-base font-bold text-white shadow-[var(--shadow-soft)] hover:bg-[var(--color-primary-hover)]">
                 {t('welcome.login')}
               </Link>
-              <Link to="/register" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] border border-[#183A5A]/35 bg-[rgba(255,255,255,0.56)] px-7 text-base font-bold text-[#183A5A] backdrop-blur dark:border-white/25 dark:bg-black/20 dark:text-[#FFF8EC]">
+              <Link to="/register" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] border border-[var(--brand-indigo)]/35 bg-[var(--surface-glass)] px-7 text-base font-bold text-[var(--brand-indigo)] backdrop-blur dark:border-white/25 dark:bg-black/20 dark:text-[#FFF8EC]">
                 {t('welcome.register')}
               </Link>
             </div>
@@ -79,10 +79,10 @@ export default function Welcome() {
 
       <section aria-label={t('welcome.featuresLabel')} className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-x border-black/10 bg-black/10 dark:border-white/10 dark:bg-white/10 lg:grid-cols-4">
         {FEATURES.map(({ key, icon: Icon }) => (
-          <article key={key} className="min-h-40 bg-[#FFFDF7] p-5 dark:bg-[#1E2325] sm:p-6">
-            <Icon aria-hidden="true" className="text-[#C9362B]" size={24} strokeWidth={1.8} />
+          <article key={key} className="min-h-40 bg-[var(--surface)] p-5 sm:p-6">
+            <Icon aria-hidden="true" className="text-[var(--accent)]" size={24} strokeWidth={1.8} />
             <h2 className="mt-4 text-base font-black">{t(`welcome.features.${key}.title`)}</h2>
-            <p className="mt-2 text-sm leading-6 text-[#60676A] dark:text-[#C7C0B5]">{t(`welcome.features.${key}.description`)}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{t(`welcome.features.${key}.description`)}</p>
           </article>
         ))}
       </section>
@@ -99,12 +99,12 @@ function TrackChoice({ checked, title, description, onClick }: { checked: boolea
       onClick={onClick}
       className={`min-h-[92px] rounded-[var(--radius-md)] border p-4 text-left transition-colors ${
         checked
-          ? 'border-[#C9362B] bg-[#FFF7F0] shadow-[inset_4px_0_0_#C9362B] dark:bg-[#2A2523]'
-          : 'border-black/15 bg-white/55 hover:border-[#557B68] dark:border-white/20 dark:bg-black/20'
+          ? 'border-[var(--accent)] bg-[var(--accent-soft)] shadow-[inset_4px_0_0_var(--accent)]'
+          : 'border-[var(--border)] bg-[var(--surface-glass)] hover:border-[var(--brand-jade)]'
       }`}
     >
       <span className="block text-sm font-black">{title}</span>
-      <span className="mt-1 block text-xs leading-5 text-[#666D70] dark:text-[#C7C0B5]">{description}</span>
+      <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">{description}</span>
     </button>
   );
 }

@@ -12,7 +12,7 @@ export default function TopikReview() {
   const { t } = useTranslation();
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
-  const instructionLanguage = configuredInstructionLanguage === 'ko' ? 'ko' : 'en';
+  const instructionLanguage = configuredInstructionLanguage;
   const progress = useTopikLearningProgress();
   const mistakes = useQuery({
     queryKey: ['topik-placement-review', scope],
@@ -34,12 +34,12 @@ export default function TopikReview() {
           {mistakes.data?.map((item) => (
             <article key={item.question_id} className="surface-panel p-5">
               <p className="text-xs font-bold uppercase text-[var(--accent)]">{item.section}</p>
-              <h3 className="mt-2 font-bold leading-7">{instructionLanguage === 'ko' ? item.prompt_ko : item.prompt_en}</h3>
+              <h3 className="mt-2 font-bold leading-7">{instructionLanguage === 'ko' ? item.prompt_ko : instructionLanguage === 'ja' ? item.prompt_ja : item.prompt_en}</h3>
               <div className="mt-3 grid gap-2 text-sm">
                 <p className="text-red-700 dark:text-red-300">{t('topik.review.yourAnswer', { answer: item.choices[item.selected_index] })}</p>
                 <p className="text-[var(--success)]">{t('topik.review.correctAnswer', { answer: item.choices[item.answer_index] })}</p>
               </div>
-              <p className="mt-3 border-t border-[var(--border)] pt-3 text-sm leading-6 text-[var(--muted-foreground)]">{instructionLanguage === 'ko' ? item.explanation_ko : item.explanation_en}</p>
+              <p className="mt-3 border-t border-[var(--border)] pt-3 text-sm leading-6 text-[var(--muted-foreground)]">{instructionLanguage === 'ko' ? item.explanation_ko : instructionLanguage === 'ja' ? item.explanation_ja : item.explanation_en}</p>
             </article>
           ))}
           {!mistakes.isLoading && mistakes.data?.length === 0 && <div className="surface-panel p-5"><p className="font-bold">{t('topik.review.noMistakes')}</p><p className="mt-1 text-sm text-[var(--muted-foreground)]">{t('topik.review.noMistakesDescription')}</p></div>}

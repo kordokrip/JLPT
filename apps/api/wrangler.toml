@@ -21,9 +21,11 @@ head_sampling_rate = 0.05
 ENVIRONMENT = "production"
 AUTH_MODE = "app-session"
 MAINTENANCE_MODE = "off"
-RELEASE_SHA = "unversioned"
+RELEASE_SHA = "topik-jlpt-cutover-2026-07-20"
 APP_ORIGIN = "https://nihongo-n3.pages.dev"
-GOOGLE_REDIRECT_URI = "https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback"
+# OAuth callback stays on the Pages origin. The Pages Function proxies this
+# route to the Worker, so OAuth state and the app-session cookie share one host.
+GOOGLE_REDIRECT_URI = "https://nihongo-n3.pages.dev/api/v1/auth/google/callback"
 # CF_ACCESS_AUD / CF_TEAM_DOMAIN are production secrets.
 # Set them with:
 #   wrangler secret put CF_ACCESS_AUD
@@ -41,10 +43,15 @@ VOICEVOX_PITCH_SCALE = "0"
 VOICEVOX_INTONATION_SCALE = "1.12"
 STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
+# AI learning assistance is fail-closed. This non-secret flag must remain false
+# until an operator completes the P5 privacy, budget, and evaluation gates.
+AI_ASSISTANCE_ENABLED = "false"
 # FSRS_OPTIMIZER_URL 비움 = 개인화 최적화 비활성(정상 운영 모드).
 # 활성화 시 외부 optimizer는 FSRS-6 21 weights 응답을 보장해야 합니다.
 # GOOGLE_TTS_API_KEY, AZURE_TTS_KEY, FSRS_OPTIMIZER_TOKEN,
 # VAPID_PRIVATE_KEY, AUDIO_BATCH_APPROVAL_TOKEN은 `wrangler secret put`으로만 설정합니다.
+# AI_ASSISTANCE_BUCKET_SECRET, AI_GATEWAY_BASE_URL, AI_GATEWAY_API_TOKEN은
+# `wrangler secret put`으로만 설정합니다. 절대로 VITE_* 또는 [vars]에 넣지 않습니다.
 # OBSERVABILITY_CANARY_TOKEN은 preview Worker에만 secret으로 설정하고 production에는 두지 않습니다.
 # OBSERVABILITY_API_TOKEN, OBSERVABILITY_ALERT_WEBHOOK_URL/TOKEN은 Worker secret으로 설정합니다.
 VAPID_PUBLIC_KEY = "BJHfUCRXkX43H96EVNlG51N9DWgmjcKdPZsPbJftK4I9WX2ym34ckNOJy7k71VXspgQZy9xze_DYzf_V7s_08jw"
@@ -52,13 +59,13 @@ OBSERVABILITY_WORKER_NAME = "nihongo-n3-api"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # D1 Database
-# database_id / bucket_name은 운영 리소스 기준으로 저장소에서 관리합니다.
-# CI에서는 별도 치환 없이 이 값을 단일 진실원(Source of Truth)으로 사용합니다.
+# Blue/Green cutover target. The previous nihongo-n3-prod database remains
+# unbound and retained for 30 days after production writes resume on v2.
 # ─────────────────────────────────────────────────────────────────────────────
 [[d1_databases]]
 binding = "DB"
-database_name = "nihongo-n3-prod"
-database_id = "5a3ba67b-e5a5-4d5f-a73c-9bb7f4db9f68"
+database_name = "nihongo-n3-prod-v2"
+database_id = "0a22d92a-4af5-486f-8934-84eb1890835c"
 migrations_dir = "../../packages/db/drizzle-v2"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -73,6 +80,41 @@ bucket_name = "nihongo-n3-audio"
 [[r2_buckets]]
 binding = "REPORTS"
 bucket_name = "nihongo-n3-reports"
+
+# Licensed-content evidence is isolated from audio and operational reports.
+# The bucket is intentionally private and must be created by an operator before
+# a deployment that uses this binding. No secret belongs in this configuration.
+[[r2_buckets]]
+binding = "CONTENT_EVIDENCE"
+bucket_name = "nihongo-n3-content-evidence"
+
+# Queue carries release/job references, hashes, and idempotency keys only.
+[[queues.producers]]
+binding = "CONTENT_RELEASE_QUEUE"
+queue = "nihongo-n3-content-release"
+
+[[queues.producers]]
+binding = "CONTENT_RELEASE_DLQ"
+queue = "nihongo-n3-content-release-dlq"
+
+[[queues.consumers]]
+queue = "nihongo-n3-content-release"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+retry_delay = 60
+dead_letter_queue = "nihongo-n3-content-release-dlq"
+
+[[queues.consumers]]
+queue = "nihongo-n3-content-release-dlq"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[workflows]]
+binding = "CONTENT_RELEASE_WORKFLOW"
+name = "nihongo-n3-content-release"
+class_name = "ContentReleaseWorkflow"
+limits = { steps = 12 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Cron Triggers
@@ -168,6 +210,37 @@ bucket_name = "nihongo-n3-audio"
 binding = "REPORTS"
 bucket_name = "nihongo-n3-reports"
 
+[[env.observability-preview.r2_buckets]]
+binding = "CONTENT_EVIDENCE"
+bucket_name = "nihongo-n3-content-evidence-observability-preview"
+
+[[env.observability-preview.queues.producers]]
+binding = "CONTENT_RELEASE_QUEUE"
+queue = "nihongo-n3-content-release-observability-preview"
+
+[[env.observability-preview.queues.producers]]
+binding = "CONTENT_RELEASE_DLQ"
+queue = "nihongo-n3-content-release-observability-preview-dlq"
+
+[[env.observability-preview.queues.consumers]]
+queue = "nihongo-n3-content-release-observability-preview"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+retry_delay = 60
+dead_letter_queue = "nihongo-n3-content-release-observability-preview-dlq"
+
+[[env.observability-preview.queues.consumers]]
+queue = "nihongo-n3-content-release-observability-preview-dlq"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[env.observability-preview.workflows]]
+binding = "CONTENT_RELEASE_WORKFLOW"
+name = "nihongo-n3-content-release-observability-preview"
+class_name = "ContentReleaseWorkflow"
+limits = { steps = 12 }
+
 [env.observability-preview.triggers]
 crons = ["*/5 * * * *"]
 
@@ -253,6 +326,37 @@ bucket_name = "nihongo-n3-audio"
 [[env.topik-preview.r2_buckets]]
 binding = "REPORTS"
 bucket_name = "nihongo-n3-reports"
+
+[[env.topik-preview.r2_buckets]]
+binding = "CONTENT_EVIDENCE"
+bucket_name = "nihongo-n3-content-evidence-topik-preview"
+
+[[env.topik-preview.queues.producers]]
+binding = "CONTENT_RELEASE_QUEUE"
+queue = "nihongo-n3-content-release-topik-preview"
+
+[[env.topik-preview.queues.producers]]
+binding = "CONTENT_RELEASE_DLQ"
+queue = "nihongo-n3-content-release-topik-preview-dlq"
+
+[[env.topik-preview.queues.consumers]]
+queue = "nihongo-n3-content-release-topik-preview"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+retry_delay = 60
+dead_letter_queue = "nihongo-n3-content-release-topik-preview-dlq"
+
+[[env.topik-preview.queues.consumers]]
+queue = "nihongo-n3-content-release-topik-preview-dlq"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[env.topik-preview.workflows]]
+binding = "CONTENT_RELEASE_WORKFLOW"
+name = "nihongo-n3-content-release-topik-preview"
+class_name = "ContentReleaseWorkflow"
+limits = { steps = 12 }
 
 [[env.topik-preview.unsafe.bindings]]
 name = "RATE_LIMITER_PUBLIC"

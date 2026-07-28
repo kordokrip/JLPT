@@ -1,7 +1,13 @@
-import { AUDIO_QA_SAMPLES, AUDIO_QA_SAMPLE_SET } from '@nihongo-n3/shared';
+import { audioQaSampleSet, audioQaSamples, type AudioQaLanguage } from '@nihongo-n3/shared';
 
 export const AUDIO_QA_PROVIDERS = ['browser', 'cloudflare', 'google', 'voicevox'] as const;
 export type AudioQaProvider = (typeof AUDIO_QA_PROVIDERS)[number];
+
+export function audioQaProvidersForLanguage(language: AudioQaLanguage): readonly AudioQaProvider[] {
+  return language === 'ko'
+    ? ['browser', 'cloudflare', 'google']
+    : AUDIO_QA_PROVIDERS;
+}
 
 export const AUDIO_QA_CRITERIA = [
   { id: 'naturalness', label: '자연스러움' },
@@ -27,8 +33,9 @@ export interface AudioQaRating {
 }
 
 export interface AudioQaScorecard {
-  schemaVersion: 1;
-  sampleSet: typeof AUDIO_QA_SAMPLE_SET;
+  schemaVersion: 2;
+  language: AudioQaLanguage;
+  sampleSet: string;
   evaluator: string;
   device: string;
   browser: string;
@@ -44,12 +51,14 @@ export function audioQaRatingKey(provider: AudioQaProvider, sampleIndex: number)
 }
 
 export function createAudioQaScorecard(options: {
+  language?: AudioQaLanguage;
   browser?: string;
   evaluatedOn?: string;
 } = {}): AudioQaScorecard {
   return {
-    schemaVersion: 1,
-    sampleSet: AUDIO_QA_SAMPLE_SET,
+    schemaVersion: 2,
+    language: options.language ?? 'ja',
+    sampleSet: audioQaSampleSet(options.language ?? 'ja'),
     evaluator: '',
     device: '',
     browser: options.browser ?? '',
@@ -66,8 +75,8 @@ export function isAudioQaScorecardComplete(scorecard: AudioQaScorecard): boolean
     return false;
   }
 
-  return AUDIO_QA_PROVIDERS.every((provider) =>
-    AUDIO_QA_SAMPLES.every((_, sampleIndex) => {
+  return audioQaProvidersForLanguage(scorecard.language).every((provider) =>
+    audioQaSamples(scorecard.language).every((_, sampleIndex) => {
       const rating = scorecard.ratings[audioQaRatingKey(provider, sampleIndex)];
       if (!rating?.candidate || rating.candidate.provider !== provider || !rating.playedAt) return false;
       if (!rating.candidate.model.trim() || !rating.candidate.voice.trim() || !rating.candidate.version.trim()) return false;
@@ -90,7 +99,7 @@ export function audioQaProviderSummary(scorecard: AudioQaScorecard, provider: Au
   const values: number[] = [];
   let completedSamples = 0;
 
-  AUDIO_QA_SAMPLES.forEach((_, sampleIndex) => {
+  audioQaSamples(scorecard.language).forEach((_, sampleIndex) => {
     const rating = scorecard.ratings[audioQaRatingKey(provider, sampleIndex)];
     const scores = AUDIO_QA_CRITERIA.map(({ id }) => rating?.scores[id]).filter(isValidScore);
     if (scores.length === AUDIO_QA_CRITERIA.length && rating?.candidate) completedSamples += 1;
@@ -107,9 +116,10 @@ export function audioQaScorecardMarkdown(scorecard: AudioQaScorecard): string {
   const complete = isAudioQaScorecardComplete(scorecard);
   const approved = isAudioQaApproved(scorecard);
   const lines = [
-    '# 오디오 30문장 청감표',
+    `# ${scorecard.language === 'ko' ? '한국어' : '일본어'} 오디오 30문장 청감표`,
     '',
     `- 표본 세트: \`${scorecard.sampleSet}\``,
+    `- 학습 언어: ${scorecard.language === 'ko' ? '한국어' : '일본어'}`,
     `- 평가자: ${escapeCell(scorecard.evaluator) || '미입력'}`,
     `- 기기: ${escapeCell(scorecard.device) || '미입력'}`,
     `- 브라우저/OS: ${escapeCell(scorecard.browser) || '미입력'}`,
@@ -124,7 +134,7 @@ export function audioQaScorecardMarkdown(scorecard: AudioQaScorecard): string {
     '| --- | ---: | ---: | --- | --- | --- |',
   ];
 
-  for (const provider of AUDIO_QA_PROVIDERS) {
+  for (const provider of audioQaProvidersForLanguage(scorecard.language)) {
     const summary = audioQaProviderSummary(scorecard, provider);
     const candidate = firstCandidate(scorecard, provider);
     lines.push(
@@ -140,8 +150,8 @@ export function audioQaScorecardMarkdown(scorecard: AudioQaScorecard): string {
     '| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- |',
   );
 
-  AUDIO_QA_SAMPLES.forEach((_, sampleIndex) => {
-    for (const provider of AUDIO_QA_PROVIDERS) {
+  audioQaSamples(scorecard.language).forEach((_, sampleIndex) => {
+    for (const provider of audioQaProvidersForLanguage(scorecard.language)) {
       const rating = scorecard.ratings[audioQaRatingKey(provider, sampleIndex)];
       lines.push(
         `| ${sampleIndex + 1} | ${provider} | ${scoreValue(rating, 'naturalness')} | ${scoreValue(rating, 'pitchAccent')} | ${scoreValue(rating, 'mora')} | ${scoreValue(rating, 'intonation')} | ${scoreValue(rating, 'noiseSpeed')} | ${escapeCell(rating?.notes ?? '')} |`,
@@ -150,13 +160,13 @@ export function audioQaScorecardMarkdown(scorecard: AudioQaScorecard): string {
   });
 
   lines.push('', '## 표본 문장', '');
-  AUDIO_QA_SAMPLES.forEach((sample, index) => lines.push(`${index + 1}. ${sample}`));
+  audioQaSamples(scorecard.language).forEach((sample, index) => lines.push(`${index + 1}. ${sample}`));
   lines.push('');
   return lines.join('\n');
 }
 
 function firstCandidate(scorecard: AudioQaScorecard, provider: AudioQaProvider): AudioQaCandidate | null {
-  for (let sampleIndex = 0; sampleIndex < AUDIO_QA_SAMPLES.length; sampleIndex += 1) {
+  for (let sampleIndex = 0; sampleIndex < audioQaSamples(scorecard.language).length; sampleIndex += 1) {
     const candidate = scorecard.ratings[audioQaRatingKey(provider, sampleIndex)]?.candidate;
     if (candidate) return candidate;
   }

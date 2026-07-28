@@ -69,6 +69,13 @@ function numberValue(row: ApiRawContentRecord, ...keys: string[]): number | unde
   return undefined;
 }
 
+function reviewedAudioPath(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return /^audio\/(?:vocab|kanji|sentence)\/n[1-5]\/\d+-[a-f0-9]{16}\.mp3$/i.test(value)
+    ? value
+    : undefined;
+}
+
 function contentLevel(value: string | undefined): ContentLevel {
   return isJlptLevel(value) ? value : DEFAULT_JLPT_LEVEL;
 }
@@ -104,13 +111,15 @@ export function normalizeVocabContentItem(row: ApiRawContentRecord): VocabConten
   const partOfSpeech = text(row, 'part_of_speech', 'pos');
   const exampleJp = text(row, 'example_jp');
   const exampleKo = text(row, 'example_ko');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
+  const audioPath = reviewedAudioPath(text(row, 'audio_path', 'audio_r2_key'));
   const sourceId = numberValue(row, 'source_id');
   const categoryId = numberValue(row, 'category_id');
   if (partOfSpeech !== undefined) item.part_of_speech = partOfSpeech;
   if (exampleJp !== undefined) item.example_jp = exampleJp;
   if (exampleKo !== undefined) item.example_ko = exampleKo;
-  item.audio_path = audioPath ?? `audio/vocab/${level.toLowerCase()}/${id}.mp3`;
+  // Do not invent a legacy R2 key. The web player can safely use browser
+  // Japanese speech when a reviewed immutable asset is not available.
+  if (audioPath !== undefined) item.audio_path = audioPath;
   if (sourceId !== undefined) item.source_id = sourceId;
   if (categoryId !== undefined) item.category_id = categoryId;
   return item;
@@ -148,9 +157,9 @@ export function normalizeKanjiContentItem(row: ApiRawContentRecord): KanjiConten
   };
   const strokeCount = numberValue(row, 'stroke_count');
   const sourceId = numberValue(row, 'source_id');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
+  const audioPath = reviewedAudioPath(text(row, 'audio_path', 'audio_r2_key'));
   if (strokeCount !== undefined) item.stroke_count = strokeCount;
   if (sourceId !== undefined) item.source_id = sourceId;
-  item.audio_path = audioPath ?? `audio/kanji/${level.toLowerCase()}/${id}.mp3`;
+  if (audioPath !== undefined) item.audio_path = audioPath;
   return item;
 }

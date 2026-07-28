@@ -3,6 +3,7 @@ import type { TopikPlacementAudioDto } from '@nihongo-n3/shared';
 
 export function useKoreanAudio() {
   const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState<'unsupported' | 'voice-unavailable' | 'playback-failed' | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stop = useCallback(() => {
@@ -19,15 +20,28 @@ export function useKoreanAudio() {
 
   const speakText = useCallback((text: string) => {
     stop();
-    if (!('speechSynthesis' in window)) return false;
+    setError(null);
+    if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+      setError('unsupported');
+      return false;
+    }
+    const voice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith('ko'));
+    // Never let an unrelated system-default voice pronounce Korean content.
+    // Devices without a Korean voice show an explicit unavailable state instead.
+    if (!voice) {
+      setError('voice-unavailable');
+      return false;
+    }
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ko-KR';
     utterance.rate = 0.86;
     utterance.pitch = 1;
-    const voice = window.speechSynthesis.getVoices().find((item) => item.lang.toLowerCase().startsWith('ko'));
-    if (voice) utterance.voice = voice;
+    utterance.voice = voice;
     utterance.onend = () => setPlaying(false);
-    utterance.onerror = () => setPlaying(false);
+    utterance.onerror = () => {
+      setPlaying(false);
+      setError('playback-failed');
+    };
     setPlaying(true);
     window.speechSynthesis.speak(utterance);
     return true;
@@ -36,14 +50,21 @@ export function useKoreanAudio() {
   const play = useCallback((source: TopikPlacementAudioDto) => {
     if (source.kind === 'browser-fallback') return speakText(source.text_ko);
     stop();
+    setError(null);
     const audio = new Audio(source.url);
     audioRef.current = audio;
     audio.onended = () => setPlaying(false);
-    audio.onerror = () => setPlaying(false);
+    audio.onerror = () => {
+      setPlaying(false);
+      setError('playback-failed');
+    };
     setPlaying(true);
-    void audio.play().catch(() => setPlaying(false));
+    void audio.play().catch(() => {
+      setPlaying(false);
+      setError('playback-failed');
+    });
     return true;
   }, [speakText, stop]);
 
-  return { play, speakText, stop, playing };
+  return { play, speakText, stop, playing, error };
 }

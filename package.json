@@ -28,6 +28,7 @@
     "ops:logpush": "node scripts/setup-logpush.mjs",
     "ops:alerts": "node scripts/setup-alerts.mjs",
     "ops:observe": "node scripts/post-deploy-observe.mjs",
+    "ops:verify-auth-proxy": "node scripts/verify-pages-auth-proxy.mjs",
     "audio:kana": "node scripts/generate-kana-audio.mjs",
     "audio:kana:upload": "node scripts/generate-kana-audio.mjs --upload"
   },

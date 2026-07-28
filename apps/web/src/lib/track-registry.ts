@@ -60,6 +60,7 @@ const JLPT_NAVIGATION: readonly TrackNavigationItem[] = [
 const TOPIK_NAVIGATION: readonly TrackNavigationItem[] = [
   { to: '/track/topik-ko', key: 'home', icon: 'home', primary: true },
   { to: '/track/topik-ko/learn', key: 'learn', icon: 'learn', primary: true },
+  { to: '/track/topik-ko/characters', key: 'characters', icon: 'characters', primary: true },
   { to: '/track/topik-ko/review', key: 'review', icon: 'review', primary: true },
   { to: '/track/topik-ko/placement', key: 'placement', icon: 'placement', primary: true },
   { to: '/track/topik-ko/progress', key: 'progress', icon: 'progress' },

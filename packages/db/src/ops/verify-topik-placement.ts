@@ -78,8 +78,8 @@ function main(): void {
     countSql(
       target,
       `SELECT count(*) AS count FROM topik_placement_questions WHERE bank_version = 'v2' AND (
-          trim(prompt_ko) = '' OR trim(prompt_en) = '' OR trim(gloss_en) = ''
-          OR trim(choices_json) = '' OR trim(explanation_en) = '' OR trim(explanation_ko) = ''
+          trim(prompt_ko) = '' OR trim(prompt_ja) = '' OR trim(prompt_en) = '' OR trim(gloss_en) = ''
+          OR trim(choices_json) = '' OR trim(explanation_en) = '' OR trim(explanation_ko) = '' OR trim(explanation_ja) = ''
           OR trim(source_code) = '' OR trim(author_reviewer) = '' OR trim(second_reviewer) = ''
           OR trim(reviewed_at) = '')`,
     ),

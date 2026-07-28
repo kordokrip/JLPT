@@ -32,5 +32,11 @@ run([
   `--persist-to=${persistTo}`, `--manifest=${manifest}`, `--report=${report}`,
   ...(requireAudio ? ['--require-audio'] : []),
 ]);
+run([
+  'exec', 'tsx', 'packages/db/src/ops/verify-content-release-contract.ts',
+]);
+run([
+  'exec', 'tsx', 'packages/db/src/ops/verify-content-release-control-plane.ts',
+]);
 
 console.log(`Fresh D1 verification complete: ${report}`);

@@ -5,23 +5,24 @@
 
 :root {
   /* ── 브랜드 색상 ─────────────────────────────── */
-  --color-primary:     #B91C1C;  /* 일본어 빨강 */
+  --color-primary:     #C7483D;
   --color-primary-fg:  #FFFFFF;
-  --color-primary-hover: #991B1B;
-  --brand-vermilion: #C9362B;
-  --brand-indigo: #183A5A;
-  --brand-jade: #557B68;
-  --brand-ivory: #F7F0E2;
-  --brand-charcoal: #222629;
+  --color-primary-hover: #AA382F;
+  --brand-vermilion: #C7483D;
+  --brand-indigo: #214764;
+  --brand-jade: #527A69;
+  --brand-blossom: #E8A7A1;
+  --brand-porcelain: #F7F3EA;
+  --brand-ink: #172536;
   --track-accent: var(--brand-vermilion);
   --track-secondary: var(--brand-indigo);
   --track-soft: #F7E7E2;
   --track-art-opacity: 0.055;
 
   /* ── Figma Make 디자인 토큰 (주색 · 와비사비) ─── */
-  --accent:            #C8332B;  /* 주색 朱色 */
+  --accent:            var(--brand-vermilion);
   --accent-foreground: #FFFFFF;
-  --accent-soft:       #FBEAE8;
+  --accent-soft:       #F8E7E3;
   --color-accent:      var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-foreground: var(--accent-foreground);
@@ -41,21 +42,21 @@
   --color-muted:      var(--muted-foreground);
 
   /* ── 배경·표면 ───────────────────────────────── */
-  --background:        #FAFAF7;  /* 따뜻한 크림 */
-  --surface:           #FFFFFF;
-  --surface-alt:       #F8F4EE;
-  --surface-raised:    #F5F5F0;
+  --background:        var(--brand-porcelain);
+  --surface:           #FFFCF6;
+  --surface-alt:       #F0EDE5;
+  --surface-raised:    #F7F4ED;
   --surface-glass:     rgba(255, 255, 255, 0.86);
-  --foreground:        #1A1A1A;
+  --foreground:        var(--brand-ink);
 
   /* ── 카드 ────────────────────────────────────── */
-  --card:              #FFFFFF;
-  --card-foreground:   #1A1A1A;
+  --card:              #FFFCF6;
+  --card-foreground:   var(--brand-ink);
   --card-border:       rgba(0, 0, 0, 0.08);
 
   /* ── 텍스트 계층 ─────────────────────────────── */
-  --text-primary:      #1A1A1A;
-  --text-secondary:    #4A4A4A;
+  --text-primary:      var(--brand-ink);
+  --text-secondary:    #465565;
   --text-muted:        #8A8A8A;
   --text-disabled:     #C4C4C4;
 
@@ -118,17 +119,17 @@
 }
 
 [data-learning-track='jlpt-ja'] {
-  --track-accent: #C8332B;
-  --track-secondary: #315A78;
-  --track-soft: #FBEAE8;
+  --track-accent: var(--brand-vermilion);
+  --track-secondary: var(--brand-indigo);
+  --track-soft: #F8E7E3;
   --accent: var(--track-accent);
   --accent-soft: var(--track-soft);
   --ring: color-mix(in srgb, var(--track-accent) 34%, transparent);
 }
 
 [data-learning-track='topik-ko'] {
-  --track-accent: #1F4E70;
-  --track-secondary: #C9362B;
+  --track-accent: var(--brand-indigo);
+  --track-secondary: var(--brand-vermilion);
   --track-soft: #E6EEF3;
   --accent: var(--track-accent);
   --accent-soft: var(--track-soft);

@@ -22,6 +22,7 @@ export default defineConfig({
         'masked-icon.svg',
         'brand-mark.png',
         'brand-hero.png',
+        'brand-hero-eastasia-v2.png',
         'page-bg-unified.png',
       ],
       manifest: {
@@ -30,8 +31,8 @@ export default defineConfig({
         description: 'JLPT 일본어와 TOPIK 한국어를 트랙별로 학습하는 오프라인 우선 PWA',
         id: '/',
         dir: 'ltr',
-        theme_color: '#F7F0E2',
-        background_color: '#F7F0E2',
+        theme_color: '#F7F3EA',
+        background_color: '#F7F3EA',
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui'],
         scope: '/',

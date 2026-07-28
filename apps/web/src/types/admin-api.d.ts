@@ -416,6 +416,8 @@ export interface paths {
                         /** @enum {string} */
                         provider?: "cloudflare" | "google" | "voicevox";
                         force?: boolean;
+                        /** @enum {string} */
+                        language?: "ja" | "ko";
                     };
                 };
             };
@@ -445,6 +447,310 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai/content-lint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * TOPIK 콘텐츠 초안의 결정론적 품질·권리 lint
+         * @description 초안 본문을 저장하거나 모델로 전송하지 않습니다. 번역, 해설 길이, 중복 distractor, 언어 표기, 금지 원천을 검사합니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        learning_track: "topik-ko";
+                        release_id: string;
+                        source: {
+                            /** @enum {string} */
+                            source_type: "self-authored" | "licensed-external" | "official-reference" | "fixture";
+                            /** Format: uri */
+                            source_url: string;
+                            license_id: string;
+                            allowed_use: string;
+                        };
+                        items: {
+                            stable_ref: string;
+                            prompt_ko: string;
+                            prompt_ja: string;
+                            prompt_en: string;
+                            explanation_ko: string;
+                            explanation_ja: string;
+                            explanation_en: string;
+                            /** @default [] */
+                            distractors?: string[];
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description lint 결과 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                release_id: string;
+                                issues: {
+                                    /** @enum {string} */
+                                    severity: "error" | "warning";
+                                    code: string;
+                                    stable_ref: string;
+                                    field: string;
+                                    detail: string;
+                                }[];
+                                blocking: boolean;
+                                /** @enum {string} */
+                                provider: "deterministic-policy";
+                            };
+                        };
+                    };
+                };
+                /** @description invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description admin required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai/content-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 검증된 TOPIK 콘텐츠 초안 보조
+         * @description feature flag와 서버 secret이 모두 설정된 경우에만 provider를 호출합니다. 결과는 draft이며 D1 release를 변경하지 않습니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        learning_track: "topik-ko";
+                        release_id: string;
+                        source: {
+                            /** @enum {string} */
+                            source_type: "self-authored" | "licensed-external" | "official-reference" | "fixture";
+                            /** Format: uri */
+                            source_url: string;
+                            license_id: string;
+                            allowed_use: string;
+                        };
+                        items: {
+                            stable_ref: string;
+                            prompt_ko: string;
+                            prompt_ja: string;
+                            prompt_en: string;
+                            explanation_ko: string;
+                            explanation_ja: string;
+                            explanation_en: string;
+                            /** @default [] */
+                            distractors?: string[];
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description 검증된 draft */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                release_id: string;
+                                draft: {
+                                    prompt_ko: string;
+                                    prompt_ja: string;
+                                    prompt_en: string;
+                                    explanation_ko: string;
+                                    explanation_ja: string;
+                                    explanation_en: string;
+                                    distractors: string[];
+                                };
+                                /** @enum {string} */
+                                provider: "workers-ai" | "ai-gateway";
+                                model: string;
+                                prompt_version: string;
+                            };
+                        };
+                    };
+                };
+                /** @description blocking lint */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description admin required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description release not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description usage limit */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description invalid provider output */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description feature disabled or unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
                     };
                 };
             };

@@ -89,7 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 4,
+      version: 5,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>

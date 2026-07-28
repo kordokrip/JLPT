@@ -43,4 +43,27 @@ describe('useKoreanAudio', () => {
     expect(utterance.lang).toBe('ko-KR');
     expect(utterance.rate).toBe(0.86);
   });
+
+  it('does not fall back to an unrelated system-default voice', () => {
+    vi.stubGlobal('SpeechSynthesisUtterance', class {
+      constructor(_text: string) {}
+    });
+    const speak = vi.fn();
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        speak,
+        getVoices: () => [{ lang: 'de-DE', name: 'German', voiceURI: 'de', localService: true, default: true }],
+      },
+    });
+
+    const { result } = renderHook(() => useKoreanAudio());
+    act(() => {
+      expect(result.current.speakText('가방')).toBe(false);
+    });
+
+    expect(speak).not.toHaveBeenCalled();
+    expect(result.current.error).toBe('voice-unavailable');
+  });
 });

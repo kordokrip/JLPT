@@ -27,9 +27,9 @@ export function RootLayout() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 bg-no-repeat mix-blend-multiply dark:mix-blend-soft-light"
         style={{
-          backgroundImage: "url('/page-bg-unified.png')",
+          backgroundImage: "url('/brand-hero-eastasia-v2.png')",
           backgroundPosition: 'right max(1rem, env(safe-area-inset-right)) bottom max(4.5rem, env(safe-area-inset-bottom))',
-          backgroundSize: 'min(68vw, 680px) auto',
+          backgroundSize: 'min(78vw, 760px) auto',
           opacity: 'var(--track-art-opacity)',
         }}
       />

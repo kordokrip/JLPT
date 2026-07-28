@@ -69,12 +69,6 @@ export default function Settings() {
     };
   }, []);
 
-  useEffect(() => {
-    if (learningTrack === 'topik-ko' && instructionLanguages['topik-ko'] === 'ja') {
-      setInstructionLanguage('topik-ko', 'en');
-    }
-  }, [instructionLanguages, learningTrack, setInstructionLanguage]);
-
   const handlePushToggle = async () => {
     setPushLoading(true);
     try {
@@ -151,15 +145,14 @@ export default function Settings() {
               ? [
                   { value: 'en', label: 'English' },
                   { value: 'ko', label: '한국어' },
+                  { value: 'ja', label: '日本語' },
                 ]
               : [
                   { value: 'ko', label: '한국어' },
                   { value: 'en', label: 'English' },
                   { value: 'ja', label: '日本語' },
                 ]}
-            value={learningTrack === 'topik-ko' && instructionLanguages[learningTrack] === 'ja'
-              ? 'en'
-              : instructionLanguages[learningTrack]}
+            value={instructionLanguages[learningTrack]}
             onChange={(value) => setInstructionLanguage(learningTrack, value)}
           />
         </SettingRow>

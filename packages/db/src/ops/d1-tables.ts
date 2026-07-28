@@ -6,6 +6,8 @@ export type D1TableSpec = {
   primaryKey: string;
   verifyWhere?: string;
   checksum: boolean;
+  /** Columns added by the target schema with a deterministic default. */
+  checksumIgnoreColumns?: readonly string[];
 };
 
 // Order is parent-first for import. Reverse it before deleting target data.
@@ -21,9 +23,21 @@ export const D1_TRANSFER_TABLES: readonly D1TableSpec[] = [
   { name: 'homophone_pairs', group: 'content', primaryKey: 'id', checksum: true },
   { name: 'reading_passages', group: 'content', primaryKey: 'id', checksum: true },
   { name: 'reading_questions', group: 'content', primaryKey: 'id', checksum: true },
-  { name: 'self_check_templates', group: 'content', primaryKey: 'id', checksum: true },
+  {
+    name: 'self_check_templates',
+    group: 'content',
+    primaryKey: 'id',
+    checksum: true,
+    checksumIgnoreColumns: ['learning_track'],
+  },
   { name: 'quiz_question_bank', group: 'content', primaryKey: 'id', checksum: true },
-  { name: 'users', group: 'mutable', primaryKey: 'id', checksum: true },
+  {
+    name: 'users',
+    group: 'mutable',
+    primaryKey: 'id',
+    checksum: true,
+    checksumIgnoreColumns: ['fsrs_options', 'learning_track'],
+  },
   {
     name: 'auth_sessions',
     group: 'mutable',
@@ -32,13 +46,31 @@ export const D1_TRANSFER_TABLES: readonly D1TableSpec[] = [
     checksum: false,
   },
   { name: 'login_events', group: 'mutable', primaryKey: 'id', checksum: true },
-  { name: 'srs_cards', group: 'mutable', primaryKey: 'id', checksum: true },
+  {
+    name: 'srs_cards',
+    group: 'mutable',
+    primaryKey: 'id',
+    checksum: true,
+    checksumIgnoreColumns: ['learning_track'],
+  },
   { name: 'review_logs', group: 'mutable', primaryKey: 'id', checksum: true },
   { name: 'daily_logs', group: 'mutable', primaryKey: 'id', checksum: true },
-  { name: 'quiz_attempts', group: 'mutable', primaryKey: 'id', checksum: true },
+  {
+    name: 'quiz_attempts',
+    group: 'mutable',
+    primaryKey: 'id',
+    checksum: true,
+    checksumIgnoreColumns: ['score', 'learning_track'],
+  },
   { name: 'self_check', group: 'mutable', primaryKey: 'id', checksum: true },
   { name: 'push_subscriptions', group: 'mutable', primaryKey: 'id', checksum: true },
-  { name: 'audio_generation_log', group: 'mutable', primaryKey: 'id', checksum: true },
+  {
+    name: 'audio_generation_log',
+    group: 'mutable',
+    primaryKey: 'id',
+    checksum: true,
+    checksumIgnoreColumns: ['provider', 'content_hash'],
+  },
 ] as const;
 
 export const EXCLUDED_TRANSIENT_TABLES = ['oauth_states', 'oauth_login_tokens'] as const;

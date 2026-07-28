@@ -490,10 +490,12 @@ admin.get('/audio/providers', async (c) => {
 });
 
 admin.post('/audio/qa/warmup', async (c) => {
-  const body = (await c.req.json<{ provider?: string; force?: boolean }>().catch(() => ({}))) as {
+  const body = (await c.req.json<{ provider?: string; force?: boolean; language?: 'ja' | 'ko' }>().catch(() => ({}))) as {
     provider?: string;
     force?: boolean;
+    language?: 'ja' | 'ko';
   };
+  const language = body.language === 'ko' ? 'ko' : 'ja';
   const providers = parseQaWarmupProviders(body.provider);
   if (providers.includes('google')) {
     const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
@@ -509,11 +511,12 @@ admin.post('/audio/qa/warmup', async (c) => {
   };
 
   for (const provider of providers) {
-    results[provider] = await warmupAudioQa(c.env, provider, { force: body.force === true });
+    results[provider] = await warmupAudioQa(c.env, provider, { force: body.force === true, language });
   }
 
   return ok(c, {
     force: body.force === true,
+    language,
     providers,
     summary: providers.map((provider) => {
       const rows = results[provider];

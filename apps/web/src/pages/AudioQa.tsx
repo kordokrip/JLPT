@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AUDIO_QA_SAMPLES } from '@nihongo-n3/shared';
+import { audioQaSamples, type AudioQaLanguage } from '@nihongo-n3/shared';
 import { audioPlayer, buildAudioUrl } from '../lib/audio';
 import { useSettingsStore } from '../stores/settings-store';
 import {
   AUDIO_QA_CRITERIA,
   AUDIO_QA_PROVIDERS,
+  audioQaProvidersForLanguage,
   audioQaProviderSummary,
   audioQaRatingKey,
   audioQaScorecardMarkdown,
@@ -17,7 +18,7 @@ import {
   type AudioQaScorecard,
 } from '../features/audio-qa/scorecard';
 
-const STORAGE_KEY = 'nihongo-n3:audio-qa-scorecard:v3';
+const STORAGE_KEY_PREFIX = 'nihongo-n3:audio-qa-scorecard:v4';
 
 const PROVIDER_INFO: Record<AudioQaProvider, {
   label: string;
@@ -25,7 +26,7 @@ const PROVIDER_INFO: Record<AudioQaProvider, {
 }> = {
   browser: {
     label: 'iOS / Browser Native',
-    description: '현재 기기에 실제 설치된 일본어 음성과 voice URI를 기록합니다.',
+    description: '현재 기기에 실제 설치된 언어 음성과 voice URI를 기록합니다.',
   },
   cloudflare: {
     label: 'Cloudflare MeloTTS',
@@ -43,19 +44,28 @@ const PROVIDER_INFO: Record<AudioQaProvider, {
 
 export default function AudioQa() {
   const { selectedVoiceURI, voiceGender } = useSettingsStore();
+  const [language, setLanguage] = useState<AudioQaLanguage>('ja');
   const [sampleIndex, setSampleIndex] = useState(0);
   const [playing, setPlaying] = useState<AudioQaProvider | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const [scorecard, setScorecard] = useState<AudioQaScorecard>(loadScorecard);
-  const sample = AUDIO_QA_SAMPLES[sampleIndex]!;
+  const [scorecard, setScorecard] = useState<AudioQaScorecard>(() => loadScorecard('ja'));
+  const samples = audioQaSamples(language);
+  const providers = audioQaProvidersForLanguage(language);
+  const sample = samples[sampleIndex]!;
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scorecard));
+    window.localStorage.setItem(`${STORAGE_KEY_PREFIX}:${scorecard.language}`, JSON.stringify(scorecard));
   }, [scorecard]);
 
+  const changeLanguage = (next: AudioQaLanguage) => {
+    setLanguage(next);
+    setSampleIndex(0);
+    setScorecard(loadScorecard(next));
+  };
+
   const summaries = useMemo(() => Object.fromEntries(
-    AUDIO_QA_PROVIDERS.map((provider) => [provider, audioQaProviderSummary(scorecard, provider)]),
-  ) as Record<AudioQaProvider, ReturnType<typeof audioQaProviderSummary>>, [scorecard]);
+    providers.map((provider) => [provider, audioQaProviderSummary(scorecard, provider)]),
+  ) as Partial<Record<AudioQaProvider, ReturnType<typeof audioQaProviderSummary>>>, [scorecard, providers]);
   const qaComplete = isAudioQaScorecardComplete(scorecard);
   const batchApproved = isAudioQaApproved(scorecard);
 
@@ -64,8 +74,8 @@ export default function AudioQa() {
     setPlaybackError(null);
     try {
       const candidate = provider === 'browser'
-        ? await playBrowserCandidate(sample, voiceGender, selectedVoiceURI)
-        : await playServerCandidate(provider, sampleIndex);
+        ? await playBrowserCandidate(sample, voiceGender, selectedVoiceURI, language)
+        : await playServerCandidate(provider, sampleIndex, language);
       const key = audioQaRatingKey(provider, sampleIndex);
       setScorecard((current) => ({
         ...current,
@@ -127,12 +137,18 @@ export default function AudioQa() {
           Audio QA
         </p>
         <h1 className="font-pretendard text-[32px] font-semibold leading-tight text-foreground">
-          일본어 발음 엔진 비교
+          한국어 · 일본어 발음 엔진 비교
         </h1>
         <p className="mt-3 max-w-[720px] font-pretendard text-[14px] leading-relaxed text-[var(--muted-foreground)]">
-          네 후보의 동일한 30개 문장을 직접 듣고 자연스러움, 피치, 모라, 억양, 잡음과 속도를 기록합니다.
+          언어별 동일 30문장을 직접 듣고 자연스러움, 억양, 발음 단위, 잡음과 속도를 기록합니다. Google 후보는 관리자 승인 배치로 R2에 준비된 경우에만 재생됩니다.
         </p>
       </header>
+
+      <div className="mb-6 grid max-w-md grid-cols-2 gap-1 rounded-[var(--radius-md)] bg-[var(--surface-alt)] p-1" role="tablist" aria-label="청감 평가 언어">
+        {([{ id: 'ja', label: '일본어 30문장' }, { id: 'ko', label: '한국어 30문장' }] as const).map(({ id, label }) => (
+          <button key={id} type="button" role="tab" aria-selected={language === id} onClick={() => changeLanguage(id)} className={language === id ? 'min-h-11 rounded bg-[var(--card)] text-sm font-bold text-[var(--accent)] shadow-[var(--shadow-sm)]' : 'min-h-11 rounded text-sm font-semibold text-[var(--muted-foreground)]'}>{label}</button>
+        ))}
+      </div>
 
       <section className="mb-6 grid gap-4 border-y border-[var(--border)] py-5 md:grid-cols-2">
         <label className="text-sm font-medium text-foreground">
@@ -176,7 +192,7 @@ export default function AudioQa() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-[13px] text-[var(--muted-foreground)]">
-              Sample {sampleIndex + 1} / {AUDIO_QA_SAMPLES.length}
+              Sample {sampleIndex + 1} / {samples.length}
             </div>
             <p className="mt-2 font-serif-jp text-[22px] leading-relaxed text-foreground">{sample}</p>
           </div>
@@ -186,7 +202,7 @@ export default function AudioQa() {
             className="h-11 rounded border border-[var(--border)] bg-[var(--card)] px-3 text-sm"
             aria-label="샘플 문장 선택"
           >
-            {AUDIO_QA_SAMPLES.map((text, index) => (
+            {samples.map((text, index) => (
               <option key={text} value={index}>{index + 1}. {text.slice(0, 24)}</option>
             ))}
           </select>
@@ -200,7 +216,7 @@ export default function AudioQa() {
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
-        {AUDIO_QA_PROVIDERS.map((provider) => {
+        {providers.map((provider) => {
           const info = PROVIDER_INFO[provider];
           const key = audioQaRatingKey(provider, sampleIndex);
           const rating = scorecard.ratings[key];
@@ -212,7 +228,7 @@ export default function AudioQa() {
                   <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted-foreground)]">{info.description}</p>
                 </div>
                 <span className="shrink-0 rounded border border-[var(--border)] px-2 py-1 text-[10px] uppercase text-[var(--muted-foreground)]">
-                  {summaries[provider].completedSamples}/30
+                  {summaries[provider]?.completedSamples ?? 0}/30
                 </span>
               </div>
 
@@ -302,7 +318,7 @@ export default function AudioQa() {
               className="mt-2 h-11 w-full rounded border border-[var(--border)] bg-[var(--card)] px-3 font-normal"
             >
               <option value="">미선택</option>
-              {AUDIO_QA_PROVIDERS.map((provider) => (
+              {providers.map((provider) => (
                 <option key={provider} value={provider}>{PROVIDER_INFO[provider].label}</option>
               ))}
             </select>
@@ -338,14 +354,15 @@ export default function AudioQa() {
   );
 }
 
-function loadScorecard(): AudioQaScorecard {
+function loadScorecard(language: AudioQaLanguage): AudioQaScorecard {
   const initial = createAudioQaScorecard({
+    language,
     browser: typeof navigator === 'undefined' ? '' : navigator.userAgent,
   });
   if (typeof window === 'undefined') return initial;
   try {
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null') as AudioQaScorecard | null;
-    return stored?.schemaVersion === 1 && stored.sampleSet === initial.sampleSet ? stored : initial;
+    const stored = JSON.parse(window.localStorage.getItem(`${STORAGE_KEY_PREFIX}:${language}`) ?? 'null') as AudioQaScorecard | null;
+    return stored?.schemaVersion === 2 && stored.language === language && stored.sampleSet === initial.sampleSet ? stored : initial;
   } catch {
     return initial;
   }
@@ -355,10 +372,11 @@ async function playBrowserCandidate(
   text: string,
   voiceGender: 'female' | 'male',
   selectedVoiceURI: string | null,
+  language: AudioQaLanguage,
 ): Promise<AudioQaCandidate> {
-  const voice = await audioPlayer.getResolvedJapaneseVoice({ voiceGender, voiceURI: selectedVoiceURI });
-  if (!voice) throw new Error('이 기기에 일본어 브라우저 음성이 설치되어 있지 않습니다.');
-  await audioPlayer.speakText(text, { voiceGender, voiceURI: voice.voiceURI });
+  const voice = await audioPlayer.getResolvedJapaneseVoice({ voiceGender, voiceURI: language === 'ja' ? selectedVoiceURI : null, lang: language === 'ja' ? 'ja-JP' : 'ko-KR' });
+  if (!voice) throw new Error(`이 기기에 ${language === 'ja' ? '일본어' : '한국어'} 브라우저 음성이 설치되어 있지 않습니다.`);
+  await audioPlayer.speakText(text, { voiceGender, voiceURI: voice.voiceURI, lang: language === 'ja' ? 'ja-JP' : 'ko-KR' });
   return {
     provider: 'browser',
     model: 'Web Speech API',
@@ -367,8 +385,8 @@ async function playBrowserCandidate(
   };
 }
 
-async function playServerCandidate(provider: Exclude<AudioQaProvider, 'browser'>, sampleIndex: number): Promise<AudioQaCandidate> {
-  const key = `audio/qa/${provider}/${sampleIndex + 1}.wav`;
+async function playServerCandidate(provider: Exclude<AudioQaProvider, 'browser'>, sampleIndex: number, language: AudioQaLanguage): Promise<AudioQaCandidate> {
+  const key = language === 'ja' ? `audio/qa/${provider}/${sampleIndex + 1}.wav` : `audio/qa/${language}/${provider}/${sampleIndex + 1}.wav`;
   const url = buildAudioUrl(key);
   const metadata = await fetch(url, { method: 'HEAD', credentials: 'include' });
   if (!metadata.ok) {

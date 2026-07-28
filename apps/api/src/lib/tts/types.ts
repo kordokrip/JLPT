@@ -6,7 +6,7 @@
 
 export interface TtsOptions {
   text:  string;
-  lang:  'ja' | 'en';
+  lang:  'ja' | 'ko' | 'en';
   /** 재생 속도 (0.5~2.0, 기본 1.0) */
   rate?: number;
   /** 음성 선택 (공급자별 다름) */

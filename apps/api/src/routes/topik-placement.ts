@@ -27,11 +27,13 @@ type QuestionRow = {
   skill: string;
   difficulty: number;
   prompt_ko: string;
+  prompt_ja: string;
   prompt_en: string;
   choices_json: string;
   answer_index: number;
   explanation_en: string;
   explanation_ko: string;
+  explanation_ja: string;
   audio_script_ko: string | null;
   audio_r2_key: string | null;
 };
@@ -40,7 +42,7 @@ type AttemptRow = {
   id: string;
   user_id: string;
   bank_version: string;
-  instruction_language: 'ko' | 'en';
+  instruction_language: 'ko' | 'en' | 'ja';
   status: 'in_progress' | 'completed';
   question_ids_json: string;
   started_at: number;
@@ -72,6 +74,7 @@ function publicQuestion(row: QuestionRow): TopikPlacementQuestionDto {
     skill: row.skill,
     difficulty: row.difficulty,
     prompt_ko: row.prompt_ko,
+    prompt_ja: row.prompt_ja,
     prompt_en: row.prompt_en,
     choices: parseChoices(row.choices_json),
     audio: audioDto(row),
@@ -80,8 +83,8 @@ function publicQuestion(row: QuestionRow): TopikPlacementQuestionDto {
 
 async function releasedQuestions(db: D1Database): Promise<QuestionRow[]> {
   const result = await db.prepare(
-    `SELECT id, section, skill, difficulty, prompt_ko, prompt_en, choices_json,
-            answer_index, explanation_en, explanation_ko, audio_script_ko, audio_r2_key
+    `SELECT id, section, skill, difficulty, prompt_ko, prompt_ja, prompt_en, choices_json,
+            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko, audio_r2_key
        FROM topik_placement_questions
       WHERE learning_track = 'topik-ko' AND bank_version = ? AND is_published = 1
       ORDER BY CASE section WHEN 'listening' THEN 0 ELSE 1 END, difficulty, id`,
@@ -177,8 +180,8 @@ topikPlacementOA.openapi(submitRoute, async (c) => {
 
   const placeholders = questionIds.map(() => '?').join(',');
   const result = await c.env.DB.prepare(
-    `SELECT id, section, skill, difficulty, prompt_ko, prompt_en, choices_json,
-            answer_index, explanation_en, explanation_ko, audio_script_ko, audio_r2_key
+    `SELECT id, section, skill, difficulty, prompt_ko, prompt_ja, prompt_en, choices_json,
+            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko, audio_r2_key
        FROM topik_placement_questions
       WHERE bank_version = ? AND is_published = 1 AND id IN (${placeholders})`,
   ).bind(attempt.bank_version, ...questionIds).all<QuestionRow>();
@@ -221,6 +224,7 @@ topikPlacementOA.openapi(submitRoute, async (c) => {
       is_correct: item.correct,
       explanation_en: item.row.explanation_en,
       explanation_ko: item.row.explanation_ko,
+      explanation_ja: item.row.explanation_ja,
     })),
   } }, 200);
 });
@@ -261,7 +265,7 @@ const reviewRoute = createRoute({
   summary: '최근 진단 오답 복습',
   responses: {
     200: { description: '제출 완료 후 공개되는 최근 오답과 해설', content: { 'application/json': { schema: z.object({ data: z.array(z.object({
-      question_id: z.string(), section: z.enum(['listening', 'reading']), prompt_ko: z.string(), prompt_en: z.string(), choices: z.array(z.string()), selected_index: z.number().int(), answer_index: z.number().int(), explanation_en: z.string(), explanation_ko: z.string(),
+      question_id: z.string(), section: z.enum(['listening', 'reading']), prompt_ko: z.string(), prompt_ja: z.string(), prompt_en: z.string(), choices: z.array(z.string()), selected_index: z.number().int(), answer_index: z.number().int(), explanation_en: z.string(), explanation_ko: z.string(), explanation_ja: z.string(),
     })) }) } } },
     401: { description: '인증 필요', content: { 'application/json': { schema: problemSchema } } },
     409: { description: 'TOPIK 트랙 필요', content: { 'application/json': { schema: problemSchema } } },
@@ -273,8 +277,8 @@ topikPlacementOA.openapi(reviewRoute, async (c) => {
     return c.json({ title: 'Track mismatch', status: 409, detail: 'TOPIK 학습 트랙으로 전환한 뒤 다시 시도하세요.' }, 409);
   }
   const rows = await c.env.DB.prepare(
-    `SELECT q.id AS question_id, q.section, q.prompt_ko, q.prompt_en, q.choices_json,
-            r.selected_index, q.answer_index, q.explanation_en, q.explanation_ko
+    `SELECT q.id AS question_id, q.section, q.prompt_ko, q.prompt_ja, q.prompt_en, q.choices_json,
+            r.selected_index, q.answer_index, q.explanation_en, q.explanation_ko, q.explanation_ja
        FROM topik_placement_responses r
        JOIN topik_placement_questions q ON q.id = r.question_id
       WHERE r.attempt_id = (
@@ -284,18 +288,20 @@ topikPlacementOA.openapi(reviewRoute, async (c) => {
       ) AND r.is_correct = 0
       ORDER BY q.section, q.difficulty, q.id`,
   ).bind(c.get('userId')).all<{
-    question_id: string; section: 'listening' | 'reading'; prompt_ko: string; prompt_en: string; choices_json: string; selected_index: number; answer_index: number; explanation_en: string; explanation_ko: string;
+    question_id: string; section: 'listening' | 'reading'; prompt_ko: string; prompt_ja: string; prompt_en: string; choices_json: string; selected_index: number; answer_index: number; explanation_en: string; explanation_ko: string; explanation_ja: string;
   }>();
   return c.json({ data: (rows.results ?? []).map((row) => ({
     question_id: row.question_id,
     section: row.section,
     prompt_ko: row.prompt_ko,
+    prompt_ja: row.prompt_ja,
     prompt_en: row.prompt_en,
     choices: parseChoices(row.choices_json),
     selected_index: row.selected_index,
     answer_index: row.answer_index,
     explanation_en: row.explanation_en,
     explanation_ko: row.explanation_ko,
+    explanation_ja: row.explanation_ja,
   })) }, 200);
 });
 

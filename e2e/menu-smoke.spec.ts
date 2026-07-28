@@ -66,7 +66,7 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
   const apiBaseUrl =
     process.env.E2E_API_URL ??
     process.env.API_BASE_URL ??
-    "http://localhost:8787";
+    `http://127.0.0.1:${process.env.E2E_API_PORT ?? 8788}`;
   const health = await page.request.get(
     `${apiBaseUrl.replace(/\/$/, "")}/health`,
     { timeout: 10_000 },
@@ -85,7 +85,7 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
     // by the E2E runner, and request/response assertions above still catch
     // genuine network and HTTP failures.
     if (
-      /\/(?:localhost|127\.0\.0\.1):5173\/(api\/v1|dev-sw\.js).*due to access control checks/.test(
+      /\/(?:localhost|127\.0\.0\.1):(?:4173|5173)\/(api\/v1|dev-sw\.js).*due to access control checks/.test(
         message,
       )
     )

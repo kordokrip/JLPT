@@ -11,8 +11,8 @@ describe('toSubmittedAnswers', () => {
 });
 
 describe('initialListeningAudioSource', () => {
-  it('uses approved R2 audio when the listening question has a fixed asset', () => {
-    expect(initialListeningAudioSource(true)).toBe('server');
+  it('uses the Japanese browser voice by default even when a server asset exists', () => {
+    expect(initialListeningAudioSource(true)).toBe('browser');
   });
 
   it('falls back to browser voice when no server audio exists', () => {

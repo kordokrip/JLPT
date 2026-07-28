@@ -23,7 +23,7 @@ export class CloudflareMeloTts implements TtsAdapter {
       CLOUDFLARE_MELOTTS_MODEL,
       {
         prompt: opts.text,
-        lang: opts.lang === 'ja' ? 'ja' : 'en',
+        lang: opts.lang,
       },
     );
 

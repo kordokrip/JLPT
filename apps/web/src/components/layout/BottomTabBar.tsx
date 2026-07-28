@@ -51,8 +51,11 @@ export function BottomTabBar() {
   const track = useSettingsStore((s) => s.learningTrack);
   const homePath = homePathForTrack(track);
   const tabs = navigationForTrack(track, user?.role);
-  const primaryTabs = tabs.filter((tab) => tab.primary);
-  const moreTabs = tabs.filter((tab) => !tab.primary);
+  // Keep the mobile bar to five destinations plus More. A track can expose
+  // more primary destinations in the desktop sidebar without creating a
+  // second row or undersized tap targets on phones.
+  const primaryTabs = tabs.filter((tab) => tab.primary).slice(0, 5);
+  const moreTabs = tabs.filter((tab) => !primaryTabs.includes(tab));
   const moreActive = moreTabs.some((tab) => location.pathname === tab.to || location.pathname.startsWith(`${tab.to}/`));
 
   useEffect(() => setOpen(false), [location.pathname]);

@@ -31,6 +31,8 @@ STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
 FSRS_OPTIMIZER_TOKEN = ""
 VAPID_PUBLIC_KEY = "test-vapid-public-key"
+# Test double: disabled by default. This is not a production credential.
+AI_ASSISTANCE_ENABLED = "false"
 
 [[d1_databases]]
 binding = "DB"
@@ -45,6 +47,37 @@ bucket_name = "nihongo-n3-audio-test"
 [[r2_buckets]]
 binding = "REPORTS"
 bucket_name = "nihongo-n3-reports-test"
+
+[[r2_buckets]]
+binding = "CONTENT_EVIDENCE"
+bucket_name = "nihongo-n3-content-evidence-test"
+
+[[queues.producers]]
+binding = "CONTENT_RELEASE_QUEUE"
+queue = "nihongo-n3-content-release-test"
+
+[[queues.producers]]
+binding = "CONTENT_RELEASE_DLQ"
+queue = "nihongo-n3-content-release-test-dlq"
+
+[[queues.consumers]]
+queue = "nihongo-n3-content-release-test"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 3
+retry_delay = 60
+dead_letter_queue = "nihongo-n3-content-release-test-dlq"
+
+[[queues.consumers]]
+queue = "nihongo-n3-content-release-test-dlq"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[workflows]]
+binding = "CONTENT_RELEASE_WORKFLOW"
+name = "nihongo-n3-content-release-test"
+class_name = "ContentReleaseWorkflow"
+limits = { steps = 12 }
 
 [[unsafe.bindings]]
 name = "RATE_LIMITER_PUBLIC"

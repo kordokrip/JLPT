@@ -17,7 +17,6 @@ describe('API response normalization', () => {
       reading: 'よろこび',
       meaning: '기쁨',
       part_of_speech: '명사',
-      audio_path: 'audio/vocab/1280.mp3',
     });
   });
 
@@ -34,20 +33,33 @@ describe('API response normalization', () => {
       example_jp: '物価は上がる一方だ。',
     });
 
-    expect(__apiTestUtils.normalizeKanji({
+    const kanji = __apiTestUtils.normalizeKanji({
       id: 1,
       char: '喜',
       jlpt_level: 'N3',
       on_yomi: 'キ',
       kun_yomi: 'よろこぶ',
       meaning_ko: '기쁠 희',
-    })).toMatchObject({
+    });
+    expect(kanji).toMatchObject({
       character: '喜',
       level: 'N3',
       reading_on: 'キ',
       reading_kun: 'よろこぶ',
       meaning: '기쁠 희',
-      audio_path: 'audio/kanji/n3/1.mp3',
     });
+    expect(kanji).not.toHaveProperty('audio_path');
+  });
+
+  it('does not expose a legacy R2 key as approved pronunciation audio', () => {
+    const item = __apiTestUtils.normalizeVocab({
+      id: 1280,
+      level: 'N3',
+      ja: '喜び',
+      kana: 'よろこび',
+      ko: '기쁨',
+      audio_r2_key: 'audio/vocab/n3/1280.mp3',
+    });
+    expect(item).not.toHaveProperty('audio_path');
   });
 });
