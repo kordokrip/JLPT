@@ -1077,12 +1077,15 @@ describe('TOPIK owner-private publication', () => {
       body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
     });
     expect(unauthenticated.status).toBe(401);
+    expect(unauthenticated.headers.get('cache-control')).toContain('no-store');
+    expect(unauthenticated.headers.get('vary')).toContain('Cookie');
 
     const nonAdminClaim = await fetch('/api/v1/admin/topik-owner-private/claims', {
       method: 'POST', headers: topikHeaders(otherCookie),
       body: JSON.stringify({ release_id: releaseId, manifest_sha256: manifestSha256 }),
     });
     expect(nonAdminClaim.status).toBe(403);
+    expect(nonAdminClaim.headers.get('cache-control')).toContain('no-store');
 
     const injectedUserId = await fetch('/api/v1/admin/topik-owner-private/claims', {
       method: 'POST', headers: topikHeaders(ownerCookie),
@@ -1129,6 +1132,7 @@ describe('TOPIK owner-private publication', () => {
       headers: { Cookie: otherCookie },
     });
     expect(otherContent.status).toBe(404);
+    expect(otherContent.headers.get('cache-control')).toContain('no-store');
     expect(JSON.stringify(await otherContent.json())).not.toContain(releaseId);
     const otherSolution = await fetch(`/api/v1/tracks/topik-ko/owner-private/content/${ownerBody.data.items[0]!.id}/solution`, { headers: { Cookie: otherCookie } });
     expect(otherSolution.status).toBe(404);

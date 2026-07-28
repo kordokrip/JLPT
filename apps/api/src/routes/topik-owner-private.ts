@@ -6,7 +6,17 @@ import type { AppEnv } from '../types.js';
 
 const ownerPrivateTopikOA = new OpenAPIHono<AppEnv>();
 
+// Apply these headers before authentication so an unauthenticated or
+// unauthorized response cannot be stored and later replayed across sessions.
+ownerPrivateTopikOA.use('/admin/topik-owner-private/*', async (c, next) => {
+  noStore(c);
+  await next();
+});
 ownerPrivateTopikOA.use('/admin/topik-owner-private/*', adminSessionAuth);
+ownerPrivateTopikOA.use('/tracks/topik-ko/owner-private/*', async (c, next) => {
+  noStore(c);
+  await next();
+});
 ownerPrivateTopikOA.use('/tracks/topik-ko/owner-private/*', appSessionAuth);
 
 const problemSchema = z.object({ title: z.string(), status: z.number().int(), detail: z.string() });
