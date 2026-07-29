@@ -54,9 +54,19 @@ export function cacheMiddleware(
 }
 
 /** 30일 캐시 (오디오·이미지용) */
-export const audioCacheMiddleware = cacheMiddleware(
-  'public, max-age=2592000, immutable',
-);
+const publicAudioCacheMiddleware = cacheMiddleware('public, max-age=2592000, immutable');
+
+/**
+ * Generated curriculum recordings live below private-audio/.  They are served
+ * only after session authentication and must never enter the shared edge cache.
+ */
+export async function audioCacheMiddleware(c: Context<AppEnv>, next: Next): Promise<Response | void> {
+  if (new URL(c.req.url).pathname.includes('/audio/private-audio/')) {
+    await next();
+    return;
+  }
+  return publicAudioCacheMiddleware(c, next);
+}
 
 /** 하루 캐시 (콘텐츠용) */
 export const contentCacheMiddleware = cacheMiddleware(

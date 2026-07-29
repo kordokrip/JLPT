@@ -135,14 +135,16 @@ topikOwnerCurriculumOA.openapi(listRoute, async (c) => {
   const itemResult = await c.env.DB.prepare(
     `SELECT i.id, i.unit_id, i.stable_ref, i.target_grade, i.item_type,
             i.prompt_ko, i.prompt_ja, i.prompt_en, i.answer_json, i.audio_required, i.audio_text_ko,
-            b.binding_state, a.immutable_r2_key
+            CASE WHEN activated.id IS NOT NULL THEN 'r2-ready' ELSE b.binding_state END AS binding_state,
+            a.immutable_r2_key
        FROM topik_owner_authored_curriculum_items i
        LEFT JOIN content_audio_bindings b
          ON b.item_type = 'topik-owner-item'
         AND b.item_id = i.id
         AND b.language = 'ko'
         AND b.audio_role = CASE WHEN i.item_type = 'listening' THEN 'listening' ELSE 'pronunciation' END
-       LEFT JOIN content_source_assets a ON a.id = b.asset_id
+       LEFT JOIN content_audio_binding_activations activated ON activated.binding_id = b.id
+       LEFT JOIN content_source_assets a ON a.id = COALESCE(activated.asset_id, b.asset_id)
       WHERE i.target_grade = ?
       ORDER BY i.unit_id, i.id`,
   ).bind(grade).all<ItemRow>();

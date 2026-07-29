@@ -186,6 +186,27 @@ export const contentAudioBindings = sqliteTable(
   }),
 );
 
+/**
+ * Append-only activation of a prepared binding.  The original binding keeps
+ * the provenance of the authored item while this row selects one immutable
+ * playable R2 asset for it.
+ */
+export const contentAudioBindingActivations = sqliteTable(
+  'content_audio_binding_activations',
+  {
+    id: text('id').primaryKey(),
+    bindingId: text('binding_id').notNull().references(() => contentAudioBindings.id, { onDelete: 'restrict' }),
+    assetId: text('asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    activatedAt: integer('activated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    selectionReason: text('selection_reason').notNull(),
+  },
+  (t) => ({
+    bindingUk: uniqueIndex('content_audio_binding_activations_binding_uk').on(t.bindingId),
+    assetUk: uniqueIndex('content_audio_binding_activations_asset_uk').on(t.assetId),
+    bindingIdx: index('content_audio_binding_activations_binding_idx').on(t.bindingId),
+  }),
+);
+
 /** Reuses a canonical item in another curriculum level without relabelling it. */
 export const learningContentLevelReferences = sqliteTable(
   'learning_content_level_references',

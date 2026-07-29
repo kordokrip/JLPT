@@ -12,6 +12,7 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { AppEnv } from '../types.js';
 import { notFound, badRequest } from '../lib/response.js';
+import { appSessionAuth } from '../lib/auth-session.js';
 import {
   buildAudioQaKey,
   isValidAudioQaIndex,
@@ -23,6 +24,27 @@ import type { AudioQaLanguage } from '@nihongo-n3/shared';
 const audio = new Hono<AppEnv>();
 
 const CACHE_CONTROL = 'public, max-age=2592000, immutable';
+
+function isPrivateAudioKey(key: string): boolean {
+  return key.startsWith('private-audio/');
+}
+
+function cacheControlForKey(key: string): string {
+  return isPrivateAudioKey(key) ? 'private, no-store' : CACHE_CONTROL;
+}
+
+function privacyHeaders(key: string): Record<string, string> {
+  return isPrivateAudioKey(key) ? { Vary: 'Cookie' } : {};
+}
+
+async function requirePrivateAudioSession(c: Context<AppEnv>, key: string): Promise<Response | null> {
+  if (!isPrivateAudioKey(key)) return null;
+  const result = await appSessionAuth(c, async () => undefined);
+  if (!(result instanceof Response)) return null;
+  result.headers.set('Cache-Control', 'private, no-store');
+  result.headers.set('Vary', 'Cookie');
+  return result;
+}
 
 function audioMetadataHeaders(object: Pick<R2Object, 'customMetadata'>): Record<string, string> {
   const metadata = object.customMetadata ?? {};
@@ -150,6 +172,11 @@ audio.get('/audio/:key{.+}', async (c) => {
   const qaKey = parseAudioQaKey(key);
   if (qaKey) return serveQaAudio(c, qaKey.provider, qaKey.index, qaKey.language);
   if (key.startsWith('audio/qa/')) return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
+  const unauthorized = await requirePrivateAudioSession(c, key);
+  if (unauthorized) return unauthorized;
+
+  const cacheControl = cacheControlForKey(key);
+  const privateHeaders = privacyHeaders(key);
 
   const rangeHeader = c.req.header('range');
   // Range 요청이면 R2 range 옵션 사용
@@ -183,9 +210,10 @@ audio.get('/audio/:key{.+}', async (c) => {
         'Content-Range': `bytes ${range.start}-${range.end}/${totalSize}`,
         'Content-Length': String(length),
         'Accept-Ranges': 'bytes',
-        'Cache-Control': CACHE_CONTROL,
+        'Cache-Control': cacheControl,
         'ETag': etag,
         'Last-Modified': lastModified,
+        ...privateHeaders,
       },
     });
   }
@@ -204,7 +232,8 @@ audio.get('/audio/:key{.+}', async (c) => {
       status: 304,
       headers: {
         'ETag': etag,
-        'Cache-Control': CACHE_CONTROL,
+        'Cache-Control': cacheControl,
+        ...privateHeaders,
       },
     });
   }
@@ -215,9 +244,10 @@ audio.get('/audio/:key{.+}', async (c) => {
       'Content-Type': r2obj.httpMetadata?.contentType ?? 'audio/mpeg',
       'Content-Length': String(r2obj.size),
       'Accept-Ranges': 'bytes',
-      'Cache-Control': CACHE_CONTROL,
+      'Cache-Control': cacheControl,
       'ETag': etag,
       'Last-Modified': lastModified,
+      ...privateHeaders,
     },
   });
 });
@@ -226,6 +256,8 @@ audio.get('/audio/:key{.+}', async (c) => {
 audio.on('HEAD', '/audio/:key{.+}', async (c) => {
   const key = c.req.param('key');
   if (!key) return badRequest(c, '오디오 키가 없습니다');
+  const unauthorized = await requirePrivateAudioSession(c, key);
+  if (unauthorized) return unauthorized;
 
   const head = await c.env.ASSETS.head(key);
   if (!head) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
@@ -236,10 +268,11 @@ audio.on('HEAD', '/audio/:key{.+}', async (c) => {
       'Content-Type': head.httpMetadata?.contentType ?? 'audio/mpeg',
       'Content-Length': String(head.size),
       'Accept-Ranges': 'bytes',
-      'Cache-Control': CACHE_CONTROL,
+      'Cache-Control': cacheControlForKey(key),
       'ETag': head.httpEtag,
       'Last-Modified': head.uploaded.toUTCString(),
       ...audioMetadataHeaders(head),
+      ...privacyHeaders(key),
     },
   });
 });

@@ -66,6 +66,8 @@ import rawContentSourceAudioAndOwnerCurriculumMigration from '../../../../packag
 import rawPreserveExistingJlptLevelsMigration from '../../../../packages/db/drizzle-v2/0018_preserve_existing_jlpt_levels.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawTopikOwnerCurriculumAudioTextMigration from '../../../../packages/db/drizzle-v2/0019_topik_owner_curriculum_audio_text.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawContentAudioBindingActivationsMigration from '../../../../packages/db/drizzle-v2/0020_content_audio_binding_activations.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -74,7 +76,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -1057,6 +1059,34 @@ describe('TOPIK owner-authored 1–6 curriculum contract', () => {
     expect(items.get(listeningId)?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.' });
     expect(JSON.stringify(listBody)).not.toContain('answer_index');
     expect(JSON.stringify(listBody)).not.toContain('해설');
+
+    const privateAudioKey = 'private-audio/ko/topik-api-grade1-vocab-audio/' + 'a'.repeat(64) + '.mp3';
+    const generatedAssetId = 'api-test-topik-owner-curriculum-generated-audio';
+    const assets = (env as typeof env & { ASSETS: R2Bucket }).ASSETS;
+    await assets.put(privateAudioKey, new Uint8Array([73, 68, 51, 4]), {
+      httpMetadata: { contentType: 'audio/mpeg', cacheControl: 'private, no-store' },
+      customMetadata: { provider: 'google', model: 'ko-KR-Neural2-A', audioVersion: 'google-neural2-v1' },
+    });
+    await db.batch([
+      db.prepare(`INSERT INTO content_source_assets (id, asset_kind, source_url, license_id, license_url, attribution_text, allowed_use, source_sha256, generated_at, stored_audio_bytes_sha256, immutable_r2_key, mime_type, provider, model, language, voice, provider_version, input_text_sha256, selection_reason) VALUES (?, 'tts-generated', 'https://example.invalid/google-tts', 'LicenseRef-google-cloud-tts-output', 'https://example.invalid/terms', 'generated fixture', 'test only', ?, 1785283200, ?, ?, 'audio/mpeg', 'google', 'ko-KR-Neural2-A', 'ko', 'ko-KR-Neural2-A', 'google-neural2-v1', ?, 'R2 activation route test')`)
+        .bind(generatedAssetId, 'a'.repeat(64), 'b'.repeat(64), privateAudioKey, 'c'.repeat(64)),
+      db.prepare(`INSERT INTO content_audio_binding_activations (id, binding_id, asset_id, selection_reason) VALUES ('topik.api.grade1.vocab.audio.activation', 'topik.api.grade1.vocab.audio', ?, 'R2 activation route test')`)
+        .bind(generatedAssetId),
+    ]);
+
+    const listedWithR2 = await fetch('/api/v1/tracks/topik-ko/curriculum?target_grade=1', { headers });
+    expect(listedWithR2.status).toBe(200);
+    const r2Body = await listedWithR2.json<{ data: { units: Array<{ items: Array<{ id: string; audio: { kind: string; url?: string } }> }> } }>();
+    const r2Items = new Map(r2Body.data.units[0]?.items.map((item) => [item.id, item]));
+    expect(r2Items.get(vocabId)?.audio).toMatchObject({ kind: 'r2', url: `/api/v1/audio/${privateAudioKey}` });
+
+    const unauthenticatedAudio = await fetch(`/api/v1/audio/${privateAudioKey}`);
+    expect(unauthenticatedAudio.status).toBe(401);
+    expect(unauthenticatedAudio.headers.get('cache-control')).toContain('no-store');
+    const privateAudio = await fetch(`/api/v1/audio/${privateAudioKey}`, { headers });
+    expect(privateAudio.status).toBe(200);
+    expect(privateAudio.headers.get('cache-control')).toBe('private, no-store');
+    expect(privateAudio.headers.get('vary')).toContain('Cookie');
 
     const solution = await fetch(`/api/v1/tracks/topik-ko/curriculum/items/${vocabId}/solution`, { headers });
     expect(solution.status).toBe(200);

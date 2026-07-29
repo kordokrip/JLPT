@@ -50,7 +50,7 @@ test('release lifecycle is strictly forward-only and withdraws published content
   assert.equal(canTransitionContentRelease('withdrawn', 'draft'), false);
 });
 
-test('N2 Batches 1–3 and N1 Batch 1 are operating self-authored sources', () => {
+test('N2 Batches 1–3 and N1 Batches 1–2 are operating self-authored sources', () => {
   assert.equal(N2_N1_SOURCE_INTAKE_TEMPLATES.length, 6);
   assert.ok(N2_N1_SOURCE_INTAKE_TEMPLATES.every((template) => template.intakeState === 'source-required'));
   const seeded = buildContentSeedPlan().manifest.entries;
@@ -58,7 +58,7 @@ test('N2 Batches 1–3 and N1 Batch 1 are operating self-authored sources', () =
   assert.deepEqual(n2Batches.map((entry) => entry.sourceCode), ['N2-A1', 'N2-A2', 'N2-A3']);
   assert.deepEqual(n2Batches.map((entry) => entry.table), ['n2_curriculum', 'n2_curriculum', 'n2_curriculum']);
   assert.deepEqual(n2Batches.map((entry) => entry.expectedRows), [258, 112, 101]);
-  const n1Batch = seeded.find((entry) => entry.sourceCode === 'N1-A1');
-  assert.equal(n1Batch?.table, 'n2_curriculum');
-  assert.equal(n1Batch?.expectedRows, 87);
+  const n1Batches = seeded.filter((entry) => /^N1-A[12]$/.test(entry.sourceCode));
+  assert.deepEqual(n1Batches.map((entry) => entry.table), ['n2_curriculum', 'n2_curriculum']);
+  assert.deepEqual(n1Batches.map((entry) => entry.expectedRows), [87, 87]);
 });

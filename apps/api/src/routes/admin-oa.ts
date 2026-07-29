@@ -70,6 +70,32 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     },
   },
   {
+    method: 'post',
+    path: '/audio/curriculum-queue',
+    tags: ['Admin', 'Audio'],
+    summary: 'N1·TOPIK 불변 binding의 Google R2 오디오 소량 생성',
+    request: {
+      headers: z.object({ 'x-audio-batch-approval': z.string().optional() }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              execute: z.boolean().default(false),
+              dry_run: z.boolean().optional(),
+              batch: z.number().int().min(1).max(20).optional(),
+              track: z.enum(['jlpt-ja', 'topik-ko']).optional(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '큐 상태 또는 생성 결과' },
+      401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
+      403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
+    },
+  },
+  {
     method: 'get',
     path: '/audio/providers',
     tags: ['Admin', 'Audio'],

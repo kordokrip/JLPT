@@ -22,10 +22,26 @@ const checks = [
       )`,
   },
   {
-    name: 'unavailable bindings disclose why browser audio is not substituted',
-    sql: `SELECT count(*) AS count FROM content_audio_bindings
-      WHERE binding_state IN ('preparing', 'not-provided')
-        AND (asset_id IS NOT NULL OR length(trim(COALESCE(unavailable_reason, ''))) = 0)`,
+    name: 'prepared bindings without an activation disclose why durable R2 audio is not ready',
+    sql: `SELECT count(*) AS count FROM content_audio_bindings b
+      LEFT JOIN content_audio_binding_activations activated ON activated.binding_id = b.id
+      WHERE b.binding_state IN ('preparing', 'not-provided')
+        AND activated.id IS NULL
+        AND (b.asset_id IS NOT NULL OR length(trim(COALESCE(b.unavailable_reason, ''))) = 0)`,
+  },
+  {
+    name: 'audio activations point to a complete immutable playable asset',
+    sql: `SELECT count(*) AS count FROM content_audio_binding_activations activated
+      JOIN content_audio_bindings b ON b.id = activated.binding_id
+      LEFT JOIN content_source_assets a ON a.id = activated.asset_id
+      WHERE b.binding_state NOT IN ('preparing', 'r2-ready')
+        OR a.id IS NULL OR a.asset_kind NOT IN ('licensed-web-audio', 'tts-generated')
+        OR a.immutable_r2_key IS NULL OR a.stored_audio_bytes_sha256 IS NULL
+        OR length(trim(COALESCE(a.provider, ''))) = 0
+        OR length(trim(COALESCE(a.model, ''))) = 0
+        OR length(trim(COALESCE(a.language, ''))) = 0
+        OR length(trim(COALESCE(a.voice, ''))) = 0
+        OR a.input_text_sha256 IS NULL`,
   },
   {
     name: 'TTS assets carry provider, version, voice, input hash, and selection reason',

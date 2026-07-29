@@ -18,6 +18,11 @@ import type { AppEnv } from '../types.js';
 import { adminSessionAuth } from '../lib/auth-session.js';
 import { badRequest, ok, problem } from '../lib/response.js';
 import { AUDIO_BATCH_LEVELS, runAudioGeneration, type AudioBatchLevel } from '../jobs/generate-audio.js';
+import {
+  getCurriculumAudioQueueStats,
+  runCurriculumAudioGeneration,
+  type CurriculumAudioTrack,
+} from '../jobs/generate-curriculum-audio.js';
 import { getTtsProviderInfo, getVoicevoxUrl, type TtsProviderId } from '../lib/tts/index.js';
 import { probeVoicevoxEngine } from '../lib/tts/voicevox.js';
 import { parseAudioQaProvider, warmupAudioQa, type AudioQaProvider } from '../lib/audio-qa.js';
@@ -460,6 +465,52 @@ admin.post('/audio/queue', async (c) => {
     level,
   });
   return ok(c, result);
+});
+
+// ── POST /audio/curriculum-queue — N1/TOPIK immutable binding audio ──────
+// The default is a read-only dry run.  Generation writes an immutable R2
+// object, then appends a matching D1 asset and activation record.
+admin.post('/audio/curriculum-queue', async (c) => {
+  const body = (await c.req.json<{
+    execute?: boolean;
+    dry_run?: boolean;
+    batch?: number;
+    track?: CurriculumAudioTrack;
+  }>().catch(() => ({}))) as {
+    execute?: boolean;
+    dry_run?: boolean;
+    batch?: number;
+    track?: CurriculumAudioTrack;
+  };
+  const track = body.track === 'jlpt-ja' || body.track === 'topik-ko' ? body.track : undefined;
+  if (body.track !== undefined && !track) return badRequest(c, 'track은 jlpt-ja 또는 topik-ko여야 합니다');
+  if (body.batch !== undefined && (!Number.isInteger(body.batch) || body.batch < 1 || body.batch > 20)) {
+    return badRequest(c, 'curriculum audio batch는 1~20개여야 합니다');
+  }
+
+  if (body.execute !== true || body.dry_run === true) {
+    return ok(c, {
+      dry_run: true,
+      approval_required: true,
+      provider: 'google',
+      max_batch: 20,
+      track: track ?? 'all',
+      pending: await getCurriculumAudioQueueStats(c.env.DB),
+    });
+  }
+
+  if (!c.env.GOOGLE_TTS_API_KEY?.trim()) {
+    return badRequest(c, 'GOOGLE_TTS_API_KEY가 설정되지 않았습니다');
+  }
+  const configuredApproval = c.env.AUDIO_BATCH_APPROVAL_TOKEN?.trim();
+  const suppliedApproval = c.req.header('x-audio-batch-approval')?.trim();
+  if (!configuredApproval || !suppliedApproval || !(await equalSecret(configuredApproval, suppliedApproval))) {
+    return badRequest(c, '오디오 배치 승인 토큰이 없거나 일치하지 않습니다');
+  }
+  return ok(c, await runCurriculumAudioGeneration(c.env, {
+    ...(body.batch !== undefined ? { batchSize: body.batch } : {}),
+    ...(track ? { track } : {}),
+  }));
 });
 
 admin.get('/audio/providers', async (c) => {

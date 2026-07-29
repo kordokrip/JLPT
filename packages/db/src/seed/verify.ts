@@ -13,6 +13,7 @@ import { n2Batch1ContentRowsSql } from "./n2-batch1.js";
 import { n2Batch2ContentRowsSql } from "./n2-batch2.js";
 import { n2Batch3ContentRowsSql } from "./n2-batch3.js";
 import { n1Batch1ContentRowsSql } from './n1-batch1.js';
+import { n1Batch2ContentRowsSql } from './n1-batch2.js';
 import { topikOwnerBatch1ContentRowsSql } from './topik-owner-curriculum-batch1.js';
 import { topikOwnerBatch2ContentRowsSql } from './topik-owner-curriculum-batch2.js';
 import {
@@ -168,6 +169,7 @@ function rowCountSql(entry: ContentManifestEntry): string {
     if (entry.sourceCode === "N2-A2") return n2Batch2ContentRowsSql();
     if (entry.sourceCode === "N2-A3") return n2Batch3ContentRowsSql();
     if (entry.sourceCode === 'N1-A1') return n1Batch1ContentRowsSql();
+    if (entry.sourceCode === 'N1-A2') return n1Batch2ContentRowsSql();
     throw new Error(`Unknown JLPT curriculum source: ${entry.sourceCode}`);
   }
   if (entry.table === 'topik_owner_curriculum') {
