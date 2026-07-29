@@ -8,7 +8,7 @@ import {
   TOPIK_GRADE1_LOCAL_FIXTURE_SOURCE_ASSET_ID,
 } from '../seed/topik-grade1-local-fixture.js';
 
-test('TOPIK grade 1 local fixture stays self-authored, R2-only, and separate from review-gated records', () => {
+test('TOPIK grade 1 local fixture stays self-authored, speaks only its supplied Korean text, and remains separate from review-gated records', () => {
   const plan = buildTopikGrade1LocalFixturePlan();
   assert.deepEqual(plan.manifest.counts, { units: 1, items: 2, stableRefs: 2, audioBindings: 2 });
   assert.match(plan.manifest.sourceSha256, /^[a-f0-9]{64}$/);
@@ -21,5 +21,7 @@ test('TOPIK grade 1 local fixture stays self-authored, R2-only, and separate fro
   assert.match(sql, /learning_content_stable_refs/);
   assert.match(sql, /'pronunciation',\n  'preparing'/);
   assert.match(sql, /'listening',\n  'preparing'/);
+  assert.match(sql, /audio_text_ko/);
+  assert.match(sql, /안녕하세요\. 저는 유나예요\. 처음 뵙겠습니다\./);
   assert.doesNotMatch(sql, /topik_practice_questions|content_releases|content_release_sources|author_reviewer|second_reviewer/i);
 });

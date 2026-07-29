@@ -16,6 +16,7 @@ const n2FixtureReport = path.join(artifacts, 'n2-local-fixture-report.json');
 const n2BatchReport = path.join(artifacts, 'n2-batch1-report.json');
 const topikFixtureManifest = path.join(artifacts, 'topik-grade1-local-fixture-manifest.json');
 const topikFixtureReport = path.join(artifacts, 'topik-grade1-local-fixture-report.json');
+const topikOwnerBatchReport = path.join(artifacts, 'topik-owner-curriculum-batch1-report.json');
 const config = path.join(REPO_ROOT, 'apps/api/wrangler.toml');
 const requireAudio = process.argv.includes('--require-audio');
 
@@ -48,6 +49,10 @@ runDbScript('src/seed/verify.ts', [
   '--local',
   `--persist-to=${persistTo}`, `--manifest=${manifest}`, `--report=${report}`,
   ...(requireAudio ? ['--require-audio'] : []),
+]);
+runDbScript('src/ops/verify-topik-owner-curriculum-batch1.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${topikOwnerBatchReport}`,
 ]);
 runDbScript('src/seed/seed-n2-local-fixture.ts', [
   '--local',

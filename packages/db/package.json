@@ -34,6 +34,7 @@
     "verify:n2:batch1": "tsx src/ops/verify-n2-batch1.ts --local",
     "verify:n2:local-fixture": "tsx src/ops/verify-n2-local-fixture.ts --local",
     "verify:topik:grade1:local-fixture": "tsx src/ops/verify-topik-grade1-local-fixture.ts --local",
+    "verify:topik:owner-batch1": "tsx src/ops/verify-topik-owner-curriculum-batch1.ts --local",
     "verify:audio:provenance": "tsx src/ops/verify-learning-audio-provenance.ts --local",
     "content:contract:verify": "tsx src/ops/verify-content-release-contract.ts",
     "content:control-plane:verify": "tsx src/ops/verify-content-release-control-plane.ts",

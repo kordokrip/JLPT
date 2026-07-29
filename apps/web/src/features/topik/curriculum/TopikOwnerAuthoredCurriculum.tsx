@@ -75,7 +75,7 @@ export function TopikOwnerAuthoredCurriculum() {
       {curriculum.isLoading && <p className="mt-6 text-sm text-[var(--muted-foreground)]">학습 단위를 불러오는 중입니다.</p>}
       {curriculum.isError && <p role="alert" className="mt-6 text-sm text-red-700 dark:text-red-300">{curriculum.error.message}</p>}
       {solutionError && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">{solutionError}</p>}
-      {audio.error && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">R2 오디오를 재생할 수 없습니다.</p>}
+      {audio.error && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">한국어 발음을 재생할 수 없습니다.</p>}
 
       {!curriculum.isLoading && curriculum.data && curriculum.data.units.length === 0 && (
         <div className="surface-panel mt-6 p-5" role="status">
@@ -114,6 +114,8 @@ export function TopikOwnerAuthoredCurriculum() {
                   <h4 className="mt-3 text-lg font-black leading-8">{localized(item, language)}</h4>
                   {item.audio?.kind === 'r2' ? (
                     <button type="button" onClick={() => audio.play(item.audio!)} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />R2 오디오 재생</button>
+                  ) : item.audio?.kind === 'browser-fallback' ? (
+                    <button type="button" onClick={() => audio.play(item.audio!)} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />Google 한국어 음성 재생</button>
                   ) : item.audio?.kind === 'unavailable' ? (
                     <p role="status" className="mt-4 inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)]"><Headphones aria-hidden="true" size={17} />{item.audio.reason === 'preparing' ? '오디오 준비 중' : '오디오를 제공하지 않습니다'}</p>
                   ) : null}

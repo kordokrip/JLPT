@@ -240,6 +240,8 @@ export const topikOwnerAuthoredCurriculumItems = sqliteTable(
     explanationJa: text('explanation_ja').notNull(),
     explanationEn: text('explanation_en').notNull(),
     audioRequired: integer('audio_required', { mode: 'boolean' }).notNull().default(false),
+    /** Spoken Korean text; separate from the learner-facing question prompt. */
+    audioTextKo: text('audio_text_ko'),
     sourceAssetId: text('source_asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
     ...timestamps,
   },

@@ -64,6 +64,8 @@ import rawTopikOwnerPrivatePublicationMigration from '../../../../packages/db/dr
 import rawContentSourceAudioAndOwnerCurriculumMigration from '../../../../packages/db/drizzle-v2/0017_content_source_audio_and_owner_curriculum.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawPreserveExistingJlptLevelsMigration from '../../../../packages/db/drizzle-v2/0018_preserve_existing_jlpt_levels.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikOwnerCurriculumAudioTextMigration from '../../../../packages/db/drizzle-v2/0019_topik_owner_curriculum_audio_text.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -72,7 +74,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -1027,9 +1029,9 @@ describe('TOPIK owner-authored 1–6 curriculum contract', () => {
     await db.batch([
       db.prepare(`INSERT INTO content_source_assets (id, asset_kind, source_url, license_id, license_url, attribution_text, allowed_use, source_sha256, generated_at, selection_reason) VALUES (?, 'self-authored-fixture', 'https://example.invalid/topik-owner', 'LicenseRef-api-test', 'https://example.invalid/license', 'API test fixture', 'local test only', ?, 1785283200, 'API contract test')`).bind(sourceAssetId, 'e'.repeat(64)),
       db.prepare(`INSERT INTO topik_owner_authored_curriculum_units (id, target_grade, stable_ref, section, title_ko, title_ja, title_en, source_asset_id) VALUES (?, 1, 'topik.api.grade1.unit', 'vocab', '인사와 자기소개', 'あいさつと自己紹介', 'Greetings and introductions', ?)`).bind(unitId, sourceAssetId),
-      db.prepare(`INSERT INTO topik_owner_authored_curriculum_items (id, unit_id, target_grade, stable_ref, item_type, prompt_ko, prompt_ja, prompt_en, answer_json, explanation_ko, explanation_ja, explanation_en, audio_required, source_asset_id) VALUES (?, ?, 1, 'topik.api.grade1.vocab', 'vocab', '안녕하세요의 뜻은 무엇입니까?', '「안녕하세요」の意味は何ですか。', 'What does 안녕하세요 mean?', '{"choices":["인사","주문","날짜","길"],"answer_index":0}', '인사입니다.', 'あいさつです。', 'It is a greeting.', 1, ?)`)
+      db.prepare(`INSERT INTO topik_owner_authored_curriculum_items (id, unit_id, target_grade, stable_ref, item_type, prompt_ko, prompt_ja, prompt_en, answer_json, explanation_ko, explanation_ja, explanation_en, audio_required, audio_text_ko, source_asset_id) VALUES (?, ?, 1, 'topik.api.grade1.vocab', 'vocab', '안녕하세요의 뜻은 무엇입니까?', '「안녕하세요」の意味は何ですか。', 'What does 안녕하세요 mean?', '{"choices":["인사","주문","날짜","길"],"answer_index":0}', '인사입니다.', 'あいさつです。', 'It is a greeting.', 1, '안녕하세요.', ?)`)
         .bind(vocabId, unitId, sourceAssetId),
-      db.prepare(`INSERT INTO topik_owner_authored_curriculum_items (id, unit_id, target_grade, stable_ref, item_type, prompt_ko, prompt_ja, prompt_en, answer_json, explanation_ko, explanation_ja, explanation_en, audio_required, source_asset_id) VALUES (?, ?, 1, 'topik.api.grade1.listening', 'listening', '말하는 사람은 무엇을 합니까?', '話している人は何をしますか。', 'What is the speaker doing?', '{"choices":["자기소개","주문","날짜","길"],"answer_index":0}', '자기소개입니다.', '自己紹介です。', 'It is an introduction.', 1, ?)`)
+      db.prepare(`INSERT INTO topik_owner_authored_curriculum_items (id, unit_id, target_grade, stable_ref, item_type, prompt_ko, prompt_ja, prompt_en, answer_json, explanation_ko, explanation_ja, explanation_en, audio_required, audio_text_ko, source_asset_id) VALUES (?, ?, 1, 'topik.api.grade1.listening', 'listening', '말하는 사람은 무엇을 합니까?', '話している人は何をしますか。', 'What is the speaker doing?', '{"choices":["자기소개","주문","날짜","길"],"answer_index":0}', '자기소개입니다.', '自己紹介です。', 'It is an introduction.', 1, '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.', ?)`)
         .bind(listeningId, unitId, sourceAssetId),
       db.prepare(`INSERT INTO learning_content_stable_refs (stable_ref, learning_track, item_type, item_id, level_tag, source_asset_id) VALUES ('topik.api.grade1.vocab', 'topik-ko', 'topik-owner-item', ?, 'TOPIK-1', ?)`)
         .bind(vocabId, sourceAssetId),
@@ -1046,11 +1048,13 @@ describe('TOPIK owner-authored 1–6 curriculum contract', () => {
 
     const listed = await fetch('/api/v1/tracks/topik-ko/curriculum?target_grade=1', { headers });
     expect(listed.status).toBe(200);
-    const listBody = await listed.json<{ data: { units: Array<{ id: string; items: Array<{ id: string; audio: { kind: string; reason?: string } }> }> } }>();
+    const listBody = await listed.json<{ data: { units: Array<{ id: string; items: Array<{ id: string; audio: { kind: string; text_ko?: string } }> }> } }>();
     expect(listBody.data.units).toHaveLength(1);
     expect(listBody.data.units[0]).toMatchObject({ id: unitId });
     expect(listBody.data.units[0]?.items).toHaveLength(2);
-    expect(listBody.data.units[0]?.items[0]?.audio).toMatchObject({ kind: 'unavailable', reason: 'preparing' });
+    const items = new Map(listBody.data.units[0]?.items.map((item) => [item.id, item]));
+    expect(items.get(vocabId)?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '안녕하세요.' });
+    expect(items.get(listeningId)?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.' });
     expect(JSON.stringify(listBody)).not.toContain('answer_index');
     expect(JSON.stringify(listBody)).not.toContain('해설');
 

@@ -16,6 +16,7 @@ import { parseKanji } from './parse-kanji.js';
 import { buildN2Batch1Plan } from './n2-batch1.js';
 import { buildN2Batch2Plan } from './n2-batch2.js';
 import { buildN2Batch3Plan } from './n2-batch3.js';
+import { buildTopikOwnerBatch1Plan } from './topik-owner-curriculum-batch1.js';
 import { parseSentences } from './parse-sentences.js';
 import { parseSysProg } from './parse-sysprog.js';
 import { parseVocab } from './parse-vocab.js';
@@ -29,11 +30,13 @@ export type SeedTable =
   | 'sysprog_terms'
   | 'curriculum_weeks'
   /** A multi-table, self-authored N2 learning batch with its own verifier query. */
-  | 'n2_curriculum';
+  | 'n2_curriculum'
+  /** Operating owner-authored TOPIK 1–6 curriculum, independent of the practice bank. */
+  | 'topik_owner_curriculum';
 
 export const CONTENT_MANIFEST_SCHEMA_VERSION = 3;
 export const CONTENT_PARSER_VERSION = 'content-parser-v3';
-export const SEEDED_SOURCE_COUNT = 16;
+export const SEEDED_SOURCE_COUNT = 17;
 
 const REPOSITORY_URL = 'https://github.com/kordokrip/JLPT';
 const ATTRIBUTIONS_URL = `${REPOSITORY_URL}/blob/main/docs/ATTRIBUTIONS.md`;
@@ -126,16 +129,17 @@ function repositoryFileUrl(filePath: string): string {
 function sourceProvenance(code: string, title: string, filePath: string): ContentProvenance {
   const mixedTerminology = code === 'A';
   const selfAuthoredN2Batch = code === 'N2-A1' || code === 'N2-A2' || code === 'N2-A3';
+  const selfAuthoredBatch = selfAuthoredN2Batch || code === 'TOPIK-A1';
   return {
     origin: {
-      name: selfAuthoredN2Batch
+      name: selfAuthoredBatch
         ? `${title} self-authored personal learning batch`
         : mixedTerminology
         ? `${title} repository compilation with documented terminology references`
         : `${title} repository-managed learning source`,
       url: repositoryFileUrl(filePath),
     },
-    license: selfAuthoredN2Batch
+    license: selfAuthoredBatch
       ? {
         id: 'LicenseRef-nihongo-n3-self-authored',
         name: 'Self-authored personal learning content',
@@ -153,8 +157,8 @@ function sourceProvenance(code: string, title: string, filePath: string): Conten
         url: `${ATTRIBUTIONS_URL}#학습-콘텐츠와-provenance`,
       },
     // This field is legacy seed provenance, not a public-release reviewer gate.
-    reviewer: selfAuthoredN2Batch ? 'self-authored personal content record (no external reviewer)' : CONTENT_REVIEWER,
-    reviewedAt: selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
+    reviewer: selfAuthoredBatch ? 'self-authored personal content record (no external reviewer)' : CONTENT_REVIEWER,
+    reviewedAt: code === 'TOPIK-A1' ? '2026-07-30' : selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
   };
 }
 
@@ -179,6 +183,7 @@ const sourceCatalog: SourceCatalogEntry[] = [
   catalogEntry('N2-A1', 'N2 자체 저작 Batch 1', CONTENT_PATHS.n2Batch1),
   catalogEntry('N2-A2', 'N2 자체 저작 Batch 2', CONTENT_PATHS.n2Batch2),
   catalogEntry('N2-A3', 'N2 자체 저작 Batch 3', CONTENT_PATHS.n2Batch3),
+  catalogEntry('TOPIK-A1', 'TOPIK 1~6급 자체 저작 Batch 1', CONTENT_PATHS.topikOwnerBatch1),
   catalogEntry('12', '예문 코퍼스', CONTENT_PATHS.sentences),
   catalogEntry('A', '직무 어휘', CONTENT_PATHS.sysprog),
   catalogEntry('C', '12개월 기본 학습계획과 자가진단', CONTENT_PATHS.selfCheck),
@@ -191,6 +196,7 @@ function buildSeedDefinitions(): SeedDefinition[] {
   const n2Batch1 = buildN2Batch1Plan();
   const n2Batch2 = buildN2Batch2Plan();
   const n2Batch3 = buildN2Batch3Plan();
+  const topikOwnerBatch1 = buildTopikOwnerBatch1Plan();
   return [
     sourceSeed('04', 'vocab', 'source', () => parseVocab({ sourceCode: '04', level: 'N5', filePath: CONTENT_PATHS.n5Vocab, naturalKeys: vocabKeys })),
     sourceSeed('05', 'grammar', 'source', () => parseGrammar({ sourceCode: '05', level: 'N5', filePath: CONTENT_PATHS.n5Grammar, naturalKeys: grammarKeys })),
@@ -216,6 +222,11 @@ function buildSeedDefinitions(): SeedDefinition[] {
       ...sourceSeed('N2-A3', 'n2_curriculum', 'source', () => n2Batch3.statements),
       expectedRows: n2Batch3.manifest.counts.contentRows,
       expectedCategories: n2Batch3.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('TOPIK-A1', 'topik_owner_curriculum', 'source', () => topikOwnerBatch1.statements),
+      expectedRows: topikOwnerBatch1.manifest.counts.contentRows,
+      expectedCategories: 0,
     },
     sourceSeed('12', 'sentences', 'source', () => parseSentences({ sourceCode: '12', filePath: CONTENT_PATHS.sentences })),
     sourceSeed('A', 'sysprog_terms', 'all', () => parseSysProg({ sourceCode: 'A', filePath: CONTENT_PATHS.sysprog })),

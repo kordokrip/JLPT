@@ -40,6 +40,7 @@ type ItemRow = {
   prompt_en: string;
   answer_json: string;
   audio_required: number;
+  audio_text_ko: string | null;
   binding_state: 'r2-ready' | 'preparing' | 'not-provided' | null;
   immutable_r2_key: string | null;
 };
@@ -80,6 +81,11 @@ function audioDto(row: ItemRow): TopikPlacementAudioDto | null {
       url: `/api/v1/audio/${row.immutable_r2_key.split('/').map(encodeURIComponent).join('/')}`,
     };
   }
+  // A self-authored transcript or pronunciation text gives the learner an
+  // immediate, language-correct browser path while the durable R2 asset is
+  // still being generated. Never synthesize the visible question instead.
+  const browserText = row.audio_text_ko?.trim();
+  if (browserText) return { kind: 'browser-fallback', text_ko: browserText };
   return { kind: 'unavailable', reason: row.binding_state === 'preparing' ? 'preparing' : 'not-provided' };
 }
 
@@ -128,7 +134,7 @@ topikOwnerCurriculumOA.openapi(listRoute, async (c) => {
 
   const itemResult = await c.env.DB.prepare(
     `SELECT i.id, i.unit_id, i.stable_ref, i.target_grade, i.item_type,
-            i.prompt_ko, i.prompt_ja, i.prompt_en, i.answer_json, i.audio_required,
+            i.prompt_ko, i.prompt_ja, i.prompt_en, i.answer_json, i.audio_required, i.audio_text_ko,
             b.binding_state, a.immutable_r2_key
        FROM topik_owner_authored_curriculum_items i
        LEFT JOIN content_audio_bindings b

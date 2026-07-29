@@ -12,6 +12,7 @@ import {
 import { n2Batch1ContentRowsSql } from "./n2-batch1.js";
 import { n2Batch2ContentRowsSql } from "./n2-batch2.js";
 import { n2Batch3ContentRowsSql } from "./n2-batch3.js";
+import { topikOwnerBatch1ContentRowsSql } from './topik-owner-curriculum-batch1.js';
 import {
   argValue,
   countSql,
@@ -165,6 +166,10 @@ function rowCountSql(entry: ContentManifestEntry): string {
     if (entry.sourceCode === "N2-A2") return n2Batch2ContentRowsSql();
     if (entry.sourceCode === "N2-A3") return n2Batch3ContentRowsSql();
     throw new Error(`Unknown N2 curriculum source: ${entry.sourceCode}`);
+  }
+  if (entry.table === 'topik_owner_curriculum') {
+    if (entry.sourceCode === 'TOPIK-A1') return topikOwnerBatch1ContentRowsSql();
+    throw new Error(`Unknown TOPIK owner curriculum source: ${entry.sourceCode}`);
   }
   if (entry.selector.kind === "source") {
     return `SELECT count(*) AS count FROM ${entry.table} WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.selector.value)})`;

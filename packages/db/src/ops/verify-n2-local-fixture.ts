@@ -63,7 +63,7 @@ for (const entry of baselineManifest.entries) {
   // N2 Batch 1 is a multi-table curriculum entry with its own local verifier;
   // it is not a physical `n2_curriculum` table and must not be treated as one
   // while this fixture checker establishes the N5~N3 preservation baseline.
-  if (entry.table === 'n2_curriculum') continue;
+  if (entry.table === 'n2_curriculum' || entry.table === 'topik_owner_curriculum') continue;
   if (entry.selector.kind === 'source') {
     sqlChecks.push({
       name: `existing ${entry.sourceCode} row count preserved`,
