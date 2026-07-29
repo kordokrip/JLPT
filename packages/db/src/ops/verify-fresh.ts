@@ -5,38 +5,71 @@ import path from 'node:path';
 
 import { REPO_ROOT } from '../seed/constants.js';
 
-const persistTo = path.join(os.tmpdir(), 'nihongo-n3-db-verify');
-const manifest = path.join(persistTo, 'content-manifest.json');
-const report = path.join(persistTo, 'verification-report.json');
+// A unique workspace avoids re-opening a stale local workerd database from a
+// previous verifier run. It is never the developer's local D1 state.
+const persistTo = fs.mkdtempSync(path.join(os.tmpdir(), 'nihongo-n3-db-verify-'));
+const artifacts = path.join(persistTo, 'artifacts');
+const manifest = path.join(artifacts, 'content-manifest.json');
+const report = path.join(artifacts, 'content-verification-report.json');
+const n2FixtureManifest = path.join(artifacts, 'n2-local-fixture-manifest.json');
+const n2FixtureReport = path.join(artifacts, 'n2-local-fixture-report.json');
+const n2BatchReport = path.join(artifacts, 'n2-batch1-report.json');
+const topikFixtureManifest = path.join(artifacts, 'topik-grade1-local-fixture-manifest.json');
+const topikFixtureReport = path.join(artifacts, 'topik-grade1-local-fixture-report.json');
 const config = path.join(REPO_ROOT, 'apps/api/wrangler.toml');
 const requireAudio = process.argv.includes('--require-audio');
 
-fs.rmSync(persistTo, { recursive: true, force: true });
-fs.mkdirSync(persistTo, { recursive: true });
+fs.mkdirSync(artifacts, { recursive: true });
 
-function run(args: string[]): void {
-  execFileSync('pnpm', args, { cwd: REPO_ROOT, stdio: 'inherit' });
+function runWrangler(args: string[]): void {
+  execFileSync('pnpm', ['--dir', 'packages/db', 'exec', 'wrangler', ...args], {
+    cwd: REPO_ROOT,
+    stdio: 'inherit',
+  });
+}
+
+function runDbScript(script: string, args: string[]): void {
+  execFileSync('pnpm', ['--dir', 'packages/db', 'exec', 'tsx', script, ...args], {
+    cwd: REPO_ROOT,
+    stdio: 'inherit',
+  });
 }
 
 console.log(`Fresh D1 verification workspace: ${persistTo}`);
-run([
-  'exec', 'wrangler', 'd1', 'migrations', 'apply', 'DB', '--local',
+runWrangler([
+  'd1', 'migrations', 'apply', 'DB', '--local',
   '--persist-to', persistTo, '--config', config,
 ]);
-run([
-  'exec', 'tsx', 'packages/db/src/seed/seed.ts', '--local',
+runDbScript('src/seed/seed.ts', [
+  '--local',
   `--persist-to=${persistTo}`, `--manifest-out=${manifest}`,
 ]);
-run([
-  'exec', 'tsx', 'packages/db/src/seed/verify.ts', '--local',
+runDbScript('src/seed/verify.ts', [
+  '--local',
   `--persist-to=${persistTo}`, `--manifest=${manifest}`, `--report=${report}`,
   ...(requireAudio ? ['--require-audio'] : []),
 ]);
-run([
-  'exec', 'tsx', 'packages/db/src/ops/verify-content-release-contract.ts',
+runDbScript('src/seed/seed-n2-local-fixture.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--manifest-out=${n2FixtureManifest}`,
 ]);
-run([
-  'exec', 'tsx', 'packages/db/src/ops/verify-content-release-control-plane.ts',
+runDbScript('src/ops/verify-n2-local-fixture.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${n2FixtureReport}`,
 ]);
+runDbScript('src/ops/verify-n2-batch1.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${n2BatchReport}`,
+]);
+runDbScript('src/seed/seed-topik-grade1-local-fixture.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--manifest-out=${topikFixtureManifest}`,
+]);
+runDbScript('src/ops/verify-topik-grade1-local-fixture.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${topikFixtureReport}`,
+]);
+runDbScript('src/ops/verify-content-release-contract.ts', []);
+runDbScript('src/ops/verify-content-release-control-plane.ts', []);
 
-console.log(`Fresh D1 verification complete: ${report}`);
+console.log(`Fresh D1 verification complete. Artifacts: ${artifacts}`);

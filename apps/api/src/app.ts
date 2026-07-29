@@ -55,6 +55,7 @@ import { authOA } from './routes/auth-oa.js';
 import { tracksOA } from './routes/tracks.js';
 import { topikPlacementOA } from './routes/topik-placement.js';
 import { topikPracticeOA } from './routes/topik-practice.js';
+import { topikOwnerCurriculumOA } from './routes/topik-owner-curriculum.js';
 import { ownerPrivateTopikOA } from './routes/topik-owner-private.js';
 import { adminSessionAuth } from './lib/auth-session.js';
 import { securityMiddleware } from './middleware/security.js';
@@ -158,6 +159,7 @@ v1.route('/', authOA);
 v1.route('/', tracksOA);
 v1.route('/', topikPlacementOA);
 v1.route('/', topikPracticeOA);
+v1.route('/', topikOwnerCurriculumOA);
 v1.route('/', ownerPrivateTopikOA);
 
 // ── 공개 콘텐츠 라우트 (엣지 캐시 적용) ──────

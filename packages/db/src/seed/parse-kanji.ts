@@ -9,10 +9,11 @@
  *   | 一 | 하나, 1 | いち | ひと | 일(一) | 一つ |
  */
 import { parseMarkdownTables, normalizeCell, stripBr, esc, escJson } from './utils.js';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export interface KanjiSql {
   sourceCode: string;
-  level: 'N5' | 'N4' | 'N3';
+  level: JlptLevel;
   filePath: string;
   naturalKeys?: Set<string>;
 }

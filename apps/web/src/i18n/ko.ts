@@ -78,7 +78,7 @@ const ko = {
       title: '한국어 학습 시작점을 확인하세요',
       description: '듣기 12문항과 읽기 12문항으로 구성된 24문항 학습 진단입니다. 공식 TOPIK 점수를 예측하는 시험이 아닙니다.',
       listeningCount: '듣기 · 12문항',
-      listeningDescription: '모든 재생 버튼은 검수된 R2 음원인지 한국어 브라우저 음성인지 명확히 표시합니다.',
+      listeningDescription: '모든 재생 버튼은 검증된 private R2 음원만 사용하며, 준비되지 않은 음원은 텍스트 학습 상태로 표시합니다.',
       readingCount: '읽기 · 12문항',
       readingDescription: '어휘, 조사, 짧은 안내문과 일상 메시지를 확인합니다.',
       preparing: '문제를 준비하는 중…',
@@ -89,7 +89,7 @@ const ko = {
       playAudio: '한국어 음성 재생',
       playing: '재생 중…',
       reviewedAudio: '검수된 고정 음원',
-      browserAudio: '한국어 브라우저 음성 대체 재생',
+      browserAudio: '오디오 준비 중',
       chooseAnswer: '정답 하나를 선택하세요',
       previous: '이전',
       next: '다음',
@@ -157,6 +157,7 @@ const ko = {
       audioTitle: '발음 원칙',
       audioDescription: '단일 자모를 여러 번 이어 읽지 않습니다. 대표 단어를 한국어 음성으로 한 번만 재생해 실제 소리 흐름을 익힙니다.',
       audio: {
+        unavailable: '검증된 R2 오디오가 아직 준비되지 않았습니다. 텍스트로 학습하세요.',
         unsupported: '이 브라우저에서는 한국어 음성 재생을 지원하지 않습니다.',
         'voice-unavailable': '기기에 한국어 음성이 없습니다. 기기 언어/음성 설정에서 한국어 음성을 설치한 뒤 다시 시도하세요.',
         'playback-failed': '한국어 음성을 재생하지 못했습니다. 잠시 후 다시 시도하세요.',
@@ -283,6 +284,7 @@ const ko = {
     abilityCheck:  '실력 체크',
     courseScopeTitle: '학습 범위',
     courseScopeExpanded: 'N5부터 N1까지의 콘텐츠가 준비되었습니다. 기본 52주 과정과 상위 레벨 학습은 별도로 관리됩니다.',
+    courseScopeN2: 'N5부터 N2까지의 콘텐츠가 준비되었습니다. N1은 별도 콘텐츠 batch로 계속 확장합니다.',
   },
 
   // ── 복습 ──
@@ -628,6 +630,7 @@ const ko = {
     localVoice:        '로컬',
     ttsProvider:       '기본 발음 엔진',
     ttsProviderDesc:   '일반 재생에서 우선 사용할 오디오 공급자를 정합니다',
+    r2OnlyAudioDesc:   '학습 및 QA 재생은 출처·라이선스·hash가 확인된 private R2 오디오만 사용합니다. 브라우저 음성은 대체하지 않습니다.',
     ttsBrowser:        '브라우저',
     audioQa:           '오디오 QA',
     audioQaDesc:       '30개 샘플로 발음 엔진 품질을 비교합니다',

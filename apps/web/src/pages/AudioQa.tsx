@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { audioQaSamples, type AudioQaLanguage } from '@nihongo-n3/shared';
 import { audioPlayer, buildAudioUrl } from '../lib/audio';
-import { useSettingsStore } from '../stores/settings-store';
 import {
   AUDIO_QA_CRITERIA,
   AUDIO_QA_PROVIDERS,
@@ -24,10 +23,6 @@ const PROVIDER_INFO: Record<AudioQaProvider, {
   label: string;
   description: string;
 }> = {
-  browser: {
-    label: 'iOS / Browser Native',
-    description: '현재 기기에 실제 설치된 언어 음성과 voice URI를 기록합니다.',
-  },
   cloudflare: {
     label: 'Cloudflare MeloTTS',
     description: '승인 전 비교용으로 R2에 고정된 30개 후보만 재생합니다.',
@@ -43,7 +38,6 @@ const PROVIDER_INFO: Record<AudioQaProvider, {
 };
 
 export default function AudioQa() {
-  const { selectedVoiceURI, voiceGender } = useSettingsStore();
   const [language, setLanguage] = useState<AudioQaLanguage>('ja');
   const [sampleIndex, setSampleIndex] = useState(0);
   const [playing, setPlaying] = useState<AudioQaProvider | null>(null);
@@ -73,9 +67,7 @@ export default function AudioQa() {
     setPlaying(provider);
     setPlaybackError(null);
     try {
-      const candidate = provider === 'browser'
-        ? await playBrowserCandidate(sample, voiceGender, selectedVoiceURI, language)
-        : await playServerCandidate(provider, sampleIndex, language);
+      const candidate = await playServerCandidate(provider, sampleIndex, language);
       const key = audioQaRatingKey(provider, sampleIndex);
       setScorecard((current) => ({
         ...current,
@@ -339,7 +331,7 @@ export default function AudioQa() {
               ? `배치 승인 완료: ${scorecard.approvedProvider}`
               : qaComplete
                 ? '청감 입력 완료, 최종 승인과 근거가 필요합니다.'
-                : '네 후보 모두 30문장을 재생하고 다섯 기준을 평가해야 합니다.'}
+                : 'R2 provenance가 기록된 모든 후보의 30문장을 재생하고 다섯 기준을 평가해야 합니다.'}
           </p>
           <button
             type="button"
@@ -368,24 +360,7 @@ function loadScorecard(language: AudioQaLanguage): AudioQaScorecard {
   }
 }
 
-async function playBrowserCandidate(
-  text: string,
-  voiceGender: 'female' | 'male',
-  selectedVoiceURI: string | null,
-  language: AudioQaLanguage,
-): Promise<AudioQaCandidate> {
-  const voice = await audioPlayer.getResolvedJapaneseVoice({ voiceGender, voiceURI: language === 'ja' ? selectedVoiceURI : null, lang: language === 'ja' ? 'ja-JP' : 'ko-KR' });
-  if (!voice) throw new Error(`이 기기에 ${language === 'ja' ? '일본어' : '한국어'} 브라우저 음성이 설치되어 있지 않습니다.`);
-  await audioPlayer.speakText(text, { voiceGender, voiceURI: voice.voiceURI, lang: language === 'ja' ? 'ja-JP' : 'ko-KR' });
-  return {
-    provider: 'browser',
-    model: 'Web Speech API',
-    voice: `${voice.name} (${voice.lang})`,
-    version: voice.voiceURI,
-  };
-}
-
-async function playServerCandidate(provider: Exclude<AudioQaProvider, 'browser'>, sampleIndex: number, language: AudioQaLanguage): Promise<AudioQaCandidate> {
+async function playServerCandidate(provider: AudioQaProvider, sampleIndex: number, language: AudioQaLanguage): Promise<AudioQaCandidate> {
   const key = language === 'ja' ? `audio/qa/${provider}/${sampleIndex + 1}.wav` : `audio/qa/${language}/${provider}/${sampleIndex + 1}.wav`;
   const url = buildAudioUrl(key);
   const metadata = await fetch(url, { method: 'HEAD', credentials: 'include' });

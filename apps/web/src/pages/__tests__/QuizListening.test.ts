@@ -11,11 +11,11 @@ describe('toSubmittedAnswers', () => {
 });
 
 describe('initialListeningAudioSource', () => {
-  it('uses the Japanese browser voice by default even when a server asset exists', () => {
-    expect(initialListeningAudioSource(true)).toBe('browser');
+  it('uses the authenticated server audio path when an immutable asset exists', () => {
+    expect(initialListeningAudioSource(true)).toBe('server');
   });
 
-  it('falls back to browser voice when no server audio exists', () => {
-    expect(initialListeningAudioSource(false)).toBe('browser');
+  it('reports unavailable audio instead of falling back to browser speech', () => {
+    expect(initialListeningAudioSource(false)).toBe('unavailable');
   });
 });

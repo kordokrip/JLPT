@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { InstructionLanguage } from '@nihongo-n3/shared';
 import { DrawingPracticePad } from '../../character-trainer/DrawingPracticePad';
 import type { CharacterStage } from '../../character-trainer/types';
-import { useKoreanAudio } from '../useKoreanAudio';
 import { HANGUL_MODE_ORDER, HANGUL_STAGE_TITLES, labelFor } from './data';
 import type { HangulCard, HangulTrainerMode } from './types';
 import type { useHangulTrainer } from './useHangulTrainer';
@@ -14,7 +13,6 @@ type HangulTrainerModel = ReturnType<typeof useHangulTrainer>;
 export function HangulTrainerView({ trainer }: { trainer: HangulTrainerModel }) {
   const { t } = useTranslation();
   const instructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']) as InstructionLanguage;
-  const audio = useKoreanAudio();
   const stageCopy = HANGUL_STAGE_TITLES[instructionLanguage][trainer.stage]
     ?? HANGUL_STAGE_TITLES.en[trainer.stage]!;
 
@@ -49,8 +47,6 @@ export function HangulTrainerView({ trainer }: { trainer: HangulTrainerModel }) 
               stage={trainer.stage}
               revealed={trainer.revealed}
               progress={trainer.progress}
-              onPlay={() => audio.speakText(card.exampleWord)}
-              isPlaying={audio.playing}
               label={t('topik.characters.playExample', { word: card.exampleWord })}
               instructionLanguage={instructionLanguage}
             />
@@ -72,7 +68,6 @@ export function HangulTrainerView({ trainer }: { trainer: HangulTrainerModel }) 
                 instructionLanguage={instructionLanguage}
                 onStage={trainer.switchStage}
               />
-              {audio.error && <p role="alert" className="text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
               <CompletionControls stage={trainer.stage} answer={trainer.answer} onNext={trainer.nextCard} onComplete={trainer.complete} />
             </section>
           </div>
@@ -108,8 +103,6 @@ function CharacterPreview({
   stage,
   revealed,
   progress,
-  onPlay,
-  isPlaying,
   label,
   instructionLanguage,
 }: {
@@ -117,8 +110,6 @@ function CharacterPreview({
   stage: CharacterStage;
   revealed: boolean;
   progress: number;
-  onPlay: () => void;
-  isPlaying: boolean;
   label: string;
   instructionLanguage: InstructionLanguage;
 }) {
@@ -130,9 +121,9 @@ function CharacterPreview({
           {(stage === 'recall' || stage === 'writeQuiz') && !revealed ? '?' : card.char}
         </span>
       </div>
-      <button type="button" onClick={onPlay} aria-label={label} className="touch-target mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 text-sm font-bold text-[var(--accent)] hover:border-[var(--accent)]">
+      <button type="button" disabled aria-label={t('quiz.audioPending')} title={t('quiz.audioPending')} className="touch-target mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-4 text-sm font-bold text-[var(--muted-foreground)] opacity-60">
         <Volume2 aria-hidden="true" size={18} />
-        {isPlaying ? t('topik.characters.playing') : t('topik.characters.play')}
+        {t('quiz.audioPending')}
       </button>
       <p lang="ko" className="mt-2 text-xs text-[var(--muted-foreground)]">{card.exampleWord} · {labelFor(card.exampleGloss, instructionLanguage)}</p>
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs">

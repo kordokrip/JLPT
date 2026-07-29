@@ -25,6 +25,8 @@ trap cleanup EXIT INT TERM
 if [[ "${E2E_SKIP_DB_BOOTSTRAP:-}" != "1" ]]; then
   rm -rf "$PERSIST_TO"
   mkdir -p "$PERSIST_TO"
+  E2E_ARTIFACT_DIR="$PERSIST_TO/artifacts"
+  mkdir -p "$E2E_ARTIFACT_DIR"
   echo "[e2e] applying canonical D1 migrations"
   CI=1 pnpm exec wrangler d1 migrations apply DB \
     --local \
@@ -35,11 +37,28 @@ if [[ "${E2E_SKIP_DB_BOOTSTRAP:-}" != "1" ]]; then
   pnpm --dir packages/db exec tsx src/seed/seed.ts \
     --local \
     --persist-to="$PERSIST_TO" \
-    --config="$WRANGLER_CONFIG"
+    --config="$WRANGLER_CONFIG" \
+    --manifest-out="$E2E_ARTIFACT_DIR/content-manifest.json"
   pnpm --dir packages/db exec tsx src/seed/verify.ts \
     --local \
     --persist-to="$PERSIST_TO" \
-    --config="$WRANGLER_CONFIG"
+    --config="$WRANGLER_CONFIG" \
+    --manifest="$E2E_ARTIFACT_DIR/content-manifest.json" \
+    --report="$E2E_ARTIFACT_DIR/content-verification-report.json"
+
+  if [[ "${E2E_TOPIK_GRADE1_FIXTURE:-0}" == "1" ]]; then
+    echo "[e2e] seeding and verifying TOPIK grade 1 local fixture"
+    pnpm --dir packages/db exec tsx src/seed/seed-topik-grade1-local-fixture.ts \
+      --local \
+      --persist-to="$PERSIST_TO" \
+      --config="$WRANGLER_CONFIG" \
+      --manifest-out="$E2E_ARTIFACT_DIR/topik-grade1-local-fixture-manifest.json"
+    pnpm --dir packages/db exec tsx src/ops/verify-topik-grade1-local-fixture.ts \
+      --local \
+      --persist-to="$PERSIST_TO" \
+      --config="$WRANGLER_CONFIG" \
+      --report="$E2E_ARTIFACT_DIR/topik-grade1-local-fixture-report.json"
+  fi
 fi
 
 pnpm -C apps/api exec wrangler dev \

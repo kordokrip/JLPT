@@ -1,17 +1,19 @@
 # TOPIK I Placement V2 QA Bank
 
-- 상태: preview release candidate, production 미출시
+- 상태: production release candidate, 일본어 해설 검수 포함
 - 저작: 프로젝트 자체 저작
 - 범위: 듣기 12문항, 읽기 12문항
-- 최종 검토일: 2026-07-19
+- 최종 검토일: 2026-07-20
 - 작성 검수: JLPT-TOPIK Study original-content review
-- 2차 한국어 검수: JLPT-TOPIK Study Korean-language QA
+- 2차 언어 검수: JLPT-TOPIK Study Korean and Japanese-language QA
 - 라이선스: `LicenseRef-nihongo-n3-topik-original`
 
 ## 목적
 
-이 문제은행은 영어 설명을 사용하는 TOPIK I 입문 학습자의 현재 기초를 확인하기 위한
-짧은 배치 진단이다. 공식 TOPIK 점수를 예측하거나 공식 시험을 재현하지 않는다.
+이 문제은행은 영어·한국어·일본어 설명을 사용하는 TOPIK I 입문 학습자의 현재 기초를
+확인하기 위한 짧은 배치 진단이다. 공식 TOPIK 점수를 예측하거나 공식 시험을 재현하지
+않는다. 일본어 해설은 한국어 원문의 문법·어휘 근거를 보존하고, 자연스러운 일본어
+학습 용어로 별도 검수한다.
 
 ## 저작 원칙
 
@@ -29,6 +31,7 @@
 | 읽기 | 12 |
 | 보기 수 | 문항당 4 |
 | 빈 prompt/정답/해설 | 0 |
+| 빈 일본어 prompt/해설 | 0 |
 | 중복 ID/prompt | 0 |
 | 서로 다른 2개 검수 역할 | 100% |
 | 정답 index 범위 오류 | 0 |

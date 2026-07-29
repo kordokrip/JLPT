@@ -7,7 +7,7 @@
 export const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const;
 export type JlptLevel = (typeof JLPT_LEVELS)[number];
 
-export const CONTENT_RELEASES = ['foundation-only', 'n5-n3', 'n5-n1'] as const;
+export const CONTENT_RELEASES = ['foundation-only', 'n5-n3', 'n5-n2', 'n5-n1'] as const;
 export type ContentRelease = (typeof CONTENT_RELEASES)[number];
 
 export const DEFAULT_JLPT_CONTENT_RELEASE: ContentRelease = 'n5-n3';
@@ -16,6 +16,7 @@ export const DEFAULT_JLPT_LEVEL: JlptLevel = 'N3';
 const RELEASE_LEVELS: Record<ContentRelease, readonly JlptLevel[]> = {
   'foundation-only': [],
   'n5-n3': JLPT_LEVELS.slice(0, 3),
+  'n5-n2': JLPT_LEVELS.slice(0, 4),
   'n5-n1': JLPT_LEVELS,
 };
 
@@ -49,10 +50,9 @@ export function highestReleasedJlptLevel(release: ContentRelease): JlptLevel {
 }
 
 /**
- * 승인된 R2 오디오 생성 범위. N2/N1은 별도 청감 QA와 R2 승인 전까지 배치에 포함하지 않는다.
- * `JLPT_LEVELS`의 순서를 보존해 파생하므로 실행 순서와 공개 레벨 정책이 분리되지 않는다.
+ * Audio intake/verifier coverage mirrors every JLPT level.  This does not run
+ * generation: a batch runner still needs an approved provider, cost window and
+ * licensed/provenanced source for every selected asset.
  */
-export type AudioBatchLevel = Exclude<JlptLevel, 'N2' | 'N1'>;
-export const AUDIO_BATCH_LEVELS = JLPT_LEVELS.filter(
-  (level): level is AudioBatchLevel => level !== 'N2' && level !== 'N1',
-);
+export type AudioBatchLevel = JlptLevel;
+export const AUDIO_BATCH_LEVELS: readonly AudioBatchLevel[] = JLPT_LEVELS;

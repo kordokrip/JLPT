@@ -447,7 +447,7 @@ export interface paths {
                                 track: "jlpt-ja";
                                 available: boolean;
                                 /** @enum {string} */
-                                content_release: "foundation-only" | "n5-n3" | "n5-n1";
+                                content_release: "foundation-only" | "n5-n3" | "n5-n2" | "n5-n1";
                                 available_levels: ("N5" | "N4" | "N3" | "N2" | "N1")[];
                                 write_enabled: boolean;
                             } | {
@@ -610,8 +610,9 @@ export interface paths {
                                         url: string;
                                     } | {
                                         /** @enum {string} */
-                                        kind: "browser-fallback";
-                                        text_ko: string;
+                                        kind: "unavailable";
+                                        /** @enum {string} */
+                                        reason: "preparing" | "not-provided";
                                     } | null;
                                 }[];
                                 started_at: number;
@@ -988,8 +989,9 @@ export interface paths {
                                         url: string;
                                     } | {
                                         /** @enum {string} */
-                                        kind: "browser-fallback";
-                                        text_ko: string;
+                                        kind: "unavailable";
+                                        /** @enum {string} */
+                                        reason: "preparing" | "not-provided";
                                     } | null;
                                 }[];
                             };
@@ -1223,6 +1225,195 @@ export interface paths {
                     };
                 };
                 /** @description TOPIK 트랙 필요 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * TOPIK 1–6 owner-authored local curriculum units
+         * @description Returns additive owner-authored curriculum records only. It does not read the reviewed practice bank or the public content-release lifecycle.
+         */
+        get: {
+            parameters: {
+                query: {
+                    target_grade: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Curriculum units without solutions or provenance */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                target_grade: number;
+                                units: {
+                                    id: string;
+                                    stable_ref: string;
+                                    target_grade: number;
+                                    /** @enum {string} */
+                                    section: "vocab" | "grammar" | "reading" | "listening" | "writing";
+                                    title_ko: string;
+                                    title_ja: string;
+                                    title_en: string;
+                                    items: {
+                                        id: string;
+                                        stable_ref: string;
+                                        target_grade: number;
+                                        /** @enum {string} */
+                                        item_type: "vocab" | "grammar" | "reading" | "listening" | "writing";
+                                        prompt_ko: string;
+                                        prompt_ja: string;
+                                        prompt_en: string;
+                                        choices: string[];
+                                        audio: {
+                                            /** @enum {string} */
+                                            kind: "r2";
+                                            url: string;
+                                        } | {
+                                            /** @enum {string} */
+                                            kind: "unavailable";
+                                            /** @enum {string} */
+                                            reason: "preparing" | "not-provided";
+                                        } | null;
+                                    }[];
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum/items/{itemId}/solution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reveal an owner-authored local curriculum solution after study */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Solution payload */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                item_id: string;
+                                answer_payload: {
+                                    [key: string]: unknown;
+                                };
+                                explanation_ko: string;
+                                explanation_ja: string;
+                                explanation_en: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description Curriculum item not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
                 409: {
                     headers: {
                         [name: string]: unknown;

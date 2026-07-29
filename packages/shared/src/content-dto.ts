@@ -71,7 +71,8 @@ function numberValue(row: ApiRawContentRecord, ...keys: string[]): number | unde
 
 function reviewedAudioPath(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  return /^audio\/(?:vocab|kanji|sentence)\/n[1-5]\/\d+-[a-f0-9]{16}\.mp3$/i.test(value)
+  return (/^audio\/(?:vocab|kanji|sentence)\/n[1-5]\/\d+-[a-f0-9]{16}\.mp3$/i.test(value)
+    || /^private-audio\/(?:ja|ko)\/[a-z0-9-]+\/[a-f0-9]{16,64}\.(?:mp3|wav|ogg)$/i.test(value))
     ? value
     : undefined;
 }
@@ -117,8 +118,8 @@ export function normalizeVocabContentItem(row: ApiRawContentRecord): VocabConten
   if (partOfSpeech !== undefined) item.part_of_speech = partOfSpeech;
   if (exampleJp !== undefined) item.example_jp = exampleJp;
   if (exampleKo !== undefined) item.example_ko = exampleKo;
-  // Do not invent a legacy R2 key. The web player can safely use browser
-  // Japanese speech when a reviewed immutable asset is not available.
+  // Do not invent a legacy R2 key. Without a verified immutable asset, normal
+  // learning UI presents an explicit unavailable state instead of browser TTS.
   if (audioPath !== undefined) item.audio_path = audioPath;
   if (sourceId !== undefined) item.source_id = sourceId;
   if (categoryId !== undefined) item.category_id = categoryId;

@@ -7,13 +7,17 @@ import { useTrackStatus } from '../hooks/useTrackStatus';
 
 export default function QuizListening() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { levels } = useTrackStatus();
+  const { levels, isLoading: isTrackStatusLoading } = useTrackStatus();
   const selectedLevel = useMemo(() => {
     const requested = searchParams.get('level');
-    return isJlptLevel(requested) && levels.includes(requested)
-      ? requested
-      : (levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL);
-  }, [levels, searchParams]);
+    // Keep a valid deep-linked level while the status query is still resolving.
+    // Otherwise the N5–N3 offline fallback can rewrite `/quiz/listening?level=N2`
+    // to N3 before the server confirms that the operating N2 batch is available.
+    if (isJlptLevel(requested) && (isTrackStatusLoading || levels.includes(requested))) {
+      return requested;
+    }
+    return levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
+  }, [isTrackStatusLoading, levels, searchParams]);
 
   useEffect(() => {
     if (searchParams.get('level') === selectedLevel) return;

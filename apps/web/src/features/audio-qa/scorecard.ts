@@ -1,11 +1,12 @@
 import { audioQaSampleSet, audioQaSamples, type AudioQaLanguage } from '@nihongo-n3/shared';
 
-export const AUDIO_QA_PROVIDERS = ['browser', 'cloudflare', 'google', 'voicevox'] as const;
+/** QA may compare only R2 objects with recorded provider provenance. */
+export const AUDIO_QA_PROVIDERS = ['cloudflare', 'google', 'voicevox'] as const;
 export type AudioQaProvider = (typeof AUDIO_QA_PROVIDERS)[number];
 
 export function audioQaProvidersForLanguage(language: AudioQaLanguage): readonly AudioQaProvider[] {
   return language === 'ko'
-    ? ['browser', 'cloudflare', 'google']
+    ? ['cloudflare', 'google']
     : AUDIO_QA_PROVIDERS;
 }
 

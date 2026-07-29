@@ -60,7 +60,7 @@ export async function mockTopikReadApis(page: Page): Promise<void> {
           prompt_ja: '男性はどこへ行きますか。',
           prompt_en: 'Where is the man going?',
           choices: ['학교', '은행', '병원', '시장'],
-          audio: { kind: 'browser-fallback', text_ko: '남자는 은행에 갑니다.' },
+          audio: { kind: 'unavailable', reason: 'preparing' },
         }],
       } }),
     });

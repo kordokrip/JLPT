@@ -77,7 +77,7 @@ const en = {
       title: 'Find your Korean starting point',
       description: 'A 24-question diagnostic with 12 listening and 12 reading checks. This is a learning placement, not an official TOPIK score prediction.',
       listeningCount: 'Listening · 12',
-      listeningDescription: 'Every audio control identifies whether it uses reviewed R2 audio or a Korean browser voice fallback.',
+      listeningDescription: 'Every audio control uses verified private R2 audio only; an unready asset is shown as text-study status.',
       readingCount: 'Reading · 12',
       readingDescription: 'Vocabulary, particles, short notices, and everyday messages.',
       preparing: 'Preparing questions…',
@@ -88,7 +88,7 @@ const en = {
       playAudio: 'Play Korean audio',
       playing: 'Playing…',
       reviewedAudio: 'Reviewed fixed audio',
-      browserAudio: 'Korean browser voice fallback',
+      browserAudio: 'Audio preparing',
       chooseAnswer: 'Choose one answer',
       previous: 'Previous',
       next: 'Next',
@@ -156,6 +156,7 @@ const en = {
       audioTitle: 'Pronunciation policy',
       audioDescription: 'The app does not repeat isolated jamo. It plays one Korean reading of an anchor word so you learn the sound in a real word.',
       audio: {
+        unavailable: 'Verified R2 audio is not ready yet. Study with the text for now.',
         unsupported: 'This browser does not support Korean speech playback.',
         'voice-unavailable': 'No Korean voice is installed on this device. Add a Korean system voice in device language or accessibility settings, then try again.',
         'playback-failed': 'Korean speech could not be played. Please try again shortly.',
@@ -280,6 +281,7 @@ const en = {
     abilityCheck:  'Ability test',
     courseScopeTitle: 'Course scope',
     courseScopeExpanded: 'Content from N5 through N1 is available. Higher-level study is managed separately from the core 52-week course.',
+    courseScopeN2: 'Content from N5 through N2 is available. N1 continues in a separate content batch.',
   },
 
   review: {
@@ -613,6 +615,7 @@ const en = {
     localVoice:        'Local',
     ttsProvider:       'Default voice engine',
     ttsProviderDesc:   'Choose the preferred provider for pronunciation playback',
+    r2OnlyAudioDesc:   'Learning and QA play only private R2 audio with recorded source, licence, and hash. Browser speech is never substituted.',
     ttsBrowser:        'Browser',
     audioQa:           'Audio QA',
     audioQaDesc:       'Compare pronunciation quality with 30 fixed samples',

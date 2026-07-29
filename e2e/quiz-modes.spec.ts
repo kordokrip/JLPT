@@ -92,7 +92,7 @@ test.describe('퀴즈 기능 smoke', () => {
     });
   });
 
-  test('청해 전용 화면은 승인된 R2가 없으면 브라우저 fallback을 제공한다', async ({ page }) => {
+  test('청해 전용 화면은 승인된 R2가 없으면 준비 상태를 명시하고 브라우저 음성을 호출하지 않는다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       const serverAudioRequests: string[] = [];
       page.on('request', (request) => {
@@ -100,90 +100,11 @@ test.describe('퀴즈 기능 smoke', () => {
           serverAudioRequests.push(request.url());
         }
       });
-      await page.addInitScript(() => {
-        const spoken: Array<{ text: string; lang: string; voice: string | null }> = [];
-        Object.defineProperty(window, '__spokenJapaneseForTest', { value: spoken, configurable: true });
-
-        class FakeSpeechSynthesisUtterance {
-          text: string;
-          lang = '';
-          rate = 1;
-          pitch = 1;
-          volume = 1;
-          voice: SpeechSynthesisVoice | null = null;
-          onstart: (() => void) | null = null;
-          onend: (() => void) | null = null;
-          onerror: (() => void) | null = null;
-
-          constructor(text: string) {
-            this.text = text;
-          }
-        }
-
-        const japaneseVoice = {
-          default: true,
-          lang: 'ja-JP',
-          localService: true,
-          name: 'Japanese E2E Voice',
-          voiceURI: 'ja-jp-e2e',
-        } as SpeechSynthesisVoice;
-        Object.defineProperty(window, 'SpeechSynthesisUtterance', {
-          configurable: true,
-          value: FakeSpeechSynthesisUtterance,
-        });
-        Object.defineProperty(window, 'speechSynthesis', {
-          configurable: true,
-          value: {
-            addEventListener: () => undefined,
-            cancel: () => undefined,
-            getVoices: () => [japaneseVoice],
-            speak: (utterance: FakeSpeechSynthesisUtterance) => {
-              spoken.push({
-                text: utterance.text,
-                lang: utterance.lang,
-                voice: utterance.voice?.voiceURI ?? null,
-              });
-              utterance.onstart?.();
-              utterance.onend?.();
-            },
-          },
-        });
-
-        localStorage.setItem('nihongo-n3-settings', JSON.stringify({
-          state: {
-            language: 'ko',
-            theme: 'system',
-            furiganaMode: 'hover',
-            playbackRate: 1,
-            voiceGender: 'female',
-            selectedVoiceURI: null,
-            ttsProvider: 'browser',
-            autoPronounce: true,
-            dailyNewLimit: 20,
-            lastSyncedAt: new Date(0).toISOString(),
-          },
-          version: 0,
-        }));
-      });
       await page.goto('/quiz/listening');
       await expect(page.getByRole('heading', { name: /청해 퀴즈|Listening Quiz|聴解クイズ/ })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByText(/일본어 브라우저 음성으로 재생합니다|Japanese browser voice|日本語ブラウザー音声/)).toBeVisible();
-      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toHaveCount(0);
+      await expect(page.getByText(/오디오가 준비 중입니다|Audio is still being prepared|音声を準備中/)).toBeVisible();
       const play = page.getByRole('button', { name: /재생|Play|再生/ });
-      await expect(play).toBeVisible();
-      await play.click();
-      await expect.poll(async () => page.evaluate(() => (
-        window as unknown as { __spokenJapaneseForTest: unknown[] }
-      ).__spokenJapaneseForTest.length)).toBe(1);
-      const spoken = await page.evaluate(() => (
-        window as unknown as {
-          __spokenJapaneseForTest: Array<{ text: string; lang: string; voice: string | null }>;
-        }
-      ).__spokenJapaneseForTest);
-      expect(spoken).toHaveLength(1);
-      expect(spoken[0]?.lang).toBe('ja-JP');
-      expect(spoken[0]?.voice).toBe('ja-jp-e2e');
-      expect(spoken[0]?.text).toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
+      await expect(play).toBeDisabled();
       expect(serverAudioRequests, 'must not request a fabricated R2 path').toEqual([]);
       await expect(page.locator('audio[src]')).toHaveCount(0);
       await expect(page.getByRole('radiogroup')).toBeVisible();

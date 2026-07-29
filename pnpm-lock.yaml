@@ -188,12 +188,6 @@ importers:
         specifier: ^1.45.0
         version: 1.60.0
 
-  packages/content:
-    devDependencies:
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
-
   packages/db:
     dependencies:
       drizzle-orm:

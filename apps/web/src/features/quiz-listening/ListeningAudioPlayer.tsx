@@ -1,13 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { audioPlayer, buildAudioUrl } from '../../lib/audio';
-import { initialListeningAudioSource } from './logic';
 import { LISTENING_SKIP_BACK_SECONDS, MAX_LISTENING_PLAYS } from './types';
-import type { ListeningAudioSource } from './types';
 
 export function ListeningAudioPlayer({
   audioKey,
-  fallbackText,
+  fallbackText: _fallbackText,
   onPlaysExhausted,
 }: {
   audioKey?: string | undefined;
@@ -16,7 +14,6 @@ export function ListeningAudioPlayer({
 }) {
   const { t } = useTranslation();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [source, setSource] = useState<ListeningAudioSource>(() => initialListeningAudioSource(Boolean(audioKey)));
   const [playing, setPlaying] = useState(false);
   const [playCount, setPlayCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -24,24 +21,12 @@ export function ListeningAudioPlayer({
   const [audioUnavailable, setAudioUnavailable] = useState(false);
 
   const src = audioKey ? buildAudioUrl(audioKey) : '';
-  const useBrowserSpeech = source === 'browser' || audioUnavailable || !audioKey;
+  const canPlayR2Audio = Boolean(audioKey) && !audioUnavailable;
 
   const handlePlayPause = useCallback(() => {
     const el = audioRef.current;
 
-    if (useBrowserSpeech || !el) {
-      if (!fallbackText) return;
-      if (playCount >= MAX_LISTENING_PLAYS) { onPlaysExhausted?.(); return; }
-      setPlayCount((n) => n + 1);
-      void audioPlayer.speakText(fallbackText, {
-        lang: 'ja-JP',
-        preferGoogleVoice: true,
-        onStart: () => setPlaying(true),
-        onEnd: () => setPlaying(false),
-        onError: () => setPlaying(false),
-      });
-      return;
-    }
+    if (!canPlayR2Audio || !el) return;
 
     if (el.paused) {
       if (playCount >= MAX_LISTENING_PLAYS) { onPlaysExhausted?.(); return; }
@@ -50,12 +35,12 @@ export function ListeningAudioPlayer({
     } else {
       el.pause();
     }
-  }, [fallbackText, playCount, onPlaysExhausted, useBrowserSpeech]);
+  }, [canPlayR2Audio, playCount, onPlaysExhausted]);
 
   const handleSkipBack = useCallback(() => {
-    if (useBrowserSpeech || !audioRef.current) return;
+    if (!canPlayR2Audio || !audioRef.current) return;
     audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - LISTENING_SKIP_BACK_SECONDS);
-  }, [useBrowserSpeech]);
+  }, [canPlayR2Audio]);
 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -79,33 +64,6 @@ export function ListeningAudioPlayer({
         />
       )}
 
-      {audioKey && fallbackText && (
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--surface-alt)] p-1" role="group" aria-label={t('quiz.audioSource')}>
-          {(['browser', 'server'] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={source === option}
-              onClick={() => {
-                audioRef.current?.pause();
-                audioPlayer.stop();
-                setPlaying(false);
-                setAudioUnavailable(false);
-                setSource(option);
-              }}
-              className={[
-                'min-h-11 rounded-lg px-3 text-sm font-semibold transition-colors',
-                source === option
-                  ? 'bg-[var(--card)] text-[var(--accent)] shadow-sm'
-                  : 'text-[var(--muted-foreground)] hover:text-foreground',
-              ].join(' ')}
-            >
-              {option === 'browser' ? t('quiz.browserVoice') : t('quiz.serverAudio')}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div
         className="h-1.5 w-full rounded-full bg-[var(--surface-alt)] overflow-hidden"
         role="progressbar"
@@ -124,7 +82,7 @@ export function ListeningAudioPlayer({
           type="button"
           aria-label={t('quiz.rewindSeconds', { seconds: LISTENING_SKIP_BACK_SECONDS })}
           onClick={handleSkipBack}
-          disabled={useBrowserSpeech}
+          disabled={!canPlayR2Audio}
           className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 text-[var(--muted-foreground)] hover:text-foreground transition-colors disabled:opacity-40"
         >
           <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" aria-hidden="true">
@@ -137,7 +95,7 @@ export function ListeningAudioPlayer({
           type="button"
           aria-label={playing ? t('common.pause') : t('common.play')}
           onClick={handlePlayPause}
-          disabled={!playing && playCount >= MAX_LISTENING_PLAYS}
+          disabled={!canPlayR2Audio || (!playing && playCount >= MAX_LISTENING_PLAYS)}
           className="w-14 h-14 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {playing ? (
@@ -173,9 +131,9 @@ export function ListeningAudioPlayer({
           {t('quiz.maxPlaysReached')}
         </p>
       )}
-      {useBrowserSpeech && fallbackText && (
+      {!canPlayR2Audio && (
         <p className="text-center text-[12px] text-[var(--muted-foreground)] font-pretendard">
-          {source === 'browser' ? t('quiz.browserSpeechPreferred') : t('quiz.browserSpeechFallback')}
+          {t('quiz.audioPending')}
         </p>
       )}
     </div>

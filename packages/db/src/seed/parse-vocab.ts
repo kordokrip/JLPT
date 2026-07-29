@@ -20,11 +20,12 @@ import {
   esc,
   escJson,
 } from './utils.js';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export interface VocabSql {
   /** `sources.code` (예: '04') */
   sourceCode: string;
-  level: 'N5' | 'N4' | 'N3';
+  level: JlptLevel;
   filePath: string;
   naturalKeys?: Set<string>;
 }

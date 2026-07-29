@@ -35,15 +35,15 @@ const reportPath = path.resolve(
 
 const rows = querySql<AudioSourceRow>(target, `
   SELECT id, 'vocab' AS item_type, level, ja AS text, audio_r2_key
-  FROM vocab WHERE level IN ('N5', 'N4', 'N3')
+  FROM vocab WHERE level IN ('N5', 'N4', 'N3', 'N2', 'N1')
   UNION ALL
   SELECT id, 'kanji' AS item_type, jlpt_level AS level,
          COALESCE(on_yomi, kun_yomi, char) AS text, audio_r2_key
-  FROM kanji WHERE jlpt_level IN ('N5', 'N4', 'N3')
+  FROM kanji WHERE jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1')
   UNION ALL
   SELECT id, 'sentence' AS item_type, level, ja AS text, audio_r2_key
-  FROM sentences WHERE level IN ('N5', 'N4', 'N3')
-  ORDER BY CASE level WHEN 'N5' THEN 1 WHEN 'N4' THEN 2 ELSE 3 END, item_type, id
+  FROM sentences WHERE level IN ('N5', 'N4', 'N3', 'N2', 'N1')
+  ORDER BY CASE level WHEN 'N5' THEN 1 WHEN 'N4' THEN 2 WHEN 'N3' THEN 3 WHEN 'N2' THEN 4 ELSE 5 END, item_type, id
 `);
 
 const aws = new AwsClient({

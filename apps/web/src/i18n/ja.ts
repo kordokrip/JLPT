@@ -77,7 +77,7 @@ const ja = {
       title: '韓国語学習のスタート地点を確認',
       description: '聞き取り12問と読解12問で構成した24問の学習診断です。公式TOPIKスコアを予測する試験ではありません。',
       listeningCount: '聞き取り・12問',
-      listeningDescription: '再生ボタンには、審査済みR2音声か韓国語ブラウザー音声かを明記します。',
+      listeningDescription: 'すべての再生ボタンは検証済みprivate R2音声だけを使い、未準備の音声はテキスト学習状態として表示します。',
       readingCount: '読解・12問',
       readingDescription: '語彙、助詞、短い案内文、日常メッセージを確認します。',
       preparing: '問題を準備中…',
@@ -88,7 +88,7 @@ const ja = {
       playAudio: '韓国語音声を再生',
       playing: '再生中…',
       reviewedAudio: '審査済み固定音声',
-      browserAudio: '韓国語ブラウザー音声による代替再生',
+      browserAudio: '音声を準備中',
       chooseAnswer: '答えを1つ選んでください',
       previous: '前へ',
       next: '次へ',
@@ -156,6 +156,7 @@ const ja = {
       audioTitle: '発音の方針',
       audioDescription: '単独の字母を何度も続けて読みません。代表語を韓国語音声で一度だけ再生し、実際の音の流れを覚えます。',
       audio: {
+        unavailable: '検証済みのR2音声はまだ準備されていません。テキストで学習してください。',
         unsupported: 'このブラウザーは韓国語音声の再生に対応していません。',
         'voice-unavailable': 'この端末に韓国語音声がありません。端末の言語・音声設定で韓国語音声を追加してから再試行してください。',
         'playback-failed': '韓国語音声を再生できませんでした。しばらくしてから再試行してください。',
@@ -280,6 +281,7 @@ const ja = {
     abilityCheck:  '実力チェック',
     courseScopeTitle: '学習範囲',
     courseScopeExpanded: 'N5からN1までのコンテンツが準備されました。上位レベルの学習は基本52週間コースとは別に管理します。',
+    courseScopeN2: 'N5からN2までのコンテンツが準備されました。N1は別のコンテンツバッチで引き続き拡張します。',
   },
 
   review: {
@@ -613,6 +615,7 @@ const ja = {
     localVoice:        'ローカル',
     ttsProvider:       '既定の音声エンジン',
     ttsProviderDesc:   '発音再生で優先する音声プロバイダーを選びます',
+    r2OnlyAudioDesc:   '学習とQAは出典・ライセンス・hashを記録したprivate R2音声だけを再生します。ブラウザー音声には切り替えません。',
     ttsBrowser:        'ブラウザー',
     audioQa:           '音声QA',
     audioQaDesc:       '30個のサンプルで発音エンジンの品質を比較します',

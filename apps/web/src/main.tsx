@@ -54,7 +54,7 @@ if (!rootEl) throw new Error('#root element not found');
 // 다크모드 초기화 (렌더 전 적용)
 // ─────────────────────────────────────────────
 (function applyTheme() {
-  const { theme, playbackRate, selectedVoiceURI, voiceGender, learningTrack } = useSettingsStore.getState();
+  const { theme, playbackRate, learningTrack } = useSettingsStore.getState();
   setActiveLearningTrack(learningTrack);
   const isDark =
     theme === 'dark' ||
@@ -63,8 +63,6 @@ if (!rootEl) throw new Error('#root element not found');
   document.documentElement.lang = i18n.language || 'ko';
   audioPlayer.configure({
     rate: playbackRate,
-    voiceGender,
-    voiceURI: selectedVoiceURI,
     sourcePreference: 'server',
   });
 })();

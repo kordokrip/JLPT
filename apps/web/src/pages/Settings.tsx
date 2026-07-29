@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
 import { useAuthStore } from '../stores/auth-store';
 import { audioPlayer } from '../lib/audio';
-import type { JapaneseVoiceOption, PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
+import type { PlaybackRate } from '../lib/audio';
 import type { ReactNode } from 'react';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
@@ -37,9 +37,6 @@ export default function Settings() {
     theme, setTheme,
     furiganaMode, setFurigana,
     playbackRate, setPlaybackRate,
-    voiceGender, setVoiceGender,
-    selectedVoiceURI, setSelectedVoiceURI,
-    ttsProvider, setTtsProvider,
     autoPronounce, setAutoPronounce,
     dailyNewLimit, setDailyNewLimit,
     lastSyncedAt,
@@ -52,21 +49,10 @@ export default function Settings() {
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
   const [pushLoading, setPushLoading]         = useState(false);
-  const [voices, setVoices]                   = useState<JapaneseVoiceOption[]>([]);
 
   useEffect(() => {
     setNotifPermission(getNotificationPermission());
     getCurrentSubscription().then((sub) => setIsSubscribed(!!sub)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    audioPlayer.getJapaneseVoices().then((items) => {
-      if (mounted) setVoices(items);
-    });
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const handlePushToggle = async () => {
@@ -90,25 +76,6 @@ export default function Settings() {
   const handleRate = (r: PlaybackRate) => {
     setPlaybackRate(r);
     audioPlayer.rate = r;
-  };
-
-  const handleVoiceGender = (v: VoiceGender) => {
-    setVoiceGender(v);
-    audioPlayer.voiceGender = v;
-    void audioPlayer.speakText(t('settings.voicePreviewText'));
-  };
-
-  const handleVoiceURI = (uri: string) => {
-    const next = uri || null;
-    setSelectedVoiceURI(next);
-    audioPlayer.voiceURI = next;
-    void audioPlayer.speakText(t('settings.voicePreviewText'), { voiceURI: next });
-  };
-
-  const handleTtsProvider = (provider: TtsProviderId) => {
-    setTtsProvider('browser');
-    audioPlayer.sourcePreference = 'server';
-    if (provider === 'browser') void audioPlayer.speakText(t('settings.voicePreviewText'));
   };
 
   const handleThemeChange = (nextTheme: Theme) => {
@@ -211,41 +178,8 @@ export default function Settings() {
             onChange={(v) => handleRate(v as PlaybackRate)}
           />
         </SettingRow>
-        <SettingRow label={t('settings.voiceGender')} sublabel={t('settings.voiceGenderDesc')}>
-          <SegmentControl
-            testId="voice-gender"
-            options={[
-              { value: 'female', label: t('settings.voiceFemale') },
-              { value: 'male',   label: t('settings.voiceMale')   },
-            ]}
-            value={voiceGender}
-            onChange={(v) => handleVoiceGender(v as VoiceGender)}
-          />
-        </SettingRow>
-        <SettingRow label={t('settings.browserVoice')} sublabel={t('settings.browserVoiceDesc')}>
-          <select
-            value={selectedVoiceURI ?? ''}
-            onChange={(event) => handleVoiceURI(event.target.value)}
-            className="min-h-11 w-[min(100vw-3rem,18rem)] rounded border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-foreground"
-            aria-label={t('settings.browserVoice')}
-          >
-            <option value="">{t('settings.autoVoice')}</option>
-            {voices.map((voice) => (
-              <option key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name} ({voice.lang}{voice.localService ? ` · ${t('settings.localVoice')}` : ''})
-              </option>
-            ))}
-          </select>
-        </SettingRow>
-        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.ttsProviderDesc')}>
-          <SegmentControl
-            testId="tts-provider"
-            options={[
-              { value: 'browser', label: t('settings.ttsBrowser') },
-            ]}
-            value={ttsProvider === 'browser' ? ttsProvider : 'browser'}
-            onChange={(v) => handleTtsProvider(v as TtsProviderId)}
-          />
+        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.r2OnlyAudioDesc')}>
+          <span className="rounded border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--muted-foreground)]">R2 only</span>
         </SettingRow>
         <SettingRow label={t('settings.audioQa')} sublabel={t('settings.audioQaDesc')}>
           <Link

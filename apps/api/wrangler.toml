@@ -21,7 +21,7 @@ head_sampling_rate = 0.05
 ENVIRONMENT = "production"
 AUTH_MODE = "app-session"
 MAINTENANCE_MODE = "off"
-RELEASE_SHA = "topik-jlpt-cutover-2026-07-20"
+RELEASE_SHA = "3655e147d89ceb371764d0d9bc95b6b6843a9897"
 APP_ORIGIN = "https://nihongo-n3.pages.dev"
 # OAuth callback stays on the Pages origin. The Pages Function proxies this
 # route to the Worker, so OAuth state and the app-session cookie share one host.

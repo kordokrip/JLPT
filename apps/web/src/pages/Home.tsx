@@ -27,7 +27,10 @@ export default function Home() {
   const { cards: dueCards, isLoading } = useDueCards();
   const { data: stats } = useSrsStats();
   const { status: trackStatus, levels: releasedLevels } = useTrackStatus();
-  const hasExpandedRelease = trackStatus?.content_release === 'n5-n1';
+  const hasExpandedRelease = trackStatus?.content_release === 'n5-n2' || trackStatus?.content_release === 'n5-n1';
+  const courseScopeMessage = trackStatus?.content_release === 'n5-n2'
+    ? t('home.courseScopeN2')
+    : t('home.courseScopeExpanded');
 
   const dueCount  = dueCards.length;
   const totalCards = stats?.total  ?? 0;
@@ -115,7 +118,7 @@ export default function Home() {
               <div className="mb-5 border-t border-[var(--border)] pt-4">
                 <p className="text-xs font-semibold text-foreground">{t('home.courseScopeTitle')}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">
-                  {t('home.courseScopeExpanded')}
+                  {courseScopeMessage}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t('home.courseScopeTitle')}>
                   {releasedLevels.map((level) => (

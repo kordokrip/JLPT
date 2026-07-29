@@ -8,62 +8,36 @@ describe('useKoreanAudio', () => {
     vi.unstubAllGlobals();
   });
 
-  it('speaks one exact Korean utterance with a Korean voice contract', () => {
-    class MockUtterance {
-      text: string;
-      lang = '';
-      rate = 1;
-      pitch = 1;
-      voice: SpeechSynthesisVoice | null = null;
-      onend: ((event: SpeechSynthesisEvent) => void) | null = null;
-      onerror: ((event: SpeechSynthesisErrorEvent) => void) | null = null;
-      constructor(text: string) { this.text = text; }
-    }
-    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
-    const speak = vi.fn();
-    const cancel = vi.fn();
-    Object.defineProperty(window, 'speechSynthesis', {
-      configurable: true,
-      value: {
-        cancel,
-        speak,
-        getVoices: () => [{ lang: 'ko-KR', name: 'Korean', voiceURI: 'ko', localService: true, default: true }],
-      },
-    });
-
+  it('reports an unavailable DTO without invoking browser SpeechSynthesis', () => {
+    const speech = { cancel: vi.fn(), speak: vi.fn() };
+    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: speech });
     const { result } = renderHook(() => useKoreanAudio());
+
     act(() => {
-      expect(result.current.speakText('안녕하세요?')).toBe(true);
+      expect(result.current.play({ kind: 'unavailable', reason: 'preparing' })).toBe(false);
     });
 
-    expect(cancel).toHaveBeenCalledTimes(1);
-    expect(speak).toHaveBeenCalledTimes(1);
-    const utterance = speak.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
-    expect(utterance.text).toBe('안녕하세요?');
-    expect(utterance.lang).toBe('ko-KR');
-    expect(utterance.rate).toBe(0.86);
+    expect(speech.speak).not.toHaveBeenCalled();
+    expect(result.current.error).toBe('unavailable');
   });
 
-  it('does not fall back to an unrelated system-default voice', () => {
-    vi.stubGlobal('SpeechSynthesisUtterance', class {
-      constructor(_text: string) {}
-    });
-    const speak = vi.fn();
-    Object.defineProperty(window, 'speechSynthesis', {
-      configurable: true,
-      value: {
-        cancel: vi.fn(),
-        speak,
-        getVoices: () => [{ lang: 'de-DE', name: 'German', voiceURI: 'de', localService: true, default: true }],
-      },
-    });
-
+  it('plays only an R2 DTO through an HTML audio element', () => {
+    const play = vi.fn().mockResolvedValue(undefined);
+    class MockAudio {
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      currentTime = 0;
+      constructor(public src: string) {}
+      pause = vi.fn();
+      play = play;
+    }
+    vi.stubGlobal('Audio', MockAudio);
     const { result } = renderHook(() => useKoreanAudio());
+
     act(() => {
-      expect(result.current.speakText('가방')).toBe(false);
+      expect(result.current.play({ kind: 'r2', url: '/api/v1/audio/private-audio/ko/listening/test.mp3' })).toBe(true);
     });
 
-    expect(speak).not.toHaveBeenCalled();
-    expect(result.current.error).toBe('voice-unavailable');
+    expect(play).toHaveBeenCalledOnce();
   });
 });

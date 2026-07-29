@@ -9,6 +9,7 @@ import { topikPracticeApi } from '../lib/api';
 import { useSettingsStore } from '../stores/settings-store';
 import { AiAssistanceNotice } from '../components/feature/AiAssistanceNotice';
 import { OwnerPrivateTopikPanel } from '../features/topik/OwnerPrivateTopikPanel';
+import { TopikOwnerAuthoredCurriculum } from '../features/topik/curriculum/TopikOwnerAuthoredCurriculum';
 import { useAuthStore } from '../stores/auth-store';
 import { useTranslation } from 'react-i18next';
 import type { TopikPracticeSolutionDto } from '@nihongo-n3/shared';
@@ -73,7 +74,7 @@ export default function TopikLearn() {
               <ul className="mt-4 divide-y divide-[var(--border)] border-y border-[var(--border)]">
                 {unit.expressions.map((expression) => (
                   <li key={expression.ko} className="flex items-center gap-3 py-3">
-                    <button type="button" onClick={() => audio.speakText(expression.ko)} className="touch-target inline-flex shrink-0 items-center justify-center rounded-full text-[var(--accent)]" aria-label={t('topik.learn.playExpression', { text: expression.ko })}>
+                    <button type="button" disabled className="touch-target inline-flex shrink-0 items-center justify-center rounded-full text-[var(--muted-foreground)] opacity-60" aria-label={t('quiz.audioPending')} title={t('quiz.audioPending')}>
                       <Volume2 aria-hidden="true" size={18} />
                     </button>
                     <span className="min-w-0"><span lang="ko" className="block font-bold">{expression.ko}</span><span className="mt-0.5 block text-sm text-[var(--muted-foreground)]">{expression.en}</span></span>
@@ -85,6 +86,8 @@ export default function TopikLearn() {
         })}
       </div>
       {audio.error && <p role="alert" className="mt-4 max-w-[800px] text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
+
+      <TopikOwnerAuthoredCurriculum />
 
       <section className="mt-10 max-w-[960px] border-t border-[var(--border)] pt-8" aria-labelledby="topik-practice-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -123,7 +126,11 @@ export default function TopikLearn() {
                 {question.section === 'listening' && <span className="inline-flex items-center gap-1"><Headphones aria-hidden="true" size={15} />{t('topik.sections.listening')}</span>}
               </div>
               <h3 className="mt-3 text-lg font-black leading-8">{instructionText(question)}</h3>
-              {audioSource && <button type="button" onClick={() => audio.play(audioSource)} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>}
+              {audioSource?.kind === 'r2' ? (
+                <button type="button" onClick={() => audio.play(audioSource)} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>
+              ) : question.section === 'listening' ? (
+                <p className="mt-4 text-sm text-[var(--muted-foreground)]">{t('quiz.audioPending')}</p>
+              ) : null}
               {question.question_type === 'choice' ? <fieldset className="mt-5 grid gap-2"><legend className="sr-only">{t('topik.practice.answerLabel')}</legend>{question.choices.map((choice, choiceIndex) => <button key={choice} type="button" role="radio" aria-checked={selected === choiceIndex} onClick={() => setAnswers((current) => ({ ...current, [question.id]: choiceIndex }))} className={`touch-target rounded-[var(--radius-md)] border px-4 py-3 text-left font-semibold ${selected === choiceIndex ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--accent)]'}`}><span className="mr-3 text-xs text-[var(--muted-foreground)]">{choiceIndex + 1}</span>{choice}</button>)}</fieldset> : <textarea value={drafts[question.id] ?? ''} onChange={(event) => setDrafts((current) => ({ ...current, [question.id]: event.target.value }))} className="mt-5 min-h-32 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-3 text-sm leading-6" placeholder={t('topik.practice.writingPlaceholder')} aria-label={t('topik.practice.writingLabel')} />}
               {!solution && <button type="button" disabled={!canReveal} onClick={() => void revealSolution(question.id)} className="mt-5 touch-target rounded-[var(--radius-md)] border border-[var(--border)] px-4 font-bold disabled:opacity-40">{t('topik.practice.reveal')}</button>}
               {solution && <div className="mt-5 border-t border-[var(--border)] pt-4 text-sm leading-6"><p className="font-bold text-[var(--accent)]">{t('topik.practice.explanation')}</p>{question.question_type === 'choice' && <p className="mt-2">{selected === solution.answer_index ? t('topik.practice.correct') : t('topik.practice.correctAnswer', { answer: question.choices[solution.answer_index ?? 0] })}</p>}<p className="mt-2 text-[var(--muted-foreground)]">{explanationText(solution)}</p>{sampleText(solution) && <><p className="mt-4 font-bold text-[var(--accent)]">{t('topik.practice.sample')}</p><p className="mt-2 whitespace-pre-wrap text-[var(--muted-foreground)]">{sampleText(solution)}</p></>}</div>}

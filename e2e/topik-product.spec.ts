@@ -29,7 +29,7 @@ test.describe('TOPIK product flow', () => {
               id: 'listen-1', section: 'listening', skill: 'detail', difficulty: 1,
               prompt_ko: '여자는 어디에 갑니까?', prompt_ja: '女性はどこへ行きますか。', prompt_en: 'Where is the woman going?',
               choices: ['학교', '은행', '병원', '시장'],
-              audio: { kind: 'browser-fallback', text_ko: '여자는 은행에 갑니다.' },
+              audio: { kind: 'unavailable', reason: 'preparing' },
             },
             {
               id: 'read-1', section: 'reading', skill: 'notice', difficulty: 1,
@@ -64,7 +64,7 @@ test.describe('TOPIK product flow', () => {
     await page.getByRole('button', { name: '日本語' }).last().click();
 
     await page.goto('/track/topik-ko/learn');
-    await page.getByRole('button', { name: /안녕하세요\? 재생|Play 안녕하세요\?|안녕하세요\?を再生/ }).click();
+    await expect(page.getByTitle(/오디오가 준비 중|Audio is still being prepared|音声を準備中/).first()).toBeVisible();
     await page.getByRole('button', { name: /완료로 표시|Mark complete|完了にする/ }).first().click();
     await expect(page.getByRole('button', { name: /미완료로 변경|Mark incomplete|未完了に戻す/ }).first()).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('radio', { name: /은행/ }).last().click();
@@ -80,9 +80,7 @@ test.describe('TOPIK product flow', () => {
     await page.getByRole('button', { name: /진단 시작|Start placement|診断を始める/ }).click();
     await expect(page.getByText('女性はどこへ行きますか。')).toBeVisible();
     await expect(page.getByText('여자는 은행에 갑니다.')).toHaveCount(0);
-    await expect(page.getByText(/한국어 브라우저 음성 대체 재생|Korean browser voice fallback|韓国語ブラウザー音声/)).toBeVisible();
-    await page.getByRole('button', { name: /한국어 음성 재생|Play Korean audio|韓国語音声を再生/ }).click();
-    await page.waitForTimeout(100);
+    await expect(page.getByText(/오디오가 준비 중|Audio is still being prepared|音声を準備中/).last()).toBeVisible();
     expect(unexpectedAudioRequests).toEqual([]);
 
     await page.getByRole('radio', { name: /은행/ }).click();

@@ -475,7 +475,7 @@ export interface paths {
                         /** @enum {string} */
                         provider?: "google";
                         /** @enum {string} */
-                        level?: "N5" | "N4" | "N3";
+                        level?: "N5" | "N4" | "N3" | "N2" | "N1";
                         force_regenerate?: boolean;
                     };
                 };

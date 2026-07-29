@@ -18,10 +18,11 @@ import {
   escJson,
   type ParsedCategory,
 } from './utils.js';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export interface GrammarSql {
   sourceCode: string;
-  level: 'N5' | 'N4' | 'N3';
+  level: JlptLevel;
   filePath: string;
   naturalKeys?: Set<string>;
 }

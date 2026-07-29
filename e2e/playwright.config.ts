@@ -69,7 +69,7 @@ export default defineConfig({
           // A reused local server can point at another checkout or an obsolete
           // Worker build. Default to an isolated server; opt in only when the
           // caller explicitly owns and has verified the existing process.
-          command: "../scripts/e2e-api-dev.sh",
+          command: "E2E_TOPIK_GRADE1_FIXTURE=1 ../scripts/e2e-api-dev.sh",
           port: e2eApiPort,
           reuseExistingServer,
           timeout: 180_000,

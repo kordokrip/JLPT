@@ -9,6 +9,9 @@ import {
   type ContentManifest,
   type ContentManifestEntry,
 } from "./content-manifest.js";
+import { n2Batch1ContentRowsSql } from "./n2-batch1.js";
+import { n2Batch2ContentRowsSql } from "./n2-batch2.js";
+import { n2Batch3ContentRowsSql } from "./n2-batch3.js";
 import {
   argValue,
   countSql,
@@ -157,6 +160,12 @@ function sqlLiteral(value: string): string {
 }
 
 function rowCountSql(entry: ContentManifestEntry): string {
+  if (entry.table === "n2_curriculum") {
+    if (entry.sourceCode === "N2-A1") return n2Batch1ContentRowsSql();
+    if (entry.sourceCode === "N2-A2") return n2Batch2ContentRowsSql();
+    if (entry.sourceCode === "N2-A3") return n2Batch3ContentRowsSql();
+    throw new Error(`Unknown N2 curriculum source: ${entry.sourceCode}`);
+  }
   if (entry.selector.kind === "source") {
     return `SELECT count(*) AS count FROM ${entry.table} WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.selector.value)})`;
   }
@@ -541,15 +550,15 @@ addNumericSqlCheck(
   0,
   `SELECT
      (SELECT count(*) FROM vocab
-      WHERE level IN ('N5', 'N4', 'N3')
+      WHERE level IN ('N5', 'N4', 'N3', 'N2', 'N1')
         AND ${invalidImmutableAudioKey("vocab", "level")})
      +
      (SELECT count(*) FROM kanji
-      WHERE jlpt_level IN ('N5', 'N4', 'N3')
+      WHERE jlpt_level IN ('N5', 'N4', 'N3', 'N2', 'N1')
         AND ${invalidImmutableAudioKey("kanji", "jlpt_level")})
      +
      (SELECT count(*) FROM sentences
-     WHERE level IN ('N5', 'N4', 'N3')
+     WHERE level IN ('N5', 'N4', 'N3', 'N2', 'N1')
         AND ${invalidImmutableAudioKey("sentence", "level")})
      AS count`,
   requireAudio,

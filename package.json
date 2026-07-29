@@ -10,7 +10,7 @@
   },
   "type": "module",
   "scripts": {
-    "typecheck": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api --filter @nihongo-n3/db --filter @nihongo-n3/shared --filter @nihongo-n3/content -r typecheck",
+    "typecheck": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api --filter @nihongo-n3/db --filter @nihongo-n3/shared -r typecheck",
     "build": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r build",
     "test": "pnpm test:ops && pnpm -F @nihongo-n3/db test && pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
     "test:ops": "node --test scripts/__tests__/*.test.mjs",

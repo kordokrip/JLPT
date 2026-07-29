@@ -11,7 +11,7 @@ import {
 } from './scorecard';
 
 describe('audio QA scorecard', () => {
-  it('requires evaluator, device, exact candidate metadata, and five scores for all 120 comparisons', () => {
+  it('requires evaluator, device, exact R2 candidate metadata, and five scores for all provider comparisons', () => {
     const scorecard = createAudioQaScorecard({ browser: 'WebKit / iOS', evaluatedOn: '2026-07-15' });
     scorecard.evaluator = 'QA evaluator';
     scorecard.device = 'iPhone 15 Plus';
@@ -58,7 +58,7 @@ describe('audio QA scorecard', () => {
     const scorecard = createAudioQaScorecard({ language: 'ko', browser: 'Chrome', evaluatedOn: '2026-07-20' });
     scorecard.evaluator = 'QA evaluator';
     scorecard.device = 'Android';
-    for (const provider of ['browser', 'cloudflare', 'google'] as const) {
+    for (const provider of ['cloudflare', 'google'] as const) {
       audioQaSamples('ko').forEach((_, sampleIndex) => {
         scorecard.ratings[audioQaRatingKey(provider, sampleIndex)] = {
           candidate: { provider, model: `${provider}-model`, voice: `${provider}-voice`, version: 'v1' },

@@ -13,6 +13,9 @@ import {
 import { parseCurriculum } from './parse-curriculum.js';
 import { parseGrammar } from './parse-grammar.js';
 import { parseKanji } from './parse-kanji.js';
+import { buildN2Batch1Plan } from './n2-batch1.js';
+import { buildN2Batch2Plan } from './n2-batch2.js';
+import { buildN2Batch3Plan } from './n2-batch3.js';
 import { parseSentences } from './parse-sentences.js';
 import { parseSysProg } from './parse-sysprog.js';
 import { parseVocab } from './parse-vocab.js';
@@ -24,15 +27,18 @@ export type SeedTable =
   | 'kanji'
   | 'sentences'
   | 'sysprog_terms'
-  | 'curriculum_weeks';
+  | 'curriculum_weeks'
+  /** A multi-table, self-authored N2 learning batch with its own verifier query. */
+  | 'n2_curriculum';
 
-export const CONTENT_MANIFEST_SCHEMA_VERSION = 2;
-export const CONTENT_PARSER_VERSION = 'content-parser-v2';
-export const SEEDED_SOURCE_COUNT = 13;
+export const CONTENT_MANIFEST_SCHEMA_VERSION = 3;
+export const CONTENT_PARSER_VERSION = 'content-parser-v3';
+export const SEEDED_SOURCE_COUNT = 16;
 
 const REPOSITORY_URL = 'https://github.com/kordokrip/JLPT';
 const ATTRIBUTIONS_URL = `${REPOSITORY_URL}/blob/main/docs/ATTRIBUTIONS.md`;
-const CONTENT_REVIEWER = 'nihongo-n3 editorial QA';
+// `reviewer` is a legacy manifest column name, not a publication requirement.
+const CONTENT_REVIEWER = 'self-authored personal content record (no external reviewer)';
 const CONTENT_REVIEWED_AT = '2026-07-16';
 
 export interface ContentProvenance {
@@ -60,6 +66,10 @@ interface SeedDefinition extends SourceCatalogEntry {
   table: SeedTable;
   selector: { kind: 'source'; value: string } | { kind: 'level'; value: string } | { kind: 'all' };
   parse: () => string[];
+  /** Multi-table sources declare their deliberate content-row total explicitly. */
+  expectedRows?: number;
+  /** Parsers may repeat INSERT OR IGNORE category statements across content types. */
+  expectedCategories?: number;
 }
 
 export interface ContentManifestEntry {
@@ -115,14 +125,23 @@ function repositoryFileUrl(filePath: string): string {
 
 function sourceProvenance(code: string, title: string, filePath: string): ContentProvenance {
   const mixedTerminology = code === 'A';
+  const selfAuthoredN2Batch = code === 'N2-A1' || code === 'N2-A2' || code === 'N2-A3';
   return {
     origin: {
-      name: mixedTerminology
+      name: selfAuthoredN2Batch
+        ? `${title} self-authored personal learning batch`
+        : mixedTerminology
         ? `${title} repository compilation with documented terminology references`
         : `${title} repository-managed learning source`,
       url: repositoryFileUrl(filePath),
     },
-    license: mixedTerminology
+    license: selfAuthoredN2Batch
+      ? {
+        id: 'LicenseRef-nihongo-n3-self-authored',
+        name: 'Self-authored personal learning content',
+        url: `${ATTRIBUTIONS_URL}#학습-콘텐츠와-provenance`,
+      }
+      : mixedTerminology
       ? {
         id: 'LicenseRef-nihongo-n3-mixed-terminology',
         name: 'Repository compilation with source references',
@@ -133,8 +152,9 @@ function sourceProvenance(code: string, title: string, filePath: string): Conten
         name: 'Repository-managed learning content',
         url: `${ATTRIBUTIONS_URL}#학습-콘텐츠와-provenance`,
       },
-    reviewer: CONTENT_REVIEWER,
-    reviewedAt: CONTENT_REVIEWED_AT,
+    // This field is legacy seed provenance, not a public-release reviewer gate.
+    reviewer: selfAuthoredN2Batch ? 'self-authored personal content record (no external reviewer)' : CONTENT_REVIEWER,
+    reviewedAt: selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
   };
 }
 
@@ -156,9 +176,11 @@ const sourceCatalog: SourceCatalogEntry[] = [
   catalogEntry('10A', 'N3 어휘 전반', CONTENT_PATHS.n3Vocab1),
   catalogEntry('10B', 'N3 어휘 후반', CONTENT_PATHS.n3Vocab2),
   catalogEntry('11', 'N3 문법', CONTENT_PATHS.n3Grammar),
+  catalogEntry('N2-A1', 'N2 자체 저작 Batch 1', CONTENT_PATHS.n2Batch1),
+  catalogEntry('N2-A2', 'N2 자체 저작 Batch 2', CONTENT_PATHS.n2Batch2),
+  catalogEntry('N2-A3', 'N2 자체 저작 Batch 3', CONTENT_PATHS.n2Batch3),
   catalogEntry('12', '예문 코퍼스', CONTENT_PATHS.sentences),
   catalogEntry('A', '직무 어휘', CONTENT_PATHS.sysprog),
-  catalogEntry('B', '운영 가이드', path.join(REPO_ROOT, 'docs/00_overview/B_ops_guide.md')),
   catalogEntry('C', '12개월 기본 학습계획과 자가진단', CONTENT_PATHS.selfCheck),
 ];
 
@@ -166,6 +188,9 @@ function buildSeedDefinitions(): SeedDefinition[] {
   const vocabKeys = new Set<string>();
   const grammarKeys = new Set<string>();
   const kanjiKeys = new Set<string>();
+  const n2Batch1 = buildN2Batch1Plan();
+  const n2Batch2 = buildN2Batch2Plan();
+  const n2Batch3 = buildN2Batch3Plan();
   return [
     sourceSeed('04', 'vocab', 'source', () => parseVocab({ sourceCode: '04', level: 'N5', filePath: CONTENT_PATHS.n5Vocab, naturalKeys: vocabKeys })),
     sourceSeed('05', 'grammar', 'source', () => parseGrammar({ sourceCode: '05', level: 'N5', filePath: CONTENT_PATHS.n5Grammar, naturalKeys: grammarKeys })),
@@ -177,6 +202,21 @@ function buildSeedDefinitions(): SeedDefinition[] {
     sourceSeed('10B', 'vocab', 'source', () => parseVocab({ sourceCode: '10B', level: 'N3', filePath: CONTENT_PATHS.n3Vocab2, naturalKeys: vocabKeys })),
     sourceSeed('11', 'grammar', 'source', () => parseGrammar({ sourceCode: '11', level: 'N3', filePath: CONTENT_PATHS.n3Grammar, naturalKeys: grammarKeys })),
     sourceSeed('09', 'kanji', 'level', () => parseKanji({ sourceCode: '09', level: 'N3', filePath: CONTENT_PATHS.n3Kanji, naturalKeys: kanjiKeys }), 'N3'),
+    {
+      ...sourceSeed('N2-A1', 'n2_curriculum', 'source', () => n2Batch1.statements),
+      expectedRows: n2Batch1.manifest.counts.contentRows,
+      expectedCategories: n2Batch1.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A2', 'n2_curriculum', 'source', () => n2Batch2.statements),
+      expectedRows: n2Batch2.manifest.counts.contentRows,
+      expectedCategories: n2Batch2.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A3', 'n2_curriculum', 'source', () => n2Batch3.statements),
+      expectedRows: n2Batch3.manifest.counts.contentRows,
+      expectedCategories: n2Batch3.manifest.counts.categories,
+    },
     sourceSeed('12', 'sentences', 'source', () => parseSentences({ sourceCode: '12', filePath: CONTENT_PATHS.sentences })),
     sourceSeed('A', 'sysprog_terms', 'all', () => parseSysProg({ sourceCode: 'A', filePath: CONTENT_PATHS.sysprog })),
     sourceSeed('C', 'curriculum_weeks', 'all', parseCurriculum),
@@ -339,13 +379,13 @@ export function buildContentSeedPlan(): ContentSeedPlan {
         title: definition.title,
         filePath: relativeFilePath(definition.filePath),
         sha256,
-        sourceVersion: `source-v2-${sha256.slice(0, 16)}`,
+        sourceVersion: `source-v3-${sha256.slice(0, 16)}`,
         parserVersion: CONTENT_PARSER_VERSION,
         provenance: definition.provenance,
         table: definition.table,
         selector: definition.selector,
-        expectedRows: countInserts(parsed, definition.table),
-        expectedCategories: countInserts(parsed, 'categories'),
+        expectedRows: definition.expectedRows ?? countInserts(parsed, definition.table),
+        expectedCategories: definition.expectedCategories ?? countInserts(parsed, 'categories'),
       } satisfies ContentManifestEntry,
     };
   });
@@ -368,7 +408,7 @@ export function buildContentSeedPlan(): ContentSeedPlan {
   const manifestSha256 = checksum(identity);
   const manifest: ContentManifest = {
     ...identity,
-    contentVersion: `content-v2-${manifestSha256.slice(0, 20)}`,
+    contentVersion: `content-v3-${manifestSha256.slice(0, 20)}`,
     manifestSha256,
     seedRunId: `seed-${randomUUID()}`,
     generatedAt: new Date().toISOString(),

@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import test from 'node:test';
+
+import {
+  buildN2Batch2Plan,
+  N2_BATCH_2_KANJI,
+  N2_BATCH_2_PATH,
+  N2_BATCH_2_SOURCE_ASSET_ID,
+  n2Batch2ContentRowsSql,
+} from '../seed/n2-batch2.js';
+
+test('N2 Batch 2 adds a self-authored work-and-life unit without a release gate', () => {
+  const plan = buildN2Batch2Plan();
+  assert.deepEqual(plan.manifest.counts, {
+    categories: 7,
+    vocab: 48,
+    grammar: 8,
+    kanji: 12,
+    sentences: 32,
+    reading: 4,
+    readingQuestions: 8,
+    stableRefs: 104,
+    audioBindings: 96,
+    contentRows: 112,
+  });
+  assert.match(plan.manifest.sourceSha256, /^[a-f0-9]{64}$/);
+
+  const source = fs.readFileSync(N2_BATCH_2_PATH, 'utf8');
+  assert.match(source, /공식 JLPT 문항·정답·지문·음원은 포함하거나 변형하지 않습니다/);
+  assert.doesNotMatch(source, /기출|official JLPT question/i);
+
+  const sql = plan.statements.join('\n');
+  assert.match(sql, new RegExp(N2_BATCH_2_SOURCE_ASSET_ID));
+  assert.match(sql, /learning_content_stable_refs/);
+  assert.match(sql, /content_audio_bindings/);
+  assert.match(sql, /'preparing', NULL/);
+  assert.doesNotMatch(sql, /content_releases|content_release_sources|first_reviewer|second_reviewer/i);
+  assert.match(n2Batch2ContentRowsSql(), /reading_questions/);
+  for (const char of N2_BATCH_2_KANJI) assert.match(sql, new RegExp(`'${char}'`));
+});

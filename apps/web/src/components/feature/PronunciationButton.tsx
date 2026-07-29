@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { audioPlayer } from '../../lib/audio';
+import { audioPlayer, isReviewedImmutableAudioPath } from '../../lib/audio';
 import type { MouseEvent } from 'react';
 import type { AudioSourcePreference } from '../../lib/audio';
 import type { AudioSurface } from '@nihongo-n3/shared';
@@ -32,6 +32,7 @@ export function PronunciationButton({
   const { t } = useTranslation();
   const playableText = text?.trim();
   if (!playableText && !audioPath) return null;
+  const hasApprovedAudio = Boolean(audioPath && isReviewedImmutableAudioPath(audioPath));
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -51,13 +52,15 @@ export function PronunciationButton({
     <button
       type="button"
       onClick={handleClick}
-      aria-label={label ?? t('browse.playPronunciation')}
+      disabled={!hasApprovedAudio}
+      aria-label={hasApprovedAudio ? label ?? t('browse.playPronunciation') : t('quiz.audioPending')}
+      title={hasApprovedAudio ? undefined : t('quiz.audioPending')}
       className={[
         compact
           ? 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full'
           : 'inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-[13px]',
         'border border-[var(--border)] bg-card text-[var(--muted-foreground)]',
-        'hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors',
+        'hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:cursor-not-allowed disabled:opacity-60',
         className,
       ].join(' ')}
     >

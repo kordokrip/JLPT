@@ -126,7 +126,7 @@ export type TopikOfficialReferenceDto = z.infer<typeof topikOfficialReferenceSch
 
 export const topikPlacementAudioSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('r2'), url: z.string().min(1) }),
-  z.object({ kind: z.literal('browser-fallback'), text_ko: z.string().min(1) }),
+  z.object({ kind: z.literal('unavailable'), reason: z.enum(['preparing', 'not-provided']) }),
 ]);
 export type TopikPlacementAudioDto = z.infer<typeof topikPlacementAudioSchema>;
 
@@ -219,6 +219,58 @@ export const topikPracticeSolutionSchema = z.object({
   sample_answer_en: z.string().min(1).nullable(),
 });
 export type TopikPracticeSolutionDto = z.infer<typeof topikPracticeSolutionSchema>;
+
+/**
+ * Personal, owner-authored TOPIK learning units. This contract deliberately
+ * has no public content-release or reviewer lifecycle.
+ */
+export const topikOwnerCurriculumGradeSchema = z.coerce.number().int().min(1).max(6);
+export const topikOwnerCurriculumSectionSchema = z.enum([
+  'vocab', 'grammar', 'reading', 'listening', 'writing',
+]);
+export const topikOwnerCurriculumItemTypeSchema = z.enum([
+  'vocab', 'grammar', 'reading', 'listening', 'writing',
+]);
+
+export const topikOwnerCurriculumItemSchema = z.object({
+  id: z.string().min(1),
+  stable_ref: z.string().min(1),
+  target_grade: topikOwnerCurriculumGradeSchema,
+  item_type: topikOwnerCurriculumItemTypeSchema,
+  prompt_ko: z.string().min(1),
+  prompt_ja: z.string().min(1),
+  prompt_en: z.string().min(1),
+  choices: z.array(z.string().min(1)).max(4),
+  audio: topikPlacementAudioSchema.nullable(),
+});
+export type TopikOwnerCurriculumItemDto = z.infer<typeof topikOwnerCurriculumItemSchema>;
+
+export const topikOwnerCurriculumUnitSchema = z.object({
+  id: z.string().min(1),
+  stable_ref: z.string().min(1),
+  target_grade: topikOwnerCurriculumGradeSchema,
+  section: topikOwnerCurriculumSectionSchema,
+  title_ko: z.string().min(1),
+  title_ja: z.string().min(1),
+  title_en: z.string().min(1),
+  items: z.array(topikOwnerCurriculumItemSchema),
+});
+export type TopikOwnerCurriculumUnitDto = z.infer<typeof topikOwnerCurriculumUnitSchema>;
+
+export const topikOwnerCurriculumListSchema = z.object({
+  target_grade: topikOwnerCurriculumGradeSchema,
+  units: z.array(topikOwnerCurriculumUnitSchema),
+});
+export type TopikOwnerCurriculumListDto = z.infer<typeof topikOwnerCurriculumListSchema>;
+
+export const topikOwnerCurriculumSolutionSchema = z.object({
+  item_id: z.string().min(1),
+  answer_payload: z.record(z.string(), z.unknown()),
+  explanation_ko: z.string().min(1),
+  explanation_ja: z.string().min(1),
+  explanation_en: z.string().min(1),
+});
+export type TopikOwnerCurriculumSolutionDto = z.infer<typeof topikOwnerCurriculumSolutionSchema>;
 
 /**
  * Public contract for the release-controlled TOPIK curriculum. Answers,

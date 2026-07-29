@@ -112,6 +112,140 @@ export const trackContentSeedSources = sqliteTable(
   }),
 );
 
+/** Immutable provenance for self-authored, licensed web, and TTS source assets. */
+export const contentSourceAssets = sqliteTable(
+  'content_source_assets',
+  {
+    id: text('id').primaryKey(),
+    assetKind: text('asset_kind', {
+      enum: ['self-authored-fixture', 'licensed-external-text', 'licensed-external-file', 'licensed-web-audio', 'tts-generated'],
+    }).notNull(),
+    sourceUrl: text('source_url').notNull(),
+    licenseId: text('license_id').notNull(),
+    licenseUrl: text('license_url').notNull(),
+    attributionText: text('attribution_text').notNull(),
+    allowedUse: text('allowed_use').notNull(),
+    sourceSha256: text('source_sha256').notNull(),
+    retrievedAt: integer('retrieved_at', { mode: 'timestamp' }),
+    generatedAt: integer('generated_at', { mode: 'timestamp' }),
+    storedAudioBytesSha256: text('stored_audio_bytes_sha256'),
+    immutableR2Key: text('immutable_r2_key'),
+    mimeType: text('mime_type'),
+    provider: text('provider'),
+    model: text('model'),
+    language: text('language'),
+    voice: text('voice'),
+    providerVersion: text('provider_version'),
+    inputTextSha256: text('input_text_sha256'),
+    selectionReason: text('selection_reason'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({ kindIdx: index('content_source_assets_kind_idx').on(t.assetKind, t.language) }),
+);
+
+/** Stable identifiers bridge existing polymorphic learning tables to provenance. */
+export const learningContentStableRefs = sqliteTable(
+  'learning_content_stable_refs',
+  {
+    stableRef: text('stable_ref').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    itemType: text('item_type', {
+      enum: ['jlpt-vocab', 'jlpt-grammar', 'jlpt-kanji', 'jlpt-sentence', 'jlpt-reading', 'topik-owner-item'],
+    }).notNull(),
+    itemId: text('item_id').notNull(),
+    levelTag: text('level_tag').notNull(),
+    sourceAssetId: text('source_asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    itemUk: uniqueIndex('learning_content_stable_refs_item_type_item_id_uk').on(t.itemType, t.itemId),
+    trackLevelIdx: index('learning_content_stable_refs_track_level_idx').on(t.learningTrack, t.levelTag, t.itemType),
+  }),
+);
+
+/** Only an r2-ready binding may be played on a normal learning screen. */
+export const contentAudioBindings = sqliteTable(
+  'content_audio_bindings',
+  {
+    id: text('id').primaryKey(),
+    stableRef: text('stable_ref').notNull().references(() => learningContentStableRefs.stableRef, { onDelete: 'restrict' }),
+    itemType: text('item_type', {
+      enum: ['jlpt-vocab', 'jlpt-kanji', 'jlpt-sentence', 'jlpt-reading', 'topik-owner-item'],
+    }).notNull(),
+    itemId: text('item_id').notNull(),
+    language: text('language', { enum: ['ja', 'ko'] }).notNull(),
+    audioRole: text('audio_role', { enum: ['pronunciation', 'listening'] }).notNull(),
+    bindingState: text('binding_state', { enum: ['r2-ready', 'preparing', 'not-provided'] }).notNull(),
+    assetId: text('asset_id').references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    unavailableReason: text('unavailable_reason'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    bindingUk: uniqueIndex('content_audio_bindings_item_language_role_uk').on(t.itemType, t.itemId, t.language, t.audioRole),
+    stateIdx: index('content_audio_bindings_state_idx').on(t.bindingState, t.language, t.audioRole),
+  }),
+);
+
+/** Reuses a canonical item in another curriculum level without relabelling it. */
+export const learningContentLevelReferences = sqliteTable(
+  'learning_content_level_references',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    curriculumLevel: text('curriculum_level').notNull(),
+    itemType: text('item_type', {
+      enum: ['jlpt-vocab', 'jlpt-grammar', 'jlpt-kanji', 'jlpt-sentence', 'jlpt-reading', 'topik-owner-item'],
+    }).notNull(),
+    itemId: text('item_id').notNull(),
+    referenceKind: text('reference_kind', { enum: ['primary', 'prerequisite'] }).notNull(),
+    sourceAssetId: text('source_asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    itemUk: uniqueIndex('learning_content_level_references_uk').on(t.learningTrack, t.curriculumLevel, t.itemType, t.itemId, t.referenceKind),
+    lookupIdx: index('learning_content_level_references_lookup_idx').on(t.learningTrack, t.curriculumLevel, t.itemType),
+  }),
+);
+
+/** Owner-authored TOPIK grade 1–6 curriculum; separate from the reviewed practice bank. */
+export const topikOwnerAuthoredCurriculumUnits = sqliteTable(
+  'topik_owner_authored_curriculum_units',
+  {
+    id: text('id').primaryKey(),
+    targetGrade: integer('target_grade').notNull(),
+    stableRef: text('stable_ref').notNull().unique(),
+    section: text('section', { enum: ['vocab', 'grammar', 'reading', 'listening', 'writing'] }).notNull(),
+    titleKo: text('title_ko').notNull(),
+    titleJa: text('title_ja').notNull(),
+    titleEn: text('title_en').notNull(),
+    sourceAssetId: text('source_asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    ...timestamps,
+  },
+  (t) => ({ gradeIdx: index('topik_owner_curriculum_units_grade_idx').on(t.targetGrade, t.section) }),
+);
+
+export const topikOwnerAuthoredCurriculumItems = sqliteTable(
+  'topik_owner_authored_curriculum_items',
+  {
+    id: text('id').primaryKey(),
+    unitId: text('unit_id').notNull().references(() => topikOwnerAuthoredCurriculumUnits.id, { onDelete: 'restrict' }),
+    targetGrade: integer('target_grade').notNull(),
+    stableRef: text('stable_ref').notNull().unique(),
+    itemType: text('item_type', { enum: ['vocab', 'grammar', 'reading', 'listening', 'writing'] }).notNull(),
+    promptKo: text('prompt_ko').notNull(),
+    promptJa: text('prompt_ja').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    answerJson: text('answer_json').notNull().default('{}'),
+    explanationKo: text('explanation_ko').notNull(),
+    explanationJa: text('explanation_ja').notNull(),
+    explanationEn: text('explanation_en').notNull(),
+    audioRequired: integer('audio_required', { mode: 'boolean' }).notNull().default(false),
+    sourceAssetId: text('source_asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
+    ...timestamps,
+  },
+  (t) => ({ gradeIdx: index('topik_owner_curriculum_items_grade_idx').on(t.targetGrade, t.itemType) }),
+);
+
 /** Immutable, review-gated release ledger shared by track-specific content. */
 export const contentReleases = sqliteTable(
   'content_releases',
@@ -1092,6 +1226,18 @@ export const pushSubscriptions = sqliteTable('push_subscriptions', {
 // ═══════════════════════════════════════════════════════════════════
 export type Source = typeof sources.$inferSelect;
 export type NewSource = typeof sources.$inferInsert;
+export type ContentSourceAsset = typeof contentSourceAssets.$inferSelect;
+export type NewContentSourceAsset = typeof contentSourceAssets.$inferInsert;
+export type LearningContentStableRef = typeof learningContentStableRefs.$inferSelect;
+export type NewLearningContentStableRef = typeof learningContentStableRefs.$inferInsert;
+export type ContentAudioBinding = typeof contentAudioBindings.$inferSelect;
+export type NewContentAudioBinding = typeof contentAudioBindings.$inferInsert;
+export type LearningContentLevelReference = typeof learningContentLevelReferences.$inferSelect;
+export type NewLearningContentLevelReference = typeof learningContentLevelReferences.$inferInsert;
+export type TopikOwnerAuthoredCurriculumUnit = typeof topikOwnerAuthoredCurriculumUnits.$inferSelect;
+export type NewTopikOwnerAuthoredCurriculumUnit = typeof topikOwnerAuthoredCurriculumUnits.$inferInsert;
+export type TopikOwnerAuthoredCurriculumItem = typeof topikOwnerAuthoredCurriculumItems.$inferSelect;
+export type NewTopikOwnerAuthoredCurriculumItem = typeof topikOwnerAuthoredCurriculumItems.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Vocab = typeof vocab.$inferSelect;

@@ -25,6 +25,8 @@ import {
   type TopikPracticeListDto,
   type TopikPracticeSolutionDto,
   type TopikReleasedContentListDto,
+  type TopikOwnerCurriculumListDto,
+  type TopikOwnerCurriculumSolutionDto,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
 import type { components, paths } from '../types/api.js';
@@ -298,6 +300,14 @@ export const topikPracticeApi = {
     api.get<TopikPracticeListDto>('/tracks/topik-ko/practice', { exam_level: examLevel, section }),
   solution: (questionId: string) =>
     api.get<TopikPracticeSolutionDto>(`/tracks/topik-ko/practice/questions/${encodeURIComponent(questionId)}/solution`),
+};
+
+/** Additive TOPIK 1–6 curriculum; intentionally independent from the 28-item practice bank. */
+export const topikOwnerCurriculumApi = {
+  list: (targetGrade: number) =>
+    api.get<TopikOwnerCurriculumListDto>('/tracks/topik-ko/curriculum', { target_grade: targetGrade }),
+  solution: (itemId: string) =>
+    api.get<TopikOwnerCurriculumSolutionDto>(`/tracks/topik-ko/curriculum/items/${encodeURIComponent(itemId)}/solution`),
 };
 
 export interface OwnerPrivateTopikSolutionDto {

@@ -16,14 +16,11 @@ import {
 import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import {
-  CacheFirst,
   NetworkOnly,
   StaleWhileRevalidate,
-  NetworkFirst,
 } from 'workbox-strategies';
 import { ExpirationPlugin }        from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { RangeRequestsPlugin }     from 'workbox-range-requests';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -52,17 +49,12 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// 오디오 파일: CacheFirst, 30일, 500개
+// Audio objects are fetched from private R2 through an authenticated endpoint.
+// Do not cache them in the Service Worker: a device-local cache is never an
+// access-control boundary and must not outlive the authenticated session.
 registerRoute(
   ({ url }) => url.pathname.includes('/api/v1/audio/'),
-  new CacheFirst({
-    cacheName: 'nihongo-audio',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 }),
-      new CacheableResponsePlugin({ statuses: [0, 200, 206] }),
-      new RangeRequestsPlugin(),
-    ],
-  }),
+  new NetworkOnly(),
 );
 
 // 콘텐츠 API (어휘·문법·한자·예문·커리큘럼): StaleWhileRevalidate
