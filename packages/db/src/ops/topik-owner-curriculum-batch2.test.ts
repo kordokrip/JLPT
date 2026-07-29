@@ -20,6 +20,7 @@ test('TOPIK 1–6 Batch 2 adds a second browser-ready item for every grade and s
   assert.match(sql, /audio_text_ko/);
   assert.match(sql, /browser Korean voice/);
   assert.match(sql, /self-authored TOPIK learning content\.',\n\s*'Personal learning content/);
+  assert.match(sql, /not official TOPIK material\.',\n\s*'[a-f0-9]{64}'/);
   assert.doesNotMatch(sql, /content_releases|topik_practice_questions/i);
   assert.match(topikOwnerBatch2ContentRowsSql(), /topik_owner_authored_curriculum_items/);
 });
