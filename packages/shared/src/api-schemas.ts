@@ -126,6 +126,7 @@ export type TopikOfficialReferenceDto = z.infer<typeof topikOfficialReferenceSch
 
 export const topikPlacementAudioSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('r2'), url: z.string().min(1) }),
+  z.object({ kind: z.literal('browser-fallback'), text_ko: z.string().min(1) }),
   z.object({ kind: z.literal('unavailable'), reason: z.enum(['preparing', 'not-provided']) }),
 ]);
 export type TopikPlacementAudioDto = z.infer<typeof topikPlacementAudioSchema>;

@@ -57,7 +57,7 @@ export function TopikOwnerAuthoredCurriculum() {
     <section className="mt-10 max-w-[960px] border-t border-[var(--border)] pt-8" aria-labelledby="topik-owner-curriculum-title">
       <p className="text-sm font-bold text-[var(--accent)]">TOPIK 1–6</p>
       <h2 id="topik-owner-curriculum-title" className="mt-2 text-2xl font-black">자체 저작 학습 단위</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">기존 TOPIK I/II 문제은행과 별도인 학습용 단위입니다. 오디오는 검증된 private R2 파일이 있을 때만 재생합니다.</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">기존 TOPIK I/II 문제은행과 별도인 학습용 단위입니다. 듣기 대본이 있는 항목은 기기의 한국어 음성으로 바로 들을 수 있습니다.</p>
 
       <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="TOPIK 목표 급">
         {GRADES.map((item) => (

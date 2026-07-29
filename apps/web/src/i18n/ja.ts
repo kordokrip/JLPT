@@ -617,6 +617,7 @@ const ja = {
     ttsProviderDesc:   '発音再生で優先する音声プロバイダーを選びます',
     r2OnlyAudioDesc:   '学習とQAは出典・ライセンス・hashを記録したprivate R2音声だけを再生します。ブラウザー音声には切り替えません。',
     ttsBrowser:        'ブラウザー',
+    googleVoicePreferred: 'Googleの日本語・韓国語音声を優先',
     audioQa:           '音声QA',
     audioQaDesc:       '30個のサンプルで発音エンジンの品質を比較します',
     openAudioQa:       '比較を開く',

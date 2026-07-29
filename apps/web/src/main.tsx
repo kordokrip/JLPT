@@ -63,7 +63,7 @@ if (!rootEl) throw new Error('#root element not found');
   document.documentElement.lang = i18n.language || 'ko';
   audioPlayer.configure({
     rate: playbackRate,
-    sourcePreference: 'server',
+    sourcePreference: 'browser',
   });
 })();
 

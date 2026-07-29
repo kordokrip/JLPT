@@ -65,15 +65,15 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
           <div className="mt-5 flex flex-wrap items-center gap-3 border-y border-[var(--border)] py-4">
             <button
               type="button"
-              disabled={question.audio?.kind !== 'r2'}
-              onClick={() => question.audio?.kind === 'r2' && audio.play(question.audio)}
+              disabled={!question.audio || question.audio.kind === 'unavailable'}
+              onClick={() => question.audio && question.audio.kind !== 'unavailable' && audio.play(question.audio)}
               className="touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white disabled:opacity-50"
             >
               <Volume2 aria-hidden="true" size={19} />
               {audio.playing ? t('topik.placement.playing') : t('topik.placement.playAudio')}
             </button>
             <span className="text-xs text-[var(--muted-foreground)]">
-              {question.audio?.kind === 'r2' ? t('topik.placement.reviewedAudio') : t('quiz.audioPending')}
+              {question.audio?.kind === 'r2' ? t('topik.placement.reviewedAudio') : question.audio?.kind === 'browser-fallback' ? t('topik.placement.browserAudio') : t('quiz.audioPending')}
             </span>
             {audio.error && <p role="alert" className="w-full text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
           </div>

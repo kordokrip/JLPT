@@ -63,7 +63,8 @@ function audioDto(row: QuestionRow): TopikPlacementAudioDto | null {
     const path = row.audio_r2_key.split('/').map(encodeURIComponent).join('/');
     return { kind: 'r2', url: `/api/v1/audio/${path}` };
   }
-  return { kind: 'unavailable', reason: row.audio_script_ko?.trim() ? 'preparing' : 'not-provided' };
+  if (row.audio_script_ko?.trim()) return { kind: 'browser-fallback', text_ko: row.audio_script_ko };
+  return { kind: 'unavailable', reason: 'not-provided' };
 }
 
 function publicQuestion(row: QuestionRow): TopikPlacementQuestionDto {

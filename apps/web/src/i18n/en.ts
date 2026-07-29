@@ -617,6 +617,7 @@ const en = {
     ttsProviderDesc:   'Choose the preferred provider for pronunciation playback',
     r2OnlyAudioDesc:   'Learning and QA play only private R2 audio with recorded source, licence, and hash. Browser speech is never substituted.',
     ttsBrowser:        'Browser',
+    googleVoicePreferred: 'Prefer Google Japanese and Korean voices',
     audioQa:           'Audio QA',
     audioQaDesc:       'Compare pronunciation quality with 30 fixed samples',
     openAudioQa:       'Open comparison',

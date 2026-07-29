@@ -946,7 +946,7 @@ describe('TOPIK placement V2', () => {
     expect(startBody.data.instruction_language).toBe('ja');
     expect(startBody.data.questions).toHaveLength(24);
     expect(startBody.data.questions.filter((item) => item.section === 'listening')).toHaveLength(12);
-    expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'unavailable', reason: 'preparing' });
+    expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '한국어 듣기 문장 1입니다.' });
     expect(startBody.data.questions[0]?.prompt_ja).toContain('日本語');
     expect(JSON.stringify(startBody)).not.toContain('answer_index');
     expect(JSON.stringify(startBody)).not.toContain('explanation_en');

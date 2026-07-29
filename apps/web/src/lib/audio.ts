@@ -17,8 +17,8 @@ export function buildAudioUrl(path: string): string {
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
-/** Normal learning playback is served only by the authenticated audio endpoint. */
-export type AudioSourcePreference = 'server';
+/** Personal-study pronunciation uses the browser's Japanese voice first. */
+export type AudioSourcePreference = 'browser' | 'server';
 export type TtsProviderId = 'browser' | 'cloudflare' | 'google' | 'voicevox' | 'style-bert-vits2';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
@@ -67,7 +67,7 @@ class AudioPlayer {
   private _rate: PlaybackRate = 1.0;
   private _voiceGender: VoiceGender = 'female';
   private _voiceURI: string | null = null;
-  private _sourcePreference: AudioSourcePreference = 'server';
+  private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
   private voicesReady = new Map<string, Promise<void>>();
 
@@ -242,19 +242,39 @@ class AudioPlayer {
   }
 
   async playPronunciation({
+    text,
     audioPath,
     surface,
+    prefer,
+    forceBrowser = false,
     slow = false,
+    repeat = 1,
+    preferGoogleVoice = true,
   }: PronunciationOptions): Promise<boolean> {
+    const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
+    const source = prefer ?? this._sourcePreference ?? policy.primary;
     const approvedAudioPath = audioPath && isReviewedImmutableAudioPath(audioPath) ? audioPath : undefined;
+    const preferBrowser = forceBrowser || source === 'browser' || policy.primary === 'browser' || !approvedAudioPath;
     const useSlow = slow || policy.slow;
-    if (!approvedAudioPath) return false;
-    return this.play(approvedAudioPath, undefined, useSlow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
+    const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
+
+    if (preferBrowser && normalized) {
+      const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
+      const spoken = await this.speakText(spokenText, {
+        ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
+        preferGoogleVoice: useGoogleVoice,
+      });
+      if (spoken || !approvedAudioPath) return spoken;
+    }
+    if (approvedAudioPath) {
+      return this.play(approvedAudioPath, normalized, useSlow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
+    }
+    return normalized ? this.speakText(normalized, { preferGoogleVoice: useGoogleVoice }) : false;
   }
 
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
-  async play(path: string, _fallbackText?: string, options: { rate?: number } = {}): Promise<boolean> {
+  async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<boolean> {
     this.stop();
 
     let entry = this.cache.get(path);
@@ -271,7 +291,7 @@ class AudioPlayer {
       });
     }
 
-    if (!entry.buffer) return false;
+    if (!entry.buffer) return fallbackText ? this.speakText(fallbackText, { preferGoogleVoice: true }) : false;
 
     const ctx = this.getCtx();
     if (ctx.state === 'suspended') await ctx.resume();

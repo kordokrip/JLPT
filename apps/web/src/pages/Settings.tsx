@@ -178,8 +178,8 @@ export default function Settings() {
             onChange={(v) => handleRate(v as PlaybackRate)}
           />
         </SettingRow>
-        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.r2OnlyAudioDesc')}>
-          <span className="rounded border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--muted-foreground)]">R2 only</span>
+        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.browserVoiceDesc')}>
+          <span className="rounded border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--muted-foreground)]">{t('settings.googleVoicePreferred')}</span>
         </SettingRow>
         <SettingRow label={t('settings.audioQa')} sublabel={t('settings.audioQaDesc')}>
           <Link

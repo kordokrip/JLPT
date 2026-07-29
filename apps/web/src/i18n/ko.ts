@@ -632,6 +632,7 @@ const ko = {
     ttsProviderDesc:   '일반 재생에서 우선 사용할 오디오 공급자를 정합니다',
     r2OnlyAudioDesc:   '학습 및 QA 재생은 출처·라이선스·hash가 확인된 private R2 오디오만 사용합니다. 브라우저 음성은 대체하지 않습니다.',
     ttsBrowser:        '브라우저',
+    googleVoicePreferred: 'Google 일본어·한국어 음성 우선',
     audioQa:           '오디오 QA',
     audioQaDesc:       '30개 샘플로 발음 엔진 품질을 비교합니다',
     openAudioQa:       '비교 열기',

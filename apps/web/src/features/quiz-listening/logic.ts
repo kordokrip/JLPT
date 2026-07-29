@@ -1,3 +1,4 @@
+import { prefersBrowserAudio } from '@nihongo-n3/shared';
 import type { ListeningAudioSource, SubmittedAnswer } from './types';
 
 export function toSubmittedAnswers(answers: Record<string, string>): SubmittedAnswer[] {
@@ -5,5 +6,5 @@ export function toSubmittedAnswers(answers: Record<string, string>): SubmittedAn
 }
 
 export function initialListeningAudioSource(hasServerAudio: boolean): ListeningAudioSource {
-  return hasServerAudio ? 'server' : 'unavailable';
+  return hasServerAudio && !prefersBrowserAudio('listening') ? 'server' : 'browser';
 }

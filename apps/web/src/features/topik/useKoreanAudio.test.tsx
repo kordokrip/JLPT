@@ -21,6 +21,42 @@ describe('useKoreanAudio', () => {
     expect(result.current.error).toBe('unavailable');
   });
 
+  it('prefers a Google Korean browser voice and never uses an unrelated default voice', () => {
+    class MockUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(public text: string) {}
+    }
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    const speak = vi.fn();
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        speak,
+        getVoices: () => [
+          { lang: 'en-US', name: 'English', voiceURI: 'en', default: true },
+          { lang: 'ko-KR', name: 'Korean system', voiceURI: 'ko-system', default: true },
+          { lang: 'ko-KR', name: 'Google 한국의', voiceURI: 'google-ko-kr', default: false },
+        ],
+      },
+    });
+    const { result } = renderHook(() => useKoreanAudio());
+
+    act(() => {
+      expect(result.current.speakText('안녕하세요')).toBe(true);
+    });
+
+    const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
+    expect(utterance.text).toBe('안녕하세요');
+    expect(utterance.lang).toBe('ko-KR');
+    expect(utterance.voice?.voiceURI).toBe('google-ko-kr');
+  });
+
   it('plays only an R2 DTO through an HTML audio element', () => {
     const play = vi.fn().mockResolvedValue(undefined);
     class MockAudio {

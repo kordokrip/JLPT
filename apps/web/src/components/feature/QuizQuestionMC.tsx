@@ -3,7 +3,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { audioPlayer, isReviewedImmutableAudioPath } from '../../lib/audio';
+import { audioPlayer } from '../../lib/audio';
 
 interface Props {
   questionId:  string;
@@ -21,32 +21,34 @@ export default function QuizQuestionMC({
   prompt,
   choices,
   audioKey,
-  audioText: _audioText,
+  audioText,
   selected,
   onSelect,
   disabled = false,
 }: Props) {
   const { t } = useTranslation();
-  const [audioUnavailable, setAudioUnavailable] = useState(false);
-  const canPlayAudio = Boolean(audioKey && isReviewedImmutableAudioPath(audioKey));
+  const [usingBrowserVoice, setUsingBrowserVoice] = useState(false);
+  const promptAudioText = audioText ?? (hasJapanese(prompt) ? prompt : undefined);
+  const canPlayAudio = Boolean(audioKey || promptAudioText);
 
   const handleAudio = () => {
-    if (!audioKey) return;
-    setAudioUnavailable(false);
+    setUsingBrowserVoice(false);
     audioPlayer
       .playPronunciation({
+        text: promptAudioText,
         audioPath: audioKey,
         surface: 'listening',
+        preferGoogleVoice: true,
       })
-      .then((played) => setAudioUnavailable(!played))
-      .catch(() => setAudioUnavailable(true));
+      .then(() => setUsingBrowserVoice(Boolean(promptAudioText)))
+      .catch(() => setUsingBrowserVoice(Boolean(promptAudioText)));
   };
 
   return (
     <div className="space-y-4">
       {/* 문제 */}
       <div className="text-center">
-        {canPlayAudio ? (
+        {canPlayAudio && (
           <button
             type="button"
             aria-label={t('common.play')}
@@ -59,12 +61,12 @@ export default function QuizQuestionMC({
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
             </svg>
           </button>
-        ) : (
+        )}
+        {usingBrowserVoice && promptAudioText && (
           <p className="mb-3 text-[12px] text-[var(--muted-foreground)]" role="status">
-            {t('quiz.audioPending')}
+            {t('quiz.browserSpeechPreferred')}
           </p>
         )}
-        {audioUnavailable && <p className="mb-3 text-[12px] text-[var(--muted-foreground)]" role="status">{t('quiz.audioPending')}</p>}
         <p
           id={`q-${questionId}-prompt`}
           className="font-sans-jp text-[28px] font-medium text-foreground"
@@ -105,4 +107,8 @@ export default function QuizQuestionMC({
       </ul>
     </div>
   );
+}
+
+function hasJapanese(text: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(text);
 }

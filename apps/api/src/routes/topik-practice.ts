@@ -70,7 +70,7 @@ function audioDto(row: PracticeRow): TopikPlacementAudioDto | null {
     const path = row.audio_r2_key.split('/').map(encodeURIComponent).join('/');
     return { kind: 'r2', url: `/api/v1/audio/${path}` };
   }
-  return { kind: 'unavailable', reason: row.audio_script_ko?.trim() ? 'preparing' : 'not-provided' };
+  return row.audio_script_ko?.trim() ? { kind: 'browser-fallback', text_ko: row.audio_script_ko } : { kind: 'unavailable', reason: 'not-provided' };
 }
 
 function publicQuestion(row: PracticeRow): TopikPracticeQuestionDto {
