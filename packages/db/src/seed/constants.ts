@@ -34,6 +34,7 @@ export const CONTENT_PATHS = {
   n2Batch3:     path.join(REPO_ROOT, 'docs/05_n2/04_self_authored_batch_3.md'),
   n1Batch1:     path.join(REPO_ROOT, 'docs/06_n1/01_self_authored_batch_1.md'),
   topikOwnerBatch1: path.join(REPO_ROOT, 'docs/07_topik/02_owner_authored_grades_1_6_batch_1.md'),
+  topikOwnerBatch2: path.join(REPO_ROOT, 'docs/07_topik/03_owner_authored_grades_1_6_batch_2.md'),
   sentences:    path.join(REPO_ROOT, 'docs/04_supplement/12_example_sentences.md'),
   sysprog:      path.join(REPO_ROOT, 'docs/04_supplement/A_sysprog_vocab_500.md'),
   pronunciation:path.join(REPO_ROOT, 'docs/04_supplement/02_pronunciation_kana.md'),

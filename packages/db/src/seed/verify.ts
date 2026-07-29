@@ -14,6 +14,7 @@ import { n2Batch2ContentRowsSql } from "./n2-batch2.js";
 import { n2Batch3ContentRowsSql } from "./n2-batch3.js";
 import { n1Batch1ContentRowsSql } from './n1-batch1.js';
 import { topikOwnerBatch1ContentRowsSql } from './topik-owner-curriculum-batch1.js';
+import { topikOwnerBatch2ContentRowsSql } from './topik-owner-curriculum-batch2.js';
 import {
   argValue,
   countSql,
@@ -171,6 +172,7 @@ function rowCountSql(entry: ContentManifestEntry): string {
   }
   if (entry.table === 'topik_owner_curriculum') {
     if (entry.sourceCode === 'TOPIK-A1') return topikOwnerBatch1ContentRowsSql();
+    if (entry.sourceCode === 'TOPIK-A2') return topikOwnerBatch2ContentRowsSql();
     throw new Error(`Unknown TOPIK owner curriculum source: ${entry.sourceCode}`);
   }
   if (entry.selector.kind === "source") {
