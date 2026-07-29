@@ -16,6 +16,7 @@ import { parseKanji } from './parse-kanji.js';
 import { buildN2Batch1Plan } from './n2-batch1.js';
 import { buildN2Batch2Plan } from './n2-batch2.js';
 import { buildN2Batch3Plan } from './n2-batch3.js';
+import { buildN1Batch1Plan } from './n1-batch1.js';
 import { buildTopikOwnerBatch1Plan } from './topik-owner-curriculum-batch1.js';
 import { parseSentences } from './parse-sentences.js';
 import { parseSysProg } from './parse-sysprog.js';
@@ -36,7 +37,7 @@ export type SeedTable =
 
 export const CONTENT_MANIFEST_SCHEMA_VERSION = 3;
 export const CONTENT_PARSER_VERSION = 'content-parser-v3';
-export const SEEDED_SOURCE_COUNT = 17;
+export const SEEDED_SOURCE_COUNT = 18;
 
 const REPOSITORY_URL = 'https://github.com/kordokrip/JLPT';
 const ATTRIBUTIONS_URL = `${REPOSITORY_URL}/blob/main/docs/ATTRIBUTIONS.md`;
@@ -129,7 +130,7 @@ function repositoryFileUrl(filePath: string): string {
 function sourceProvenance(code: string, title: string, filePath: string): ContentProvenance {
   const mixedTerminology = code === 'A';
   const selfAuthoredN2Batch = code === 'N2-A1' || code === 'N2-A2' || code === 'N2-A3';
-  const selfAuthoredBatch = selfAuthoredN2Batch || code === 'TOPIK-A1';
+  const selfAuthoredBatch = selfAuthoredN2Batch || code === 'N1-A1' || code === 'TOPIK-A1';
   return {
     origin: {
       name: selfAuthoredBatch
@@ -158,7 +159,7 @@ function sourceProvenance(code: string, title: string, filePath: string): Conten
       },
     // This field is legacy seed provenance, not a public-release reviewer gate.
     reviewer: selfAuthoredBatch ? 'self-authored personal content record (no external reviewer)' : CONTENT_REVIEWER,
-    reviewedAt: code === 'TOPIK-A1' ? '2026-07-30' : selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
+    reviewedAt: code === 'TOPIK-A1' || code === 'N1-A1' ? '2026-07-30' : selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
   };
 }
 
@@ -183,6 +184,7 @@ const sourceCatalog: SourceCatalogEntry[] = [
   catalogEntry('N2-A1', 'N2 자체 저작 Batch 1', CONTENT_PATHS.n2Batch1),
   catalogEntry('N2-A2', 'N2 자체 저작 Batch 2', CONTENT_PATHS.n2Batch2),
   catalogEntry('N2-A3', 'N2 자체 저작 Batch 3', CONTENT_PATHS.n2Batch3),
+  catalogEntry('N1-A1', 'N1 자체 저작 Batch 1', CONTENT_PATHS.n1Batch1),
   catalogEntry('TOPIK-A1', 'TOPIK 1~6급 자체 저작 Batch 1', CONTENT_PATHS.topikOwnerBatch1),
   catalogEntry('12', '예문 코퍼스', CONTENT_PATHS.sentences),
   catalogEntry('A', '직무 어휘', CONTENT_PATHS.sysprog),
@@ -196,6 +198,7 @@ function buildSeedDefinitions(): SeedDefinition[] {
   const n2Batch1 = buildN2Batch1Plan();
   const n2Batch2 = buildN2Batch2Plan();
   const n2Batch3 = buildN2Batch3Plan();
+  const n1Batch1 = buildN1Batch1Plan();
   const topikOwnerBatch1 = buildTopikOwnerBatch1Plan();
   return [
     sourceSeed('04', 'vocab', 'source', () => parseVocab({ sourceCode: '04', level: 'N5', filePath: CONTENT_PATHS.n5Vocab, naturalKeys: vocabKeys })),
@@ -222,6 +225,11 @@ function buildSeedDefinitions(): SeedDefinition[] {
       ...sourceSeed('N2-A3', 'n2_curriculum', 'source', () => n2Batch3.statements),
       expectedRows: n2Batch3.manifest.counts.contentRows,
       expectedCategories: n2Batch3.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N1-A1', 'n2_curriculum', 'source', () => n1Batch1.statements),
+      expectedRows: n1Batch1.manifest.counts.contentRows,
+      expectedCategories: n1Batch1.manifest.counts.categories,
     },
     {
       ...sourceSeed('TOPIK-A1', 'topik_owner_curriculum', 'source', () => topikOwnerBatch1.statements),
