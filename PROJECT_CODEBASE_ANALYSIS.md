@@ -1,15 +1,14 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-기준일: 2026-08-19 KST. 이 문서는 코드·schema·route·test를 기준으로 한 현재 구조 지도입니다. production 기준선과 로컬 릴리스 후보는 별도 상태입니다.
+기준일: 2026-08-19 KST. 이 문서는 배포된 코드·schema·route·test를 기준으로 한 현재 구조 지도입니다.
 
-## 배포 경계
+## Production 기준선
 
 | 상태 | DB/런타임 | 콘텐츠 |
 | --- | --- | --- |
-| production 기준선 | D1 `0000–0023`, Worker `693837d0-70e0-40b7-9f7e-72487321b6f7`, Pages `9d8e6460-2e86-477c-8eb8-fc4c41491f4c` | canonical 6,501행, TOPIK practice v2 300 공개 |
-| 로컬 후보 | migration `0024–0027`, 대응 shared/API/web 구현과 테스트 | N3 120문항, TOPIK owner Batch 5 20항목; review artifact 존재, publication state는 draft/unpublished |
+| production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://7b0e9050.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
 
-로컬 후보는 아직 production에 반영되지 않았습니다. 아래 설명에서 “구현됨”은 로컬 코드 상태를 의미합니다.
+배포 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다.
 
 ## 계층과 데이터 흐름
 
@@ -30,7 +29,7 @@ packages/shared DTO·FSRS ── apps/api Worker
 | `packages/db` | D1 schema/migration, source/seed plan, release gate, verifier |
 | `e2e` | 브라우저별 데이터 바인딩·학습 흐름·R2 요청 차단 검증 |
 
-## 로컬 신규 데이터 모델
+## Production 데이터 모델
 
 | migration | 모델과 불변 조건 |
 | --- | --- |
@@ -56,29 +55,28 @@ TOPIK 대시보드는 서버 due, 미완료 owner 목록, 30일 activity summary
 
 ## 콘텐츠와 release control
 
-production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner Batch 1–4(120 unit/120 item), TOPIK practice v2 300문항을 제공합니다.
+production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner Batch 1–5(140 unit/140 item), TOPIK practice v2 300문항을 제공합니다. TOPIK Batch 5는 1·2급만 확장합니다.
 
-로컬 초안은 별도 source와 deterministic builder에 있습니다.
+2026-08-19 콘텐츠 release는 별도 source와 deterministic builder에서 생성되어 production에 반영됐습니다.
 
-- `jlpt-n3-practice-v1-2026-08-19`: 한자 읽기 60 + 듣기 60, 각 모드 정답 위치 `15/15/15/15`, 3개 언어 prompt/explanation, 모두 `is_published=0`
-- `topik-owner-batch5-2026-08-19`: 급수별 10개, 다섯 영역 각 2개, 총 20개. 듣기 4개만 `audio_text_ko`와 Google speech binding을 가짐
-- 두 독립 adversarial review artifact가 140개 전체의 정답·해설을 대조하지만 draft 필드 자체는 release 실행 전까지 pending/unpublished로 유지
+- `jlpt-n3-practice-v1-2026-08-19`: 한자 읽기 60 + 듣기 60, 각 모드 정답 위치 `15/15/15/15`, quality link 120개, published
+- `topik-owner-batch5-2026-08-19`: 급수별 10개, 다섯 영역 각 2개, 총 20개, quality link 20개, published. 듣기 4개만 `audio_text_ko`와 Google speech binding을 가짐
+- 두 독립 adversarial review artifact가 140개 전체의 정답·해설을 대조했고 release gate가 이를 실제 publication과 연결
 
-기존 TOPIK v2 300 audit을 release control plane에 역사적으로 연결하는 backfill script도 로컬에 있습니다. production 실행은 `--publish`와 명시적 환경 guard가 필요하며 아직 적용되지 않았습니다.
+기존 TOPIK v2 300 audit은 historical release `topik-practice-v2-2026-08-17`의 quality link 300개로 production control plane에 연결됐습니다.
 
 ## 음성 불변 조건
 
 모든 발음은 Google 브라우저 음성만 사용합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`, web prefetch는 네트워크 없는 no-op이며 E2E는 `/api/v1/audio/` 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
 
-## 검증 상태와 남은 위험
+## 검증 상태와 다음 관찰
 
-2026-08-19 로컬 집중 검증 결과는 web unit 34파일/86테스트, web production build, Chromium·WebKit 활동/퀴즈/owner E2E 24/24 통과입니다. API route test는 event idempotency·track mismatch·strict-level weakest를, DB test는 migration order·release link·140개 review coverage·Google-only 계약을 고정합니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. Chromium·WebKit production E2E도 통과했습니다. API route test는 event idempotency·track mismatch·strict-level weakest를, DB test는 migration order·release link·140개 review coverage·Google-only 계약을 고정합니다.
 
-아직 남은 릴리스 위험은 다음과 같습니다.
+다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
 
-- `0024–0027` upgrade를 production snapshot 사본과 preview D1에서 다시 확인해야 합니다.
-- 역사적 TOPIK v2 release/evidence backfill은 production에서 아직 0인 control-plane 기록을 채우므로 백업과 dry-run이 필요합니다.
-- 신규 140개 초안은 review artifact가 있어도 release link, G0–G4, preview, production 승인 전에는 공개할 수 없습니다.
+- activity summary의 중복률, track 격리, speech error를 7일/30일 창으로 관찰합니다.
+- release link 수 120/20/300과 published 상태를 원격 verifier에서 계속 고정합니다.
 - 배포 뒤 실제 사용량이 N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건에 도달해야 다음 콘텐츠 증량을 판단할 수 있습니다.
 
 실행 순서는 [NEXT_DEVELOPMENT_PLAN_2026-08-19.md](./docs/00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md)를 따릅니다.

@@ -2,20 +2,17 @@
 
 JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, Google 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
 
-## 릴리스 기준 — 2026-08-19 KST
-
-운영 상태와 로컬 릴리스 후보를 혼동하지 않습니다.
+## Production 기준 — 2026-08-19 KST
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| production D1 | `nihongo-n3-prod-v2`, migration `0000–0023` |
-| production Worker | `693837d0-70e0-40b7-9f7e-72487321b6f7` |
-| production Pages | `9d8e6460-2e86-477c-8eb8-fc4c41491f4c` |
-| production 콘텐츠 | manifest `content-v3-d102868e3d43b9b3c1a4`, TOPIK practice v2 300개 공개, v1 28개 보존·비공개 |
-| 로컬 릴리스 후보 | migration `0024–0027`, 활동 API/UI, strict-level `weakest`, release-quality 연결, Google speech 계약 |
-| 검토된 로컬 콘텐츠 초안 | `jlpt-n3-practice-v1-2026-08-19` 120문항, `topik-owner-batch5-2026-08-19` 20항목; 모두 미공개 |
+| production D1 | `nihongo-n3-prod-v2`, migration `0000–0027` |
+| production Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
+| production Pages | `https://7b0e9050.nihongo-n3.pages.dev` |
+| source release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
 
-`0024–0027`과 신규 콘텐츠 초안은 아직 위 production 기준선에 배포되지 않았습니다. 배포 전후 절차는 [2026-08-19 다음 개발 계획](./docs/00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md)을 따릅니다. 2026-08-09와 2026-08-17의 실제 production 기록과 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
+2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 배포 기록과 이후 관찰 계획은 [2026-08-19 실행 계획](./docs/00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md), 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
 
 ## 구조
 
@@ -31,7 +28,7 @@ apps/web React PWA ← apps/api Hono Worker ← packages/shared DTO·FSRS
 - `packages/db`: Drizzle schema, migration, deterministic seed, fresh verifier
 - `e2e`: Chromium/WebKit 핵심 학습 흐름과 음성 정책 회귀 검사
 
-## 2026-08-19 로컬 후보의 핵심 계약
+## 2026-08-19 production 계약
 
 - `POST /api/v1/activity/events`: 최대 100개 이벤트를 idempotent batch로 수신합니다. 브라우저는 Dexie에 먼저 저장한 뒤 계정×트랙 범위에서 재전송합니다.
 - `GET /api/v1/activity/summary?window=7d|30d`: 완료·정답·복습·음성 결과를 트랙/급수/영역/모드별로 집계합니다.
@@ -57,6 +54,6 @@ pnpm -F @nihongo-n3/db content:contract:verify
 pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
 
-2026-08-19 집중 검증에서는 web unit 34파일/86테스트, web production build, Chromium·WebKit의 활동/퀴즈/TOPIK owner E2E 24/24가 통과했습니다. 이 E2E는 Google 일본어·한국어 음성 호출과 `/api/v1/audio/` 요청 0건을 함께 확인합니다. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하지만 원격 write나 배포는 수행하지 않습니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. Chromium·WebKit production E2E도 Google 일본어·한국어 음성과 `/api/v1/audio/` 요청 0건을 포함해 통과했습니다. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 문서 탐색은 [docs/README.md](./docs/README.md), 코드 구조는 [PROJECT_CODEBASE_ANALYSIS.md](./PROJECT_CODEBASE_ANALYSIS.md), 실제 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md)를 기준으로 합니다.

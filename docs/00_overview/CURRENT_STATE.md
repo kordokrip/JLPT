@@ -1,18 +1,17 @@
 # 현재 구현 상태
 
-기준일: 2026-08-19 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 운영 기준입니다. “production”과 “로컬 후보”는 서로 다른 상태입니다.
+기준일: 2026-08-19 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
 ## 상태 요약
 
-| 구분 | Production 기준선 | 로컬 릴리스 후보 |
-| --- | --- | --- |
-| D1 migration | `0000–0023` | `0000–0027` fresh 재현 |
-| Worker | `693837d0-70e0-40b7-9f7e-72487321b6f7` | activity/weakest/Google speech 호환 코드 |
-| Pages | `9d8e6460-2e86-477c-8eb8-fc4c41491f4c` | activity queue/summary/next-action UI |
-| 콘텐츠 | canonical 6,501행, TOPIK v2 300 공개 | N3 120 + TOPIK owner 20 초안, 미공개 |
-| release control | migration 0022 quality ledger까지 | 0026 quality link와 guarded historical backfill |
-
-`0024–0027`, 대응 앱 코드, 신규 140개 초안은 아직 production에 배포되지 않았습니다.
+| 구분 | Production 기준 |
+| --- | --- |
+| D1 migration | `0000–0027` |
+| Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
+| Pages | `https://7b0e9050.nihongo-n3.pages.dev` |
+| source release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
+| release control | quality requirements/links와 G0–G4 production 연결 |
 
 ## Production 콘텐츠
 
@@ -26,12 +25,12 @@ manifest `content-v3-d102868e3d43b9b3c1a4`는 26개 source와 canonical 6,501행
 | 공용/직무/계획 | 예문 1,100, 직무 어휘 82, 주차 계획 52 |
 | JLPT N2 | Batch 1–5, 583 canonical행 |
 | JLPT N1 | Batch 1–4, 286 canonical행 |
-| TOPIK owner | Batch 1–4, 120 unit + 120 item |
+| TOPIK owner | Batch 1–5, 140 unit + 140 item; Batch 5는 1·2급 20개 확장 |
 | TOPIK practice | v2 300 공개, v1 28 보존·비공개 |
 
 TOPIK v2 선택형 네 영역은 각각 정답 위치 `15/15/15/15`이고 쓰기 60개는 서술형입니다. 정적 JLPT 독해 분포는 N1 `5/5/5/5`, N2 `10/10/9/9`, N3 `3/3/2/2`입니다.
 
-## 로컬 migration `0024–0027`
+## Production migration `0024–0027`
 
 - `0024_learning_activity_events.sql`: `(user_id,event_id)` 중복 차단. `content_opened`, `content_completed`, `quiz_answered`, `review_rated`, `speech_attempted`만 저장하고 문제 원문/개인정보는 저장하지 않습니다.
 - `0025_jlpt_practice_questions.sql`: 버전형 자체 저작 JLPT bank. 3개 언어 prompt/choice/explanation, 정답 위치, listening script를 보관하며 기본 미공개입니다.
@@ -52,20 +51,21 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 기존 퀴즈 요청/응답은 유지됩니다. `strategy`는 선택적 `random|weakest`이고 기본은 `random`입니다. 웹은 random일 때 해당 필드를 보내지 않습니다. `weakest`는 최근 30일 오답을 우선하되 요청 급수 내부에서만 선택합니다. 풀이 가능한 문제가 부족해도 다른 JLPT 급수로 fallback하지 않고 명시적으로 실패합니다.
 
-## 로컬 검토 콘텐츠
+## 2026-08-19 Production 콘텐츠 release
 
-- `jlpt-n3-practice-v1-2026-08-19` (`JLPT_N3_PRACTICE_BANK_V1`): 한자 읽기 60, 듣기 60. 각 영역 정답 위치 `15/15/15/15`; 전부 `is_published=0`.
-- `topik-owner-batch5-2026-08-19` (`TOPIK_OWNER_BATCH_5`): 1급 10, 2급 10. 급수별 어휘·문법·읽기·듣기·쓰기 각 2개; release state `draft`.
-- 서로 다른 두 adversarial reviewer artifact가 140개 전체의 정답과 해설을 독립 대조했습니다. source draft의 reviewer slot/publication 상태는 실제 release materialization 전까지 pending/unpublished로 유지합니다.
+- `jlpt-n3-practice-v1-2026-08-19`: 한자 읽기 60, 듣기 60. 각 영역 `15/15/15/15`, quality link 120개, published.
+- `topik-owner-batch5-2026-08-19`: 1급 10, 2급 10. 급수별 다섯 영역 각 2개, quality link 20개, published.
+- `topik-practice-v2-2026-08-17`: 기존 audit 300개를 historical release에 연결, published.
+- 서로 다른 두 adversarial reviewer artifact와 자동 validator 결과가 실제 release-quality link에 연결됐습니다.
 - TOPIK listening 4개와 JLPT listening script만 Google 브라우저 음성 대상입니다.
 
-이 초안은 fresh schema나 review test 통과만으로 공개되지 않습니다. release-quality link, G0–G4, preview, 명시적 production 승인이 추가로 필요합니다.
+이후 콘텐츠도 fresh schema나 review test만으로 공개하지 않으며 release-quality link, G0–G4, preview, 명시적 production 승인을 요구합니다.
 
 ## Google-only 음성 정책
 
-발음은 Google 브라우저 음성만 사용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. 신규 speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
+발음은 Google 브라우저 음성만 사용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
 
-## 로컬 검증 기록 — 2026-08-19
+## 배포 후 검증 기록 — 2026-08-19
 
 - web unit: 34파일, 86테스트 통과
 - web production build와 typecheck 통과
@@ -73,8 +73,12 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 - 브라우저 검증에 Google 일본어·한국어 speech와 `/api/v1/audio/` 요청 0건 포함
 - API route tests에 event idempotency/track guard/summary/strict-level weakest 포함
 - DB tests에 migration order, release link gate, N3/TOPIK 140개 review coverage, Google-only speech contract 포함
+- remote DB verifier와 TOPIK v2 verifier 통과
+- remote question quality 332개 검사, 실패 0건
+- remote R2 pronunciation 참조 0건
+- Chromium·WebKit production E2E 통과
 
-전체 release gate는 배포 직전에 다시 실행해야 합니다.
+같은 release gate는 다음 배포 직전에도 다시 실행해야 합니다.
 
 ```bash
 pnpm verify:ci
@@ -102,8 +106,15 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - remote question verifier, R2=0, Worker/Pages smoke 통과
 - rollback Worker `b959a270-7b2a-46a3-83dc-615ed63f730d`
 
-기존 TOPIK v2 300 audit을 `content_releases` 및 G0–G4 evidence에 연결하는 guarded backfill은 로컬에 구현됐지만 아직 production에 적용되지 않았습니다.
+### 2026-08-19
+
+- D1 migration 0024–0027
+- Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`
+- Pages `https://7b0e9050.nihongo-n3.pages.dev`
+- source SHA `3485c6ef8addda3cd3e209730646c296175cf3c9`
+- 세 release의 quality link 120/20/300 및 published 상태 확인
+- remote DB/TOPIK verifier, question quality 332/0, R2 pronunciation 0, Chromium/WebKit production E2E 통과
 
 ## 다음 단계
 
-[NEXT_DEVELOPMENT_PLAN_2026-08-19.md](NEXT_DEVELOPMENT_PLAN_2026-08-19.md)의 시계열 gate를 따릅니다. 어느 단계에서든 실패하면 production publication을 중단하고 draft를 유지합니다.
+[NEXT_DEVELOPMENT_PLAN_2026-08-19.md](NEXT_DEVELOPMENT_PLAN_2026-08-19.md)의 배포 기록과 사후 관찰 순서를 따릅니다. 다음 release도 어느 gate에서든 실패하면 publication을 중단하고 draft를 유지합니다.
