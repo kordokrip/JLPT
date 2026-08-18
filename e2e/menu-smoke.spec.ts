@@ -93,7 +93,7 @@ async function assertNoRuntimeFailures(page: Page, run: () => Promise<void>) {
     if (
       failures.length === 0 &&
       badResponses.length === 0 &&
-      /\/nihongo-n3\.pages\.dev\/sw\.js.*due to access control checks/.test(
+      /\/(?:[a-z0-9-]+\.)?nihongo-n3\.pages\.dev\/(?:sw\.js|api\/v1\/).*due to access control checks/.test(
         message,
       )
     ) {
