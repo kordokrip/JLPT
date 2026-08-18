@@ -1,5 +1,4 @@
-import { OpenAPIHono, z } from '@hono/zod-openapi';
-import { AUDIO_BATCH_LEVELS, type AudioBatchLevel } from '@nihongo-n3/shared';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { admin } from './admin.js';
 import { createdResponseSchema, dataResponseSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
@@ -43,92 +42,48 @@ mountLegacyRouteWithOpenApiDocs(adminOA, admin, [
     method: 'post',
     path: '/audio/queue',
     tags: ['Admin', 'Audio'],
-    summary: '승인된 Google TTS 오디오 배치 실행',
-    request: {
-      headers: z.object({
-        'x-audio-batch-approval': z.string().optional(),
-      }),
-      body: {
-        content: {
-          'application/json': {
-            schema: z.object({
-              execute: z.boolean().default(false),
-              dry_run: z.boolean().optional(),
-              batch: z.number().int().min(1).max(200).optional(),
-              provider: z.literal('google').optional(),
-              level: z.enum([...AUDIO_BATCH_LEVELS] as [AudioBatchLevel, ...AudioBatchLevel[]]).optional(),
-              force_regenerate: z.boolean().optional(),
-            }),
-          },
-        },
-      },
-    },
+    summary: '폐기된 R2 발음 생성 경로',
+    description: 'R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.',
     responses: {
-      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '큐 실행 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
       403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
+      410: { content: { 'application/json': { schema: problemSchema } }, description: 'R2 발음 생성은 비활성' },
     },
   },
   {
     method: 'post',
     path: '/audio/curriculum-queue',
     tags: ['Admin', 'Audio'],
-    summary: 'N1·TOPIK 불변 binding의 Google R2 오디오 소량 생성',
-    request: {
-      headers: z.object({ 'x-audio-batch-approval': z.string().optional() }),
-      body: {
-        content: {
-          'application/json': {
-            schema: z.object({
-              execute: z.boolean().default(false),
-              dry_run: z.boolean().optional(),
-              batch: z.number().int().min(1).max(20).optional(),
-              track: z.enum(['jlpt-ja', 'topik-ko']).optional(),
-            }),
-          },
-        },
-      },
-    },
+    summary: '폐기된 R2 curriculum 발음 생성 경로',
+    description: 'R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.',
     responses: {
-      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: '큐 상태 또는 생성 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
       403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
+      410: { content: { 'application/json': { schema: problemSchema } }, description: 'R2 발음 생성은 비활성' },
     },
   },
   {
     method: 'get',
     path: '/audio/providers',
     tags: ['Admin', 'Audio'],
-    summary: 'TTS provider 운영 연결 상태 확인',
+    summary: '폐기된 서버 TTS provider 경로',
+    description: '발음은 브라우저의 Google 음성만 사용하며 서버 provider 탐색은 비활성이다.',
     responses: {
-      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'provider 상태' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
       403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
+      410: { content: { 'application/json': { schema: problemSchema } }, description: '서버 TTS provider 경로는 비활성' },
     },
   },
   {
     method: 'post',
     path: '/audio/qa/warmup',
     tags: ['Admin', 'Audio'],
-    summary: '30개 QA 샘플 오디오 일괄 생성',
-    request: {
-      headers: z.object({ 'x-audio-batch-approval': z.string().optional() }),
-      body: {
-        content: {
-          'application/json': {
-            schema: z.object({
-              provider: z.enum(['cloudflare', 'google', 'voicevox']).optional(),
-              force: z.boolean().optional(),
-              language: z.enum(['ja', 'ko']).optional(),
-            }),
-          },
-        },
-      },
-    },
+    summary: '폐기된 R2 QA 발음 생성 경로',
+    description: 'R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.',
     responses: {
-      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'QA 샘플 생성 결과' },
       401: { content: { 'application/json': { schema: problemSchema } }, description: '인증 필요' },
       403: { content: { 'application/json': { schema: problemSchema } }, description: '관리자 권한 필요' },
+      410: { content: { 'application/json': { schema: problemSchema } }, description: 'R2 QA 발음 생성은 비활성' },
     },
   },
 ]);

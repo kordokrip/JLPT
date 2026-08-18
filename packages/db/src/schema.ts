@@ -7,11 +7,11 @@
  *   콘텐츠계: sources, categories, vocab, grammar, kanji,
  *             sentences, sysprog_terms, curriculum_weeks, homophone_pairs
  *   학습계:   users, srs_cards, review_logs, daily_logs,
- *             quiz_attempts, self_check
+ *             learning_activity_events, quiz_attempts, self_check
  *
  * JSON 컬럼: SQLite text 저장, .$type<T>()로 타입 힌트.
  * FSRS-6:   stability / difficulty 필드가 srs_cards에 있음.
- * 오디오:   바이너리는 R2 저장, D1에는 audio_r2_key만 기록.
+ * 발음:     브라우저 Google 음성만 사용하며 D1에는 텍스트 eligibility만 기록.
  */
 import {
   sqliteTable,
@@ -112,7 +112,11 @@ export const trackContentSeedSources = sqliteTable(
   }),
 );
 
-/** Immutable provenance for self-authored, licensed web, and TTS source assets. */
+/**
+ * Immutable provenance for content sources. The legacy R2-related columns
+ * remain mapped only because migration 0017 created them; production guards
+ * prohibit filling them for pronunciation.
+ */
 export const contentSourceAssets = sqliteTable(
   'content_source_assets',
   {
@@ -163,7 +167,11 @@ export const learningContentStableRefs = sqliteTable(
   }),
 );
 
-/** Only an r2-ready binding may be played on a normal learning screen. */
+/**
+ * Stable audio metadata for authored content. Production accepts pending
+ * metadata only; playback is browser Google speech and no R2-ready binding
+ * may be inserted.
+ */
 export const contentAudioBindings = sqliteTable(
   'content_audio_bindings',
   {
@@ -175,7 +183,7 @@ export const contentAudioBindings = sqliteTable(
     itemId: text('item_id').notNull(),
     language: text('language', { enum: ['ja', 'ko'] }).notNull(),
     audioRole: text('audio_role', { enum: ['pronunciation', 'listening'] }).notNull(),
-    bindingState: text('binding_state', { enum: ['r2-ready', 'preparing', 'not-provided'] }).notNull(),
+    bindingState: text('binding_state', { enum: ['preparing', 'not-provided'] }).notNull(),
     assetId: text('asset_id').references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
     unavailableReason: text('unavailable_reason'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
@@ -186,24 +194,27 @@ export const contentAudioBindings = sqliteTable(
   }),
 );
 
-/**
- * Append-only activation of a prepared binding.  The original binding keeps
- * the provenance of the authored item while this row selects one immutable
- * playable R2 asset for it.
- */
-export const contentAudioBindingActivations = sqliteTable(
-  'content_audio_binding_activations',
+/** Google browser speech eligibility. It deliberately has no binary/R2 field. */
+export const contentSpeechBindings = sqliteTable(
+  'content_speech_bindings',
   {
     id: text('id').primaryKey(),
-    bindingId: text('binding_id').notNull().references(() => contentAudioBindings.id, { onDelete: 'restrict' }),
-    assetId: text('asset_id').notNull().references(() => contentSourceAssets.id, { onDelete: 'restrict' }),
-    activatedAt: integer('activated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-    selectionReason: text('selection_reason').notNull(),
+    stableRef: text('stable_ref').notNull().references(() => learningContentStableRefs.stableRef, { onDelete: 'restrict' }),
+    itemType: text('item_type', {
+      enum: ['jlpt-vocab', 'jlpt-kanji', 'jlpt-sentence', 'jlpt-reading', 'topik-owner-item'],
+    }).notNull(),
+    itemId: text('item_id').notNull(),
+    language: text('language', { enum: ['ja', 'ko'] }).notNull(),
+    speechRole: text('speech_role', { enum: ['pronunciation', 'listening'] }).notNull(),
+    provider: text('provider', { enum: ['google-browser'] }).notNull().default('google-browser'),
+    bindingState: text('binding_state', { enum: ['ready', 'unavailable'] }).notNull(),
+    textSource: text('text_source', { enum: ['item', 'sentence', 'passage', 'audio-script'] }).notNull(),
+    unavailableReason: text('unavailable_reason'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   },
   (t) => ({
-    bindingUk: uniqueIndex('content_audio_binding_activations_binding_uk').on(t.bindingId),
-    assetUk: uniqueIndex('content_audio_binding_activations_asset_uk').on(t.assetId),
-    bindingIdx: index('content_audio_binding_activations_binding_idx').on(t.bindingId),
+    bindingUk: uniqueIndex('content_speech_bindings_item_language_role_uk').on(t.itemType, t.itemId, t.language, t.speechRole),
+    stateIdx: index('content_speech_bindings_state_idx').on(t.bindingState, t.language, t.speechRole),
   }),
 );
 
@@ -910,6 +921,65 @@ export const reviewLogs = sqliteTable(
   }),
 );
 
+/** Server-persisted study completion for string-keyed TOPIK owner curriculum items. */
+export const topikOwnerCurriculumProgress = sqliteTable(
+  'topik_owner_curriculum_progress',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    itemId: text('item_id').notNull().references(() => topikOwnerAuthoredCurriculumItems.id, { onDelete: 'restrict' }),
+    status: text('status', { enum: ['not_started', 'in_progress', 'completed'] }).notNull().default('not_started'),
+    completedAt: integer('completed_at', { mode: 'timestamp' }),
+    lastStudiedAt: integer('last_studied_at', { mode: 'timestamp' }),
+    ...timestamps,
+  },
+  (t) => ({
+    naturalPk: primaryKey({ columns: [t.userId, t.itemId] }),
+    userStatusIdx: index('topik_owner_progress_user_status_idx').on(t.userId, t.status, t.updatedAt),
+  }),
+);
+
+/** FSRS-6 cards for TOPIK owner curriculum; kept separate from integer-keyed JLPT SRS cards. */
+export const topikOwnerSrsCards = sqliteTable(
+  'topik_owner_srs_cards',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    itemId: text('item_id').notNull().references(() => topikOwnerAuthoredCurriculumItems.id, { onDelete: 'restrict' }),
+    state: text('state', { enum: ['new', 'learning', 'review', 'relearning'] }).notNull().default('new'),
+    stability: real('stability').notNull().default(0),
+    difficulty: real('difficulty').notNull().default(5),
+    dueAt: integer('due_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    lastReviewedAt: integer('last_reviewed_at', { mode: 'timestamp' }),
+    lapses: integer('lapses').notNull().default(0),
+    reps: integer('reps').notNull().default(0),
+    learningStepsIdx: integer('learning_steps_idx').notNull().default(0),
+    desiredRetention: real('desired_retention').notNull().default(0.9),
+    ...timestamps,
+  },
+  (t) => ({
+    naturalUk: uniqueIndex('topik_owner_srs_cards_user_item_uk').on(t.userId, t.itemId),
+    dueIdx: index('topik_owner_srs_cards_user_due_idx').on(t.userId, t.dueAt),
+    stateIdx: index('topik_owner_srs_cards_user_state_idx').on(t.userId, t.state),
+  }),
+);
+
+export const topikOwnerReviewLogs = sqliteTable(
+  'topik_owner_review_logs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    cardId: integer('card_id').notNull().references(() => topikOwnerSrsCards.id, { onDelete: 'cascade' }),
+    reviewedAt: integer('reviewed_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+    rating: text('rating', { enum: ['again', 'hard', 'good', 'easy'] }).notNull(),
+    elapsedDays: real('elapsed_days').notNull().default(0),
+    scheduledDays: real('scheduled_days').notNull().default(0),
+    responseMs: integer('response_ms'),
+  },
+  (t) => ({
+    cardIdx: index('topik_owner_review_logs_card_idx').on(t.cardId),
+    reviewedAtIdx: index('topik_owner_review_logs_reviewed_at_idx').on(t.reviewedAt),
+  }),
+);
+
 export const dailyLogs = sqliteTable(
   'daily_logs',
   {
@@ -928,6 +998,36 @@ export const dailyLogs = sqliteTable(
   },
   (t) => ({
     userDateUk: uniqueIndex('daily_logs_track_date_uk').on(t.userId, t.learningTrack, t.date),
+  }),
+);
+
+/** Privacy-minimized activity used for learning recommendations and aggregates. */
+export const learningActivityEvents = sqliteTable(
+  'learning_activity_events',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    eventId: text('event_id').notNull(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    eventType: text('event_type', {
+      enum: ['content_opened', 'content_completed', 'quiz_answered', 'review_rated', 'speech_attempted'],
+    }).notNull(),
+    contentType: text('content_type'),
+    contentId: text('content_id'),
+    levelTag: text('level_tag'),
+    section: text('section'),
+    mode: text('mode', { enum: ['vocab_mc', 'grammar_fill', 'kanji_reading', 'listening'] }),
+    correct: integer('correct', { mode: 'boolean' }),
+    rating: text('rating', { enum: ['again', 'hard', 'good', 'easy'] }),
+    durationMs: integer('duration_ms'),
+    speechOutcome: text('speech_outcome', { enum: ['played', 'unavailable', 'error'] }),
+    occurredAt: integer('occurred_at', { mode: 'timestamp' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    userEventUk: uniqueIndex('learning_activity_events_user_event_uk').on(t.userId, t.eventId),
+    userTrackTimeIdx: index('learning_activity_events_user_track_time_idx').on(t.userId, t.learningTrack, t.occurredAt),
+    userContentTimeIdx: index('learning_activity_events_user_content_time_idx').on(t.userId, t.learningTrack, t.contentType, t.contentId, t.occurredAt),
   }),
 );
 
@@ -1178,9 +1278,99 @@ export const topikPracticeQuestions = sqliteTable(
     releaseIdx: index('topik_practice_release_idx').on(
       t.learningTrack, t.bankVersion, t.isPublished, t.examLevel, t.section, t.difficulty,
     ),
-    promptUk: uniqueIndex('topik_practice_prompt_uk').on(
-      t.learningTrack, t.examLevel, t.section, t.promptKo,
+    promptUk: uniqueIndex('topik_practice_prompt_version_uk').on(
+      t.learningTrack, t.bankVersion, t.examLevel, t.section, t.promptKo,
     ),
+  }),
+);
+
+/** Versioned, self-authored JLPT practice. Listening stores script text only. */
+export const jlptPracticeQuestions = sqliteTable(
+  'jlpt_practice_questions',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja'] }).notNull().default('jlpt-ja'),
+    level: text('level', { enum: ['N5', 'N4', 'N3', 'N2', 'N1'] }).notNull(),
+    mode: text('mode', { enum: ['vocab_mc', 'grammar_fill', 'kanji_reading', 'listening'] }).notNull(),
+    skill: text('skill').notNull(),
+    difficulty: integer('difficulty').notNull(),
+    promptKo: text('prompt_ko').notNull(),
+    promptJa: text('prompt_ja').notNull(),
+    promptEn: text('prompt_en').notNull(),
+    choicesJson: text('choices_json').notNull(),
+    answerIndex: integer('answer_index').notNull(),
+    explanationKo: text('explanation_ko').notNull(),
+    explanationJa: text('explanation_ja').notNull(),
+    explanationEn: text('explanation_en').notNull(),
+    audioScriptJa: text('audio_script_ja'),
+    sourceCode: text('source_code').notNull(),
+    sourceEvidenceSha256: text('source_evidence_sha256').notNull(),
+    bankVersion: text('bank_version').notNull(),
+    isPublished: integer('is_published', { mode: 'boolean' }).notNull().default(false),
+    ...timestamps,
+  },
+  (t) => ({
+    releaseIdx: index('jlpt_practice_release_idx').on(
+      t.learningTrack, t.bankVersion, t.isPublished, t.level, t.mode, t.difficulty,
+    ),
+    promptUk: uniqueIndex('jlpt_practice_prompt_version_uk').on(
+      t.learningTrack, t.bankVersion, t.level, t.mode, t.promptJa,
+    ),
+  }),
+);
+
+/** Evidence and independent-review outcome for a versioned authored question. */
+export const contentQualityAudits = sqliteTable(
+  'content_quality_audits',
+  {
+    id: text('id').primaryKey(),
+    learningTrack: text('learning_track', { enum: ['jlpt-ja', 'topik-ko'] }).notNull(),
+    contentType: text('content_type', { enum: ['topik-practice', 'topik-placement', 'topik-owner', 'jlpt-reading', 'jlpt-quiz'] }).notNull(),
+    contentId: text('content_id').notNull(),
+    contentVersion: text('content_version').notNull(),
+    evidenceSha256: text('evidence_sha256').notNull(),
+    validatorVersion: text('validator_version').notNull(),
+    automatedStatus: text('automated_status', { enum: ['passed', 'failed'] }).notNull(),
+    authorReviewStatus: text('author_review_status', { enum: ['pending', 'signed', 'rejected'] }).notNull(),
+    adversarialReviewStatus: text('adversarial_review_status', { enum: ['pending', 'signed', 'rejected'] }).notNull(),
+    authorReviewer: text('author_reviewer').notNull(),
+    adversarialReviewer: text('adversarial_reviewer').notNull(),
+    releaseState: text('release_state', { enum: ['draft', 'approved', 'published', 'withdrawn'] }).notNull().default('draft'),
+    detailsJson: text('details_json').notNull().default('{}'),
+    checkedAt: text('checked_at').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    contentUk: uniqueIndex('content_quality_audits_content_uk').on(t.learningTrack, t.contentType, t.contentId, t.contentVersion),
+    releaseIdx: index('content_quality_audits_release_idx').on(t.learningTrack, t.contentType, t.contentVersion, t.releaseState),
+  }),
+);
+
+/** Expected item-audit coverage for a future quality-gated release. */
+export const contentReleaseQualityRequirements = sqliteTable(
+  'content_release_quality_requirements',
+  {
+    releaseId: text('release_id').primaryKey().references(() => contentReleases.id, { onDelete: 'cascade' }),
+    contentType: text('content_type', {
+      enum: ['topik-practice', 'topik-placement', 'topik-owner', 'jlpt-reading', 'jlpt-quiz'],
+    }).notNull(),
+    expectedAuditCount: integer('expected_audit_count').notNull(),
+    validatorVersion: text('validator_version').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+);
+
+/** Immutable association between a release and already-reviewed item audits. */
+export const contentReleaseQualityAuditLinks = sqliteTable(
+  'content_release_quality_audit_links',
+  {
+    releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }),
+    auditId: text('audit_id').notNull().references(() => contentQualityAudits.id, { onDelete: 'restrict' }),
+    linkedAt: integer('linked_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.releaseId, t.auditId] }),
+    auditIdx: index('content_release_quality_audit_links_audit_idx').on(t.auditId, t.releaseId),
   }),
 );
 
@@ -1261,6 +1451,12 @@ export type TopikOwnerAuthoredCurriculumUnit = typeof topikOwnerAuthoredCurricul
 export type NewTopikOwnerAuthoredCurriculumUnit = typeof topikOwnerAuthoredCurriculumUnits.$inferInsert;
 export type TopikOwnerAuthoredCurriculumItem = typeof topikOwnerAuthoredCurriculumItems.$inferSelect;
 export type NewTopikOwnerAuthoredCurriculumItem = typeof topikOwnerAuthoredCurriculumItems.$inferInsert;
+export type TopikOwnerCurriculumProgress = typeof topikOwnerCurriculumProgress.$inferSelect;
+export type NewTopikOwnerCurriculumProgress = typeof topikOwnerCurriculumProgress.$inferInsert;
+export type TopikOwnerSrsCard = typeof topikOwnerSrsCards.$inferSelect;
+export type NewTopikOwnerSrsCard = typeof topikOwnerSrsCards.$inferInsert;
+export type TopikOwnerReviewLog = typeof topikOwnerReviewLogs.$inferSelect;
+export type NewTopikOwnerReviewLog = typeof topikOwnerReviewLogs.$inferInsert;
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
 export type Vocab = typeof vocab.$inferSelect;

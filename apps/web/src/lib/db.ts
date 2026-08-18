@@ -14,6 +14,7 @@ import type {
   TopikPracticeListDto,
   VocabContentItem,
   LearningTrackId,
+  LearningActivityEvent,
 } from '@nihongo-n3/shared';
 
 // ─────────────────────────────────────────────
@@ -142,6 +143,14 @@ export interface SyncQueueItem {
   last_error?: string;
 }
 
+export interface ActivityEventQueueItem extends LearningActivityEvent {
+  id?: number;
+  scope_id: string;
+  status: SyncStatus;
+  retries: number;
+  last_error?: string;
+}
+
 export interface LocalMeta {
   key: string;
   value: string;
@@ -225,6 +234,7 @@ class NihongoDb extends Dexie {
 
   // 동기화 큐
   sync_queue!: EntityTable<SyncQueueItem, 'id'>;
+  activity_event_queue!: EntityTable<ActivityEventQueueItem, 'id'>;
 
   // 로컬 메타데이터
   meta!: EntityTable<LocalMeta, 'key'>;
@@ -290,6 +300,10 @@ class NihongoDb extends Dexie {
     // Older v4 entries remain harmless but are no longer addressed by the v5 key.
     this.version(5).stores({
       topik_practice_cache: '&id, scope_id, content_release, [scope_id+content_release+exam_level+section], fetched_at',
+    });
+
+    this.version(6).stores({
+      activity_event_queue: '++id, &event_id, scope_id, [scope_id+status], status, occurred_at',
     });
   }
 }

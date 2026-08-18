@@ -1,0 +1,94 @@
+name: Local verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verification:
+    name: API, web, DB, build, and documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm docs:check
+      - run: pnpm verify:ci
+
+  e2e:
+    name: E2E (${{ matrix.project }})
+    needs: verification
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir e2e exec playwright install --with-deps ${{ matrix.project }}
+      # The macOS and Linux screenshot baselines are intentionally distinct.
+      # Functional E2E remains a required cross-browser gate; the Linux visual
+      # comparison below publishes its expected/actual/diff images for review.
+      - run: pnpm --dir e2e exec playwright test --project=${{ matrix.project }} --grep-invert="핵심 화면 시각 회귀"
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.project }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  visual-baseline-observer:
+    name: Linux visual baseline observer
+    needs: verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.4.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir e2e exec playwright install --with-deps chromium
+      - name: Compare the committed Linux visual baseline
+        id: visual-baseline
+        continue-on-error: true
+        run: pnpm --dir e2e exec playwright test visual-regression.spec.ts --project=chromium
+      - name: Upload Linux visual comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-linux
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14

@@ -4,11 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { registerSW } from 'virtual:pwa-register';
 import { initSync } from './lib/sync';
+import { flushActivityEvents } from './lib/activity-events';
 import { initDeviceProfile } from './lib/device-profile';
 import { audioPlayer } from './lib/audio';
 import { db, setActiveLearningTrack } from './lib/db';
 import { useUiStore } from './stores/ui-store';
 import { useSettingsStore } from './stores/settings-store';
+import { useAuthStore } from './stores/auth-store';
 
 import App from './App';
 import './index.css';
@@ -80,6 +82,16 @@ void db.open().catch((error) => {
   console.warn('[IDB]', 'failed to open local database', error);
 });
 initSync();
+useSettingsStore.subscribe((state, previous) => {
+  if (state.learningTrack !== previous.learningTrack) setActiveLearningTrack(state.learningTrack);
+});
+useAuthStore.subscribe((state, previous) => {
+  const activated = state.status === 'authenticated'
+    && (previous.status !== 'authenticated'
+      || state.user?.id !== previous.user?.id
+      || state.user?.learning_track !== previous.user?.learning_track);
+  if (activated) void flushActivityEvents();
+});
 initDeviceProfile();
 
 ReactDOM.createRoot(rootEl).render(

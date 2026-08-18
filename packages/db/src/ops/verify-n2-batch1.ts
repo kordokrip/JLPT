@@ -95,22 +95,22 @@ const numericChecks: Array<{ name: string; expected: number; sql: string }> = [
       WHERE learning_track = 'jlpt-ja' AND level_tag = 'N2' AND source_asset_id = ${assetId}`,
   },
   {
-    name: 'N2 Batch 1 audio bindings', expected: batch.counts.audioBindings,
-    sql: `SELECT count(*) AS count FROM content_audio_bindings b
+    name: 'N2 Batch 1 Google speech bindings', expected: batch.counts.audioBindings,
+    sql: `SELECT count(*) AS count FROM content_speech_bindings b
       JOIN learning_content_stable_refs r ON r.stable_ref = b.stable_ref
       WHERE r.learning_track = 'jlpt-ja' AND r.level_tag = 'N2' AND r.source_asset_id = ${assetId}`,
   },
   {
-    name: 'N2 Batch 1 audio is honestly preparing without an R2 asset', expected: batch.counts.audioBindings,
-    sql: `SELECT count(*) AS count FROM content_audio_bindings b
+    name: 'N2 Batch 1 speech is ready for Google browser playback', expected: batch.counts.audioBindings,
+    sql: `SELECT count(*) AS count FROM content_speech_bindings b
       JOIN learning_content_stable_refs r ON r.stable_ref = b.stable_ref
       WHERE r.learning_track = 'jlpt-ja' AND r.level_tag = 'N2' AND r.source_asset_id = ${assetId}
-        AND b.binding_state = 'preparing' AND b.asset_id IS NULL
-        AND length(trim(COALESCE(b.unavailable_reason, ''))) > 0`,
+        AND b.binding_state = 'ready' AND b.provider = 'google-browser'
+        AND b.unavailable_reason IS NULL`,
   },
   {
-    name: 'N2 Batch 1 audio binding identity matches stable refs', expected: 0,
-    sql: `SELECT count(*) AS count FROM content_audio_bindings b
+    name: 'N2 Batch 1 speech binding identity matches stable refs', expected: 0,
+    sql: `SELECT count(*) AS count FROM content_speech_bindings b
       JOIN learning_content_stable_refs r ON r.stable_ref = b.stable_ref
       WHERE r.source_asset_id = ${assetId} AND (b.item_type <> r.item_type OR b.item_id <> r.item_id)`,
   },

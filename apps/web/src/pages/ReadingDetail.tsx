@@ -38,7 +38,6 @@ interface PassageFull {
   word_count:         number;
   vocab_ids:          number[];
   grammar_ids:        number[];
-  audio_r2_key:       string | null;
   source_attribution: string | null;
   questions:          RQuestion[];
 }

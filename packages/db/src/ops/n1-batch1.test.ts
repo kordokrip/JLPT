@@ -33,8 +33,9 @@ test('N1 Batch 1 adds self-authored high-level learning data without official ex
   const sql = plan.statements.join('\n');
   assert.match(sql, new RegExp(N1_BATCH_1_SOURCE_ASSET_ID));
   assert.match(sql, /learning_content_stable_refs/);
-  assert.match(sql, /content_audio_bindings/);
-  assert.match(sql, /Browser Google Japanese speech/);
+  assert.match(sql, /content_speech_bindings/);
+  assert.match(sql, /'google-browser', 'ready'/);
+  assert.match(sql, /browser Google Japanese pronunciation/i);
   assert.doesNotMatch(sql, /content_releases|content_release_sources|first_reviewer|second_reviewer/i);
   assert.match(n1Batch1ContentRowsSql(), /reading_questions/);
   for (const char of N1_BATCH_1_KANJI) assert.match(sql, new RegExp(`'${char}'`));

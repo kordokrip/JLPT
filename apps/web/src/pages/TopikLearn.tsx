@@ -13,16 +13,23 @@ import { TopikOwnerAuthoredCurriculum } from '../features/topik/curriculum/Topik
 import { useAuthStore } from '../stores/auth-store';
 import { useTranslation } from 'react-i18next';
 import type { TopikPracticeSolutionDto } from '@nihongo-n3/shared';
+import { recordLearningActivity } from '../lib/activity-events';
+import { useSearchParams } from 'react-router-dom';
 
 export default function TopikLearn() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const progress = useTopikLearningProgress();
   const authUser = useAuthStore((state) => state.user);
   const audio = useKoreanAudio();
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
   const [examLevel, setExamLevel] = useState<'TOPIK-I' | 'TOPIK-II'>('TOPIK-I');
-  const [section, setSection] = useState<'listening' | 'writing' | 'reading'>('listening');
+  const requestedSection = searchParams.get('section');
+  const initialSection = requestedSection === 'writing' || requestedSection === 'reading'
+    ? requestedSection
+    : 'listening';
+  const [section, setSection] = useState<'listening' | 'writing' | 'reading'>(initialSection);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [solutions, setSolutions] = useState<Record<string, TopikPracticeSolutionDto>>({});
@@ -44,6 +51,19 @@ export default function TopikLearn() {
       return;
     }
     setSolutions((current) => ({ ...current, [questionId]: result.data }));
+    const question = practice.data?.questions.find((item) => item.id === questionId);
+    const selected = answers[questionId];
+    if (question?.question_type === 'choice' && selected !== undefined && result.data.answer_index !== null) {
+      void recordLearningActivity({
+        event_type: 'quiz_answered',
+        learning_track: 'topik-ko',
+        content_type: 'topik_practice_question',
+        content_id: questionId,
+        level_tag: examLevel,
+        section: question.section,
+        correct: selected === result.data.answer_index,
+      }).catch(() => undefined);
+    }
   };
   const instructionText = (item: { prompt_ko: string; prompt_ja: string; prompt_en: string }) =>
     configuredInstructionLanguage === 'ko' ? item.prompt_ko : configuredInstructionLanguage === 'ja' ? item.prompt_ja : item.prompt_en;
@@ -87,9 +107,9 @@ export default function TopikLearn() {
       </div>
       {audio.error && <p role="alert" className="mt-4 max-w-[800px] text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
 
-      <TopikOwnerAuthoredCurriculum />
+      <TopikOwnerAuthoredCurriculum initialGrade={Number(searchParams.get('grade') ?? 1)} />
 
-      <section className="mt-10 max-w-[960px] border-t border-[var(--border)] pt-8" aria-labelledby="topik-practice-title">
+      <section id="topik-practice" className="mt-10 max-w-[960px] scroll-mt-24 border-t border-[var(--border)] pt-8" aria-labelledby="topik-practice-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-[var(--accent)]">{t('topik.practice.eyebrow')}</p>
@@ -127,7 +147,7 @@ export default function TopikLearn() {
               </div>
               <h3 className="mt-3 text-lg font-black leading-8">{instructionText(question)}</h3>
               {audioSource && audioSource.kind !== 'unavailable' ? (
-                <button type="button" onClick={() => audio.play(audioSource)} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>
+                <button type="button" onClick={() => audio.play(audioSource, { contentType: 'topik_practice_question', contentId: question.id, levelTag: examLevel, section: question.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>
               ) : question.section === 'listening' ? (
                 <p className="mt-4 text-sm text-[var(--muted-foreground)]">{t('quiz.audioPending')}</p>
               ) : null}

@@ -455,41 +455,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 승인된 Google TTS 오디오 배치 실행 */
+        /**
+         * 폐기된 R2 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         */
         post: {
             parameters: {
                 query?: never;
-                header?: {
-                    "x-audio-batch-approval"?: string;
-                };
+                header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /** @default false */
-                        execute?: boolean;
-                        dry_run?: boolean;
-                        batch?: number;
-                        /** @enum {string} */
-                        provider?: "google";
-                        /** @enum {string} */
-                        level?: "N5" | "N4" | "N3" | "N2" | "N1";
-                        force_regenerate?: boolean;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
-                /** @description 큐 실행 결과 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -501,6 +479,72 @@ export interface paths {
                 };
                 /** @description 관리자 권한 필요 */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 발음 생성은 비활성 */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audio/curriculum-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 폐기된 R2 curriculum 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 발음 생성은 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -523,7 +567,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** TTS provider 운영 연결 상태 확인 */
+        /**
+         * 폐기된 서버 TTS provider 경로
+         * @description 발음은 브라우저의 Google 음성만 사용하며 서버 provider 탐색은 비활성이다.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -533,15 +580,6 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description provider 상태 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -553,6 +591,15 @@ export interface paths {
                 };
                 /** @description 관리자 권한 필요 */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 서버 TTS provider 경로는 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -579,37 +626,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 30개 QA 샘플 오디오 일괄 생성 */
+        /**
+         * 폐기된 R2 QA 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         */
         post: {
             parameters: {
                 query?: never;
-                header?: {
-                    "x-audio-batch-approval"?: string;
-                };
+                header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        provider?: "cloudflare" | "google" | "voicevox";
-                        force?: boolean;
-                        /** @enum {string} */
-                        language?: "ja" | "ko";
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
-                /** @description QA 샘플 생성 결과 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -621,6 +650,15 @@ export interface paths {
                 };
                 /** @description 관리자 권한 필요 */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 QA 발음 생성은 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };

@@ -112,15 +112,13 @@ export function normalizeVocabContentItem(row: ApiRawContentRecord): VocabConten
   const partOfSpeech = text(row, 'part_of_speech', 'pos');
   const exampleJp = text(row, 'example_jp');
   const exampleKo = text(row, 'example_ko');
-  const audioPath = reviewedAudioPath(text(row, 'audio_path', 'audio_r2_key'));
   const sourceId = numberValue(row, 'source_id');
   const categoryId = numberValue(row, 'category_id');
   if (partOfSpeech !== undefined) item.part_of_speech = partOfSpeech;
   if (exampleJp !== undefined) item.example_jp = exampleJp;
   if (exampleKo !== undefined) item.example_ko = exampleKo;
-  // Do not invent a legacy R2 key. Without a verified immutable asset, normal
-  // learning UI presents an explicit unavailable state instead of browser TTS.
-  if (audioPath !== undefined) item.audio_path = audioPath;
+  // Pronunciation is requested from Google at playback time. Never expose a
+  // legacy R2 key through a learner DTO.
   if (sourceId !== undefined) item.source_id = sourceId;
   if (categoryId !== undefined) item.category_id = categoryId;
   return item;
@@ -158,9 +156,7 @@ export function normalizeKanjiContentItem(row: ApiRawContentRecord): KanjiConten
   };
   const strokeCount = numberValue(row, 'stroke_count');
   const sourceId = numberValue(row, 'source_id');
-  const audioPath = reviewedAudioPath(text(row, 'audio_path', 'audio_r2_key'));
   if (strokeCount !== undefined) item.stroke_count = strokeCount;
   if (sourceId !== undefined) item.source_id = sourceId;
-  if (audioPath !== undefined) item.audio_path = audioPath;
   return item;
 }

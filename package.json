@@ -2,7 +2,7 @@
   "name": "nihongo-n3-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "JLPT N5-N3 learning PWA monorepo (Cloudflare Workers + React PWA)",
+  "description": "JLPT N5-N1 and TOPIK personal learning PWA monorepo (Cloudflare Workers + React PWA)",
   "packageManager": "pnpm@11.4.0",
   "engines": {
     "node": ">=22.13.0",
@@ -15,6 +15,7 @@
     "test": "pnpm test:ops && pnpm -F @nihongo-n3/db test && pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
     "test:ops": "node --test scripts/__tests__/*.test.mjs",
     "test:e2e": "pnpm -F @nihongo-n3/e2e test",
+    "docs:check": "node scripts/check-markdown-links.mjs",
     "lint": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r lint",
     "verify": "pnpm typecheck && pnpm test && pnpm build",
     "verify:ci": "pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh",
@@ -28,9 +29,7 @@
     "ops:logpush": "node scripts/setup-logpush.mjs",
     "ops:alerts": "node scripts/setup-alerts.mjs",
     "ops:observe": "node scripts/post-deploy-observe.mjs",
-    "ops:verify-auth-proxy": "node scripts/verify-pages-auth-proxy.mjs",
-    "audio:kana": "node scripts/generate-kana-audio.mjs",
-    "audio:kana:upload": "node scripts/generate-kana-audio.mjs --upload"
+    "ops:verify-auth-proxy": "node scripts/verify-pages-auth-proxy.mjs"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

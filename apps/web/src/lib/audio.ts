@@ -1,25 +1,18 @@
 /**
  * apps/web/src/lib/audio.ts
  *
- * 단일 AudioContext 기반 큐 재생기.
- * - 현재 카드 + 다음 3장 자동 prefetch
+ * Google browser speech playback helper.
+ * - Google 브라우저 음성만 사용
  * - 재생 속도 0.75x / 1x / 1.25x
- * - R2 Range 요청 활용 (브라우저 자동 처리)
+ * - R2 요청·저장·fallback은 사용하지 않음
  */
 
-import { apiUrl } from './api-base';
 import { getAudioPlaybackPolicy, type AudioSurface } from '@nihongo-n3/shared';
-
-export function buildAudioUrl(path: string): string {
-  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-  return apiUrl(`/audio/${encodedPath}`);
-}
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
-/** Personal-study pronunciation uses the browser's Japanese voice first. */
-export type AudioSourcePreference = 'browser' | 'server';
-export type TtsProviderId = 'browser' | 'cloudflare' | 'google' | 'voicevox' | 'style-bert-vits2';
+/** Compatibility type: a server source is never available. */
+export type AudioSourcePreference = 'browser';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
@@ -53,17 +46,7 @@ interface PronunciationOptions {
   preferGoogleVoice?: boolean;
 }
 
-interface AudioEntry {
-  path: string;
-  buffer?: AudioBuffer;
-  loading: boolean;
-  error: boolean;
-}
-
 class AudioPlayer {
-  private ctx: AudioContext | null = null;
-  private cache = new Map<string, AudioEntry>();
-  private currentSource: AudioBufferSourceNode | null = null;
   private _rate: PlaybackRate = 1.0;
   private _voiceGender: VoiceGender = 'female';
   private _voiceURI: string | null = null;
@@ -93,37 +76,11 @@ class AudioPlayer {
     if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
   }
 
-  private getCtx(): AudioContext {
-    if (!this.ctx || this.ctx.state === 'closed') {
-      this.ctx = new AudioContext();
-    }
-    return this.ctx;
-  }
-
-  /** 오디오 파일을 AudioBuffer로 프리페치 */
+  /** Google browser speech has no server object to prefetch. */
   async prefetch(paths: string[]): Promise<void> {
-    for (const path of paths) {
-      if (this.cache.has(path)) continue;
-      const entry: AudioEntry = { path, loading: true, error: false };
-      this.cache.set(path, entry);
-      this._load(path, entry).catch(() => void 0);
-    }
-  }
-
-  private async _load(path: string, entry: AudioEntry): Promise<void> {
-    const url = buildAudioUrl(path);
-    try {
-      const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arrayBuffer = await res.arrayBuffer();
-      const ctx = this.getCtx();
-      entry.buffer = await ctx.decodeAudioData(arrayBuffer);
-      entry.loading = false;
-    } catch (e) {
-      entry.loading = false;
-      entry.error = true;
-      this.cache.delete(path);
-    }
+    // Kept as a no-op compatibility surface. Google browser speech is not an
+    // R2 object and must not be prefetched from /audio.
+    void paths;
   }
 
   async warmVoices(language = 'ja'): Promise<void> {
@@ -214,12 +171,10 @@ class AudioPlayer {
       options.voiceGender ?? this._voiceGender,
       utterance.lang,
       options.voiceURI ?? this._voiceURI,
-      options.preferGoogleVoice ?? true,
+      true,
     );
-    // Never fall through to an unrelated system default voice. This prevents
-    // Japanese text from being read by a German or English voice while voices
-    // are still loading or Japanese is unavailable on the device.
-    if (language.toLowerCase().startsWith('ja') && !voice) {
+    // Google voice only: do not fall through to another browser/provider.
+    if (!voice || !isGoogleJapaneseVoice(voice)) {
       options.onError?.();
       this._onEnd?.();
       return false;
@@ -253,81 +208,27 @@ class AudioPlayer {
   }: PronunciationOptions): Promise<boolean> {
     const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
-    const source = prefer ?? this._sourcePreference ?? policy.primary;
-    const approvedAudioPath = audioPath && isReviewedImmutableAudioPath(audioPath) ? audioPath : undefined;
-    const preferBrowser = forceBrowser || source === 'browser' || policy.primary === 'browser' || !approvedAudioPath;
+    void audioPath;
+    void prefer;
+    void forceBrowser;
     const useSlow = slow || policy.slow;
-    const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
-
-    if (preferBrowser && normalized) {
-      const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
-      const spoken = await this.speakText(spokenText, {
-        ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
-        preferGoogleVoice: useGoogleVoice,
-      });
-      if (spoken || !approvedAudioPath) return spoken;
-    }
-    if (approvedAudioPath) {
-      return this.play(approvedAudioPath, normalized, useSlow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
-    }
-    return normalized ? this.speakText(normalized, { preferGoogleVoice: useGoogleVoice }) : false;
+    const spokenText = normalized && repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
+    return spokenText ? this.speakText(spokenText, {
+      ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
+      preferGoogleVoice: preferGoogleVoice && policy.preferGoogleVoice,
+    }) : false;
   }
 
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
   async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<boolean> {
-    this.stop();
-
-    let entry = this.cache.get(path);
-    if (!entry) {
-      entry = { path, loading: true, error: false };
-      this.cache.set(path, entry);
-      await this._load(path, entry);
-    } else if (entry.loading) {
-      // 로딩 중이면 완료 대기
-      await new Promise<void>((resolve) => {
-        const check = setInterval(() => {
-          if (!entry!.loading) { clearInterval(check); resolve(); }
-        }, 50);
-      });
-    }
-
-    if (!entry.buffer) return fallbackText ? this.speakText(fallbackText, { preferGoogleVoice: true }) : false;
-
-    const ctx = this.getCtx();
-    if (ctx.state === 'suspended') await ctx.resume();
-
-    const source = ctx.createBufferSource();
-    source.buffer = entry.buffer;
-    source.playbackRate.value = options.rate ?? this._rate;
-    source.connect(ctx.destination);
-    source.onended = () => {
-      this.currentSource = null;
-      this._onEnd?.();
-    };
-    source.start();
-    this.currentSource = source;
-    return true;
+    // A legacy R2 path must never initiate a network request. A supplied
+    // transcript may be spoken only by a Google Japanese browser voice.
+    void path;
+    return fallbackText ? this.speakText(fallbackText, { ...(options.rate !== undefined ? { rate: options.rate } : {}), preferGoogleVoice: true }) : false;
   }
 
   stop(): void {
-    try { this.currentSource?.stop(); } catch { /* already stopped */ }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    this.currentSource = null;
-  }
-
-  /** 캐시 상태 조회 */
-  isCached(path: string): boolean {
-    const e = this.cache.get(path);
-    return !!e?.buffer;
-  }
-
-  /** 오래된 캐시 정리 (최대 100개) */
-  pruneCache(max = 100): void {
-    if (this.cache.size <= max) return;
-    const keys = [...this.cache.keys()];
-    for (const k of keys.slice(0, this.cache.size - max)) {
-      this.cache.delete(k);
-    }
   }
 }
 
@@ -381,11 +282,6 @@ export function selectJapaneseVoice<T extends JapaneseVoiceOption>(
       return { voice, score };
     })
     .sort((a, b) => b.score - a.score)[0]?.voice;
-}
-
-export function isReviewedImmutableAudioPath(path: string): boolean {
-  return /^audio\/(?:vocab|kanji|sentence)\/n[1-5]\/\d+-[a-f0-9]{16}\.mp3$/i.test(path)
-    || /^private-audio\/(?:ja|ko)\/[a-z0-9-]+\/[a-f0-9]{16,64}\.(?:mp3|wav|ogg)$/i.test(path);
 }
 
 function toJapaneseVoiceOption(voice: Pick<SpeechSynthesisVoice, 'voiceURI' | 'name' | 'lang' | 'localService' | 'default'>): JapaneseVoiceOption {

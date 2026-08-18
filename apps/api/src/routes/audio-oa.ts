@@ -1,102 +1,20 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../types.js';
 import { audio } from './audio.js';
-import { audioKeyParamSchema, mountLegacyRouteWithOpenApiDocs, problemSchema } from './openapi-docs.js';
-import { z } from '@hono/zod-openapi';
+import { problemSchema, mountLegacyRouteWithOpenApiDocs } from './openapi-docs.js';
+
 const audioOA = new OpenAPIHono<AppEnv>();
+
 mountLegacyRouteWithOpenApiDocs(audioOA, audio, [
   {
-    method: 'head',
-    path: '/audio/qa/{language}/{provider}/{file}',
-    tags: ['Audio'],
-    summary: '언어별 고정 샘플 TTS QA 메타데이터',
-    request: { params: z.object({ language: z.enum(['ja', 'ko']), provider: z.enum(['cloudflare', 'google', 'voicevox']), file: z.string().regex(/^\d+\.wav$/).openapi({ example: '1.wav' }) }) },
-    responses: { 200: { description: 'QA provider/model/version 메타데이터' }, 400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' }, 404: { content: { 'application/json': { schema: problemSchema } }, description: '승인된 QA 배치가 아직 R2에 없음' } },
-  },
-  {
-    method: 'get',
-    path: '/audio/qa/{language}/{provider}/{file}',
-    tags: ['Audio'],
-    summary: '언어별 고정 샘플 TTS QA 오디오',
-    request: { params: z.object({ language: z.enum(['ja', 'ko']), provider: z.enum(['cloudflare', 'google', 'voicevox']), file: z.string().regex(/^\d+\.wav$/).openapi({ example: '1.wav' }) }) },
-    responses: { 200: { content: { 'audio/wav': { schema: { type: 'string', format: 'binary' } }, 'audio/mpeg': { schema: { type: 'string', format: 'binary' } } }, description: 'QA 샘플 오디오' }, 400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' }, 404: { content: { 'application/json': { schema: problemSchema } }, description: '승인된 QA 배치가 아직 R2에 없음' } },
-  },
-  {
-    method: 'head',
-    path: '/audio/qa/{provider}/{file}',
-    tags: ['Audio'],
-    summary: '고정 샘플 TTS QA 메타데이터',
-    request: {
-      params: z.object({
-        provider: z.enum(['cloudflare', 'google', 'voicevox']),
-        file: z.string().regex(/^\d+\.wav$/).openapi({ example: '1.wav' }),
-      }),
-    },
-    responses: {
-      200: { description: 'QA 샘플 provider/model/version 메타데이터' },
-      400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
-      404: { content: { 'application/json': { schema: problemSchema } }, description: '승인된 QA 배치가 아직 R2에 없음' },
-    },
-  },
-  {
-    method: 'get',
-    path: '/audio/qa/{provider}/{file}',
-    tags: ['Audio'],
-    summary: '고정 샘플 TTS QA 오디오',
-    request: {
-      params: z.object({
-        provider: z.enum(['cloudflare', 'google', 'voicevox']),
-        file: z.string().regex(/^\d+\.wav$/).openapi({ example: '1.wav' }),
-      }),
-    },
-    responses: {
-      200: {
-        content: {
-          'audio/wav': { schema: { type: 'string', format: 'binary' } },
-        },
-        description: 'QA 샘플 오디오',
-      },
-      400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
-      404: { content: { 'application/json': { schema: problemSchema } }, description: '승인된 QA 배치가 아직 R2에 없음' },
-    },
-  },
-  {
     method: 'get',
     path: '/audio/{key}',
     tags: ['Audio'],
-    summary: 'R2 오디오 스트리밍',
-    request: { params: audioKeyParamSchema },
+    summary: '폐기된 R2 발음 경로',
     responses: {
-      200: {
-        content: {
-          'audio/mpeg': { schema: { type: 'string', format: 'binary' } },
-          'audio/wav': { schema: { type: 'string', format: 'binary' } },
-        },
-        description: '오디오 파일',
-      },
-      206: {
-        content: {
-          'audio/mpeg': { schema: { type: 'string', format: 'binary' } },
-          'audio/wav': { schema: { type: 'string', format: 'binary' } },
-        },
-        description: 'Range 응답',
-      },
-      400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
-      404: { content: { 'application/json': { schema: problemSchema } }, description: '파일 없음' },
-      416: { description: 'Range Not Satisfiable' },
-    },
-  },
-  {
-    method: 'head',
-    path: '/audio/{key}',
-    tags: ['Audio'],
-    summary: 'R2 오디오 메타데이터',
-    request: { params: audioKeyParamSchema },
-    responses: {
-      200: { description: '오디오 메타데이터' },
-      400: { content: { 'application/json': { schema: problemSchema } }, description: '잘못된 요청' },
-      404: { content: { 'application/json': { schema: problemSchema } }, description: '파일 없음' },
+      410: { content: { 'application/json': { schema: problemSchema } }, description: 'R2 발음 저장/재생은 정책상 비활성' },
     },
   },
 ]);
+
 export { audioOA };

@@ -606,8 +606,8 @@ export interface paths {
                                     choices: string[];
                                     audio: {
                                         /** @enum {string} */
-                                        kind: "r2";
-                                        url: string;
+                                        kind: "google";
+                                        text_ko: string;
                                     } | {
                                         /** @enum {string} */
                                         kind: "unavailable";
@@ -985,8 +985,8 @@ export interface paths {
                                     choices: string[];
                                     audio: {
                                         /** @enum {string} */
-                                        kind: "r2";
-                                        url: string;
+                                        kind: "google";
+                                        text_ko: string;
                                     } | {
                                         /** @enum {string} */
                                         kind: "unavailable";
@@ -1256,7 +1256,7 @@ export interface paths {
         };
         /**
          * TOPIK 1–6 owner-authored local curriculum units
-         * @description Returns additive owner-authored curriculum records only. It does not read the reviewed practice bank or the public content-release lifecycle.
+         * @description Returns owner-authored curriculum records without solutions. Quality-gated items appear only after their linked content release is published.
          */
         get: {
             parameters: {
@@ -1299,14 +1299,16 @@ export interface paths {
                                         choices: string[];
                                         audio: {
                                             /** @enum {string} */
-                                            kind: "r2";
-                                            url: string;
+                                            kind: "google";
+                                            text_ko: string;
                                         } | {
                                             /** @enum {string} */
                                             kind: "unavailable";
                                             /** @enum {string} */
                                             reason: "preparing" | "not-provided";
                                         } | null;
+                                        /** @enum {string} */
+                                        progress_status: "not_started" | "in_progress" | "completed";
                                     }[];
                                 }[];
                             };
@@ -1430,6 +1432,353 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Server-persisted TOPIK 1–6 curriculum progress and FSRS queue totals */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Progress grouped by TOPIK target grade */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                grades: {
+                                    target_grade: number;
+                                    total_items: number;
+                                    completed_items: number;
+                                    due_cards: number;
+                                    review_cards: number;
+                                }[];
+                                completed_item_ids: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum/items/{itemId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a studied owner-curriculum item complete and introduce its FSRS card */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Persisted progress and idempotent FSRS card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                item_id: string;
+                                /** @enum {string} */
+                                status: "completed";
+                                card_id: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description Curriculum item not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum/review/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** TOPIK owner-curriculum FSRS cards currently due */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Due cards without answers or explanations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                cards: {
+                                    card_id: number;
+                                    /** @enum {string} */
+                                    state: "new" | "learning" | "review" | "relearning";
+                                    due_at: number;
+                                    item: {
+                                        id: string;
+                                        stable_ref: string;
+                                        target_grade: number;
+                                        /** @enum {string} */
+                                        item_type: "vocab" | "grammar" | "reading" | "listening" | "writing";
+                                        prompt_ko: string;
+                                        prompt_ja: string;
+                                        prompt_en: string;
+                                        choices: string[];
+                                        audio: {
+                                            /** @enum {string} */
+                                            kind: "google";
+                                            text_ko: string;
+                                        } | {
+                                            /** @enum {string} */
+                                            kind: "unavailable";
+                                            /** @enum {string} */
+                                            reason: "preparing" | "not-provided";
+                                        } | null;
+                                        /** @enum {string} */
+                                        progress_status: "not_started" | "in_progress" | "completed";
+                                    };
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tracks/topik-ko/curriculum/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply an FSRS rating to a TOPIK owner-curriculum card */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        card_id: number;
+                        /** @enum {string} */
+                        rating: "again" | "hard" | "good" | "easy";
+                        response_ms?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Next FSRS state and due timestamp */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                state: "new" | "learning" | "review" | "relearning";
+                                stability: number;
+                                difficulty: number;
+                                lapses: number;
+                                reps: number;
+                                due_at: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description Card not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description TOPIK track required */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2457,201 +2806,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/audio/qa/{language}/{provider}/{file}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 언어별 고정 샘플 TTS QA 오디오 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    language: "ja" | "ko";
-                    provider: "cloudflare" | "google" | "voicevox";
-                    file: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description QA 샘플 오디오 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "audio/wav": string;
-                        "audio/mpeg": string;
-                    };
-                };
-                /** @description 잘못된 요청 */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description 승인된 QA 배치가 아직 R2에 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        /** 언어별 고정 샘플 TTS QA 메타데이터 */
-        head: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    language: "ja" | "ko";
-                    provider: "cloudflare" | "google" | "voicevox";
-                    file: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description QA provider/model/version 메타데이터 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description 잘못된 요청 */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description 승인된 QA 배치가 아직 R2에 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-            };
-        };
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/audio/qa/{provider}/{file}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** 고정 샘플 TTS QA 오디오 */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    provider: "cloudflare" | "google" | "voicevox";
-                    file: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description QA 샘플 오디오 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "audio/wav": string;
-                    };
-                };
-                /** @description 잘못된 요청 */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description 승인된 QA 배치가 아직 R2에 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        /** 고정 샘플 TTS QA 메타데이터 */
-        head: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    provider: "cloudflare" | "google" | "voicevox";
-                    file: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description QA 샘플 provider/model/version 메타데이터 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description 잘못된 요청 */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description 승인된 QA 배치가 아직 R2에 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-            };
-        };
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/audio/{key}": {
         parameters: {
             query?: never;
@@ -2659,62 +2813,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** R2 오디오 스트리밍 */
+        /** 폐기된 R2 발음 경로 */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
-                path: {
-                    key: string;
-                };
+                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description 오디오 파일 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "audio/mpeg": string;
-                        "audio/wav": string;
-                    };
-                };
-                /** @description Range 응답 */
-                206: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "audio/mpeg": string;
-                        "audio/wav": string;
-                    };
-                };
-                /** @description 잘못된 요청 */
-                400: {
+                /** @description R2 발음 저장/재생은 정책상 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["ProblemDetail"];
                     };
-                };
-                /** @description 파일 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description Range Not Satisfiable */
-                416: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
                 };
             };
         };
@@ -2722,45 +2838,7 @@ export interface paths {
         post?: never;
         delete?: never;
         options?: never;
-        /** R2 오디오 메타데이터 */
-        head: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    key: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description 오디오 메타데이터 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description 잘못된 요청 */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-                /** @description 파일 없음 */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ProblemDetail"];
-                    };
-                };
-            };
-        };
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -3676,6 +3754,11 @@ export interface paths {
                         level: "N5" | "N4" | "N3" | "N2" | "N1";
                         /** @default 5 */
                         count?: number;
+                        /**
+                         * @default random
+                         * @enum {string}
+                         */
+                        strategy?: "random" | "weakest";
                     };
                 };
             };
@@ -4669,6 +4752,142 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/activity/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 중복 안전 학습 활동 기록 */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        events: {
+                            event_id: string;
+                            /** @enum {string} */
+                            event_type: "content_opened" | "content_completed" | "quiz_answered" | "review_rated" | "speech_attempted";
+                            /** @enum {string} */
+                            learning_track: "jlpt-ja" | "topik-ko";
+                            content_type?: string;
+                            content_id?: string;
+                            level_tag?: string;
+                            section?: string;
+                            /** @enum {string} */
+                            mode?: "vocab_mc" | "grammar_fill" | "kanji_reading" | "listening";
+                            correct?: boolean;
+                            /** @enum {string} */
+                            rating?: "again" | "hard" | "good" | "easy";
+                            duration_ms?: number;
+                            /** @enum {string} */
+                            speech_outcome?: "played" | "unavailable" | "error";
+                            /** Format: date-time */
+                            occurred_at: string;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description 저장 결과 */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GenericCreatedResponse"];
+                    };
+                };
+                /** @description 잘못된 이벤트 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/activity/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 7일 또는 30일 학습 활동 집계 */
+        get: {
+            parameters: {
+                query?: {
+                    window?: "7d" | "30d";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 학습 활동 집계 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GenericDataResponse"];
+                    };
+                };
+                /** @description 잘못된 기간 */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

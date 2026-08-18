@@ -1,5 +1,8 @@
+import { z } from 'zod';
+
 export const LEARNING_TRACK_IDS = ['jlpt-ja', 'topik-ko'] as const;
 export type LearningTrackId = (typeof LEARNING_TRACK_IDS)[number];
+export const learningTrackSchema = z.enum(LEARNING_TRACK_IDS);
 
 export const TOPIK_EXAM_LEVELS = ['TOPIK-I', 'TOPIK-II'] as const;
 export type TopikExamLevel = (typeof TOPIK_EXAM_LEVELS)[number];

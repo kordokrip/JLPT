@@ -11,6 +11,7 @@
 import { db, getActiveLocalUserId, type SyncOpType, type SyncQueueItem } from './db';
 import { syncApi } from './api';
 import { createClientId, isOnline } from './browser';
+import { flushActivityEvents } from './activity-events';
 
 type ServerSyncOpType = 'review' | 'daily_log' | 'quiz' | 'self_check';
 
@@ -114,9 +115,13 @@ export async function purge(keepDays = 7): Promise<void> {
 // 온라인 복귀 이벤트 리스너 등록
 // ─────────────────────────────────────────────
 export function initSync(): () => void {
-  const handler = () => void flush();
+  const flushAll = () => {
+    void flush();
+    void flushActivityEvents();
+  };
+  const handler = () => flushAll();
   window.addEventListener('online', handler);
   // 즉시 한 번 시도
-  if (isOnline()) void flush();
+  if (isOnline()) flushAll();
   return () => window.removeEventListener('online', handler);
 }

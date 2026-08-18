@@ -10,7 +10,7 @@ import {
 } from '../seed/n2-local-fixture.js';
 import { REPO_ROOT } from '../seed/constants.js';
 
-test('N2 local fixture has self-authored provenance, stable IDs, and explicit pending R2 audio bindings', () => {
+test('N2 local fixture has self-authored provenance, stable IDs, and explicit Google-only pending audio bindings', () => {
   const plan = buildN2LocalFixturePlan();
   assert.equal(plan.manifest.counts.vocab, 3);
   assert.equal(plan.manifest.counts.grammar, 1);
@@ -25,10 +25,10 @@ test('N2 local fixture has self-authored provenance, stable IDs, and explicit pe
   const sql = plan.statements.join('\n');
   assert.match(sql, new RegExp(N2_LOCAL_FIXTURE_SOURCE_ASSET_ID));
   assert.match(sql, /learning_content_stable_refs/);
-  assert.match(sql, /content_audio_bindings/);
+  assert.match(sql, /content_speech_bindings/);
   assert.match(sql, /learning_content_level_references/);
   assert.match(sql, /curriculum-reference:jlpt:n2:kanji:対/);
-  assert.match(sql, /'preparing', NULL/);
+  assert.match(sql, /'google-browser', 'ready'/);
   assert.doesNotMatch(sql, /INSERT INTO `kanji`[^;]*['"]対['"]/);
   assert.doesNotMatch(sql, /content_releases|content_release_sources|author_reviewer|second_reviewer/i);
 });

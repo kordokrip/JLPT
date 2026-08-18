@@ -15,7 +15,6 @@ export const TOPIK_OWNER_BATCH_1_SOURCE_ASSET_ID = 'source-asset:topik-owner-aut
 export const TOPIK_OWNER_BATCH_1_PATH = path.join(REPO_ROOT, 'docs/07_topik/02_owner_authored_grades_1_6_batch_1.md');
 const REPOSITORY_URL = 'https://github.com/kordokrip/JLPT/blob/main/docs/07_topik/02_owner_authored_grades_1_6_batch_1.md';
 const LICENSE_URL = 'https://github.com/kordokrip/JLPT/blob/main/docs/ATTRIBUTIONS.md#학습-콘텐츠와-provenance';
-const AUDIO_PREPARING_REASON = 'A durable R2 recording has not been generated yet; this self-authored Korean text is available through the browser Korean voice.';
 
 type Section = 'vocab' | 'grammar' | 'reading' | 'listening' | 'writing';
 
@@ -123,9 +122,9 @@ function stableRefStatement(item: ItemSeed): string {
 function audioBindingStatement(item: ItemSeed): string {
   const role = item.section === 'listening' ? 'listening' : 'pronunciation';
   return [
-    'INSERT OR IGNORE INTO `content_audio_bindings`',
-    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `audio_role`, `binding_state`, `asset_id`, `unavailable_reason`)',
-    `VALUES (${esc(`audio-binding:${stableRef(item)}`)}, ${esc(stableRef(item))}, 'topik-owner-item', ${esc(itemId(item))}, 'ko', ${esc(role)}, 'preparing', NULL, ${esc(AUDIO_PREPARING_REASON)});`,
+    'INSERT OR IGNORE INTO `content_speech_bindings`',
+    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `speech_role`, `provider`, `binding_state`, `text_source`, `unavailable_reason`)',
+    `VALUES (${esc(`speech-binding:${stableRef(item)}`)}, ${esc(stableRef(item))}, 'topik-owner-item', ${esc(itemId(item))}, 'ko', ${esc(role)}, 'google-browser', 'ready', 'audio-script', NULL);`,
   ].join('\n');
 }
 
@@ -147,7 +146,7 @@ export function buildTopikOwnerBatch1Plan(): TopikOwnerBatch1Plan {
       `VALUES (${esc(TOPIK_OWNER_BATCH_1_SOURCE_ASSET_ID)}, 'self-authored-fixture', ${esc(REPOSITORY_URL)}, 'LicenseRef-nihongo-n3-self-authored', ${esc(LICENSE_URL)},`,
       "  '© Nihongo N3 contributors; self-authored TOPIK learning content.',",
       "  'Personal learning content; self-authored Korean prompts, scripts, questions, answers, and explanations; not official TOPIK material.',",
-      `  ${esc(sourceSha256)}, 1785369600, 'First operating TOPIK 1–6 self-authored curriculum batch with browser Korean voice while R2 audio is prepared.');`,
+      `  ${esc(sourceSha256)}, 1785369600, 'First operating TOPIK 1–6 self-authored curriculum batch using Google Korean browser speech only; R2 pronunciation is disabled.');`,
     ].join('\n'),
     ...ITEMS.map(unitStatement),
     ...ITEMS.map(itemStatement),

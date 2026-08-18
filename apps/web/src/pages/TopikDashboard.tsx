@@ -7,12 +7,17 @@ import { useTrackStatus } from '../hooks/useTrackStatus';
 import { topikOfficialReferenceApi, topikPlacementApi } from '../lib/api';
 import { useTopikLearningProgress } from '../features/topik/learning/useTopikLearningProgress';
 import { LearningTrackSwitch } from '../components/feature/LearningTrackSwitch';
+import { useTopikOwnerCurriculumProgress } from '../features/topik/curriculum/useTopikOwnerCurriculumProgress';
+import { useLearningActivitySummary } from '../hooks/useLearningActivity';
+import { selectNextLearningAction, type NextLearningAction } from '../features/learning/next-action';
 
 export default function TopikDashboard() {
   const { t } = useTranslation();
   const scope = useDataScope();
   const { status, isLoading: statusLoading } = useTrackStatus();
   const progress = useTopikLearningProgress();
+  const ownerProgress = useTopikOwnerCurriculumProgress(scope);
+  const activity = useLearningActivitySummary('30d');
   const latest = useQuery({
     queryKey: ['topik-placement-latest', scope],
     queryFn: async () => {
@@ -32,6 +37,13 @@ export default function TopikDashboard() {
     retry: false,
   });
   const available = status?.track === 'topik-ko' && status.content_release !== 'foundation-only';
+  const dueCount = ownerProgress.data?.grades.reduce((total, grade) => total + grade.due_cards, 0) ?? 0;
+  const incompleteGrade = ownerProgress.data?.grades.find((grade) => grade.completed_items < grade.total_items)?.target_grade;
+  const nextAction = selectNextLearningAction({
+    dueCount,
+    ...(incompleteGrade !== undefined ? { incompleteGrade } : {}),
+    groups: activity.data?.groups ?? [],
+  });
 
   return (
     <div className="app-page">
@@ -42,6 +54,8 @@ export default function TopikDashboard() {
       </header>
 
       <LearningTrackSwitch />
+
+      <NextActionPanel action={nextAction} />
 
       {!statusLoading && !available && (
         <section className="mb-6 border-l-4 border-[var(--accent)] bg-[var(--surface-alt)] p-5">
@@ -118,6 +132,43 @@ export default function TopikDashboard() {
         </section>
       )}
     </div>
+  );
+}
+
+function NextActionPanel({ action }: { action: NextLearningAction }) {
+  const { t } = useTranslation();
+  const copy = action.kind === 'due-review'
+    ? {
+        title: t('topik.dashboard.nextDueTitle', { count: action.count }),
+        description: t('topik.dashboard.nextDueDescription'),
+      }
+    : action.kind === 'incomplete-owner'
+      ? {
+          title: t('topik.dashboard.nextOwnerTitle', { grade: action.grade }),
+          description: t('topik.dashboard.nextOwnerDescription'),
+        }
+      : action.kind === 'weakest-area'
+        ? {
+            title: t('topik.dashboard.nextWeakTitle', { area: action.area }),
+            description: t('topik.dashboard.nextWeakDescription', { accuracy: Math.round(action.accuracy * 100) }),
+          }
+        : {
+            title: t('topik.dashboard.nextStartTitle'),
+            description: t('topik.dashboard.nextStartDescription'),
+          };
+  return (
+    <section className="mb-6 rounded-[var(--radius-lg)] border border-[var(--accent)] bg-[var(--accent-soft)] p-5" aria-labelledby="topik-next-action-title">
+      <p className="text-xs font-black uppercase tracking-[0.08em] text-[var(--accent)]">{t('topik.dashboard.nextAction')}</p>
+      <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 id="topik-next-action-title" className="text-xl font-black text-foreground">{copy.title}</h2>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-secondary)]">{copy.description}</p>
+        </div>
+        <Link to={action.to} className="touch-target inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 text-sm font-bold text-white">
+          {t('topik.dashboard.nextActionOpen')} <ArrowRight aria-hidden="true" size={17} />
+        </Link>
+      </div>
+    </section>
   );
 }
 

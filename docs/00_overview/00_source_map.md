@@ -1,15 +1,55 @@
-# 학습 원본 지도
+# 학습 원본·데이터 흐름 지도
 
-학습 데이터의 기준은 실제 원본 문서와 seed 코드다. 과거 공개 릴리스·검수·운영 문서는 의도적으로 제거했으며, 이 문서는 콘텐츠를 찾는 최소 진입점이다.
+기준일: 2026-08-19 KST. 원본, builder, production 상태, 로컬 후보를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다.
 
-| 범위 | 원본 | seed 기준 |
-| --- | --- | --- |
-| JLPT N5 | `docs/01_n5/` | `packages/db/src/seed/content-manifest.ts` |
-| JLPT N4 | `docs/02_n4/` | `packages/db/src/seed/content-manifest.ts` |
-| JLPT N3 | `docs/03_n3/` | `packages/db/src/seed/content-manifest.ts` |
-| JLPT 공통 예문 | `docs/04_supplement/12_example_sentences.md` | `packages/db/src/seed/content-manifest.ts` |
-| JLPT N2 | `docs/05_n2/` | `packages/db/src/seed/n2-batch1.ts`, `n2-batch2.ts`, `n2-batch3.ts` 및 후속 batch |
-| JLPT N1 | `docs/06_n1/` | N2 구조를 복제하는 후속 batch |
-| TOPIK | `docs/07_topik/` | TOPIK curriculum/placement seed |
+## Production source map
 
-모든 새 unit은 어휘, 문법, 예문, 읽기 또는 듣기, 확인 문제와 해설을 자체 저작으로 묶는다. 오디오는 provenance가 확인된 R2 binding이 준비된 경우만 재생한다.
+| 범위 | 원본 | builder | Production 상태 |
+| --- | --- | --- | --- |
+| JLPT N5 | `docs/01_n5` | `content-manifest.ts` | 어휘·문법·한자 공개 |
+| JLPT N4 | `docs/02_n4` | `content-manifest.ts` | 어휘·문법·한자 공개 |
+| JLPT N3 canonical | `docs/03_n3` | `content-manifest.ts` | 어휘·문법·한자 공개 |
+| 공용 자료 | `docs/04_supplement` | `content-manifest.ts` | 예문·직무·계획 공개 |
+| JLPT N2 | `docs/05_n2` | `n2-batch1.ts`–`n2-batch5.ts` | Batch 1–5 공개 |
+| JLPT N1 | `docs/06_n1` | `n1-batch1.ts`–`n1-batch4.ts` | Batch 1–4 공개 |
+| TOPIK owner | `docs/07_topik/02`–`05` | `topik-owner-curriculum-batch1.ts`–`batch4.ts` | 1–6급, 5영역 공개 |
+| TOPIK placement | `docs/07_topik` | placement v2 builder | v2 공개 |
+| TOPIK practice | `docs/07_topik` | practice v2 builder | v2 300 공개; v1 보존·비공개 |
+
+TOPIK practice v2는 “공개 후보”가 아니라 2026-08-17 production 공개 상태입니다.
+
+## 로컬 릴리스 후보 source map
+
+| 후보 | 자체 저작 원본 | builder/review | 상태 |
+| --- | --- | --- | --- |
+| `jlpt-n3-practice-v1-2026-08-19` (120) | `packages/db/src/content/jlpt-n3-topik-owner-expansion-source.md` | `jlpt-n3-practice-bank-v1.ts`, `content-expansion-adversarial-review-1.ts`, `-2.ts` | 검토 artifact 완료, bank 미공개 |
+| `topik-owner-batch5-2026-08-19` (20) | 같은 source | `topik-owner-curriculum-batch5.ts`, 같은 두 review artifact | draft, 미배포 |
+| TOPIK v2 historical release | 기존 v2 evidence/audit | `backfill-topik-practice-v2-release.ts` | guarded, production 미적용 |
+
+review artifact와 publication은 별개입니다. 실제 seed/publication에는 `0026` release-quality link, G0–G4 evidence, preview, 명시적 production 승인이 필요합니다.
+
+## 런타임 데이터 map
+
+```text
+퀴즈/owner/Google speech
+  → web Dexie activity queue
+  → POST /api/v1/activity/events
+  → learning_activity_events (0024)
+  → GET /api/v1/activity/summary
+  → due review → incomplete owner → weakest area
+```
+
+퀴즈 `weakest`는 최근 30일 오답을 보되 요청 JLPT 급수를 벗어나지 않습니다. TOPIK owner complete와 FSRS review event는 해당 서버 transaction과 함께 기록됩니다.
+
+## Speech map
+
+```text
+audio_script_ja / audio_text_ko
+  → content_speech_bindings(provider=google-browser)
+  → browser Google voice
+  → played | unavailable | error activity event
+```
+
+R2는 이 경로에 존재하지 않습니다. 음성 binary, R2 key, R2 fallback을 생성·저장·조회하지 않습니다. legacy `/api/v1/audio/*`는 `410 Gone`, `content_audio_bindings`는 로컬 `0027` 이후 신규 insert가 금지됩니다.
+
+원본 본문을 바꾸면 source SHA와 manifest/version이 바뀝니다. 제목의 목표 수량 대신 seed plan과 fresh verifier를 최종 기준으로 사용합니다.

@@ -73,7 +73,7 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
               {audio.playing ? t('topik.placement.playing') : t('topik.placement.playAudio')}
             </button>
             <span className="text-xs text-[var(--muted-foreground)]">
-              {question.audio?.kind === 'r2' ? t('topik.placement.reviewedAudio') : question.audio?.kind === 'browser-fallback' ? t('topik.placement.browserAudio') : t('quiz.audioPending')}
+              {question.audio?.kind === 'google' ? 'Google 한국어 음성' : t('quiz.audioPending')}
             </span>
             {audio.error && <p role="alert" className="w-full text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
           </div>

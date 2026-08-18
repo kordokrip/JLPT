@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isGoogleJapaneseVoice, isReviewedImmutableAudioPath, selectJapaneseVoice, voiceSortScore, type JapaneseVoiceOption } from '../audio';
+import { isGoogleJapaneseVoice, selectJapaneseVoice, voiceSortScore, type JapaneseVoiceOption } from '../audio';
 
 describe('audio voice selection', () => {
   it('prioritizes Google Japanese voices over other Japanese voices', () => {
@@ -55,8 +55,4 @@ describe('audio voice selection', () => {
     })?.name).toBe('Google 日本語');
   });
 
-  it('accepts only immutable reviewed asset paths for a server fallback', () => {
-    expect(isReviewedImmutableAudioPath('audio/vocab/n3/1280.mp3')).toBe(false);
-    expect(isReviewedImmutableAudioPath('audio/vocab/n3/1280-1234567890abcdef.mp3')).toBe(true);
-  });
 });

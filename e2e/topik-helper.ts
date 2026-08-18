@@ -34,7 +34,7 @@ export async function mockTopikReadApis(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ data: {
-        bank_version: 'v1',
+        bank_version: 'v2',
         exam_level: examLevel,
         section,
         questions: [writing ? {
@@ -60,7 +60,7 @@ export async function mockTopikReadApis(page: Page): Promise<void> {
           prompt_ja: '男性はどこへ行きますか。',
           prompt_en: 'Where is the man going?',
           choices: ['학교', '은행', '병원', '시장'],
-          audio: { kind: 'unavailable', reason: 'preparing' },
+          audio: { kind: 'google', text_ko: '남자는 은행에 갑니다.' },
         }],
       } }),
     });

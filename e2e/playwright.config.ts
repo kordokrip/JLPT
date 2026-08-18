@@ -14,8 +14,8 @@ const reuseExistingServer = process.env.E2E_REUSE_EXISTING_SERVER === "1";
  *   1. scripts/e2e-api-dev.sh      → http://127.0.0.1:8788
  *   2. pnpm -F @nihongo-n3/web dev → http://127.0.0.1:4173  (자동 시작)
  *
- * CI (.github/workflows/e2e.yml) 에서는 wrangler dev + vite dev 를
- * 백그라운드로 실행한 뒤 `pnpm -F @nihongo-n3/e2e test` 를 호출합니다.
+ * CI (.github/workflows/ci.yml)에서는 Playwright webServer가 isolated
+ * wrangler dev + vite dev를 시작한 뒤 browser project별로 test를 실행합니다.
  */
 export default defineConfig({
   testDir: ".",

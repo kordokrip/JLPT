@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { TOPIK_FOUNDATION_UNITS } from '../features/topik/learning/content';
-import { useTopikLearningProgress } from '../features/topik/learning/useTopikLearningProgress';
+import { useTopikOwnerCurriculumProgress } from '../features/topik/curriculum/useTopikOwnerCurriculumProgress';
 import { useDataScope } from '../hooks/useDataScope';
 import { topikPlacementApi } from '../lib/api';
 import { useTranslation } from 'react-i18next';
@@ -9,18 +8,28 @@ import { useTranslation } from 'react-i18next';
 export default function TopikProgress() {
   const { t } = useTranslation();
   const scope = useDataScope();
-  const progress = useTopikLearningProgress();
+  const curriculumProgress = useTopikOwnerCurriculumProgress(scope);
   const latest = useQuery({ queryKey: ['topik-placement-latest', scope], queryFn: async () => { const result = await topikPlacementApi.latest(); if (!result.ok) throw new Error(result.message); return result.data; }, retry: false });
-  const unitPercent = Math.round(progress.completedCount / TOPIK_FOUNDATION_UNITS.length * 100);
+  const totalItems = curriculumProgress.data?.grades.reduce((total, grade) => total + grade.total_items, 0) ?? 0;
+  const completedItems = curriculumProgress.data?.grades.reduce((total, grade) => total + grade.completed_items, 0) ?? 0;
+  const dueCards = curriculumProgress.data?.grades.reduce((total, grade) => total + grade.due_cards, 0) ?? 0;
+  const unitPercent = totalItems > 0 ? Math.round(completedItems / totalItems * 100) : 0;
   return (
     <div className="app-page max-w-[800px]">
       <p className="text-sm font-bold text-[var(--accent)]">{t('topik.progress.eyebrow')}</p>
       <h1 className="mt-2 text-3xl font-black">{t('topik.progress.title')}</h1>
       <p className="mt-3 leading-7 text-[var(--muted-foreground)]">{t('topik.progress.description')}</p>
       <section className="mt-7 border-y border-[var(--border)] py-6">
-        <div className="flex items-end justify-between"><h2 className="font-bold">{t('topik.progress.units')}</h2><strong className="text-2xl text-[var(--accent)]">{unitPercent}%</strong></div>
+        <div className="flex items-end justify-between"><h2 className="font-bold">TOPIK 1–6 자체 저작 학습</h2><strong className="text-2xl text-[var(--accent)]">{unitPercent}%</strong></div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--muted)]"><div className="h-full bg-[var(--accent)]" style={{ width: `${unitPercent}%` }} /></div>
-        <p className="mt-2 text-sm text-[var(--muted-foreground)]">{t('topik.progress.unitsComplete', { completed: progress.completedCount, total: TOPIK_FOUNDATION_UNITS.length })}</p>
+        {curriculumProgress.isLoading ? <p className="mt-2 text-sm text-[var(--muted-foreground)]">진행률을 불러오는 중입니다.</p> : <p className="mt-2 text-sm text-[var(--muted-foreground)]">{completedItems}/{totalItems}개 학습 완료 · 오늘 복습 {dueCards}개</p>}
+        {curriculumProgress.isError && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-300">{curriculumProgress.error.message}</p>}
+      </section>
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="급수별 진행률">
+        {curriculumProgress.data?.grades.map((grade) => {
+          const percent = grade.total_items > 0 ? Math.round(grade.completed_items / grade.total_items * 100) : 0;
+          return <Link key={grade.target_grade} to="/track/topik-ko/learn" className="surface-panel p-4 hover:border-[var(--accent)]"><div className="flex items-center justify-between"><strong>{grade.target_grade}급</strong><span className="text-sm font-bold text-[var(--accent)]">{percent}%</span></div><p className="mt-2 text-sm text-[var(--muted-foreground)]">{grade.completed_items}/{grade.total_items} 완료 · 복습 {grade.due_cards}개</p></Link>;
+        })}
       </section>
       <section className="mt-6 grid grid-cols-3 gap-2">
         <Metric label={t('topik.placement.scoreTotal')} value={latest.data?.score_total} />

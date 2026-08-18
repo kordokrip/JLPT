@@ -33,23 +33,14 @@ GOOGLE_REDIRECT_URI = "https://nihongo-n3.pages.dev/api/v1/auth/google/callback"
 # Set AUTH_MODE = "cf-access" after both secrets are configured.
 # 주간 리포트 이메일 수신 주소 (MailChannels, 비어 있으면 발송 안 함)
 NOTIFY_EMAIL = ""
-# TTS 공급자 선택: cloudflare | google | azure | voicevox | style-bert-vits2
-TTS_PROVIDER = "cloudflare"
-AZURE_TTS_REGION = "japaneast"
-VOICEVOX_URL = ""
-VOICEVOX_SPEAKER = "3"
-VOICEVOX_SPEED_SCALE = "0.94"
-VOICEVOX_PITCH_SCALE = "0"
-VOICEVOX_INTONATION_SCALE = "1.12"
-STYLE_BERT_VITS2_URL = ""
+# 발음은 클라이언트의 Google 브라우저 음성만 사용한다.
 FSRS_OPTIMIZER_URL = ""
 # AI learning assistance is fail-closed. This non-secret flag must remain false
 # until an operator completes the P5 privacy, budget, and evaluation gates.
 AI_ASSISTANCE_ENABLED = "false"
 # FSRS_OPTIMIZER_URL 비움 = 개인화 최적화 비활성(정상 운영 모드).
 # 활성화 시 외부 optimizer는 FSRS-6 21 weights 응답을 보장해야 합니다.
-# GOOGLE_TTS_API_KEY, AZURE_TTS_KEY, FSRS_OPTIMIZER_TOKEN,
-# VAPID_PRIVATE_KEY, AUDIO_BATCH_APPROVAL_TOKEN은 `wrangler secret put`으로만 설정합니다.
+# FSRS_OPTIMIZER_TOKEN, VAPID_PRIVATE_KEY는 `wrangler secret put`으로만 설정합니다.
 # AI_ASSISTANCE_BUCKET_SECRET, AI_GATEWAY_BASE_URL, AI_GATEWAY_API_TOKEN은
 # `wrangler secret put`으로만 설정합니다. 절대로 VITE_* 또는 [vars]에 넣지 않습니다.
 # OBSERVABILITY_CANARY_TOKEN은 preview Worker에만 secret으로 설정하고 production에는 두지 않습니다.
@@ -69,13 +60,7 @@ database_id = "0a22d92a-4af5-486f-8934-84eb1890835c"
 migrations_dir = "../../packages/db/drizzle-v2"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# R2 Object Storage
-# bucket_name은 wrangler.toml 값 기준으로 배포/백업 워크플로에서 공통 사용합니다.
-# ─────────────────────────────────────────────────────────────────────────────
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nihongo-n3-audio"
-
+# R2 Object Storage — 발음 전용 ASSETS 바인딩은 의도적으로 제거했습니다.
 # 주간 리포트 + 백업 SQL 저장 버킷
 [[r2_buckets]]
 binding = "REPORTS"
@@ -184,14 +169,6 @@ RELEASE_SHA = "unversioned-preview"
 APP_ORIGIN = "https://nihongo-n3.pages.dev"
 GOOGLE_REDIRECT_URI = "https://nihongo-n3-api-observability-preview.kordokrip.workers.dev/api/v1/auth/google/callback"
 NOTIFY_EMAIL = ""
-TTS_PROVIDER = "cloudflare"
-AZURE_TTS_REGION = "japaneast"
-VOICEVOX_URL = ""
-VOICEVOX_SPEAKER = "3"
-VOICEVOX_SPEED_SCALE = "0.94"
-VOICEVOX_PITCH_SCALE = "0"
-VOICEVOX_INTONATION_SCALE = "1.12"
-STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
 VAPID_PUBLIC_KEY = "BJHfUCRXkX43H96EVNlG51N9DWgmjcKdPZsPbJftK4I9WX2ym34ckNOJy7k71VXspgQZy9xze_DYzf_V7s_08jw"
 OBSERVABILITY_WORKER_NAME = "nihongo-n3-api-observability-preview"
@@ -201,10 +178,6 @@ binding = "DB"
 database_name = "nihongo-n3-prod"
 database_id = "5a3ba67b-e5a5-4d5f-a73c-9bb7f4db9f68"
 migrations_dir = "../../packages/db/drizzle-v2"
-
-[[env.observability-preview.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nihongo-n3-audio"
 
 [[env.observability-preview.r2_buckets]]
 binding = "REPORTS"
@@ -301,14 +274,6 @@ RELEASE_SHA = "unversioned-topik-preview"
 APP_ORIGIN = "https://feature-topik-product-expans.nihongo-n3.pages.dev"
 GOOGLE_REDIRECT_URI = "https://nihongo-n3-api-topik-preview.kordokrip.workers.dev/api/v1/auth/google/callback"
 NOTIFY_EMAIL = ""
-TTS_PROVIDER = "cloudflare"
-AZURE_TTS_REGION = "japaneast"
-VOICEVOX_URL = ""
-VOICEVOX_SPEAKER = "3"
-VOICEVOX_SPEED_SCALE = "0.94"
-VOICEVOX_PITCH_SCALE = "0"
-VOICEVOX_INTONATION_SCALE = "1.12"
-STYLE_BERT_VITS2_URL = ""
 FSRS_OPTIMIZER_URL = ""
 AI_ASSISTANCE_ENABLED = "false"
 VAPID_PUBLIC_KEY = "BJHfUCRXkX43H96EVNlG51N9DWgmjcKdPZsPbJftK4I9WX2ym34ckNOJy7k71VXspgQZy9xze_DYzf_V7s_08jw"
@@ -319,10 +284,6 @@ binding = "DB"
 database_name = "nihongo-n3-topik-preview"
 database_id = "5c8863e9-09ea-4180-adb5-e097f4b8de34"
 migrations_dir = "../../packages/db/drizzle-v2"
-
-[[env.topik-preview.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nihongo-n3-audio"
 
 [[env.topik-preview.r2_buckets]]
 binding = "REPORTS"

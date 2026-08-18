@@ -15,6 +15,7 @@ const FIXTURE_LICENSE_URL = 'https://github.com/kordokrip/JLPT/blob/main/docs/AT
 const UNIT_ID = 'topik-owner-grade1-unit-greetings-v1';
 const VOCAB_ITEM_ID = 'topik-owner-grade1-vocab-annyeonghaseyo-v1';
 const LISTENING_ITEM_ID = 'topik-owner-grade1-listening-introduction-v1';
+const UNAVAILABLE_AUDIO_ITEM_ID = 'topik-owner-grade1-listening-audio-unavailable-v1';
 
 export interface TopikGrade1LocalFixtureManifest {
   sourceCode: string;
@@ -43,12 +44,19 @@ function stableRef(stableRef: string, itemId: string): string {
   ].join('\n');
 }
 
-function preparingBinding(id: string, stableRefValue: string, itemId: string, role: 'pronunciation' | 'listening'): string {
+function speechBinding(
+  id: string,
+  stableRefValue: string,
+  itemId: string,
+  role: 'pronunciation' | 'listening',
+  state: 'ready' | 'unavailable' = 'ready',
+): string {
+  const unavailableReason = state === 'unavailable' ? esc('audio-text-not-provided') : 'NULL';
   return [
-    'INSERT OR IGNORE INTO `content_audio_bindings`',
-    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `audio_role`, `binding_state`, `asset_id`, `unavailable_reason`)',
-    `VALUES (${esc(id)}, ${esc(stableRefValue)}, 'topik-owner-item', ${esc(itemId)}, 'ko', ${esc(role)},`,
-    "  'preparing', NULL, 'No licensed Korean recording or validated TTS pilot has been attached to this self-authored local fixture.');",
+    'INSERT OR IGNORE INTO `content_speech_bindings`',
+    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `speech_role`, `provider`, `binding_state`, `text_source`, `unavailable_reason`)',
+    `VALUES (${esc(id.replace(/^audio-binding:/, 'speech-binding:'))}, ${esc(stableRefValue)}, 'topik-owner-item', ${esc(itemId)}, 'ko', ${esc(role)},`,
+    `  'google-browser', ${esc(state)}, 'audio-script', ${unavailableReason});`,
   ].join('\n');
 }
 
@@ -56,6 +64,7 @@ export function buildTopikGrade1LocalFixturePlan(): TopikGrade1LocalFixturePlan 
   const sourceSha256 = sha256(fs.readFileSync(TOPIK_GRADE1_LOCAL_FIXTURE_PATH));
   const vocabStableRef = 'topik:grade1:vocab:annyeonghaseyo';
   const listeningStableRef = 'topik:grade1:listening:introduction';
+  const unavailableAudioStableRef = 'topik:grade1:listening:audio-unavailable';
   const statements = [
     [
       'INSERT INTO `sources` (`code`, `title`, `file_path`, `version`)',
@@ -95,10 +104,20 @@ export function buildTopikGrade1LocalFixturePlan(): TopikGrade1LocalFixturePlan 
       `  ${esc(JSON.stringify({ choices: ['자기소개', '약속 취소', '물건 구매', '길 묻기'], answer_index: 0 }))},`,
       `  '대본에서 이름을 말하고 처음 뵙겠다고 하므로 자기소개입니다.', '名前を言って「初めてお目にかかります」と話しているため、自己紹介です。', 'The speaker states a name and says nice to meet you, so this is an introduction.', 1, '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.', ${esc(TOPIK_GRADE1_LOCAL_FIXTURE_SOURCE_ASSET_ID)});`,
     ].join('\n'),
+    [
+      'INSERT OR IGNORE INTO `topik_owner_authored_curriculum_items`',
+      '  (`id`, `unit_id`, `target_grade`, `stable_ref`, `item_type`, `prompt_ko`, `prompt_ja`, `prompt_en`, `answer_json`, `explanation_ko`, `explanation_ja`, `explanation_en`, `audio_required`, `audio_text_ko`, `source_asset_id`)',
+      `VALUES (${esc(UNAVAILABLE_AUDIO_ITEM_ID)}, ${esc(UNIT_ID)}, 1, ${esc(unavailableAudioStableRef)}, 'listening',`,
+      `  '오디오가 제공되지 않을 때 올바른 안내는 무엇입니까?', '音声が提供されない場合の正しい案内は何ですか。', 'What is the correct notice when audio is unavailable?',`,
+      `  ${esc(JSON.stringify({ choices: ['브라우저 Google 음성을 사용할 수 없다고 안내한다', 'R2 파일을 찾는다', '다른 음성 엔진으로 바꾼다', '무단 녹음을 재생한다'], answer_index: 0 }))},`,
+      `  '발음 텍스트가 없으면 브라우저 Google 음성을 제공하지 않으며 unavailable 상태를 안내합니다. R2나 다른 음성 엔진으로 fallback하지 않습니다.', '発音テキストがない場合はブラウザの Google 音声を提供せず、unavailable 状態を案内します。R2 や別の音声エンジンへ fallback しません。', 'Without pronunciation text, browser Google speech is marked unavailable. The app does not fall back to R2 or another speech engine.', 1, NULL, ${esc(TOPIK_GRADE1_LOCAL_FIXTURE_SOURCE_ASSET_ID)});`,
+    ].join('\n'),
     stableRef(vocabStableRef, VOCAB_ITEM_ID),
     stableRef(listeningStableRef, LISTENING_ITEM_ID),
-    preparingBinding('audio-binding:topik:grade1:vocab:annyeonghaseyo', vocabStableRef, VOCAB_ITEM_ID, 'pronunciation'),
-    preparingBinding('audio-binding:topik:grade1:listening:introduction', listeningStableRef, LISTENING_ITEM_ID, 'listening'),
+    stableRef(unavailableAudioStableRef, UNAVAILABLE_AUDIO_ITEM_ID),
+    speechBinding('audio-binding:topik:grade1:vocab:annyeonghaseyo', vocabStableRef, VOCAB_ITEM_ID, 'pronunciation'),
+    speechBinding('audio-binding:topik:grade1:listening:introduction', listeningStableRef, LISTENING_ITEM_ID, 'listening'),
+    speechBinding('audio-binding:topik:grade1:listening:audio-unavailable', unavailableAudioStableRef, UNAVAILABLE_AUDIO_ITEM_ID, 'listening', 'unavailable'),
   ];
   return {
     statements,
@@ -108,8 +127,8 @@ export function buildTopikGrade1LocalFixturePlan(): TopikGrade1LocalFixturePlan 
       sourcePath: path.relative(REPO_ROOT, TOPIK_GRADE1_LOCAL_FIXTURE_PATH).split(path.sep).join('/'),
       sourceSha256,
       unitId: UNIT_ID,
-      itemIds: [VOCAB_ITEM_ID, LISTENING_ITEM_ID],
-      counts: { units: 1, items: 2, stableRefs: 2, audioBindings: 2 },
+      itemIds: [VOCAB_ITEM_ID, LISTENING_ITEM_ID, UNAVAILABLE_AUDIO_ITEM_ID],
+      counts: { units: 1, items: 3, stableRefs: 3, audioBindings: 3 },
     },
   };
 }

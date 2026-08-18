@@ -8,7 +8,7 @@ import {
   TOPIK_OWNER_BATCH_1_SOURCE_ASSET_ID,
 } from '../seed/topik-owner-curriculum-batch1.js';
 
-test('TOPIK 1–6 Batch 1 is operating self-authored content with browser-ready Korean texts', () => {
+test('TOPIK 1–6 Batch 1 is operating self-authored content with Google-ready Korean texts', () => {
   const plan = buildTopikOwnerBatch1Plan();
   assert.deepEqual(plan.manifest.counts, { units: 30, items: 30, stableRefs: 30, audioBindings: 30, contentRows: 60 });
   assert.match(plan.manifest.sourceSha256, /^[a-f0-9]{64}$/);
@@ -21,6 +21,7 @@ test('TOPIK 1–6 Batch 1 is operating self-authored content with browser-ready 
   assert.match(sql, /audio_text_ko/);
   assert.match(sql, /TOPIK-1/);
   assert.match(sql, /TOPIK-6/);
-  assert.match(sql, /browser Korean voice/);
+  assert.match(sql, /Google Korean browser speech only/);
+  assert.match(sql, /R2 pronunciation is disabled/);
   assert.doesNotMatch(sql, /topik_practice_questions|content_releases/);
 });

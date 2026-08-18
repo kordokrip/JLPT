@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TopikPlacementAudioDto } from '@nihongo-n3/shared';
+import { recordLearningActivity } from '../../lib/activity-events';
+
+export interface KoreanSpeechActivityContext {
+  contentType: string;
+  contentId: string;
+  levelTag?: string;
+  section?: string;
+}
 
 export function useKoreanAudio() {
   const [playing, setPlaying] = useState(false);
@@ -7,7 +15,6 @@ export function useKoreanAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stop = useCallback(() => {
-    window.speechSynthesis?.cancel();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -18,21 +25,21 @@ export function useKoreanAudio() {
 
   useEffect(() => stop, [stop]);
 
-  const speakText = useCallback((text: string) => {
+  const speakText = useCallback((text: string, context?: KoreanSpeechActivityContext) => {
     stop();
     setError(null);
     if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
       setError('unavailable');
+      if (context) void recordSpeechActivity(context, 'unavailable');
       return false;
     }
     const voices = window.speechSynthesis.getVoices();
     const koreanVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith('ko'));
-    const voice = koreanVoices.find((item) => `${item.name} ${item.voiceURI}`.toLowerCase().includes('google'))
-      ?? koreanVoices.find((item) => item.default)
-      ?? koreanVoices[0];
-    // Never allow Korean study text to fall through to another language's default voice.
+    const voice = koreanVoices.find((item) => `${item.name} ${item.voiceURI}`.toLowerCase().includes('google'));
+    // Google voice only: never fall through to another provider or language.
     if (!voice) {
       setError('unavailable');
+      if (context) void recordSpeechActivity(context, 'unavailable');
       return false;
     }
     const utterance = new SpeechSynthesisUtterance(text);
@@ -46,33 +53,43 @@ export function useKoreanAudio() {
       setError('playback-failed');
     };
     setPlaying(true);
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.speak(utterance);
+      if (context) void recordSpeechActivity(context, 'played');
+    } catch {
+      setPlaying(false);
+      setError('playback-failed');
+      if (context) void recordSpeechActivity(context, 'error');
+      return false;
+    }
     return true;
   }, [stop]);
 
-  const play = useCallback((source: TopikPlacementAudioDto) => {
-    if (source.kind === 'browser-fallback') return speakText(source.text_ko);
+  const play = useCallback((source: TopikPlacementAudioDto, context?: KoreanSpeechActivityContext) => {
+    if (source.kind === 'google') return speakText(source.text_ko, context);
     if (source.kind === 'unavailable') {
       stop();
       setError('unavailable');
+      if (context) void recordSpeechActivity(context, 'unavailable');
       return false;
     }
-    stop();
-    setError(null);
-    const audio = new Audio(source.url);
-    audioRef.current = audio;
-    audio.onended = () => setPlaying(false);
-    audio.onerror = () => {
-      setPlaying(false);
-      setError('playback-failed');
-    };
-    setPlaying(true);
-    void audio.play().catch(() => {
-      setPlaying(false);
-      setError('playback-failed');
-    });
-    return true;
+    return false;
   }, [speakText, stop]);
 
   return { play, speakText, stop, playing, error };
+}
+
+async function recordSpeechActivity(
+  context: KoreanSpeechActivityContext,
+  speechOutcome: 'played' | 'unavailable' | 'error',
+): Promise<void> {
+  await recordLearningActivity({
+    event_type: 'speech_attempted',
+    learning_track: 'topik-ko',
+    content_type: context.contentType,
+    content_id: context.contentId,
+    ...(context.levelTag !== undefined ? { level_tag: context.levelTag } : {}),
+    ...(context.section !== undefined ? { section: context.section } : {}),
+    speech_outcome: speechOutcome,
+  }).catch(() => undefined);
 }

@@ -1,6 +1,7 @@
 # TOPIK I Placement V2 QA Bank
 
-- 상태: production release candidate, 일본어 해설 검수 포함
+- 기준일: 2026-08-09 KST
+- 상태: repository의 v2 placement source. remote release 여부는 문서가 아닌 D1 release contract로 확인
 - 저작: 프로젝트 자체 저작
 - 범위: 듣기 12문항, 읽기 12문항
 - 최종 검토일: 2026-07-20
@@ -20,7 +21,7 @@
 1. 공식 기출 문항, 정답, 듣기 음원을 복제하지 않는다.
 2. 듣기 대본과 읽기 문항은 일상적인 초급 한국어 상황을 바탕으로 자체 저작한다.
 3. 공개 문제 DTO에는 정답과 해설을 포함하지 않는다. 제출 뒤에만 채점 결과를 반환한다.
-4. 듣기 고정 음원이 승인되기 전에는 명시적인 한국어 브라우저 음성 fallback만 사용한다.
+4. 이 placement v2 API는 `audio_script_ko`가 있는 listening question에 Google 음성 DTO를 반환하고, 재생 텍스트가 없으면 unavailable을 반환한다. R2 audio key와 browser fallback은 사용하지 않는다.
 5. 결과는 `starter`, `foundation`, `ready` 학습 밴드이며 공식 급수 판정이 아니다.
 
 ## 검증 계약

@@ -17,7 +17,8 @@ export default defineConfig({
       wrangler: { configPath: './wrangler.test.toml' },
       miniflare: {
         d1Databases: ['DB'],
-        r2Buckets: ['ASSETS', 'REPORTS', 'CONTENT_EVIDENCE'],
+        // ASSETS is deliberately absent: pronunciation must not access R2.
+        r2Buckets: ['REPORTS', 'CONTENT_EVIDENCE'],
         queueProducers: ['CONTENT_RELEASE_QUEUE', 'CONTENT_RELEASE_DLQ'],
         queueConsumers: [
           'nihongo-n3-content-release-test',

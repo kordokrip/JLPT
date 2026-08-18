@@ -1,64 +1,84 @@
-# 개인용 JLPT · TOPIK PWA 구조 분석
+# 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-기준일: 2026-07-29 KST. 이 문서는 현재 코드와 로컬 검증을 기준으로 한 간결한 구조 지도다.
+기준일: 2026-08-19 KST. 이 문서는 코드·schema·route·test를 기준으로 한 현재 구조 지도입니다. production 기준선과 로컬 릴리스 후보는 별도 상태입니다.
 
-## 목적
+## 배포 경계
 
-어느 기기에서나 같은 진도와 설정으로 JLPT N5~N1, TOPIK 1~6을 효율적으로 학습한다. 기능의 성공 기준은 운영 절차의 수가 아니라 실제 데이터가 PWA의 탐색·읽기·듣기·퀴즈·복습에 연결되는지다.
+| 상태 | DB/런타임 | 콘텐츠 |
+| --- | --- | --- |
+| production 기준선 | D1 `0000–0023`, Worker `693837d0-70e0-40b7-9f7e-72487321b6f7`, Pages `9d8e6460-2e86-477c-8eb8-fc4c41491f4c` | canonical 6,501행, TOPIK practice v2 300 공개 |
+| 로컬 후보 | migration `0024–0027`, 대응 shared/API/web 구현과 테스트 | N3 120문항, TOPIK owner Batch 5 20항목; review artifact 존재, publication state는 draft/unpublished |
 
-## 실제 실행 흐름
+로컬 후보는 아직 production에 반영되지 않았습니다. 아래 설명에서 “구현됨”은 로컬 코드 상태를 의미합니다.
+
+## 계층과 데이터 흐름
 
 ```text
-학습 원본(docs)
-  → seed generator와 검증(packages/db)
-  → Cloudflare D1
-  → Worker API(apps/api)
-  → React PWA(apps/web)
-  → 복습 기록·설정·오프라인 shell
+packages/db source/seed ── fresh D1 / production D1
+                                │
+packages/shared DTO·FSRS ── apps/api Worker
+                                │ JSON API
+                           apps/web PWA
+                         Query + Dexie queue
 ```
 
-| 계층 | 책임 | 유지 이유 |
-| --- | --- | --- |
-| `apps/web` | 반응형 PWA, 학습·복습·설정 UI | 모든 기기에서 직접 사용하는 제품 |
-| `apps/api` | 인증, 콘텐츠·학습 기록 API, R2 audio 접근 | PWA와 D1/R2의 안전한 연결 |
-| `packages/db` | schema, canonical migration, seed, fresh verifier | 실제 학습 데이터를 재현 가능하게 적재 |
-| `packages/shared` | DTO, FSRS, 트랙·레벨 계약 | web과 API의 동작 불일치 방지 |
-| `docs` | 학습 원본과 소스 조건 | 콘텐츠의 단일 원본 |
-| `e2e` | Chromium/WebKit 핵심 학습 경로 | 모바일 Safari를 포함한 회귀 방지 |
+| 계층 | 주요 책임 |
+| --- | --- |
+| `apps/web` | 보호 라우트, 퀴즈/owner 학습, 다음 행동, Google speech, 오프라인 활동 큐 |
+| `apps/api` | 세션·track guard, 콘텐츠/퀴즈, TOPIK progress·FSRS, 활동 수집·집계 |
+| `packages/shared` | 요청/응답 Zod schema, activity event 타입, FSRS 계산 |
+| `packages/db` | D1 schema/migration, source/seed plan, release gate, verifier |
+| `e2e` | 브라우저별 데이터 바인딩·학습 흐름·R2 요청 차단 검증 |
 
-## 현재 학습 데이터 상태
+## 로컬 신규 데이터 모델
 
-| 범위 | 상태 | 근거 |
-| --- | --- | --- |
-| JLPT N5~N3 | 기존 seed와 학습 UI가 연결됨 | `content-manifest.ts` |
-| JLPT N2 | Batch 1·2·3이 main manifest, track status, PWA browse/reading path에 연결됨 | `n2-batch1.ts`, `n2-batch2.ts`, `n2-batch3.ts`, `n2-release-browse.spec.ts` |
-| JLPT N1 | 데이터 없음 | `docs/06_n1/` 및 후속 batch 필요 |
-| TOPIK 1~6 | 화면·DB 모델은 있으나 전체 급수별 unit 수가 부족함 | TOPIK curriculum routes/seeds |
+| migration | 모델과 불변 조건 |
+| --- | --- |
+| `0024_learning_activity_events.sql` | `(user_id,event_id)` 고유 이벤트. 원문/개인정보 대신 track, level, section, content ID, 정오답, FSRS rating, speech outcome, 시각만 저장 |
+| `0025_jlpt_practice_questions.sql` | 자체 저작 JLPT 정적 문제은행. 버전, 공개 상태, 3개 언어 prompt/choice/explanation, listening script를 관리하고 기본 미공개 |
+| `0026_release_quality_links.sql` | `content_release_quality_requirements`와 `content_release_quality_audit_links`. 완전하고 승인된 audit 링크 집합 없이는 공개 차단 |
+| `0027_google_speech_contract.sql` | `content_speech_bindings`: provider `google-browser`, state `ready|unavailable`. legacy `content_audio_bindings`는 한 호환 릴리스 동안 보존하되 신규 insert 차단 |
 
-## UX 우선순위
+`0025`는 뒤 migration의 테이블을 참조하지 않습니다. release-link 의존 trigger는 `0026`이 관련 테이블을 만든 뒤 설치하므로 fresh migration 순서가 유효합니다.
 
-유지할 핵심 흐름은 홈의 오늘 학습 → 새 unit/탐색 → 퀴즈·읽기·듣기 → FSRS 복습 → 통계·간단 설정이다. 반응형 레이아웃, 터치 목표 크기, iOS safe area, WebKit E2E와 PWA app shell은 이 목적에 직접 기여하므로 유지한다.
+## 활동·퀴즈·학습 연결
 
-정상 학습 오디오는 R2 asset만 재생한다. asset이 없다면 준비 상태를 표시하며 브라우저 TTS로 조용히 대체하지 않는다.
+클라이언트는 활동 이벤트를 Dexie v6 큐에 먼저 기록합니다. flush 실패 시 항목을 보존하고, 다음 온라인 전환/앱 재개 때 동일 `event_id`로 재전송합니다. 서버의 `(user_id,event_id)` 고유 키가 중복을 흡수하며 queue는 계정×트랙으로 격리됩니다.
 
-## 이번 정리에서 제거한 범위
+- `POST /api/v1/activity/events`: 1–100개 batch, 인증 track과 이벤트 track이 다르면 거부, `{accepted, duplicates}` 반환
+- `GET /api/v1/activity/summary?window=7d|30d`: totals와 track/level/section/mode groups 반환
+- 퀴즈 제출은 질문별 `quiz_answered`, TOPIK owner 완료는 `content_completed`, FSRS 평가는 `review_rated`를 해당 데이터 변경과 같은 서버 transaction에서 기록
+- speech playback은 `speech_attempted`와 `played|unavailable|error`만 기록
 
-- 사용되지 않는 `_design` Figma/Vite 골격과 빈 `guidelines` 템플릿
-- 실제 seed/API/UI가 참조하지 않는 `packages/content` 중복 메타데이터 패키지
-- 과거 공개 릴리스, 다중 검수, preview claim, blue/green, logpush, release control-plane 중심의 문서와 실행 프롬프트
-- 현재 코드와 모순되는 중복 분석·로드맵 문서
+퀴즈 생성의 `strategy`는 선택 사항입니다. `random`은 기존 요청에 필드를 추가하지 않아 호환성을 유지합니다. `weakest`는 최근 30일 오답/복습을 우선하지만 요청한 급수 내부에서만 고르며, 데이터가 없거나 부족해도 다른 급수로 fallback하지 않습니다. N3 `kanji_reading`/`listening`은 공개·검토된 정적 bank가 생기면 우선 활용하도록 연결되어 있습니다.
 
-제거하지 않은 항목은 실제 학습 UI, 데이터 원본, canonical migration, 오디오 provenance, PWA 테스트다.
+TOPIK 대시보드는 서버 due, 미완료 owner 목록, 30일 activity summary를 합쳐 `due review → incomplete owner → weakest area`의 고정 순서로 하나의 다음 행동을 만듭니다.
 
-## 다음 구조 단순화 후보
+## 콘텐츠와 release control
 
-아래는 런타임에서 실제로 연결돼 있으므로, 즉시 삭제하면 현재 기능을 깨뜨릴 수 있다. 개인 학습 UX에 계속 필요하지 않다고 판단하면 영향 범위를 분리해 제거한다.
+production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner Batch 1–4(120 unit/120 item), TOPIK practice v2 300문항을 제공합니다.
 
-| 후보 | 현재 연결 | 권장 |
-| --- | --- | --- |
-| TOPIK owner-private release/claim 경로 | TOPIK 학습 화면, API, D1 migration, E2E | 전체 TOPIK curriculum의 일반 personal seed가 안정화된 뒤 대체·제거 |
-| 다중 TTS provider와 Audio QA | Settings, admin route, audio QA 화면 | Cloudflare/R2만 유지할지 결정 후 한 번에 제거 |
-| AI writing assistance | TOPIK 학습 화면과 Worker | 실제 사용하지 않으면 UI·API·설정을 함께 제거 |
-| push notification, admin user 관리 | Settings/admin와 API | 개인 단일 사용자 흐름에서 쓰지 않으면 별도 정리 |
+로컬 초안은 별도 source와 deterministic builder에 있습니다.
 
-이 네 항목은 살아 있는 코드이므로, 삭제 전에 사용자에게 기능 유지 여부와 대안을 설명하고 확인받는다.
+- `jlpt-n3-practice-v1-2026-08-19`: 한자 읽기 60 + 듣기 60, 각 모드 정답 위치 `15/15/15/15`, 3개 언어 prompt/explanation, 모두 `is_published=0`
+- `topik-owner-batch5-2026-08-19`: 급수별 10개, 다섯 영역 각 2개, 총 20개. 듣기 4개만 `audio_text_ko`와 Google speech binding을 가짐
+- 두 독립 adversarial review artifact가 140개 전체의 정답·해설을 대조하지만 draft 필드 자체는 release 실행 전까지 pending/unpublished로 유지
+
+기존 TOPIK v2 300 audit을 release control plane에 역사적으로 연결하는 backfill script도 로컬에 있습니다. production 실행은 `--publish`와 명시적 환경 guard가 필요하며 아직 적용되지 않았습니다.
+
+## 음성 불변 조건
+
+모든 발음은 Google 브라우저 음성만 사용합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`, web prefetch는 네트워크 없는 no-op이며 E2E는 `/api/v1/audio/` 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
+
+## 검증 상태와 남은 위험
+
+2026-08-19 로컬 집중 검증 결과는 web unit 34파일/86테스트, web production build, Chromium·WebKit 활동/퀴즈/owner E2E 24/24 통과입니다. API route test는 event idempotency·track mismatch·strict-level weakest를, DB test는 migration order·release link·140개 review coverage·Google-only 계약을 고정합니다.
+
+아직 남은 릴리스 위험은 다음과 같습니다.
+
+- `0024–0027` upgrade를 production snapshot 사본과 preview D1에서 다시 확인해야 합니다.
+- 역사적 TOPIK v2 release/evidence backfill은 production에서 아직 0인 control-plane 기록을 채우므로 백업과 dry-run이 필요합니다.
+- 신규 140개 초안은 review artifact가 있어도 release link, G0–G4, preview, production 승인 전에는 공개할 수 없습니다.
+- 배포 뒤 실제 사용량이 N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건에 도달해야 다음 콘텐츠 증량을 판단할 수 있습니다.
+
+실행 순서는 [NEXT_DEVELOPMENT_PLAN_2026-08-19.md](./docs/00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md)를 따릅니다.

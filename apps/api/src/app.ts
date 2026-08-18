@@ -49,6 +49,7 @@ import { adminOA } from './routes/admin-oa.js';
 import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
+import { activityOA } from './routes/activity-oa.js';
 import { aiOA } from './routes/ai-oa.js';
 import { adminAiOA, aiLearningOA } from './routes/ai-learning-oa.js';
 import { authOA } from './routes/auth-oa.js';
@@ -200,6 +201,7 @@ v1.route('/', aiLearningOA);
 v1.use('/reading*', contentCacheMiddleware);
 v1.route('/', readingOA);
 v1.route('/', notificationsOA);  // /notifications/*
+v1.route('/', activityOA);
 
 app.route('/api/v1', v1);
 
@@ -236,9 +238,10 @@ const openApiBase = {
     { name: 'Sentences', description: '예문' },
     { name: 'Homophones', description: '검수 완료 동음이의어 변별' },
     { name: 'Content', description: '검수 완료 학습 콘텐츠 (sysprog, sources)' },
-    { name: 'Audio', description: 'R2 오디오 스트리밍' },
+    { name: 'Audio', description: 'Google 브라우저 음성 정책; R2 발음 경로는 폐기됨' },
     { name: 'SRS', description: 'FSRS-6 간격반복학습' },
     { name: 'Logs', description: '학습 로그 및 퀴즈 기록' },
+    { name: 'Activity', description: '개인정보를 제외한 학습 활동 및 집계' },
     { name: 'SelfCheck', description: '주차별 자가진단' },
     { name: 'Sync', description: '오프라인 동기화' },
     { name: 'Admin',   description: '관리자 (주간 리포트)' },

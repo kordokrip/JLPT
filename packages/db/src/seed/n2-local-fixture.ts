@@ -66,11 +66,12 @@ function pendingAudioStatement(
   language: 'ja',
   audioRole: 'pronunciation' | 'listening',
 ): string {
+  const textSource = itemType === 'jlpt-sentence' ? 'sentence' : itemType === 'jlpt-reading' ? 'passage' : 'item';
   return [
-    'INSERT OR IGNORE INTO `content_audio_bindings`',
-    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `audio_role`, `binding_state`, `asset_id`, `unavailable_reason`)',
-    `VALUES (${esc(id)}, ${esc(stableRef)}, ${esc(itemType)}, ${itemIdSql}, ${esc(language)}, ${esc(audioRole)},`,
-    "  'preparing', NULL, 'No licensed human recording or validated TTS pilot exists for this self-authored local fixture.');",
+    'INSERT OR IGNORE INTO `content_speech_bindings`',
+    '  (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `speech_role`, `provider`, `binding_state`, `text_source`, `unavailable_reason`)',
+    `VALUES (${esc(id.replace(/^audio-binding:/, 'speech-binding:'))}, ${esc(stableRef)}, ${esc(itemType)}, ${itemIdSql}, ${esc(language)}, ${esc(audioRole)},`,
+    `  'google-browser', 'ready', ${esc(textSource)}, NULL);`,
   ].join('\n');
 }
 
@@ -100,13 +101,13 @@ export function buildN2LocalFixturePlan(): N2LocalFixturePlan {
     ...parseKanji({ sourceCode: N2_LOCAL_FIXTURE_SOURCE_CODE, level: 'N2', filePath: N2_LOCAL_FIXTURE_PATH }),
   ];
 
-  const sentenceJa = '締め切りまでに修正する余地があるので、対応の順番を見直そう。';
+  const sentenceJa = '締め切りまでに機材を手配し、照会への返答をまとめよう。';
   statements.push(
     [
       'INSERT INTO `sentences` (`source_id`, `level`, `register`, `seq_no`, `ja`, `kana`, `ko`, `vocab_ids`, `grammar_ids`)',
       `VALUES ((SELECT id FROM sources WHERE code = ${esc(N2_LOCAL_FIXTURE_SOURCE_CODE)}), 'N2', 'business', 1,`,
-      `  ${esc(sentenceJa)}, 'しめきりによゆうがあるうちに、たいおうのじゅんばんをみなおそう。',`,
-      "  '마감 전까지 수정할 여지가 있으므로 대응 순서를 다시 검토하자.', '[]', '[]')",
+      `  ${esc(sentenceJa)}, 'しめきりまでにきざいをてはいし、しょうかいへのへんとうをまとめよう。',`,
+      "  '마감 전까지 기재를 준비하고 조회에 대한 답변을 정리하자.', '[]', '[]')",
       'ON CONFLICT(`source_id`, `level`, `register`, `seq_no`) DO UPDATE SET',
       '  `ja` = excluded.`ja`, `kana` = excluded.`kana`, `ko` = excluded.`ko`, `updated_at` = unixepoch();',
     ].join('\n'),
@@ -114,8 +115,8 @@ export function buildN2LocalFixturePlan(): N2LocalFixturePlan {
       'INSERT OR IGNORE INTO `reading_passages`',
       '  (`level`, `genre`, `title_ja`, `body_ja`, `body_ko`, `word_count`, `vocab_ids`, `grammar_ids`, `source_attribution`)',
       "VALUES ('N2', 'notice', '作業順の見直し',",
-      "  '来週の更新では、問い合わせの多い画面から順に案内を見直します。締め切りまでに修正する余地があるため、利用者が迷いやすい言葉も確認する予定です。',",
-      "  '다음 주 업데이트에서는 문의가 많은 화면부터 안내를 다시 검토합니다. 마감 전까지 수정할 여지가 있으므로 사용자가 헷갈리기 쉬운 표현도 확인할 예정입니다.',",
+      "  '来週の更新では、照会の多い画面から順に案内を整えます。画面の余白を確かめ、必要な機材を手配してから利用者への返答を始める予定です。',",
+      "  '다음 주 업데이트에서는 조회가 많은 화면부터 안내를 정리합니다. 화면의 여백을 확인하고 필요한 기재를 준비한 뒤 이용자 답변을 시작할 예정입니다.',",
       `  41, '[]', '[]', ${esc(`self-authored fixture; source asset ${N2_LOCAL_FIXTURE_SOURCE_ASSET_ID}`)});`,
     ].join('\n'),
     [
@@ -134,9 +135,9 @@ export function buildN2LocalFixturePlan(): N2LocalFixturePlan {
   // following audio binding no longer has a matching stable ref.
   const fixtureSourceId = `(SELECT id FROM sources WHERE code = ${esc(N2_LOCAL_FIXTURE_SOURCE_CODE)})`;
   const refs: Array<{ stableRef: string; type: 'jlpt-vocab' | 'jlpt-grammar' | 'jlpt-kanji' | 'jlpt-sentence' | 'jlpt-reading'; itemId: string }> = [
-    { stableRef: 'jlpt:n2:vocab:対応:たいおう', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '対応' AND kana = 'たいおう')` },
-    { stableRef: 'jlpt:n2:vocab:見直す:みなおす', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '見直す' AND kana = 'みなおす')` },
-    { stableRef: 'jlpt:n2:vocab:余地:よち', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '余地' AND kana = 'よち')` },
+    { stableRef: 'jlpt:n2:vocab:余白:よはく', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '余白' AND kana = 'よはく')` },
+    { stableRef: 'jlpt:n2:vocab:手配:てはい', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '手配' AND kana = 'てはい')` },
+    { stableRef: 'jlpt:n2:vocab:照会:しょうかい', type: 'jlpt-vocab', itemId: `(SELECT CAST(id AS TEXT) FROM vocab WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND ja = '照会' AND kana = 'しょうかい')` },
     { stableRef: 'jlpt:n2:grammar:に違いない', type: 'jlpt-grammar', itemId: `(SELECT CAST(id AS TEXT) FROM grammar WHERE source_id = ${fixtureSourceId} AND level = 'N2' AND pattern = '～に違いない')` },
     { stableRef: 'jlpt:n2:kanji:余', type: 'jlpt-kanji', itemId: `(SELECT CAST(id AS TEXT) FROM kanji WHERE char = '余')` },
     { stableRef: 'jlpt:n2:sentence:business:1', type: 'jlpt-sentence', itemId: `(SELECT CAST(id AS TEXT) FROM sentences WHERE source_id = (SELECT id FROM sources WHERE code = ${esc(N2_LOCAL_FIXTURE_SOURCE_CODE)}) AND level = 'N2' AND register = 'business' AND seq_no = 1)` },

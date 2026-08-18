@@ -1,32 +1,47 @@
 # 라이선스와 콘텐츠 출처
 
+기준일: 2026-08-09 KST. 이 문서는 현재 seed와 external source 후보의 경계를 기록한다. source asset의 실제 승인 값은 D1의 content_source_assets와 해당 manifest가 최종 기준이다.
+
 ## 기본 원칙
 
-- 이 저장소의 코드에는 루트 [MIT License](../LICENSE)가 적용된다.
-- JLPT/TOPIK의 공식 문항, 정답, 지문, 음원은 학습 데이터로 복사·변형·재배포하지 않는다.
-- 앱의 문법 설명, 예문, 읽기·듣기 대본, 문제, 보기, 정답과 해설은 자체 저작한다.
-- 외부 데이터를 사용할 때는 정확한 파일/API URL, 라이선스 ID·URL, attribution, 취득 시각, SHA-256과 허용 용도를 기록한다.
+- 저장소 코드는 루트 [MIT License](../LICENSE)를 따른다.
+- 현재 운영 학습 콘텐츠는 저장소에서 자체 저작한다. 공식 JLPT/TOPIK 문항·정답·지문·음원은 복사·변형·재배포하지 않는다.
+- 외부 데이터는 정확한 URL, license ID/URL, attribution, allowed use, 취득/생성 시각, SHA-256이 확인되기 전 seed 또는 R2 asset으로 등록하지 않는다.
+- level/grade는 학습 난이도 분류이며 공식 어휘 목록, 출제 비율, 합격 판정이 아니다.
 
-실제 데이터 적재 기준은 `packages/db/src/seed/content-manifest.ts`와 `content_source_assets`다. 후보 단계의 자료와 조건은 [콘텐츠 소스 후보 레지스트리](./00_overview/CONTENT_SOURCE_CANDIDATE_REGISTRY_2026-07-29.md)에 있다.
+## 현재 자체 저작 콘텐츠
 
-## 학습 콘텐츠와 Provenance
+N5~N3 원본, N2 Batch 1~5, N1 Batch 1~4, TOPIK owner curriculum Batch 1~4, TOPIK placement/practice bank의 예문·지문·대본·문제·보기·정답·해설은 프로젝트의 교육용 자체 저작이다. source manifest는 각 파일 SHA-256과 source provenance를 저장한다.
 
-N5~N3 및 N2 자체 저작 batch의 학습 원본은 `docs/`에 있고, seed verifier가 출처·hash·필수 학습 필드를 검사한다. TOPIK 자체 저작 콘텐츠는 `docs/07_topik/`의 원본과 전용 curriculum seed를 사용한다. 이 콘텐츠는 공식 시험을 대체하거나 점수를 예측하지 않는다.
-
-JLPT/TOPIK의 레벨·영역·형식은 학습 난이도를 설계하기 위한 참고 자료로만 사용한다.
-
-- [JLPT 레벨 안내](https://www.jlpt.jp/e/about/levelsummary.html)
-- [JLPT 시험 영역](https://www.jlpt.jp/e/guideline/testsections.html)
-- [TOPIK 공식 사이트](https://www.topik.go.kr/)
-
-## 외부 사전·문자 자료 후보
-
-JMdict/EDICT/KANJIDIC 계열은 CC BY-SA 4.0, KanjiVG는 CC BY-SA 3.0, 한국어기초사전의 텍스트 자료는 해당 이용 조건과 attribution을 따른다. 실제 채택 전에는 파일·필드별 조건을 다시 확인한다. 외부 데이터의 레벨 태그, 한국어 번역, 예문, 문항과 해설은 이 앱이 자체 작성한다.
+TOPIK owner curriculum은 practice bank나 공개 content release와 분리된다. owner curriculum의 source asset, stable reference, progress와 review history는 계정 범위를 벗어나 공개 시험 자료의 출처를 주장하지 않는다.
 
 ## 오디오
 
-정상 학습 경로의 오디오는 라이선스가 확인된 source 또는 승인된 TTS 생성물만 private R2 asset으로 연결한다. 각 asset에는 source/provider, licence, input/source hash, 생성·취득 시각, bytes hash를 기록한다. R2 asset이 없으면 앱은 재생 대신 준비 또는 미제공 상태를 표시한다.
+발음은 Google 음성만 사용한다. 일반 JLPT·QA·TOPIK owner item은 R2 asset·fallback을 사용하지 않으며, `audio_text_ko`가 있으면 Google 음성으로 재생하고 없으면 unavailable로 처리한다.
+
+발음용 R2 asset의 immutable key, license, input/source hash, output bytes hash, activation은 더 이상 생성·승인하지 않는다. 과거 자산의 provenance 기록은 감사 이력으로만 보존하며, 새 발음 asset 등록 기준으로 사용하지 않는다.
+
+~~~text
+source URL or TTS provider/model/voice/version
+license ID and license URL
+required attribution and allowed use
+source or input SHA-256
+retrieved/generated time
+stored audio bytes SHA-256
+Google voice availability and playback text
+R2 발음 binding/activation은 신규 등록 금지
+~~~
+
+## 외부 후보와 확인 시점
+
+- [EDRDG General Dictionary Licence](https://www.edrdg.org/edrdg/licence.html): JMdict·KANJIDIC2 등에 CC BY-SA 4.0과 앱 내 attribution 조건을 안내한다. 실제 사용 전 배포 파일과 field별 제약을 다시 검토한다.
+- [KanjiVG](https://kanjivg.tagaini.net/): 획순 SVG 후보다. 파일별 creator, license, derivative/redistribution 조건을 확인한 뒤에만 사용한다.
+- [한국어기초사전 Open API](https://krdict.korean.go.kr/kor/openApi/openApiInfo): 텍스트·발음 표기 후보다. API key, 이용 조건, 응답별 attribution을 확인하며 발음 표기만으로 audio asset 권리가 생기지 않는다.
+- [JLPT 레벨 안내](https://www.jlpt.jp/e/about/levelsummary.html)와 [JLPT 시험 영역](https://www.jlpt.jp/guideline/testsections.html): 시험 형식·수준 참고용이다.
+- [TOPIK 공식 사이트](https://www.topik.go.kr/): 시험 정보 참고용이며 문제 원본 수집 source가 아니다.
+
+후보의 상세 상태와 등록 체크리스트는 [콘텐츠 소스 후보 레지스트리](00_overview/CONTENT_SOURCE_REGISTRY.md)에 있다.
 
 ## 시각 자산
 
-`apps/web/public/`의 프로젝트 전용 시각 자산은 이 앱의 UI에서만 사용한다. 제3자 배포용 데이터셋이나 템플릿으로 재배포하지 않는다.
+apps/web/public의 프로젝트 전용 시각 자산은 이 앱 UI에서만 사용한다. 제3자 템플릿이나 데이터셋으로 재배포하지 않는다.

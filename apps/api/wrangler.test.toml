@@ -18,7 +18,7 @@ ADMIN_EMAIL = ""
 ADMIN_PASSWORD = ""
 ADMIN_BOOTSTRAP_TOKEN = ""
 NOTIFY_EMAIL = ""
-TTS_PROVIDER = "cloudflare"
+TTS_PROVIDER = "google"
 GOOGLE_TTS_API_KEY = ""
 AZURE_TTS_KEY = ""
 AZURE_TTS_REGION = "japaneast"
@@ -39,10 +39,6 @@ binding = "DB"
 database_name = "nihongo-n3-test"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "../../packages/db/drizzle-v2"
-
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nihongo-n3-audio-test"
 
 [[r2_buckets]]
 binding = "REPORTS"

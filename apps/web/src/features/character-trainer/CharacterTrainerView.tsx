@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { PronunciationButton } from '../../components/feature/PronunciationButton';
 import { CHARACTER_STAGES, kanjiRules, stageText } from './data';
-import { getCardAudioPath, getCardAudioText, getKanaPronunciationExample } from './logic';
+import { getCardAudioText, getKanaPronunciationExample } from './logic';
 import type { CharacterMode, CharacterStage, JlptLevel, StudyCard } from './types';
 import { DrawingPracticePad } from './DrawingPracticePad';
 
@@ -200,11 +200,9 @@ function CharacterPreview({
       <div className="mt-3 flex justify-center">
         <PronunciationButton
           text={getCardAudioText(card)}
-          audioPath={getCardAudioPath(card)}
           surface={card.mode === 'kanji' ? 'kanji' : 'kana'}
           label={`${card.char} 발음 듣기`}
           className="bg-[var(--card)]"
-          prefer="server"
           slow
           repeat={1}
         />
@@ -425,10 +423,8 @@ function InfoPanel({ card, compact = false }: { card: StudyCard; compact?: boole
         <PronunciationButton
           compact={compact}
           text={getCardAudioText(card)}
-          audioPath={getCardAudioPath(card)}
           surface={card.mode === 'kanji' ? 'kanji' : 'kana'}
           label={`${card.char} 발음 듣기`}
-          prefer="server"
           slow
           repeat={1}
         />

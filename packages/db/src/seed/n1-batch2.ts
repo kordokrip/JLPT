@@ -14,9 +14,8 @@ export const N1_BATCH_2_SOURCE_ASSET_ID = 'source-asset:jlpt-n1-self-authored-ba
 export const N1_BATCH_2_PATH = path.join(REPO_ROOT, 'docs/06_n1/02_self_authored_batch_2.md');
 export const N1_BATCH_2_REPOSITORY_URL = 'https://github.com/kordokrip/JLPT/blob/main/docs/06_n1/02_self_authored_batch_2.md';
 export const N1_BATCH_2_LICENSE_URL = 'https://github.com/kordokrip/JLPT/blob/main/docs/ATTRIBUTIONS.md#학습-콘텐츠와-provenance';
-export const N1_BATCH_2_KANJI = ['指', '針', '監', '督', '仮', '証', '偏', '標', '裁', '譲', '脆', '兆'] as const;
+export const N1_BATCH_2_KANJI = ['指', '針', '監', '督', '仮', '証', '偏', '標', '衡', '譲', '脆', '兆'] as const;
 
-const AUDIO_PREPARING_REASON = 'Browser Google Japanese speech is available for this personal-learning item; no immutable R2 recording has been connected yet.';
 
 interface SentenceSeed { seqNo: number; ja: string; kana?: string; ko: string; }
 interface ReadingQuestion { questionJa: string; questionKo: string; choices: readonly string[]; answerIndex: number; explanationKo: string; }
@@ -125,9 +124,10 @@ function stableRefStatements(): string[] {
 }
 
 function audioBindingStatement(itemType: 'jlpt-vocab' | 'jlpt-kanji' | 'jlpt-sentence' | 'jlpt-reading', role: 'pronunciation' | 'listening'): string {
+  const textSource = itemType === 'jlpt-sentence' ? 'sentence' : itemType === 'jlpt-reading' ? 'passage' : 'item';
   return [
-    'INSERT OR IGNORE INTO `content_audio_bindings` (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `audio_role`, `binding_state`, `asset_id`, `unavailable_reason`)',
-    `SELECT 'audio-binding:' || stable_ref, stable_ref, ${esc(itemType)}, item_id, 'ja', ${esc(role)}, 'preparing', NULL, ${esc(AUDIO_PREPARING_REASON)}`,
+    'INSERT OR IGNORE INTO `content_speech_bindings` (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `speech_role`, `provider`, `binding_state`, `text_source`, `unavailable_reason`)',
+    `SELECT 'speech-binding:' || stable_ref, stable_ref, ${esc(itemType)}, item_id, 'ja', ${esc(role)}, 'google-browser', 'ready', ${esc(textSource)}, NULL`,
     'FROM `learning_content_stable_refs`',
     `WHERE learning_track = 'jlpt-ja' AND level_tag = 'N1' AND source_asset_id = ${esc(N1_BATCH_2_SOURCE_ASSET_ID)} AND item_type = ${esc(itemType)};`,
   ].join('\n');

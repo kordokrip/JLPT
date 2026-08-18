@@ -1,7 +1,49 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { mockTopikReadApis, registerTopikUser } from './topik-helper';
 
 const ATTEMPT_ID = '10000000-0000-4000-8000-000000000001';
+
+declare global {
+  interface Window {
+    __topikProductGoogleSpeech?: Array<{ lang: string; voice: string | null }>;
+  }
+}
+
+async function installGoogleKoreanSpeechMock(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const spoken: Array<{ lang: string; voice: string | null }> = [];
+    Object.defineProperty(window, '__topikProductGoogleSpeech', { configurable: true, value: spoken });
+    class FakeSpeechSynthesisUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onend: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+
+      constructor(_text: string) {}
+    }
+    const googleKorean = {
+      default: true,
+      lang: 'ko-KR',
+      localService: true,
+      name: 'Google Korean',
+      voiceURI: 'google-ko-kr',
+    } as SpeechSynthesisVoice;
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: FakeSpeechSynthesisUtterance });
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: () => undefined,
+        getVoices: () => [googleKorean],
+        speak: (utterance: FakeSpeechSynthesisUtterance) => {
+          spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
+          utterance.onend?.(new Event('end'));
+        },
+      },
+    });
+  });
+}
 
 test.describe('TOPIK product flow', () => {
   test.beforeEach(async ({ page }) => {
@@ -9,6 +51,7 @@ test.describe('TOPIK product flow', () => {
   });
 
   test('dashboard, offline lesson, placement and result keep the TOPIK track contract', async ({ page }) => {
+    await installGoogleKoreanSpeechMock(page);
     const unexpectedAudioRequests: string[] = [];
     page.on('request', (request) => {
       if (request.url().includes('/api/v1/audio/')) unexpectedAudioRequests.push(request.url());
@@ -64,7 +107,24 @@ test.describe('TOPIK product flow', () => {
     await page.getByRole('button', { name: '日本語' }).last().click();
 
     await page.goto('/track/topik-ko/learn');
-    await expect(page.getByTitle(/오디오가 준비 중|Audio is still being prepared|音声を準備中/).first()).toBeVisible();
+    const practice = page.locator('section[aria-labelledby="topik-practice-title"]');
+    await expect(practice).toBeVisible();
+    await practice.getByRole('button', { name: /한국어 음성 재생|韓国語音声を再生|Play Korean audio/ }).click();
+    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
+      { lang: 'ko-KR', voice: 'google-ko-kr' },
+    ]);
+    const ownerCurriculum = page.locator('section').filter({
+      has: page.getByRole('heading', { name: '자체 저작 학습 단위' }),
+    });
+    await expect(ownerCurriculum).toBeVisible();
+    await ownerCurriculum.getByRole('button', { name: '인사와 자기소개 학습 시작' }).click();
+    const googleKoreanPlay = ownerCurriculum.getByRole('button', { name: 'Google 한국어 음성 재생' }).first();
+    await expect(googleKoreanPlay).toBeVisible();
+    await googleKoreanPlay.click();
+    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
+      { lang: 'ko-KR', voice: 'google-ko-kr' },
+      { lang: 'ko-KR', voice: 'google-ko-kr' },
+    ]);
     await page.getByRole('button', { name: /완료로 표시|Mark complete|完了にする/ }).first().click();
     await expect(page.getByRole('button', { name: /미완료로 변경|Mark incomplete|未完了に戻す/ }).first()).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('radio', { name: /은행/ }).last().click();

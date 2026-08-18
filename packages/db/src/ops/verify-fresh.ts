@@ -17,8 +17,9 @@ const n2BatchReport = path.join(artifacts, 'n2-batch1-report.json');
 const topikFixtureManifest = path.join(artifacts, 'topik-grade1-local-fixture-manifest.json');
 const topikFixtureReport = path.join(artifacts, 'topik-grade1-local-fixture-report.json');
 const topikOwnerBatchReport = path.join(artifacts, 'topik-owner-curriculum-batch1-report.json');
+const topikPracticeReport = path.join(artifacts, 'topik-practice-v2-report.json');
+const questionBankQualityReport = path.join(artifacts, 'question-bank-quality-report.json');
 const config = path.join(REPO_ROOT, 'apps/api/wrangler.toml');
-const requireAudio = process.argv.includes('--require-audio');
 
 fs.mkdirSync(artifacts, { recursive: true });
 
@@ -48,7 +49,19 @@ runDbScript('src/seed/seed.ts', [
 runDbScript('src/seed/verify.ts', [
   '--local',
   `--persist-to=${persistTo}`, `--manifest=${manifest}`, `--report=${report}`,
-  ...(requireAudio ? ['--require-audio'] : []),
+]);
+runDbScript('src/ops/seed-topik-placement.ts', [
+  '--local',
+  `--persist-to=${persistTo}`,
+  `--report=${path.join(artifacts, 'topik-placement-v2-seed-report.json')}`,
+]);
+runDbScript('src/ops/verify-topik-practice.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${topikPracticeReport}`,
+]);
+runDbScript('src/ops/audit-question-bank-quality.ts', [
+  '--local',
+  `--persist-to=${persistTo}`, `--report=${questionBankQualityReport}`,
 ]);
 runDbScript('src/ops/verify-topik-owner-curriculum-batch1.ts', [
   '--local',

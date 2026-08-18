@@ -33,8 +33,8 @@ test('N2 Batch 3 adds self-authored health, community, and sustainability study 
   const sql = plan.statements.join('\n');
   assert.match(sql, new RegExp(N2_BATCH_3_SOURCE_ASSET_ID));
   assert.match(sql, /learning_content_stable_refs/);
-  assert.match(sql, /content_audio_bindings/);
-  assert.match(sql, /'preparing', NULL/);
+  assert.match(sql, /content_speech_bindings/);
+  assert.match(sql, /'google-browser', 'ready'/);
   assert.doesNotMatch(sql, /content_releases|content_release_sources|first_reviewer|second_reviewer/i);
   assert.match(n2Batch3ContentRowsSql(), /reading_questions/);
   for (const char of N2_BATCH_3_KANJI) assert.match(sql, new RegExp(`'${char}'`));

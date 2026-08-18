@@ -15,7 +15,6 @@ import app, {
   getPublicOpenApiDocument,
   INTERNAL_ROUTE_EXCEPTIONS,
 } from '../app.js';
-import { audioContentHash, buildImmutableAudioKey } from '../jobs/generate-audio.js';
 import { receiver as observabilityReceiver } from '../observability-receiver.js';
 import { isSideEffectingRequest } from '../middleware/maintenance.js';
 
@@ -68,6 +67,20 @@ import rawPreserveExistingJlptLevelsMigration from '../../../../packages/db/driz
 import rawTopikOwnerCurriculumAudioTextMigration from '../../../../packages/db/drizzle-v2/0019_topik_owner_curriculum_audio_text.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawContentAudioBindingActivationsMigration from '../../../../packages/db/drizzle-v2/0020_content_audio_binding_activations.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawTopikOwnerCurriculumProgressFsrsMigration from '../../../../packages/db/drizzle-v2/0021_topik_owner_curriculum_progress_fsrs.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawQuestionBankQualityLedgerMigration from '../../../../packages/db/drizzle-v2/0022_question_bank_quality_ledger.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawRebalanceJlptN3ReadingAnswersMigration from '../../../../packages/db/drizzle-v2/0023_rebalance_jlpt_n3_reading_answers.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawLearningActivityEventsMigration from '../../../../packages/db/drizzle-v2/0024_learning_activity_events.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawJlptPracticeQuestionsMigration from '../../../../packages/db/drizzle-v2/0025_jlpt_practice_questions.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawReleaseQualityLinksMigration from '../../../../packages/db/drizzle-v2/0026_release_quality_links.sql?raw';
+// @ts-ignore – Vite raw import (번들 시점 처리됨)
+import rawGoogleSpeechContractMigration from '../../../../packages/db/drizzle-v2/0027_google_speech_contract.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -76,7 +89,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -885,6 +898,15 @@ describe('Learning tracks', () => {
 
   it.each(['N2', 'N1'] as const)('generates a level-matched %s vocabulary quiz', async (level) => {
     await seedCompleteTrackLevels([level]);
+    const source = await (env as typeof env & { DB: D1Database }).DB.prepare(
+      'SELECT id FROM sources WHERE code = ?',
+    ).bind('N7-TRACK-STATUS').first<{ id: number }>();
+    await (env as typeof env & { DB: D1Database }).DB.batch(
+      ['a', 'b', 'c'].map((suffix) => (env as typeof env & { DB: D1Database }).DB.prepare(
+        `INSERT INTO vocab (source_id, level, ja, kana, ko, pos)
+         VALUES (?, ?, ?, ?, ?, 'test')`,
+      ).bind(source!.id, level, `track-${level}-${suffix}`, `とらっく-${level.toLowerCase()}-${suffix}`, `${level} 뜻 ${suffix}`)),
+    );
     await (env as typeof env & { DB: D1Database }).DB.prepare(
       `INSERT OR IGNORE INTO users (id, email, display_name)
        VALUES ('owner', 'owner@nihongo-n3.local', 'test owner')`,
@@ -901,7 +923,200 @@ describe('Learning tracks', () => {
     }>();
     expect(body.data.level).toBe(level);
     expect(body.data.questions).toHaveLength(1);
-    expect(body.data.questions[0]?.prompt).toBe(`track-${level}`);
+    expect(body.data.questions[0]?.prompt).toMatch(new RegExp(`^track-${level}`));
+  });
+});
+
+describe('learning activity and strict-level quiz strategy', () => {
+  it('stores activity idempotently and returns only authenticated-track aggregates', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID();
+    const payload = {
+      events: [
+        {
+          event_id: `open:${suffix}`,
+          event_type: 'content_opened',
+          learning_track: 'jlpt-ja',
+          content_type: 'jlpt-vocab',
+          content_id: 'fixture-1',
+          level_tag: 'N3',
+          occurred_at: new Date().toISOString(),
+        },
+        {
+          event_id: `speech:${suffix}`,
+          event_type: 'speech_attempted',
+          learning_track: 'jlpt-ja',
+          content_type: 'jlpt-vocab',
+          content_id: 'fixture-1',
+          level_tag: 'N3',
+          speech_outcome: 'played',
+          occurred_at: new Date().toISOString(),
+        },
+      ],
+    };
+
+    const first = await fetch('/api/v1/activity/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(first.status).toBe(201);
+    expect(await first.json()).toMatchObject({ data: { accepted: 2, duplicates: 0 } });
+
+    const duplicate = await fetch('/api/v1/activity/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    expect(duplicate.status).toBe(201);
+    expect(await duplicate.json()).toMatchObject({ data: { accepted: 0, duplicates: 2 } });
+
+    const summary = await fetch('/api/v1/activity/summary?window=7d');
+    expect(summary.status).toBe(200);
+    const summaryBody = await summary.json<{
+      data: { window: string; totals: { events: number; speech_attempts: number; speech_played: number } };
+    }>();
+    expect(summaryBody.data.window).toBe('7d');
+    expect(summaryBody.data.totals.events).toBeGreaterThanOrEqual(2);
+    expect(summaryBody.data.totals.speech_attempts).toBeGreaterThanOrEqual(1);
+    expect(summaryBody.data.totals.speech_played).toBeGreaterThanOrEqual(1);
+
+    const mismatch = await fetch('/api/v1/activity/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: [{ ...payload.events[0], event_id: `mismatch:${suffix}`, learning_track: 'topik-ko' }] }),
+    });
+    expect(mismatch.status).toBe(400);
+  });
+
+  it('uses recent wrong answers for weakest and never falls back across JLPT levels', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    await db.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES ('ACTIVITY-QUIZ-TEST', 'activity quiz test', 'test/activity-quiz', '1')`,
+    ).run();
+    const source = await db.prepare('SELECT id FROM sources WHERE code = ?')
+      .bind('ACTIVITY-QUIZ-TEST').first<{ id: number }>();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const inserts = await db.batch(Array.from({ length: 5 }, (_, index) => db.prepare(
+      `INSERT INTO vocab (source_id, level, ja, kana, ko, pos)
+       VALUES (?, 'N4', ?, ?, ?, 'test')`,
+    ).bind(source!.id, `weak-${suffix}-${index}`, `うぃーく-${index}`, `취약 뜻 ${suffix}-${index}`)));
+    const weakId = Number(inserts[0]!.meta.last_row_id);
+    await db.prepare(
+      `INSERT INTO learning_activity_events
+         (event_id, user_id, learning_track, event_type, content_type, content_id, level_tag, mode, correct, occurred_at)
+       VALUES (?, 'owner', 'jlpt-ja', 'quiz_answered', 'vocab_mc', ?, 'N4', 'vocab_mc', 0, unixepoch())`,
+    ).bind(`weak-answer:${suffix}`, String(weakId)).run();
+
+    const weakest = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N4', count: 1, strategy: 'weakest' }),
+    });
+    expect(weakest.status).toBe(200);
+    const weakestBody = await weakest.json<{ data: { questions: Array<{ item_id: number }> } }>();
+    expect(weakestBody.data.questions[0]?.item_id).toBe(weakId);
+
+    const insufficient = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N5', count: 20 }),
+    });
+    expect(insufficient.status).toBe(400);
+  });
+
+  it('prefers a reviewed published N3 static bank item for weakest strategy', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const releaseId = `release-static-${suffix}`;
+    const version = `static-bank-${suffix}`;
+    await db.prepare(
+      `INSERT INTO content_releases
+         (id, learning_track, content_version, release_state, manifest_sha256, parser_version)
+       VALUES (?, 'jlpt-ja', ?, 'approved', ?, 'test-parser')`,
+    ).bind(releaseId, version, 'd'.repeat(64)).run();
+    await db.prepare(
+      `INSERT INTO content_release_quality_requirements
+         (release_id, content_type, expected_audit_count, validator_version)
+       VALUES (?, 'jlpt-quiz', 4, 'test-validator')`,
+    ).bind(releaseId).run();
+
+    const staticIds: string[] = [];
+    for (let index = 0; index < 4; index++) {
+      const id = `static-kanji-${suffix}-${index}`;
+      staticIds.push(id);
+      const auditId = `audit-${id}`;
+      await db.prepare(
+        `INSERT INTO content_quality_audits
+           (id, learning_track, content_type, content_id, content_version, evidence_sha256,
+            validator_version, automated_status, author_review_status, adversarial_review_status,
+            author_reviewer, adversarial_reviewer, release_state, checked_at)
+         VALUES (?, 'jlpt-ja', 'jlpt-quiz', ?, ?, ?, 'test-validator', 'passed',
+                 'signed', 'signed', 'reviewer-a', 'reviewer-b', 'approved', '2026-08-19')`,
+      ).bind(auditId, id, version, 'e'.repeat(64)).run();
+      await db.prepare(
+        `INSERT INTO content_release_quality_audit_links (release_id, audit_id) VALUES (?, ?)`,
+      ).bind(releaseId, auditId).run();
+      const choices = Array.from({ length: 4 }, (_, choice) => ({
+        ko: `읽기 ${index}-${choice}`,
+        ja: `よみ-${index}-${choice}`,
+        en: `reading ${index}-${choice}`,
+      }));
+      await db.prepare(
+        `INSERT INTO jlpt_practice_questions
+           (id, level, mode, skill, difficulty, prompt_ko, prompt_ja, prompt_en,
+            choices_json, answer_index, explanation_ko, explanation_ja, explanation_en,
+            source_code, source_evidence_sha256, bank_version, is_published)
+         VALUES (?, 'N3', 'kanji_reading', 'test', 3, ?, ?, ?, ?, ?, ?, ?, ?,
+                 'TEST-STATIC', ?, ?, 1)`,
+      ).bind(
+        id,
+        `정적 한자 ${index}`,
+        `静的漢字${index}`,
+        `static kanji ${index}`,
+        JSON.stringify(choices),
+        index,
+        `한국어 해설 ${index}`,
+        `日本語解説${index}`,
+        `English explanation ${index}`,
+        'f'.repeat(64),
+        version,
+      ).run();
+    }
+    const weakId = staticIds[2]!;
+    await db.prepare(
+      `INSERT INTO learning_activity_events
+         (event_id, user_id, learning_track, event_type, content_type, content_id, level_tag, mode, correct, occurred_at)
+       VALUES (?, 'owner', 'jlpt-ja', 'quiz_answered', 'kanji_reading', ?, 'N3', 'kanji_reading', 0, unixepoch())`,
+    ).bind(`static-wrong:${suffix}`, weakId).run();
+
+    const response = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'kanji_reading', level: 'N3', count: 1, strategy: 'weakest' }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      data: { questions: Array<{ item_id: string; prompt: string; choices: string[]; answer?: string }> };
+    }>();
+    expect(body.data.questions[0]).toMatchObject({ item_id: weakId, prompt: '静的漢字2' });
+    expect(body.data.questions[0]?.choices).toEqual([
+      'よみ-2-0', 'よみ-2-1', 'よみ-2-2', 'よみ-2-3',
+    ]);
+    expect(body.data.questions[0]).not.toHaveProperty('answer');
   });
 });
 
@@ -950,7 +1165,7 @@ describe('TOPIK placement V2', () => {
     expect(startBody.data.instruction_language).toBe('ja');
     expect(startBody.data.questions).toHaveLength(24);
     expect(startBody.data.questions.filter((item) => item.section === 'listening')).toHaveLength(12);
-    expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '한국어 듣기 문장 1입니다.' });
+    expect(startBody.data.questions[0]?.audio).toMatchObject({ kind: 'google', text_ko: '한국어 듣기 문장 1입니다.' });
     expect(startBody.data.questions[0]?.prompt_ja).toContain('日本語');
     expect(JSON.stringify(startBody)).not.toContain('answer_index');
     expect(JSON.stringify(startBody)).not.toContain('explanation_en');
@@ -977,7 +1192,7 @@ describe('TOPIK self-authored practice bank', () => {
     await db.batch([
       db.prepare(
         `INSERT INTO track_content_sources (learning_track, source_code, title, file_path, source_version, provenance_json)
-         VALUES ('topik-ko', 'TOPIK-PRACTICE-V1', 'test practice', 'test/topik-practice', 'test', '{}')
+         VALUES ('topik-ko', 'TOPIK-PRACTICE-V2', 'test practice', 'test/topik-practice', 'test', '{}')
          ON CONFLICT(learning_track, source_code) DO UPDATE SET source_version = excluded.source_version`,
       ),
       db.prepare(
@@ -992,7 +1207,7 @@ describe('TOPIK self-authored practice bank', () => {
            second_reviewer, reviewed_at, bank_version, is_published)
          VALUES ('topik-practice-test-001', 'topik-ko', 'TOPIK-II', 'reading', 'choice', 'test', 3,
            '한국어 질문', '日本語の質問', 'English question', '["정답","오답 1","오답 2","오답 3"]', 0,
-           '한국어 해설', '日本語の解説', 'English explanation', 'TOPIK-PRACTICE-V1', 'author', 'reviewer', '2026-07-20', 'v1', 1)`,
+           '한국어 해설', '日本語の解説', 'English explanation', 'TOPIK-PRACTICE-V2', 'author', 'reviewer', '2026-07-20', 'v2', 1)`,
       ),
     ]);
 
@@ -1039,8 +1254,8 @@ describe('TOPIK owner-authored 1–6 curriculum contract', () => {
         .bind(vocabId, sourceAssetId),
       db.prepare(`INSERT INTO learning_content_stable_refs (stable_ref, learning_track, item_type, item_id, level_tag, source_asset_id) VALUES ('topik.api.grade1.listening', 'topik-ko', 'topik-owner-item', ?, 'TOPIK-1', ?)`)
         .bind(listeningId, sourceAssetId),
-      db.prepare(`INSERT INTO content_audio_bindings (id, stable_ref, item_type, item_id, language, audio_role, binding_state, unavailable_reason) VALUES ('topik.api.grade1.vocab.audio', 'topik.api.grade1.vocab', 'topik-owner-item', ?, 'ko', 'pronunciation', 'preparing', 'local fixture audio pending')`).bind(vocabId),
-      db.prepare(`INSERT INTO content_audio_bindings (id, stable_ref, item_type, item_id, language, audio_role, binding_state, unavailable_reason) VALUES ('topik.api.grade1.listening.audio', 'topik.api.grade1.listening', 'topik-owner-item', ?, 'ko', 'listening', 'preparing', 'local fixture audio pending')`).bind(listeningId),
+      db.prepare(`INSERT INTO content_speech_bindings (id, stable_ref, item_type, item_id, language, speech_role, provider, binding_state, text_source) VALUES ('topik.api.grade1.vocab.speech', 'topik.api.grade1.vocab', 'topik-owner-item', ?, 'ko', 'pronunciation', 'google-browser', 'ready', 'audio-script')`).bind(vocabId),
+      db.prepare(`INSERT INTO content_speech_bindings (id, stable_ref, item_type, item_id, language, speech_role, provider, binding_state, text_source) VALUES ('topik.api.grade1.listening.speech', 'topik.api.grade1.listening', 'topik-owner-item', ?, 'ko', 'listening', 'google-browser', 'ready', 'audio-script')`).bind(listeningId),
     ]);
 
     const cookie = await registerTestSession();
@@ -1055,48 +1270,74 @@ describe('TOPIK owner-authored 1–6 curriculum contract', () => {
     expect(listBody.data.units[0]).toMatchObject({ id: unitId });
     expect(listBody.data.units[0]?.items).toHaveLength(2);
     const items = new Map(listBody.data.units[0]?.items.map((item) => [item.id, item]));
-    expect(items.get(vocabId)?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '안녕하세요.' });
-    expect(items.get(listeningId)?.audio).toMatchObject({ kind: 'browser-fallback', text_ko: '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.' });
+    expect(items.get(vocabId)?.audio).toMatchObject({ kind: 'google', text_ko: '안녕하세요.' });
+    expect(items.get(listeningId)?.audio).toMatchObject({ kind: 'google', text_ko: '안녕하세요. 저는 유나예요. 처음 뵙겠습니다.' });
     expect(JSON.stringify(listBody)).not.toContain('answer_index');
     expect(JSON.stringify(listBody)).not.toContain('해설');
-
-    const privateAudioKey = 'private-audio/ko/topik-api-grade1-vocab-audio/' + 'a'.repeat(64) + '.mp3';
-    const generatedAssetId = 'api-test-topik-owner-curriculum-generated-audio';
-    const assets = (env as typeof env & { ASSETS: R2Bucket }).ASSETS;
-    await assets.put(privateAudioKey, new Uint8Array([73, 68, 51, 4]), {
-      httpMetadata: { contentType: 'audio/mpeg', cacheControl: 'private, no-store' },
-      customMetadata: { provider: 'google', model: 'ko-KR-Neural2-A', audioVersion: 'google-neural2-v1' },
-    });
-    await db.batch([
-      db.prepare(`INSERT INTO content_source_assets (id, asset_kind, source_url, license_id, license_url, attribution_text, allowed_use, source_sha256, generated_at, stored_audio_bytes_sha256, immutable_r2_key, mime_type, provider, model, language, voice, provider_version, input_text_sha256, selection_reason) VALUES (?, 'tts-generated', 'https://example.invalid/google-tts', 'LicenseRef-google-cloud-tts-output', 'https://example.invalid/terms', 'generated fixture', 'test only', ?, 1785283200, ?, ?, 'audio/mpeg', 'google', 'ko-KR-Neural2-A', 'ko', 'ko-KR-Neural2-A', 'google-neural2-v1', ?, 'R2 activation route test')`)
-        .bind(generatedAssetId, 'a'.repeat(64), 'b'.repeat(64), privateAudioKey, 'c'.repeat(64)),
-      db.prepare(`INSERT INTO content_audio_binding_activations (id, binding_id, asset_id, selection_reason) VALUES ('topik.api.grade1.vocab.audio.activation', 'topik.api.grade1.vocab.audio', ?, 'R2 activation route test')`)
-        .bind(generatedAssetId),
-    ]);
-
-    const listedWithR2 = await fetch('/api/v1/tracks/topik-ko/curriculum?target_grade=1', { headers });
-    expect(listedWithR2.status).toBe(200);
-    const r2Body = await listedWithR2.json<{ data: { units: Array<{ items: Array<{ id: string; audio: { kind: string; url?: string } }> }> } }>();
-    const r2Items = new Map(r2Body.data.units[0]?.items.map((item) => [item.id, item]));
-    expect(r2Items.get(vocabId)?.audio).toMatchObject({ kind: 'r2', url: `/api/v1/audio/${privateAudioKey}` });
-
-    const unauthenticatedAudio = await fetch(`/api/v1/audio/${privateAudioKey}`);
-    expect(unauthenticatedAudio.status).toBe(401);
-    expect(unauthenticatedAudio.headers.get('cache-control')).toContain('no-store');
-    const privateAudio = await fetch(`/api/v1/audio/${privateAudioKey}`, { headers });
-    expect(privateAudio.status).toBe(200);
-    expect(privateAudio.headers.get('cache-control')).toBe('private, no-store');
-    expect(privateAudio.headers.get('vary')).toContain('Cookie');
 
     const solution = await fetch(`/api/v1/tracks/topik-ko/curriculum/items/${vocabId}/solution`, { headers });
     expect(solution.status).toBe(200);
     const solutionBody = await solution.json<{ data: { item_id: string; answer_payload: { answer_index: number }; explanation_ko: string } }>();
     expect(solutionBody.data).toMatchObject({ item_id: vocabId, answer_payload: { answer_index: 0 }, explanation_ko: '인사입니다.' });
 
+    const completed = await fetch(`/api/v1/tracks/topik-ko/curriculum/items/${vocabId}/complete`, { method: 'POST', headers });
+    expect(completed.status).toBe(200);
+    const completionBody = await completed.json<{ data: { card_id: number; status: string } }>();
+    expect(completionBody.data).toMatchObject({ status: 'completed' });
+    expect(completionBody.data.card_id).toBeTypeOf('number');
+
+    const progress = await fetch('/api/v1/tracks/topik-ko/curriculum/progress', { headers });
+    expect(progress.status).toBe(200);
+    const progressBody = await progress.json<{ data: { grades: Array<{ target_grade: number; completed_items: number; total_items: number; due_cards: number }>; completed_item_ids: string[] } }>();
+    expect(progressBody.data.grades.find((grade) => grade.target_grade === 1)).toMatchObject({ total_items: 2, completed_items: 1, due_cards: 1 });
+    expect(progressBody.data.completed_item_ids).toContain(vocabId);
+
+    const due = await fetch('/api/v1/tracks/topik-ko/curriculum/review/due?limit=5', { headers });
+    expect(due.status).toBe(200);
+    const dueBody = await due.json<{ data: { cards: Array<{ card_id: number; item: { id: string } }> } }>();
+    expect(dueBody.data.cards).toHaveLength(1);
+    expect(dueBody.data.cards[0]).toMatchObject({ card_id: completionBody.data.card_id, item: { id: vocabId } });
+    expect(JSON.stringify(dueBody)).not.toContain('answer_index');
+    expect(JSON.stringify(dueBody)).not.toContain('해설');
+
+    const reviewed = await fetch('/api/v1/tracks/topik-ko/curriculum/review', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ card_id: completionBody.data.card_id, rating: 'good', response_ms: 800 }),
+    });
+    expect(reviewed.status).toBe(200);
+    const reviewedBody = await reviewed.json<{ data: { state: string; due_at: number } }>();
+    expect(reviewedBody.data.state).toBeTruthy();
+    expect(reviewedBody.data.due_at).toBeGreaterThan(0);
+    const reviewLog = await db.prepare('SELECT rating, response_ms FROM topik_owner_review_logs WHERE card_id = ?').bind(completionBody.data.card_id).first<{ rating: string; response_ms: number }>();
+    expect(reviewLog).toEqual({ rating: 'good', response_ms: 800 });
+
     const reviewBank = await db.prepare(`SELECT count(*) AS count FROM topik_practice_questions WHERE id IN (?, ?)`).bind(vocabId, listeningId).first<{ count: number }>();
     const publicRelease = await db.prepare(`SELECT count(*) AS count FROM content_releases WHERE content_version = 'api-test-topik-owner-curriculum-source'`).first<{ count: number }>();
     expect(reviewBank?.count).toBe(0);
     expect(publicRelease?.count).toBe(0);
+  });
+
+  it('hides a quality-gated owner item until its linked release is published', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const assetId = 'api-test-topik-owner-draft-asset';
+    const unitId = 'api-test-topik-owner-draft-unit';
+    const itemId = 'api-test-topik-owner-draft-item';
+    await db.batch([
+      db.prepare(`INSERT INTO content_source_assets (id, asset_kind, source_url, license_id, license_url, attribution_text, allowed_use, source_sha256, generated_at, selection_reason) VALUES (?, 'self-authored-fixture', 'https://example.invalid/topik-owner-draft', 'LicenseRef-api-test', 'https://example.invalid/license', 'API draft fixture', 'local test only', ?, 1785283200, 'API publication gate test')`).bind(assetId, 'd'.repeat(64)),
+      db.prepare(`INSERT INTO topik_owner_authored_curriculum_units (id, target_grade, stable_ref, section, title_ko, title_ja, title_en, source_asset_id) VALUES (?, 2, 'topik.api.grade2.draft.unit', 'reading', '미공개 단위', '未公開単位', 'Unpublished unit', ?)`).bind(unitId, assetId),
+      db.prepare(`INSERT INTO topik_owner_authored_curriculum_items (id, unit_id, target_grade, stable_ref, item_type, prompt_ko, prompt_ja, prompt_en, answer_json, explanation_ko, explanation_ja, explanation_en, audio_required, audio_text_ko, source_asset_id) VALUES (?, ?, 2, 'topik.api.grade2.draft.item', 'reading', '미공개 질문', '未公開の質問', 'Unpublished question', '{"choices":["하나","둘","셋","넷"],"answer_index":0}', '미공개 해설', '未公開の解説', 'Unpublished explanation', 0, NULL, ?)`).bind(itemId, unitId, assetId),
+      db.prepare(`INSERT INTO content_quality_audits (id, learning_track, content_type, content_id, content_version, evidence_sha256, validator_version, automated_status, author_review_status, adversarial_review_status, author_reviewer, adversarial_reviewer, release_state, checked_at) VALUES ('api-owner-draft-audit', 'topik-ko', 'topik-owner', ?, 'api-owner-draft-v1', ?, 'api-validator-v1', 'passed', 'signed', 'signed', 'api-reviewer-one', 'api-reviewer-two', 'draft', '2026-08-19')`).bind(itemId, 'f'.repeat(64)),
+    ]);
+    const cookie = await registerTestSession();
+    const headers = { Cookie: cookie, 'Content-Type': 'application/json' };
+    await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) });
+
+    const listed = await fetch('/api/v1/tracks/topik-ko/curriculum?target_grade=2', { headers });
+    expect(listed.status).toBe(200);
+    expect(JSON.stringify(await listed.json())).not.toContain(itemId);
+    expect((await fetch(`/api/v1/tracks/topik-ko/curriculum/items/${itemId}/solution`, { headers })).status).toBe(404);
+    expect((await fetch(`/api/v1/tracks/topik-ko/curriculum/items/${itemId}/complete`, { method: 'POST', headers })).status).toBe(404);
   });
 });
 
@@ -1306,24 +1547,14 @@ describe('TOPIK official reference', () => {
   });
 });
 
-describe('R2 audio policy', () => {
-  it('returns a visible 404 instead of generating missing audio on demand', async () => {
+describe('Google-only pronunciation audio policy', () => {
+  it('returns 410 for every legacy R2 audio path', async () => {
     const res = await fetch('/api/v1/audio/audio/vocab/n3/not-generated.mp3');
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(410);
+    expect(await res.json()).toMatchObject({ title: 'Gone', status: 410 });
   });
 
-  it('uses stable provider and content version hashes in immutable keys', async () => {
-    const provider = { provider: 'google', model: 'ja-JP-Neural2-B', audioVersion: '2026-07-15' } as const;
-    const task = { id: 7, type: 'vocab' as const, level: 'N3', text: '勉強' };
-    const firstHash = await audioContentHash(task.text, provider);
-    const secondHash = await audioContentHash(task.text, provider);
-    const key = await buildImmutableAudioKey(task, provider);
-    expect(firstHash).toBe(secondHash);
-    expect(key).toMatch(/^audio\/vocab\/n3\/7-[a-f0-9]{16}\.mp3$/);
-    expect(await audioContentHash(task.text, { ...provider, audioVersion: 'next' })).not.toBe(firstHash);
-  });
-
-  it('keeps the production audio batch dry-run by default and rejects unapproved execution', async () => {
+  it('blocks legacy R2 batch generation even for an admin', async () => {
     const unauthenticated = await fetch('/admin/audio/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1340,62 +1571,22 @@ describe('R2 audio policy', () => {
     expect(forbidden.status).toBe(403);
 
     const adminCookie = await registerTestSession('admin');
-    const dryRun = await fetch('/admin/audio/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
-      body: JSON.stringify({ provider: 'google' }),
-    });
-    expect(dryRun.status).toBe(200);
-    const dryRunBody = await dryRun.json<{ data: {
-      dry_run: boolean;
-      execution_order: string[];
-      immutable_overwrite_allowed: boolean;
-      stats: { vocab: { pending: number } };
-    } }>();
-    expect(dryRunBody.data.dry_run).toBe(true);
-    expect(dryRunBody.data.execution_order).toEqual(['N5', 'N4', 'N3', 'N2', 'N1']);
-    expect(dryRunBody.data.immutable_overwrite_allowed).toBe(false);
-    expect(dryRunBody.data.stats.vocab.pending).toBeGreaterThanOrEqual(0);
-
-    const execute = await fetch('/admin/audio/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
-      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5' }),
-    });
-    expect(execute.status).toBe(400);
-
-    const force = await fetch('/admin/audio/queue', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
-      body: JSON.stringify({ execute: true, provider: 'google', level: 'N5', force_regenerate: true }),
-    });
-    expect(force.status).toBe(400);
+    for (const path of ['/admin/audio/queue', '/admin/audio/curriculum-queue', '/admin/audio/qa/warmup']) {
+      const blocked = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+        body: JSON.stringify({ provider: 'google' }),
+      });
+      expect(blocked.status).toBe(410);
+      expect(await blocked.json()).toMatchObject({ title: 'Gone', status: 410 });
+    }
   });
 
-  it('exposes only safe provider metadata for fixed QA candidates', async () => {
-    const assets = (env as unknown as { ASSETS: R2Bucket }).ASSETS;
-    await assets.put('audio/qa/google/1.wav', new Uint8Array([82, 73, 70, 70]), {
-      httpMetadata: { contentType: 'audio/wav' },
-      customMetadata: {
-        provider: 'google',
-        model: 'ja-JP-Neural2-B',
-        audioVersion: 'google-neural2-v1',
-      },
-    });
-
+  it('blocks legacy R2 QA routes regardless of HTTP method', async () => {
     const response = await fetch('/api/v1/audio/audio/qa/google/1.wav', { method: 'HEAD' });
-    expect(response.status).toBe(200);
-    expect(response.headers.get('x-audio-provider')).toBe('google');
-    expect(response.headers.get('x-audio-model')).toBe('ja-JP-Neural2-B');
-    expect(response.headers.get('x-audio-version')).toBe('google-neural2-v1');
-
-    await assets.put('audio/qa/ko/google/1.wav', new Uint8Array([82, 73, 70, 70]), {
-      httpMetadata: { contentType: 'audio/wav' },
-      customMetadata: { provider: 'google', model: 'ko-KR-Neural2-A', audioVersion: 'google-neural2-v1' },
-    });
+    expect(response.status).toBe(410);
     const korean = await fetch('/api/v1/audio/audio/qa/ko/google/1.wav', { method: 'HEAD' });
-    expect(korean.status).toBe(200);
-    expect(korean.headers.get('x-audio-model')).toBe('ko-KR-Neural2-A');
+    expect(korean.status).toBe(410);
   });
 });
 

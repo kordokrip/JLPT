@@ -16,6 +16,8 @@ import {
   type ContentVersionDto,
   type JlptLevel,
   type LearningTrackId,
+  type LearningActivityEvent,
+  type LearningActivitySummary,
   type TrackStatusDto,
   type TopikOfficialReferenceDto,
   type TopikInstructionLanguage,
@@ -26,6 +28,11 @@ import {
   type TopikPracticeSolutionDto,
   type TopikReleasedContentListDto,
   type TopikOwnerCurriculumListDto,
+  type TopikOwnerCurriculumCompletionDto,
+  type TopikOwnerCurriculumDueListDto,
+  type TopikOwnerCurriculumProgressDto,
+  type TopikOwnerCurriculumReviewBody,
+  type TopikOwnerCurriculumReviewResultDto,
   type TopikOwnerCurriculumSolutionDto,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
@@ -308,6 +315,14 @@ export const topikOwnerCurriculumApi = {
     api.get<TopikOwnerCurriculumListDto>('/tracks/topik-ko/curriculum', { target_grade: targetGrade }),
   solution: (itemId: string) =>
     api.get<TopikOwnerCurriculumSolutionDto>(`/tracks/topik-ko/curriculum/items/${encodeURIComponent(itemId)}/solution`),
+  progress: () =>
+    api.get<TopikOwnerCurriculumProgressDto>('/tracks/topik-ko/curriculum/progress'),
+  complete: (itemId: string) =>
+    api.post<TopikOwnerCurriculumCompletionDto>(`/tracks/topik-ko/curriculum/items/${encodeURIComponent(itemId)}/complete`),
+  due: (limit = 20) =>
+    api.get<TopikOwnerCurriculumDueListDto>('/tracks/topik-ko/curriculum/review/due', { limit }),
+  review: (body: TopikOwnerCurriculumReviewBody) =>
+    api.post<TopikOwnerCurriculumReviewResultDto>('/tracks/topik-ko/curriculum/review', body),
 };
 
 export interface OwnerPrivateTopikSolutionDto {
@@ -376,6 +391,15 @@ export const syncApi = {
       last_synced_at,
       operations,
     }),
+};
+
+export type LearningActivityGroup = LearningActivitySummary['groups'][number];
+
+export const activityApi = {
+  record: (events: LearningActivityEvent[]) =>
+    api.post<{ accepted: number; duplicates: number }>('/activity/events', { events }),
+  summary: (window: '7d' | '30d') =>
+    api.get<LearningActivitySummary>('/activity/summary', { window }),
 };
 
 // 일일 로그

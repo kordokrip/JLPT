@@ -15,39 +15,12 @@ import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, notFound, badRequest, internalError } from '../lib/response.js';
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
 import { safeErrorName } from '../lib/safe-log.js';
+import { buildBalancedChoices, cryptoRandomIndex, rotatingAnswerIndex } from '../lib/quiz-choice-order.js';
 
 const quiz = new Hono<AppEnv>();
 quiz.use('*', cfAccessAuth);
 
 // ───────────────────────────────────────────────────────
-// 헬퍼: Fisher-Yates 셔플
-// ───────────────────────────────────────────────────────
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j]!, a[i]!];
-  }
-  return a;
-}
-
-function buildChoices(answer: string, candidates: string[], maxDistractors = 3): string[] {
-  const seen = new Set<string>();
-  const answerKey = answer.trim();
-  if (answerKey) seen.add(answerKey);
-
-  const distractors: string[] = [];
-  for (const candidate of shuffle(candidates)) {
-    const key = candidate.trim();
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    distractors.push(candidate);
-    if (distractors.length >= maxDistractors) break;
-  }
-
-  return shuffle([answer, ...distractors]);
-}
-
 function firstExampleJa(raw: string | null): string | null {
   if (!raw) return null;
   try {
@@ -83,7 +56,7 @@ quiz.post('/quiz/generate', async (c) => {
   );
   if (!body.success) return badRequest(c, body.error.message);
 
-  const { mode, level, count } = body.data;
+  const { mode, level, count, strategy } = body.data;
   const userId = c.get('userId');
   const db = c.env.DB;
 
@@ -93,37 +66,107 @@ quiz.post('/quiz/generate', async (c) => {
     prompt:   string;
     choices:  string[];
     answer:   string;
-    item_id:  number;
-    audio_key?: string;
+    item_id:  string | number;
     script_ja?: string;
     script_ko?: string;
   };
 
   const questions: Question[] = [];
+  const answerPositionOffset = cryptoRandomIndex(4);
+  let answerPositionOrdinal = 0;
+  const nextChoices = (answer: string, candidates: string[]): string[] => {
+    const choices = buildBalancedChoices(
+      answer,
+      candidates,
+      rotatingAnswerIndex(answerPositionOffset, answerPositionOrdinal),
+    );
+    answerPositionOrdinal += 1;
+    return choices;
+  };
+  const ordering = (tableAlias: string): { sql: string; bindings: unknown[] } => {
+    if (strategy === 'random') return { sql: 'ORDER BY RANDOM() LIMIT ?', bindings: [count * 4] };
+    return {
+      sql: `ORDER BY (
+        SELECT count(*) FROM learning_activity_events activity
+        WHERE activity.user_id = ?
+          AND activity.learning_track = 'jlpt-ja'
+          AND activity.event_type = 'quiz_answered'
+          AND activity.content_type = ?
+          AND activity.content_id = CAST(${tableAlias}.id AS TEXT)
+          AND activity.correct = 0
+          AND activity.occurred_at >= unixepoch() - 2592000
+      ) DESC, RANDOM() LIMIT ?`,
+      bindings: [userId, mode, count * 4],
+    };
+  };
 
   try {
-    if (mode === 'vocab_mc') {
-      // 정답 후보. N3 원본 중 일부는 한국어 의미가 비어 있어, 운영 퀴즈는
-      // 요청 레벨 데이터가 부족할 때 의미가 있는 하위/전체 데이터로 폴백한다.
-      let pool = await loadRows<{ id: number; word: string; meaning_ko: string }>(
+    if (strategy === 'weakest' && level === 'N3' && (mode === 'kanji_reading' || mode === 'listening')) {
+      type LocalizedChoice = { ko: string; ja: string; en: string };
+      const staticRows = await loadRows<{
+        id: string;
+        prompt_ko: string;
+        prompt_ja: string;
+        choices_json: string;
+        answer_index: number;
+        audio_script_ja: string | null;
+      }>(
+        db,
+        `SELECT bank.id, bank.prompt_ko, bank.prompt_ja, bank.choices_json,
+                bank.answer_index, bank.audio_script_ja
+           FROM jlpt_practice_questions bank
+          WHERE bank.learning_track = 'jlpt-ja'
+            AND bank.level = ?
+            AND bank.mode = ?
+            AND bank.is_published = 1
+          ORDER BY (
+            SELECT count(*) FROM learning_activity_events activity
+             WHERE activity.user_id = ?
+               AND activity.learning_track = 'jlpt-ja'
+               AND activity.event_type = 'quiz_answered'
+               AND activity.content_type = ?
+               AND activity.content_id = bank.id
+               AND activity.correct = 0
+               AND activity.occurred_at >= unixepoch() - 2592000
+          ) DESC, RANDOM()
+          LIMIT ?`,
+        [level, mode, userId, mode, count],
+      );
+      const mapped = staticRows.flatMap((row): Question[] => {
+        let localized: LocalizedChoice[];
+        try {
+          localized = JSON.parse(row.choices_json) as LocalizedChoice[];
+        } catch {
+          return [];
+        }
+        const language = mode === 'kanji_reading' ? 'ja' : 'ko';
+        const choices = localized.map((choice) => choice?.[language]?.trim()).filter((choice): choice is string => Boolean(choice));
+        const answer = choices[row.answer_index];
+        if (choices.length !== 4 || new Set(choices).size !== 4 || !answer) return [];
+        return [{
+          id: `q_${row.id}`,
+          type: mode,
+          prompt: mode === 'kanji_reading' ? row.prompt_ja : row.prompt_ko,
+          choices,
+          answer,
+          item_id: row.id,
+          ...(mode === 'listening' && row.audio_script_ja ? { script_ja: row.audio_script_ja } : {}),
+        }];
+      });
+      if (mapped.length === count) questions.push(...mapped);
+    }
+
+    if (questions.length === 0 && mode === 'vocab_mc') {
+      const order = ordering('vocab');
+      const pool = await loadRows<{ id: number; word: string; meaning_ko: string }>(
         db,
         `SELECT id, ja AS word, ko AS meaning_ko FROM vocab
          WHERE level = ?
            AND ja != ''
            AND ko != ''
-         ORDER BY RANDOM() LIMIT ?`,
-        [level, count * 4],
+         ${order.sql}`,
+        [level, ...order.bindings],
       );
-      if (pool.length < count) {
-        pool = await loadRows<{ id: number; word: string; meaning_ko: string }>(
-          db,
-          `SELECT id, ja AS word, ko AS meaning_ko FROM vocab
-           WHERE ja != ''
-             AND ko != ''
-           ORDER BY RANDOM() LIMIT ?`,
-          [count * 4],
-        );
-      }
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
@@ -135,29 +178,21 @@ quiz.post('/quiz/generate', async (c) => {
           id:      `q_${ans.id}`,
           type:    'vocab_mc',
           prompt:  ans.word,
-          choices: buildChoices(ans.meaning_ko, distractorCandidates),
+          choices: nextChoices(ans.meaning_ko, distractorCandidates),
           answer:  ans.meaning_ko,
           item_id: ans.id,
         });
       }
-    } else if (mode === 'kanji_reading') {
-      let pool = await loadRows<{ id: number; kanji: string; primary_reading: string }>(
+    } else if (questions.length === 0 && mode === 'kanji_reading') {
+      const order = ordering('kanji');
+      const pool = await loadRows<{ id: number; kanji: string; primary_reading: string }>(
         db,
         `SELECT id, char AS kanji, COALESCE(on_yomi, kun_yomi, '') AS primary_reading FROM kanji
          WHERE jlpt_level = ?
            AND COALESCE(on_yomi, kun_yomi, '') != ''
-         ORDER BY RANDOM() LIMIT ?`,
-        [level, count * 4],
+         ${order.sql}`,
+        [level, ...order.bindings],
       );
-      if (pool.length < count) {
-        pool = await loadRows<{ id: number; kanji: string; primary_reading: string }>(
-          db,
-          `SELECT id, char AS kanji, COALESCE(on_yomi, kun_yomi, '') AS primary_reading FROM kanji
-           WHERE COALESCE(on_yomi, kun_yomi, '') != ''
-           ORDER BY RANDOM() LIMIT ?`,
-          [count * 4],
-        );
-      }
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
@@ -169,31 +204,22 @@ quiz.post('/quiz/generate', async (c) => {
           id:      `q_${ans.id}`,
           type:    'kanji_reading',
           prompt:  ans.kanji,
-          choices: buildChoices(ans.primary_reading, distractorCandidates),
+          choices: nextChoices(ans.primary_reading, distractorCandidates),
           answer:  ans.primary_reading,
           item_id: ans.id,
         });
       }
-    } else if (mode === 'grammar_fill') {
-      let rawPool = await loadRows<{ id: number; pattern: string; examples: string }>(
+    } else if (questions.length === 0 && mode === 'grammar_fill') {
+      const order = ordering('grammar');
+      const rawPool = await loadRows<{ id: number; pattern: string; examples: string }>(
         db,
         `SELECT id, pattern, examples FROM grammar
          WHERE level = ?
            AND examples IS NOT NULL
            AND examples != '[]'
-         ORDER BY RANDOM() LIMIT ?`,
-        [level, count * 4],
+         ${order.sql}`,
+        [level, ...order.bindings],
       );
-      if (rawPool.length < count) {
-        rawPool = await loadRows<{ id: number; pattern: string; examples: string }>(
-          db,
-          `SELECT id, pattern, examples FROM grammar
-           WHERE examples IS NOT NULL
-             AND examples != '[]'
-           ORDER BY RANDOM() LIMIT ?`,
-          [count * 4],
-        );
-      }
 
       const pool = rawPool
         .map((row) => ({ ...row, example_ja: firstExampleJa(row.examples) }))
@@ -210,33 +236,23 @@ quiz.post('/quiz/generate', async (c) => {
           id:      `q_${ans.id}`,
           type:    'grammar_fill',
           prompt,
-          choices: buildChoices(ans.pattern, distractorCandidates),
+          choices: nextChoices(ans.pattern, distractorCandidates),
           answer:  ans.pattern,
           item_id: ans.id,
         });
       }
-    } else if (mode === 'listening') {
-      let pool = await loadRows<{ id: number; sentence_ja: string; sentence_ko: string; audio_r2_key: string | null; level: string }>(
+    } else if (questions.length === 0 && mode === 'listening') {
+      const order = ordering('sentences');
+      const pool = await loadRows<{ id: number; sentence_ja: string; sentence_ko: string; level: string }>(
         db,
-        `SELECT id, ja AS sentence_ja, ko AS sentence_ko, audio_r2_key, level
+        `SELECT id, ja AS sentence_ja, ko AS sentence_ko, level
          FROM sentences
          WHERE level = ?
            AND ja != ''
            AND ko != ''
-         ORDER BY RANDOM() LIMIT ?`,
-        [level, count * 4],
+         ${order.sql}`,
+        [level, ...order.bindings],
       );
-      if (pool.length < count) {
-        pool = await loadRows<{ id: number; sentence_ja: string; sentence_ko: string; audio_r2_key: string | null; level: string }>(
-          db,
-          `SELECT id, ja AS sentence_ja, ko AS sentence_ko, audio_r2_key, level
-           FROM sentences
-           WHERE ja != ''
-             AND ko != ''
-           ORDER BY RANDOM() LIMIT ?`,
-          [count * 4],
-        );
-      }
       const answers = pool.slice(0, count);
 
       for (const ans of answers) {
@@ -248,10 +264,9 @@ quiz.post('/quiz/generate', async (c) => {
           id:       `q_${ans.id}`,
           type:     'listening',
           prompt:   '음성을 듣고 올바른 해석을 고르세요.',
-          choices:  buildChoices(ans.sentence_ko, distractorCandidates),
+          choices:  nextChoices(ans.sentence_ko, distractorCandidates),
           answer:   ans.sentence_ko,
           item_id:  ans.id,
-          ...(ans.audio_r2_key ? { audio_key: ans.audio_r2_key } : {}),
           script_ja: ans.sentence_ja,
           script_ko: ans.sentence_ko,
         });
@@ -262,7 +277,7 @@ quiz.post('/quiz/generate', async (c) => {
     return internalError(c, '문제 생성 중 오류가 발생했습니다');
   }
 
-  if (questions.length === 0) {
+  if (questions.length !== count || questions.some((question) => question.choices.length !== 4)) {
     return badRequest(c, `${level} 레벨 ${mode} 문제 데이터가 부족합니다`);
   }
 
@@ -326,6 +341,8 @@ quiz.post('/quiz/submit', async (c) => {
     total: number;
     questions_json: string | null;
     detail_json: string | null;
+    mode: string | null;
+    level: string | null;
   };
 
   const attempt = await db
@@ -336,7 +353,7 @@ quiz.post('/quiz/submit', async (c) => {
   if (!attempt) return notFound(c, `quiz_id=${quiz_id} 를 찾을 수 없습니다`);
 
   const raw = attempt.questions_json ?? attempt.detail_json ?? '[]';
-  type StoredQ = { id: string; answer: string; item_id: number };
+  type StoredQ = { id: string; type: string; answer: string; item_id: string | number };
   let storedQuestions: StoredQ[] = [];
   try {
     storedQuestions = JSON.parse(raw) as StoredQ[];
@@ -359,16 +376,34 @@ quiz.post('/quiz/submit', async (c) => {
   const now = new Date().toISOString();
   const score = attempt.total > 0 ? Math.round((correctCount / attempt.total) * 100) : 0;
 
-  // 결과 업데이트. 로컬/이전 D1 스키마에는 finished_at 컬럼이 없을 수 있다.
+  // 결과와 문항별 활동 기록을 하나의 D1 batch로 반영한다. 이벤트 ID는
+  // attempt 범위에서 결정적이므로 같은 제출이 재전송되어도 중복되지 않는다.
   try {
-    await db
-      .prepare(
+    const update = db.prepare(
         `UPDATE quiz_attempts
            SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
          WHERE id = ? AND learning_track = ?`,
       )
-      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id, learningTrack)
-      .run();
+      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id, learningTrack);
+    const activityStatements = storedQuestions.map((question) => {
+      const submitted = answerMap.get(question.id) ?? '';
+      return db.prepare(
+        `INSERT OR IGNORE INTO learning_activity_events
+           (event_id, user_id, learning_track, event_type, content_type, content_id,
+            level_tag, mode, correct, occurred_at)
+         VALUES (?, ?, ?, 'quiz_answered', ?, ?, ?, ?, ?, unixepoch())`,
+      ).bind(
+        `quiz:${quiz_id}:${question.id}`,
+        userId,
+        learningTrack,
+        question.type || attempt.mode || null,
+        String(question.item_id),
+        attempt.level,
+        question.type || attempt.mode,
+        Number(submitted === question.answer),
+      );
+    });
+    await db.batch([update, ...activityStatements]);
   } catch {
     await db
       .prepare(

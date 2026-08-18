@@ -25,7 +25,6 @@ export const N2_BATCH_1_KANJI = [
   '準', '源', '件', '設', '障', '築',
 ] as const;
 
-const AUDIO_PREPARING_REASON = 'No licensed human recording or validated TTS pilot exists yet for this self-authored N2 Batch 1 item.';
 
 interface SentenceSeed {
   seqNo: number;
@@ -375,9 +374,10 @@ function prerequisiteStatement(): string {
 }
 
 function audioBindingStatement(itemType: 'jlpt-vocab' | 'jlpt-kanji' | 'jlpt-sentence' | 'jlpt-reading', role: 'pronunciation' | 'listening'): string {
+  const textSource = itemType === 'jlpt-sentence' ? 'sentence' : itemType === 'jlpt-reading' ? 'passage' : 'item';
   return [
-    'INSERT OR IGNORE INTO `content_audio_bindings` (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `audio_role`, `binding_state`, `asset_id`, `unavailable_reason`)',
-    `SELECT 'audio-binding:' || stable_ref, stable_ref, ${esc(itemType)}, item_id, 'ja', ${esc(role)}, 'preparing', NULL, ${esc(AUDIO_PREPARING_REASON)}`,
+    'INSERT OR IGNORE INTO `content_speech_bindings` (`id`, `stable_ref`, `item_type`, `item_id`, `language`, `speech_role`, `provider`, `binding_state`, `text_source`, `unavailable_reason`)',
+    `SELECT 'speech-binding:' || stable_ref, stable_ref, ${esc(itemType)}, item_id, 'ja', ${esc(role)}, 'google-browser', 'ready', ${esc(textSource)}, NULL`,
     'FROM `learning_content_stable_refs`',
     `WHERE learning_track = 'jlpt-ja' AND level_tag = 'N2' AND source_asset_id = ${esc(N2_BATCH_1_SOURCE_ASSET_ID)} AND item_type = ${esc(itemType)};`,
   ].join('\n');

@@ -169,8 +169,8 @@ test("queries related user data one table at a time for remote D1", () => {
 
   const counts = collectRelatedCounts(source, ["real-1", "real-2"], ["test-1"]);
 
-  assert.equal(counts.length, 10);
-  assert.equal(queries.length, 10);
+  assert.equal(counts.length, 13);
+  assert.equal(queries.length, 13);
   assert.equal(queries.every((query) => !query.includes("UNION ALL")), true);
   assert.equal(queries.every((query) => query.includes("AS keep_rows")), true);
   assert.equal(queries.every((query) => query.includes("AS delete_rows")), true);

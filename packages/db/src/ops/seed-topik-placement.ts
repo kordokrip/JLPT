@@ -22,6 +22,7 @@ type Check = {
 };
 
 const PRODUCTION_TARGET = "nihongo-n3-prod-v2";
+const PREVIEW_TARGET = "nihongo-n3-topik-preview";
 const target = parseD1Target();
 const publish = process.argv.includes("--publish");
 const reportArg = process.argv.find((arg) => arg.startsWith("--report="));
@@ -32,17 +33,25 @@ const reportPath = path.resolve(
 
 function assertRemoteReleaseTarget(options: D1TargetOptions): void {
   if (!options.remote) return;
+  if (options.database === PREVIEW_TARGET) {
+    if (process.env.ALLOW_TOPIK_PREVIEW_CHANGE !== "topik-placement-v2-seed") {
+      throw new Error(
+        `Preview TOPIK placement v2 seed requires --database=${PREVIEW_TARGET} and ALLOW_TOPIK_PREVIEW_CHANGE=topik-placement-v2-seed.`,
+      );
+    }
+    return;
+  }
   if (options.database !== PRODUCTION_TARGET) {
     throw new Error(
-      `Remote TOPIK seed is restricted to --database=${PRODUCTION_TARGET}.`,
+      `Remote TOPIK placement v2 seed is restricted to ${PREVIEW_TARGET} or --database=${PRODUCTION_TARGET}.`,
     );
   }
   if (!publish) {
     throw new Error("Remote TOPIK seed requires --publish.");
   }
-  if (process.env.ALLOW_PRODUCTION_CHANGE !== "topik-seed") {
+  if (process.env.ALLOW_PRODUCTION_CHANGE !== "topik-placement-v2-seed") {
     throw new Error(
-      "Set ALLOW_PRODUCTION_CHANGE=topik-seed after local verification and a Cloudflare maintenance review.",
+      "Set ALLOW_PRODUCTION_CHANGE=topik-placement-v2-seed after local verification and a Cloudflare maintenance review.",
     );
   }
 }
@@ -111,7 +120,11 @@ function seed(): void {
     const report = {
       generatedAt: new Date().toISOString(),
       target: { database: target.database, location: target.remote ? "remote" : "local" },
-      release: target.remote ? "production-candidate" : "local-verification",
+      release: target.remote
+        ? target.database === PREVIEW_TARGET
+          ? "preview-candidate"
+          : "production-candidate"
+        : "local-verification",
       manifest: plan.manifest,
       checks,
       passed: checks.every((check) => check.passed),

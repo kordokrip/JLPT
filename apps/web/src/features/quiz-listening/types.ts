@@ -1,16 +1,12 @@
 import type { JlptLevel } from '@nihongo-n3/shared';
 
 export const MAX_LISTENING_PLAYS = 3;
-export const LISTENING_SKIP_BACK_SECONDS = 5;
-
-export type ListeningAudioSource = 'browser' | 'server';
 
 export interface ListeningQuestion {
   id: string;
   type: string;
   prompt: string;
   choices: string[];
-  audio_key?: string | undefined;
   script_ja?: string | undefined;
   script_ko?: string | undefined;
 }

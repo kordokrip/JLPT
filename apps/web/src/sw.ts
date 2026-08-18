@@ -49,14 +49,6 @@ registerRoute(
   new NetworkOnly(),
 );
 
-// Audio objects are fetched from private R2 through an authenticated endpoint.
-// Do not cache them in the Service Worker: a device-local cache is never an
-// access-control boundary and must not outlive the authenticated session.
-registerRoute(
-  ({ url }) => url.pathname.includes('/api/v1/audio/'),
-  new NetworkOnly(),
-);
-
 // 콘텐츠 API (어휘·문법·한자·예문·커리큘럼): StaleWhileRevalidate
 registerRoute(
   ({ url }) => /\/(vocab|grammar|kanji|sentences|curriculum)/.test(url.pathname),

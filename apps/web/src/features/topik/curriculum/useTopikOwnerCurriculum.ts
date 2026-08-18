@@ -4,7 +4,7 @@ import type { TopikOwnerCurriculumListDto } from '@nihongo-n3/shared';
 import { topikOwnerCurriculumApi } from '../../../lib/api';
 import { useUiStore } from '../../../stores/ui-store';
 
-/** The API remains the source of truth; private R2 audio is never put in a PWA cache. */
+/** The API remains the source of truth; Google browser speech is never put in a PWA cache. */
 export function useTopikOwnerCurriculum(scopeId: string, targetGrade: number) {
   const isOnline = useUiStore((state) => state.isOnline);
   return useQuery({

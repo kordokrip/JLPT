@@ -35,7 +35,6 @@ type QuestionRow = {
   explanation_ko: string;
   explanation_ja: string;
   audio_script_ko: string | null;
-  audio_r2_key: string | null;
 };
 
 type AttemptRow = {
@@ -59,11 +58,7 @@ function parseChoices(value: string): string[] {
 
 function audioDto(row: QuestionRow): TopikPlacementAudioDto | null {
   if (row.section !== 'listening') return null;
-  if (row.audio_r2_key) {
-    const path = row.audio_r2_key.split('/').map(encodeURIComponent).join('/');
-    return { kind: 'r2', url: `/api/v1/audio/${path}` };
-  }
-  if (row.audio_script_ko?.trim()) return { kind: 'browser-fallback', text_ko: row.audio_script_ko };
+  if (row.audio_script_ko?.trim()) return { kind: 'google', text_ko: row.audio_script_ko };
   return { kind: 'unavailable', reason: 'not-provided' };
 }
 
@@ -84,7 +79,7 @@ function publicQuestion(row: QuestionRow): TopikPlacementQuestionDto {
 async function releasedQuestions(db: D1Database): Promise<QuestionRow[]> {
   const result = await db.prepare(
     `SELECT id, section, skill, difficulty, prompt_ko, prompt_ja, prompt_en, choices_json,
-            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko, audio_r2_key
+            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko
        FROM topik_placement_questions
       WHERE learning_track = 'topik-ko' AND bank_version = ? AND is_published = 1
       ORDER BY CASE section WHEN 'listening' THEN 0 ELSE 1 END, difficulty, id`,
@@ -181,7 +176,7 @@ topikPlacementOA.openapi(submitRoute, async (c) => {
   const placeholders = questionIds.map(() => '?').join(',');
   const result = await c.env.DB.prepare(
     `SELECT id, section, skill, difficulty, prompt_ko, prompt_ja, prompt_en, choices_json,
-            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko, audio_r2_key
+            answer_index, explanation_en, explanation_ko, explanation_ja, audio_script_ko
        FROM topik_placement_questions
       WHERE bank_version = ? AND is_published = 1 AND id IN (${placeholders})`,
   ).bind(attempt.bank_version, ...questionIds).all<QuestionRow>();

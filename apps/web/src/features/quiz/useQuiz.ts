@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { useTrackStatus } from '../../hooks/useTrackStatus';
 import { isQuizMode, toQuizAnswers } from './logic';
-import type { JlptLevel, QuizGenerateResponse, QuizMode, QuizQuestion, QuizSubmitResponse } from './types';
+import type { JlptLevel, QuizGenerateResponse, QuizMode, QuizQuestion, QuizStrategy, QuizSubmitResponse } from './types';
 import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
 
 export function useQuizRoute() {
@@ -27,10 +27,13 @@ export function useQuizRoute() {
  */
 export function useQuizSession(mode: QuizMode) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { levels } = useTrackStatus();
   const highestLevel = levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
   const [level, setLevel] = useState<JlptLevel>(highestLevel);
   const [count, setCount] = useState(5);
+  const [strategy, setStrategy] = useState<QuizStrategy>(() =>
+    searchParams.get('strategy') === 'weakest' ? 'weakest' : 'random');
   const [quizId, setQuizId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -44,7 +47,12 @@ export function useQuizSession(mode: QuizMode) {
 
   const generateMut = useMutation({
     mutationFn: async () => {
-      const res = await api.post<QuizGenerateResponse>('/quiz/generate', { mode, level, count });
+      const res = await api.post<QuizGenerateResponse>('/quiz/generate', {
+        mode,
+        level,
+        count,
+        ...(strategy === 'weakest' ? { strategy } : {}),
+      });
       if (!res.ok) throw new Error(res.message);
       return res.data;
     },
@@ -93,6 +101,7 @@ export function useQuizSession(mode: QuizMode) {
     level,
     levels,
     count,
+    strategy,
     questions,
     answers,
     current,
@@ -106,6 +115,7 @@ export function useQuizSession(mode: QuizMode) {
     submit: () => submitMut.mutate(),
     selectLevel: setLevel,
     selectCount: setCount,
+    selectStrategy: setStrategy,
     selectAnswer,
     selectQuestion: setCurrent,
     setElapsed: (seconds: number) => setElapsed(seconds),

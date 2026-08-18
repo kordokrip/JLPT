@@ -1,6 +1,7 @@
 # TOPIK I/II 자체 저작 학습 문제은행 V1
 
-- 상태: 검수 완료 후 배포 대상
+- 기준일: 2026-08-09 KST
+- 상태: repository practice source. remote 공개 여부는 content release contract와 runtime query로 결정
 - 저작: 프로젝트 자체 저작
 - 범위: TOPIK I 듣기 6·읽기 6, TOPIK II 듣기 6·쓰기 4·읽기 6
 - 작성 검수: JLPT-TOPIK Study self-authored content review

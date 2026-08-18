@@ -14,7 +14,7 @@ import { appSessionAuth } from '../lib/auth-session.js';
 import type { AppEnv } from '../types.js';
 
 const topikPracticeOA = new OpenAPIHono<AppEnv>();
-const BANK_VERSION = 'v1';
+const BANK_VERSION = 'v2';
 
 const problemSchema = z.object({ title: z.string(), status: z.number().int(), detail: z.string() });
 
@@ -37,7 +37,6 @@ type PracticeRow = {
   sample_answer_ja: string | null;
   sample_answer_en: string | null;
   audio_script_ko: string | null;
-  audio_r2_key: string | null;
 };
 
 type ReleasedContentRow = {
@@ -66,11 +65,7 @@ function parseChoices(value: string): string[] {
 
 function audioDto(row: PracticeRow): TopikPlacementAudioDto | null {
   if (row.section !== 'listening') return null;
-  if (row.audio_r2_key) {
-    const path = row.audio_r2_key.split('/').map(encodeURIComponent).join('/');
-    return { kind: 'r2', url: `/api/v1/audio/${path}` };
-  }
-  return row.audio_script_ko?.trim() ? { kind: 'browser-fallback', text_ko: row.audio_script_ko } : { kind: 'unavailable', reason: 'not-provided' };
+  return row.audio_script_ko?.trim() ? { kind: 'google', text_ko: row.audio_script_ko } : { kind: 'unavailable', reason: 'not-provided' };
 }
 
 function publicQuestion(row: PracticeRow): TopikPracticeQuestionDto {
@@ -134,7 +129,7 @@ topikPracticeOA.openapi(listRoute, async (c) => {
   const result = await c.env.DB.prepare(
     `SELECT id, exam_level, section, question_type, skill, difficulty, prompt_ko, prompt_ja, prompt_en,
             choices_json, answer_index, explanation_ko, explanation_ja, explanation_en,
-            sample_answer_ko, sample_answer_ja, sample_answer_en, audio_script_ko, audio_r2_key
+            sample_answer_ko, sample_answer_ja, sample_answer_en, audio_script_ko
        FROM topik_practice_questions
       WHERE learning_track = 'topik-ko' AND bank_version = ? AND is_published = 1
         AND exam_level = ? AND section = ?

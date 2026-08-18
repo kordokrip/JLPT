@@ -19,5 +19,7 @@ export * from './learning-tracks';
 export * from './content-release-control-plane';
 export * from './release-operations';
 export * from './ai-learning-assistance';
+export * from './learning-activity';
+export * from './jlpt-practice';
 export type { QuizMode, QuizGenerateBody, QuizSubmitBody } from './api-schemas';
 export * from './fsrs';
