@@ -66,7 +66,7 @@ export function TopikPlacementView({ model }: { model: ReturnTypeOfUseTopikPlace
             <button
               type="button"
               disabled={!question.audio || question.audio.kind === 'unavailable'}
-              onClick={() => question.audio && question.audio.kind !== 'unavailable' && audio.play(question.audio)}
+              onClick={() => { if (question.audio && question.audio.kind !== 'unavailable') void audio.play(question.audio); }}
               className="touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white disabled:opacity-50"
             >
               <Volume2 aria-hidden="true" size={19} />

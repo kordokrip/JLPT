@@ -30,7 +30,7 @@ export default function AudioQa() {
   const playSample = async () => {
     setPlaybackError(null);
     if (language === 'ko') {
-      if (!koreanAudio.speakText(sample)) setPlaybackError('Google 한국어 음성을 사용할 수 없습니다. 텍스트로 확인하세요.');
+      if (!await koreanAudio.speakText(sample)) setPlaybackError('Google 한국어 음성을 사용할 수 없습니다. 텍스트로 확인하세요.');
       return;
     }
     const played = await audioPlayer.speakText(sample, {

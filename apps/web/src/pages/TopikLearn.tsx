@@ -94,7 +94,7 @@ export default function TopikLearn() {
               <ul className="mt-4 divide-y divide-[var(--border)] border-y border-[var(--border)]">
                 {unit.expressions.map((expression) => (
                   <li key={expression.ko} className="flex items-center gap-3 py-3">
-                    <button type="button" onClick={() => audio.speakText(expression.ko)} className="touch-target inline-flex shrink-0 items-center justify-center rounded-full text-[var(--accent)]" aria-label={t('topik.learn.playExpression', { text: expression.ko })}>
+                    <button type="button" onClick={() => void audio.speakText(expression.ko)} className="touch-target inline-flex shrink-0 items-center justify-center rounded-full text-[var(--accent)]" aria-label={t('topik.learn.playExpression', { text: expression.ko })}>
                       <Volume2 aria-hidden="true" size={18} />
                     </button>
                     <span className="min-w-0"><span lang="ko" className="block font-bold">{expression.ko}</span><span className="mt-0.5 block text-sm text-[var(--muted-foreground)]">{expression.en}</span></span>
@@ -147,7 +147,7 @@ export default function TopikLearn() {
               </div>
               <h3 className="mt-3 text-lg font-black leading-8">{instructionText(question)}</h3>
               {audioSource && audioSource.kind !== 'unavailable' ? (
-                <button type="button" onClick={() => audio.play(audioSource, { contentType: 'topik_practice_question', contentId: question.id, levelTag: examLevel, section: question.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>
+                <button type="button" onClick={() => void audio.play(audioSource, { contentType: 'topik_practice_question', contentId: question.id, levelTag: examLevel, section: question.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />{audio.playing ? t('topik.placement.playing') : t('topik.practice.playAudio')}</button>
               ) : question.section === 'listening' ? (
                 <p className="mt-4 text-sm text-[var(--muted-foreground)]">{t('quiz.audioPending')}</p>
               ) : null}

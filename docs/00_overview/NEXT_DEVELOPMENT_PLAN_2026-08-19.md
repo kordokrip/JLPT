@@ -1,6 +1,8 @@
 # 2026-08-19 릴리스 기록과 다음 개발 계획
 
-상태: **Production 배포 및 사후 검증 완료**.
+상태: **2026-08-19 Production 배포 완료, 2026-08-23 Google 한국어 음성 장애 수정본 검증 및 반영 진행 중**.
+
+2026-08-23 교차검증에서 TOPIK 첫 클릭 음성 실패를 실제 Production에서 재현했습니다. 원인은 비동기로 준비되는 Google 음성 목록을 기다리지 않은 클라이언트 코드였으며, 상세 내용은 [장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)에 있습니다. 과거 fixture 기반 음성 테스트 통과를 실제 브라우저 성공으로 간주하지 않습니다.
 
 ## 현재 기준선
 
@@ -94,6 +96,17 @@ Chromium과 WebKit production에서 JLPT 일본어와 TOPIK 한국어 음성을 
 
 완료 조건: 데이터 기반으로 “증량” 또는 “진입 UX 개선” 중 하나를 결정.
 
+### 2026-08-23 읽기 전용 중간 집계
+
+| 기준 | 현재 | 판정 |
+| --- | ---: | --- |
+| N3 quiz 응답 | 0 / 50 | 미달 |
+| TOPIK owner 완료 | 0 / 10 | 미달 |
+| TOPIK FSRS 복습 | 0 / 5 | 미달 |
+| TOPIK speech | played 0 / unavailable 13 / error 0 | 음성 복구 우선 |
+
+세 학습 임계값이 모두 미달이므로 N2 Batch 6, N1 Batch 5, TOPIK 추가 증량은 시작하지 않습니다. Google 한국어 음성 복구와 다음 학습 진입 UX를 먼저 운영에서 확인하고 같은 집계를 다시 실행합니다.
+
 ## 6. 다음 릴리스 공통 gate
 
 ```bash
@@ -125,5 +138,7 @@ pnpm docs:check
 - [x] Question quality `332/0`
 - [x] Chromium/WebKit production E2E 통과
 - [x] Google 브라우저 음성만 사용, R2 pronunciation 참조 0
+- [x] 2026-08-23 활동 집계 읽기 전용 중간 점검
+- [ ] Google 한국어 음성 수정본 Production 반영 및 실제 `played` 관찰
 - [ ] 7일 데이터 바인딩 관찰
 - [ ] 30일 학습 지표 기반 다음 우선순위 결정

@@ -49,7 +49,7 @@ export function HangulTrainerView({ trainer }: { trainer: HangulTrainerModel }) 
               stage={trainer.stage}
               revealed={trainer.revealed}
               progress={trainer.progress}
-              onPlay={() => audio.speakText(card.exampleWord)}
+              onPlay={() => void audio.speakText(card.exampleWord)}
               isPlaying={audio.playing}
               label={t('topik.characters.playExample', { word: card.exampleWord })}
               instructionLanguage={instructionLanguage}

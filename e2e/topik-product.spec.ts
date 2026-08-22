@@ -6,6 +6,7 @@ const ATTEMPT_ID = '10000000-0000-4000-8000-000000000001';
 declare global {
   interface Window {
     __topikProductGoogleSpeech?: Array<{ lang: string; voice: string | null }>;
+    __releaseTopikProductGoogleVoice?: () => void;
   }
 }
 
@@ -36,6 +37,55 @@ async function installGoogleKoreanSpeechMock(page: Page): Promise<void> {
       value: {
         cancel: () => undefined,
         getVoices: () => [googleKorean],
+        speak: (utterance: FakeSpeechSynthesisUtterance) => {
+          spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
+          utterance.onend?.(new Event('end'));
+        },
+      },
+    });
+  });
+}
+
+async function installDelayedGoogleKoreanSpeechMock(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const spoken: Array<{ lang: string; voice: string | null }> = [];
+    const listeners = new Set<() => void>();
+    let ready = false;
+    Object.defineProperty(window, '__topikProductGoogleSpeech', { configurable: true, value: spoken });
+    Object.defineProperty(window, '__releaseTopikProductGoogleVoice', {
+      configurable: true,
+      value: () => {
+        ready = true;
+        listeners.forEach((listener) => listener());
+      },
+    });
+    class FakeSpeechSynthesisUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      volume = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onend: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+
+      constructor(_text: string) {}
+    }
+    const googleKorean = {
+      default: true,
+      lang: 'ko-KR',
+      localService: false,
+      name: 'Google Korean',
+      voiceURI: 'google-ko-kr',
+    } as SpeechSynthesisVoice;
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: FakeSpeechSynthesisUtterance });
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: () => undefined,
+        resume: () => undefined,
+        getVoices: () => ready ? [googleKorean] : [],
+        addEventListener: (name: string, listener: () => void) => { if (name === 'voiceschanged') listeners.add(listener); },
+        removeEventListener: (name: string, listener: () => void) => { if (name === 'voiceschanged') listeners.delete(listener); },
         speak: (utterance: FakeSpeechSynthesisUtterance) => {
           spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
           utterance.onend?.(new Event('end'));
@@ -149,6 +199,21 @@ test.describe('TOPIK product flow', () => {
     await page.getByRole('button', { name: /진단 제출|Submit placement|診断を提出/ }).click();
     await expect(page.getByRole('heading', { name: /TOPIK I 준비 단계|TOPIK I Ready|TOPIK I 準備段階/ })).toBeVisible();
     await expect(page.getByText('100').first()).toBeVisible();
+  });
+
+  test('first Korean playback waits for a delayed Google browser voice', async ({ page }) => {
+    await installDelayedGoogleKoreanSpeechMock(page);
+    await registerTopikUser(page);
+    await page.goto('/track/topik-ko/learn');
+
+    await page.getByRole('button', { name: '안녕하세요? 재생' }).click();
+    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech?.length ?? 0)).toBe(0);
+    await page.evaluate(() => window.__releaseTopikProductGoogleVoice?.());
+
+    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
+      { lang: 'ko-KR', voice: 'google-ko-kr' },
+    ]);
+    await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
   test('all TOPIK routes render without horizontal overflow at target viewports', async ({ page }) => {

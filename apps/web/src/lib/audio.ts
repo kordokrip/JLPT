@@ -8,6 +8,7 @@
  */
 
 import { getAudioPlaybackPolicy, type AudioSurface } from '@nihongo-n3/shared';
+import { isGoogleVoiceForLanguage, waitForGoogleBrowserVoice } from './google-browser-speech';
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
@@ -52,7 +53,6 @@ class AudioPlayer {
   private _voiceURI: string | null = null;
   private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
-  private voicesReady = new Map<string, Promise<void>>();
 
   get rate(): PlaybackRate { return this._rate; }
   set rate(v: PlaybackRate) { this._rate = v; }
@@ -84,27 +84,7 @@ class AudioPlayer {
   }
 
   async warmVoices(language = 'ja'): Promise<void> {
-    if (!('speechSynthesis' in window)) return;
-    const prefix = language.split('-')[0]?.toLowerCase() || 'ja';
-    if (window.speechSynthesis.getVoices().some((voice) => voice.lang.toLowerCase().startsWith(prefix))) return;
-    const pending = this.voicesReady.get(prefix);
-    if (pending) return pending;
-
-    const ready = new Promise<void>((resolve) => {
-      const finish = () => {
-        window.clearTimeout(timer);
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-        this.voicesReady.delete(prefix);
-        resolve();
-      };
-      const onVoicesChanged = () => {
-        if (window.speechSynthesis.getVoices().some((voice) => voice.lang.toLowerCase().startsWith(prefix))) finish();
-      };
-      const timer = window.setTimeout(finish, 1_500);
-      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
-    });
-    this.voicesReady.set(prefix, ready);
-    return ready;
+    await waitForGoogleBrowserVoice(language);
   }
 
   async getJapaneseVoices(): Promise<JapaneseVoiceOption[]> {
@@ -233,8 +213,7 @@ class AudioPlayer {
 }
 
 export function isGoogleJapaneseVoice(voice: Pick<SpeechSynthesisVoice, 'name' | 'voiceURI' | 'lang'>): boolean {
-  const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
-  return voice.lang.toLowerCase().startsWith('ja') && haystack.includes('google');
+  return isGoogleVoiceForLanguage(voice, 'ja-JP');
 }
 
 export function voiceSortScore(voice: JapaneseVoiceOption): number {

@@ -2,7 +2,7 @@
 
 JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, Google 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
 
-## Production 기준 — 2026-08-19 KST
+## Production 기준 — 2026-08-23 KST
 
 | 구분 | 현재 기준 |
 | --- | --- |
@@ -54,6 +54,6 @@ pnpm -F @nihongo-n3/db content:contract:verify
 pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
 
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. Chromium·WebKit production E2E도 Google 일본어·한국어 음성과 `/api/v1/audio/` 요청 0건을 포함해 통과했습니다. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+2026-08-23 실제 Production에서 TOPIK Google 한국어 음성의 첫 클릭 실패를 재현했습니다. 당시 테스트는 음성 목록이 즉시 준비된 fixture만 사용해 Chromium의 비동기 `voiceschanged` 경합을 놓쳤습니다. 수정본은 Google 한국어 음성을 기다리고 실제 `onend` 이후에만 성공을 기록하며, 단위·전체 기능·Chromium/WebKit 회귀를 다시 검증했습니다. 운영 증거와 현재 반영 상태는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 문서 탐색은 [docs/README.md](./docs/README.md), 코드 구조는 [PROJECT_CODEBASE_ANALYSIS.md](./PROJECT_CODEBASE_ANALYSIS.md), 실제 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md)를 기준으로 합니다.

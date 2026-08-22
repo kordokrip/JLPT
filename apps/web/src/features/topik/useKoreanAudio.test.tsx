@@ -1,103 +1,133 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useKoreanAudio } from './useKoreanAudio';
+import { isGoogleKoreanVoice, useKoreanAudio, waitForGoogleKoreanVoice } from './useKoreanAudio';
 
 const activityMocks = vi.hoisted(() => ({ record: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('../../lib/activity-events', () => ({ recordLearningActivity: activityMocks.record }));
 
+class MockUtterance {
+  lang = '';
+  rate = 1;
+  pitch = 1;
+  volume = 1;
+  voice: SpeechSynthesisVoice | null = null;
+  onstart: (() => void) | null = null;
+  onend: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+
+  constructor(public text: string) {}
+}
+
+const googleKorean = {
+  lang: 'ko-KR',
+  name: 'Google 한국어',
+  voiceURI: 'google-ko',
+  default: true,
+} as SpeechSynthesisVoice;
+
 describe('useKoreanAudio', () => {
   beforeEach(() => {
     activityMocks.record.mockResolvedValue(undefined);
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
   });
 
   afterEach(() => {
     activityMocks.record.mockClear();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
-  it('reports an unavailable DTO without invoking browser SpeechSynthesis', () => {
-    const speech = { cancel: vi.fn(), speak: vi.fn() };
+  it('recognizes only a Korean Google voice', () => {
+    expect(isGoogleKoreanVoice(googleKorean)).toBe(true);
+    expect(isGoogleKoreanVoice({ lang: 'ko-KR', name: 'Korean system', voiceURI: 'ko-system' })).toBe(false);
+    expect(isGoogleKoreanVoice({ lang: 'ja-JP', name: 'Google 日本語', voiceURI: 'google-ja' })).toBe(false);
+  });
+
+  it('reports an unavailable DTO without invoking browser speech', async () => {
+    const speech = { cancel: vi.fn(), speak: vi.fn(), getVoices: () => [googleKorean] };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: speech });
     const { result } = renderHook(() => useKoreanAudio());
 
-    act(() => {
-      expect(result.current.play({ kind: 'unavailable', reason: 'preparing' })).toBe(false);
+    await act(async () => {
+      expect(await result.current.play({ kind: 'unavailable', reason: 'preparing' })).toBe(false);
     });
 
     expect(speech.speak).not.toHaveBeenCalled();
     expect(result.current.error).toBe('unavailable');
   });
 
-  it('prefers a Google Korean browser voice and never uses an unrelated default voice', () => {
-    class MockUtterance {
-      lang = '';
-      rate = 1;
-      pitch = 1;
-      voice: SpeechSynthesisVoice | null = null;
-      onend: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      constructor(public text: string) {}
-    }
-    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
-    const speak = vi.fn();
+  it('waits for Chromium voiceschanged before selecting Google Korean', async () => {
+    let voices: SpeechSynthesisVoice[] = [];
+    let voicesChanged: (() => void) | null = null;
+    const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: {
         cancel: vi.fn(),
+        resume: vi.fn(),
         speak,
-        getVoices: () => [
-          { lang: 'en-US', name: 'English', voiceURI: 'en', default: true },
-          { lang: 'ko-KR', name: 'Korean system', voiceURI: 'ko-system', default: true },
-          { lang: 'ko-KR', name: 'Google 한국의', voiceURI: 'google-ko-kr', default: false },
-        ],
+        getVoices: () => voices,
+        addEventListener: (_name: string, listener: () => void) => { voicesChanged = listener; },
+        removeEventListener: vi.fn(),
       },
     });
     const { result } = renderHook(() => useKoreanAudio());
 
-    act(() => {
-      expect(result.current.speakText('안녕하세요')).toBe(true);
+    await act(async () => {
+      const playback = result.current.speakText('안녕하세요');
+      voices = [googleKorean];
+      voicesChanged?.();
+      expect(await playback).toBe(true);
     });
 
     const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
     expect(utterance.text).toBe('안녕하세요');
     expect(utterance.lang).toBe('ko-KR');
-    expect(utterance.voice?.voiceURI).toBe('google-ko-kr');
+    expect(utterance.voice?.voiceURI).toBe('google-ko');
   });
 
-  it('plays a Google DTO through the Google Korean voice', () => {
-    const speak = vi.fn();
-    class MockUtterance { lang = ''; rate = 1; pitch = 1; voice: SpeechSynthesisVoice | null = null; onend: (() => void) | null = null; onerror: (() => void) | null = null; constructor(public text: string) {} }
-    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
-    Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { cancel: vi.fn(), speak, getVoices: () => [{ lang: 'ko-KR', name: 'Google 한국어', voiceURI: 'google-ko', default: true }] } });
-    const { result } = renderHook(() => useKoreanAudio());
-
-    act(() => {
-      expect(result.current.play({ kind: 'google', text_ko: '테스트입니다.' })).toBe(true);
+  it('does not fall back to a non-Google Korean voice', async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        getVoices: () => [{ lang: 'ko-KR', name: 'Korean system', voiceURI: 'ko-system' }],
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
     });
 
-    expect(speak).toHaveBeenCalledOnce();
+    const pending = waitForGoogleKoreanVoice(100);
+    await vi.advanceTimersByTimeAsync(100);
+    await expect(pending).resolves.toBeNull();
   });
 
-  it('binds a Google speech outcome to the selected TOPIK content id without an audio request', async () => {
-    class MockUtterance { lang = ''; rate = 1; pitch = 1; voice: SpeechSynthesisVoice | null = null; onend: (() => void) | null = null; onerror: (() => void) | null = null; constructor(public text: string) {} }
-    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+  it('records played only after real playback completion', async () => {
+    let utterance: MockUtterance | null = null;
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: {
         cancel: vi.fn(),
-        speak: vi.fn(),
-        getVoices: () => [{ lang: 'ko-KR', name: 'Google 한국어', voiceURI: 'google-ko', default: true }],
+        resume: vi.fn(),
+        speak: vi.fn((value: MockUtterance) => { utterance = value; }),
+        getVoices: () => [googleKorean],
       },
     });
     const { result } = renderHook(() => useKoreanAudio());
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    let playback: Promise<boolean> | undefined;
 
     act(() => {
-      expect(result.current.play(
+      playback = result.current.play(
         { kind: 'google', text_ko: '안녕하세요.' },
         { contentType: 'topik_owner_item', contentId: 'owner-item-1', levelTag: '1', section: 'vocab' },
-      )).toBe(true);
+      );
+    });
+    expect(activityMocks.record).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(utterance).not.toBeNull());
+    await act(async () => {
+      utterance?.onend?.();
+      expect(await playback).toBe(true);
     });
 
     await vi.waitFor(() => expect(activityMocks.record).toHaveBeenCalledWith({
@@ -109,6 +139,32 @@ describe('useKoreanAudio', () => {
       section: 'vocab',
       speech_outcome: 'played',
     }));
-    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('records an error instead of a false played result when synthesis fails', async () => {
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        resume: vi.fn(),
+        speak: vi.fn((utterance: MockUtterance) => utterance.onerror?.()),
+        getVoices: () => [googleKorean],
+      },
+    });
+    const { result } = renderHook(() => useKoreanAudio());
+
+    await act(async () => {
+      expect(await result.current.play(
+        { kind: 'google', text_ko: '재생 실패' },
+        { contentType: 'topik_practice_question', contentId: 'question-1' },
+      )).toBe(false);
+    });
+
+    expect(result.current.error).toBe('playback-failed');
+    await vi.waitFor(() => expect(activityMocks.record).toHaveBeenCalledWith(expect.objectContaining({
+      content_id: 'question-1',
+      speech_outcome: 'error',
+    })));
+    expect(activityMocks.record).not.toHaveBeenCalledWith(expect.objectContaining({ speech_outcome: 'played' }));
   });
 });

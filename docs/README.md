@@ -1,12 +1,13 @@
 # JLPT · TOPIK 문서
 
-기준일: 2026-08-17 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다.
+기준일: 2026-08-23 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다.
 
 ## 먼저 읽을 문서
 
 | 목적 | 문서 |
 | --- | --- |
 | 현재 구현, 데이터 모델, 운영 명령 | [현재 상태](00_overview/CURRENT_STATE.md) |
+| 2026-08-23 TOPIK 음성 장애와 수정 검증 | [TOPIK Google 한국어 음성 장애 기록](00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md) |
 | 콘텐츠 수와 원본-시드 대응 | [콘텐츠 감사](00_overview/CONTENT_AUDIT.md) |
 | 원본 파일과 seed 소유자 | [학습 원본 지도](00_overview/00_source_map.md) |
 | 교육 단위와 확장 원칙 | [커리큘럼 설계](00_overview/CURRICULUM_BLUEPRINT.md) |

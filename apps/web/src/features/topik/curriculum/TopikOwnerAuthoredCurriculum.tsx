@@ -125,7 +125,7 @@ export function TopikOwnerAuthoredCurriculum({ initialGrade = 1 }: { initialGrad
                   <p className="text-xs font-bold text-[var(--muted-foreground)]">{index + 1} · {item.item_type}</p>
                   <h4 className="mt-3 text-lg font-black leading-8">{localized(item, language)}</h4>
                   {item.audio?.kind === 'google' ? (
-                    <button type="button" onClick={() => audio.play(item.audio!, { contentType: 'topik_owner_item', contentId: item.id, levelTag: String(item.target_grade), section: selectedUnit.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />Google 한국어 음성 재생</button>
+                    <button type="button" onClick={() => void audio.play(item.audio!, { contentType: 'topik_owner_item', contentId: item.id, levelTag: String(item.target_grade), section: selectedUnit.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />Google 한국어 음성 재생</button>
                   ) : item.audio?.kind === 'unavailable' ? (
                     <p role="status" className="mt-4 inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)]"><Headphones aria-hidden="true" size={17} />{item.audio.reason === 'preparing' ? '오디오 준비 중' : '오디오를 제공하지 않습니다'}</p>
                   ) : null}
