@@ -1,6 +1,6 @@
 # 2026-08-19 릴리스 기록과 다음 개발 계획
 
-상태: **2026-08-19 Production 배포 완료, 2026-08-23 Google 한국어 음성 장애 수정본 검증 및 반영 진행 중**.
+상태: **2026-08-19 콘텐츠 Production 배포와 2026-08-23 Google 한국어 음성 수정본 Production 반영 완료, 운영 관찰 진행 중**.
 
 2026-08-23 교차검증에서 TOPIK 첫 클릭 음성 실패를 실제 Production에서 재현했습니다. 원인은 비동기로 준비되는 Google 음성 목록을 기다리지 않은 클라이언트 코드였으며, 상세 내용은 [장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)에 있습니다. 과거 fixture 기반 음성 테스트 통과를 실제 브라우저 성공으로 간주하지 않습니다.
 
@@ -10,8 +10,9 @@
 | --- | --- |
 | D1 | `nihongo-n3-prod-v2`, migration `0000–0027` |
 | Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| Pages | `https://7b0e9050.nihongo-n3.pages.dev` |
-| source release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| Pages | `https://1c3bba90.nihongo-n3.pages.dev` |
+| web source SHA | `595fcd735824116fff6047e9e59f1d6acd90cb46` |
+| Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 
 | Release | 상태 | Quality links |
 | --- | --- | ---: |
@@ -38,7 +39,7 @@
 실행 프롬프트:
 
 ```text
-production을 변경하지 말고 2026-08-19 릴리스 기준선을 읽기 전용으로 감사하라. D1 migration 0000–0027, Worker 6bbe4bbd-b02d-42d3-9dfc-ad9187a86872, Pages https://7b0e9050.nihongo-n3.pages.dev, source SHA 3485c6ef8addda3cd3e209730646c296175cf3c9를 확인하라. release별 published 상태와 quality link 120/20/300을 기록하고 차이가 있으면 즉시 incident 후보로 보고하라.
+production을 변경하지 말고 현재 릴리스 기준선을 읽기 전용으로 감사하라. D1 migration 0000–0027, Worker 6bbe4bbd-b02d-42d3-9dfc-ad9187a86872, Pages https://1c3bba90.nihongo-n3.pages.dev, web source SHA 595fcd735824116fff6047e9e59f1d6acd90cb46, Worker/content release SHA 3485c6ef8addda3cd3e209730646c296175cf3c9를 확인하라. release별 published 상태와 quality link 120/20/300을 기록하고 차이가 있으면 즉시 incident 후보로 보고하라.
 ```
 
 완료 조건: 버전, migration ledger, release 상태, link 수가 이 문서와 일치.
@@ -132,7 +133,7 @@ pnpm docs:check
 
 - [x] Production D1 `0000–0027`
 - [x] Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`
-- [x] Pages `https://7b0e9050.nihongo-n3.pages.dev`
+- [x] Pages `https://1c3bba90.nihongo-n3.pages.dev`
 - [x] Release quality links `120/20/300`, 모두 published
 - [x] Remote DB/TOPIK verifier 통과
 - [x] Question quality `332/0`
@@ -140,6 +141,7 @@ pnpm docs:check
 - [x] Google 브라우저 음성만 사용, R2 pronunciation 참조 0
 - [x] 2026-08-23 활동 집계 읽기 전용 중간 점검
 - [x] Google 한국어 음성 수정본 Pages preview 배포 및 smoke
-- [ ] Google 한국어 음성 수정본 Production 반영 및 실제 `played` 관찰
+- [x] Google 한국어 음성 수정본 Production 반영과 자동 사후 검증
+- [ ] 실제 사용자 Chrome의 Google 한국어 음성 `played` 관찰
 - [ ] 7일 데이터 바인딩 관찰
 - [ ] 30일 학습 지표 기반 다음 우선순위 결정

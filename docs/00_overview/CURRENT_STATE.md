@@ -2,7 +2,7 @@
 
 기준일: 2026-08-23 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
-> 2026-08-23 TOPIK Google 한국어 음성의 첫 클릭 실패를 Production에서 재현했습니다. 코드는 수정하고 로컬 전수 회귀와 Pages preview 검증을 통과했지만 이 문서 상단의 Production Pages에는 아직 반영하지 않았습니다. 원인·운영 집계·검증 범위는 [TOPIK Google 한국어 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 따릅니다.
+> 2026-08-23 TOPIK Google 한국어 음성의 첫 클릭 실패를 Production에서 재현했습니다. 비동기 Google voice 준비, 취소, 실제 종료 기반 telemetry를 수정하고 로컬 전수 회귀, Pages preview, Production 배포와 사후 검증을 완료했습니다. 원인·운영 집계·검증 범위는 [TOPIK Google 한국어 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 따릅니다.
 
 ## 상태 요약
 
@@ -10,8 +10,9 @@
 | --- | --- |
 | D1 migration | `0000–0027` |
 | Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| Pages | `https://7b0e9050.nihongo-n3.pages.dev` |
-| source release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| Pages | `https://1c3bba90.nihongo-n3.pages.dev` |
+| web source SHA | `595fcd735824116fff6047e9e59f1d6acd90cb46` |
+| Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
 
@@ -69,6 +70,8 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 2026-08-23 수정본은 Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다. Production 최근 30일 집계는 TOPIK `played 0 / unavailable 13 / error 0`이므로, 2026-08-19의 fixture 기반 통과 기록만으로 실제 재생 성공을 주장하지 않습니다.
 
+수정본은 Production Pages `1c3bba90-8990-472b-8bf2-12a08759597f`에 반영했습니다. 자동화는 배포 bundle과 음성 lifecycle을 검증하지만 물리 스피커의 가청 출력을 증명하지 않으므로, 실제 `played` 운영 이벤트 관찰은 별도 후속 항목입니다.
+
 ## 배포 후 검증 기록 — 2026-08-19
 
 - web unit: 34파일, 86테스트 통과
@@ -119,6 +122,16 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - 세 release의 quality link 120/20/300 및 published 상태 확인
 - remote DB/TOPIK verifier, question quality 332/0, R2 pronunciation 0, Chromium/WebKit production E2E 통과
 
+### 2026-08-23
+
+- TOPIK/JLPT Google browser voice의 비동기 준비와 재생 종료 telemetry 수정
+- Pages `1c3bba90-8990-472b-8bf2-12a08759597f` (`https://1c3bba90.nihongo-n3.pages.dev`)
+- web source SHA `595fcd735824116fff6047e9e59f1d6acd90cb46`
+- D1 migration/seed와 Worker는 변경하지 않음
+- rollback Pages `7b0e9050-f36c-42a3-aab9-7d09f70df2af`; Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` 유지
+- Production 직전 음성 단위 `10/10`, 영향 기능 E2E `44/2/0`, typecheck, OpenAPI, build, fresh D1 통과
+- 배포 후 canonical smoke 5회, remote DB/FK, Worker `7/7`, auth proxy, R2 pronunciation 0 통과
+
 ## 다음 단계
 
-[TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)의 음성 복구·preview·운영 확인을 우선 수행한 뒤 [NEXT_DEVELOPMENT_PLAN_2026-08-19.md](NEXT_DEVELOPMENT_PLAN_2026-08-19.md)의 사후 관찰 순서를 따릅니다. 다음 release도 어느 gate에서든 실패하면 publication을 중단하고 draft를 유지합니다.
+[TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)의 음성 복구·preview·Production 반영은 완료했습니다. 이제 [NEXT_DEVELOPMENT_PLAN_2026-08-19.md](NEXT_DEVELOPMENT_PLAN_2026-08-19.md)의 실제 `played`, 7일 데이터 바인딩, 30일 학습 지표 관찰 순서를 따릅니다. 다음 release도 어느 gate에서든 실패하면 publication을 중단하고 draft를 유지합니다.

@@ -8,8 +8,9 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 | --- | --- |
 | production D1 | `nihongo-n3-prod-v2`, migration `0000–0027` |
 | production Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| production Pages | `https://7b0e9050.nihongo-n3.pages.dev` |
-| source release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| production Pages | `https://1c3bba90.nihongo-n3.pages.dev` |
+| web source SHA | `595fcd735824116fff6047e9e59f1d6acd90cb46` |
+| Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
 
 2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 배포 기록과 이후 관찰 계획은 [2026-08-19 실행 계획](./docs/00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md), 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
@@ -54,6 +55,6 @@ pnpm -F @nihongo-n3/db content:contract:verify
 pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
 
-2026-08-23 실제 Production에서 TOPIK Google 한국어 음성의 첫 클릭 실패를 재현했습니다. 당시 테스트는 음성 목록이 즉시 준비된 fixture만 사용해 Chromium의 비동기 `voiceschanged` 경합을 놓쳤습니다. 수정본은 Google 한국어 음성을 기다리고 실제 `onend` 이후에만 성공을 기록하며, 단위·전체 기능·Chromium/WebKit 회귀를 다시 검증했습니다. 운영 증거와 현재 반영 상태는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+2026-08-23 실제 Production에서 TOPIK Google 한국어 음성의 첫 클릭 실패를 재현했습니다. 당시 테스트는 음성 목록이 즉시 준비된 fixture만 사용해 Chromium의 비동기 `voiceschanged` 경합을 놓쳤습니다. 수정본은 Google 한국어 음성을 기다리고 실제 `onend` 이후에만 성공을 기록하며, 단위·전체 기능·Chromium/WebKit 회귀와 Production 사후 검증을 거쳐 Pages에 반영했습니다. 운영 증거와 현재 반영 상태는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 문서 탐색은 [docs/README.md](./docs/README.md), 코드 구조는 [PROJECT_CODEBASE_ANALYSIS.md](./PROJECT_CODEBASE_ANALYSIS.md), 실제 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md)를 기준으로 합니다.
