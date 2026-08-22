@@ -1,6 +1,6 @@
 # TOPIK Google 한국어 음성 장애 기록 — 2026-08-23
 
-상태: **코드 수정 및 로컬 전수 회귀 검증 완료, Production 미반영**.
+상태: **코드 수정, 로컬 전수 회귀와 Pages preview 검증 완료, Production 미반영**.
 
 ## 영향과 운영 증거
 
@@ -48,11 +48,11 @@
 
 Web Speech API 또는 Google 한국어 음성이 실제 브라우저/운영체제에 없으면 정책상 재생은 `unavailable`로 종료합니다. 비-Google 시스템 음성이나 R2로 우회하지 않습니다. 자동화는 지연된 Google 한국어 음성의 선택과 재생 lifecycle을 Chromium/WebKit에서 결정적으로 검증하지만, 물리 스피커의 가청 출력 자체를 증명하지는 않습니다.
 
-## 다음 조치
+## 실행 상태와 다음 조치
 
-1. 갱신된 시각 기준선으로 전체 E2E를 다시 통과시킵니다.
-2. 현재 Production Pages `7b0e9050-f36c-42a3-aab9-7d09f70df2af`를 rollback 기준으로 기록합니다.
-3. Production 권한과 분리된 Pages preview에 배포해 앱/API smoke와 Google-only 음성 회귀를 확인합니다.
+1. 갱신된 시각 기준선으로 전체 E2E를 다시 통과했습니다.
+2. 현재 Production Pages `7b0e9050-f36c-42a3-aab9-7d09f70df2af`를 rollback 기준으로 기록했습니다.
+3. Production 권한과 분리된 Pages preview `5ba2c5e9-b15f-4ba2-ba79-9f76fffa4ba0` (`https://5ba2c5e9.nihongo-n3.pages.dev`, source `0a2e169`)에 배포했습니다. 루트와 TOPIK status API는 5회 연속 `200`, legacy R2 발음 경로는 5회 연속 `410`이었고, 배포 bundle에서 `voiceschanged`, 2.5초 대기, `onend → played`, `onerror → error`를 다시 확인했습니다.
 4. 이 세션에서 명시적인 Production 배포 승인이 있을 때만 Pages를 승격합니다. D1 migration/seed와 Worker 변경은 없습니다.
 5. 배포 후 실제 사용자 Chrome에서 `played`가 기록되는지 관찰하고, `unavailable`이면 `/audio` 또는 R2 fallback을 추가하지 말고 Web Speech API와 Google 음성 설치 상태를 진단합니다.
 6. N3 `50`, TOPIK 완료 `10`, TOPIK FSRS 복습 `5`를 모두 충족하기 전에는 N2/N1/TOPIK 콘텐츠 증량을 시작하지 않습니다.

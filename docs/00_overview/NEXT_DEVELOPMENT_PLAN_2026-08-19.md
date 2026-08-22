@@ -139,6 +139,7 @@ pnpm docs:check
 - [x] Chromium/WebKit production E2E 통과
 - [x] Google 브라우저 음성만 사용, R2 pronunciation 참조 0
 - [x] 2026-08-23 활동 집계 읽기 전용 중간 점검
+- [x] Google 한국어 음성 수정본 Pages preview 배포 및 smoke
 - [ ] Google 한국어 음성 수정본 Production 반영 및 실제 `played` 관찰
 - [ ] 7일 데이터 바인딩 관찰
 - [ ] 30일 학습 지표 기반 다음 우선순위 결정

@@ -2,7 +2,7 @@
 
 기준일: 2026-08-23 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
-> 2026-08-23 TOPIK Google 한국어 음성의 첫 클릭 실패를 Production에서 재현했습니다. 코드는 수정하고 로컬 전수 회귀를 통과했지만 이 문서 상단의 Production Pages에는 아직 반영하지 않았습니다. 원인·운영 집계·검증 범위는 [TOPIK Google 한국어 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 따릅니다.
+> 2026-08-23 TOPIK Google 한국어 음성의 첫 클릭 실패를 Production에서 재현했습니다. 코드는 수정하고 로컬 전수 회귀와 Pages preview 검증을 통과했지만 이 문서 상단의 Production Pages에는 아직 반영하지 않았습니다. 원인·운영 집계·검증 범위는 [TOPIK Google 한국어 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 따릅니다.
 
 ## 상태 요약
 
