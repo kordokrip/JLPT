@@ -59,4 +59,12 @@ Web Speech API 또는 Google 한국어 음성이 실제 브라우저/운영체�
 4. 명시적인 승인을 받은 뒤 Production Pages `1c3bba90-8990-472b-8bf2-12a08759597f` (`https://1c3bba90.nihongo-n3.pages.dev`, canonical `https://nihongo-n3.pages.dev`, source `595fcd735824116fff6047e9e59f1d6acd90cb46`)로 배포했습니다. D1 migration/seed와 Worker 변경은 없습니다.
 5. canonical 루트·manifest·TOPIK status는 5회 연속 `200`, legacy R2 발음 경로는 5회 연속 `410`이었습니다. 배포 bundle에서 `voiceschanged`, 2.5초 대기, 실제 `onend → played`, `onerror → error` 구현을 재확인했습니다.
 6. 실제 사용자 Chrome에서 `played`가 기록되는지는 계속 관찰합니다. `unavailable`이면 `/audio` 또는 R2 fallback을 추가하지 말고 Web Speech API와 Google 음성 설치 상태를 진단합니다.
-7. N3 `50`, TOPIK 완료 `10`, TOPIK FSRS 복습 `5`를 모두 충족하기 전에는 N2/N1/TOPIK 콘텐츠 증량을 시작하지 않습니다.
+
+## 2026-08-23 다음 콘텐츠 배포 차단 재검증
+
+- 기존 사용자 Chrome 탭과 새 Chrome 탭에서 각각 Production 앱을 열어 재검증했습니다.
+- 두 탭 모두 `window.speechSynthesis=false`, voice count 0, Google `ko-KR` 0, Google `ja-JP` 0이었습니다.
+- 따라서 한국어·일본어 `played` 각 1건이라는 Production 전제조건을 충족하지 못했습니다.
+- N2/N1/TOPIK Batch 6 후보는 Preview까지만 반영했고 Production D1 seed·Worker 배포·Pages 재배포는 실행하지 않았습니다.
+- 해결 방향은 Chrome/Web Speech API 및 Google voice 제공 환경 복구입니다. R2 발음이나 `/api/v1/audio/` fallback은 해결책으로 허용하지 않습니다.
+7. N2/N1/TOPIK Batch 6은 승인된 첫 증량 예외로 Preview까지 준비했습니다. Production 반영 후에도 N3 `50`, TOPIK 완료 `10`, TOPIK FSRS 복습 `5`가 D+30에 미달하면 Batch 7을 만들지 않고 진입 UX를 먼저 개선합니다.

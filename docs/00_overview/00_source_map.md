@@ -1,6 +1,6 @@
 # 학습 원본·데이터 흐름 지도
 
-기준일: 2026-08-19 KST. 원본, builder, production release를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다.
+기준일: 2026-08-23 KST. 원본, builder, Production/Preview release를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다.
 
 ## Production source map
 
@@ -27,6 +27,16 @@ TOPIK practice v2는 “공개 후보”가 아니라 2026-08-17 production 공�
 | `topik-practice-v2-2026-08-17` (300) | 기존 v2 evidence/audit | `backfill-topik-practice-v2-release.ts` | 300 links, published |
 
 세 release는 `0026` release-quality link와 G0–G4 evidence를 거쳐 production에 반영됐습니다. source release SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다. 이후 release도 같은 승인 경로를 사용합니다.
+
+## 2026-08-23 Preview source map
+
+| release | 자체 저작 원본 | builder/review | 상태 |
+| --- | --- | --- | --- |
+| `jlpt-n2-practice-v1-2026-08-23` | `packages/db/src/seed/jlpt-n2-n1-practice-content-v1.ts` | `jlpt-n2-n1-practice-banks-v1.ts`, Reviewer A/B | Preview 60 links; Production 미반영 |
+| `jlpt-n1-practice-v1-2026-08-23` | 같은 source | 같은 builder/reviewer | Preview 60 links; Production 미반영 |
+| `topik-owner-batch6-2026-08-23` | `packages/db/src/seed/topik-owner-curriculum-batch6.ts` | Batch 6 builder, Reviewer A/B | Preview 40 links; Production 미반영 |
+
+공통 intake는 `packages/db/src/content/next-content-expansion-intake.json`, 자체 저작 선언은 `next-content-expansion-source.md`, 품질/독립 리뷰 artifact는 `.artifacts/content-quality/next-content-expansion-*`입니다. Preview 검증은 [릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 런타임 데이터 map
 

@@ -1,6 +1,6 @@
 # JLPT·TOPIK 문제은행 품질 파이프라인
 
-기준일: 2026-08-17 KST. 이 문서는 현재 코드·fresh D1·preview·production 교차 검증과 검사 artifact를 기준으로 한다. v2의 원격 release gate는 모두 통과했고 production 반영까지 완료됐다.
+기준일: 2026-08-23 KST. TOPIK practice v2의 2026-08-17 Production 기록과 이후 JLPT N2/N1·TOPIK Batch 6 확장에 적용한 현재 품질 계약을 함께 기록한다.
 
 ## 완료한 교정
 
@@ -62,3 +62,11 @@
 4. D1 backup과 restore drill, 이전 Worker/Pages version을 rollback plan에 기록한다.
 5. migration 0022~0023, canonical seed, TOPIK v2 seed를 원격에 적용한 뒤 remote verifier·API/Pages smoke를 통과한다.
 6. 하나라도 실패하면 production 반영을 중단하고 직전 D1 backup과 Worker/Pages version으로 되돌린다.
+
+## 2026-08-23 확장 적용
+
+- N2/N1 정적 문제은행은 각 60문항, 전체 정답 위치 `15/15/15/15`, 모드별 난이도 1–5 각 3문항을 강제합니다.
+- TOPIK owner Batch 6은 3–6급 각 10개이며, 선택형 정답 위치는 급수별 `2/2/2/2`입니다.
+- 최종 160개는 서로 결과를 공유하지 않은 Reviewer A/B가 모두 승인했고 release-quality link `60/60/40`으로 Preview에 연결했습니다.
+- Preview 콘텐츠·FK·거래·Chromium/WebKit 검증은 통과했지만, 실제 Chrome에서 Google 한국어·일본어 voice가 0개라 Production은 차단했습니다.
+- 사용처가 없던 legacy R2 audio prefetch 테스트는 호환 모듈과 함께 제거했습니다. `/api/v1/audio/*` 410과 R2 reference 0 회귀 검사는 계속 필수입니다.

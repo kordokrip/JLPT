@@ -1,6 +1,6 @@
 # 콘텐츠·출처 현재 감사
 
-기준일: 2026-08-19 KST. production 수량을 seed plan/schema와 원격 verifier로 두 번 대조했습니다.
+기준일: 2026-08-23 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
 
 ## Production 콘텐츠 감사
 
@@ -33,6 +33,21 @@ manifest canonical 합계는 6,501행입니다. TOPIK practice bank는 이 canon
 TOPIK owner production 합계는 Batch 5의 20 unit/item을 포함해 140 unit + 140 item입니다.
 
 TOPIK Batch 5는 선택형 16개와 쓰기 4개입니다. listening 4개만 `audio_text_ko` 및 Google speech binding을 가지며, 나머지는 음성 대상이 아닙니다.
+
+## 2026-08-23 Preview 후보 감사
+
+| release | 수량/분포 | quality link | 현재 상태 |
+| --- | --- | ---: | --- |
+| `jlpt-n2-practice-v1-2026-08-23` | 4모드×15, 난이도별 3, 정답 `15/15/15/15` | 60 | Preview published, Production 미반영 |
+| `jlpt-n1-practice-v1-2026-08-23` | 4모드×15, 난이도별 3, 정답 `15/15/15/15` | 60 | Preview published, Production 미반영 |
+| `topik-owner-batch6-2026-08-23` | 3–6급 각 10, 5영역×2, 선택형 급수별 `2/2/2/2` | 40 | Preview published, Production 미반영 |
+
+- 다국어 prompt/choice/explanation/rubric, 중복, 정답 유일성, listening script를 전수 검사했고 실패는 0건입니다.
+- 최종 draft SHA는 `e95d4a7c814a850c770108183328904c85e4ea0bd4588a851ab97e7a5c33c070`입니다.
+- Reviewer A/B는 서로 결과를 공유하지 않고 최종 160개에 대해 모두 승인했습니다.
+- Preview TOPIK owner는 각 급수 30개, 급수·영역별 6개이며 Batch 6 listening 8개만 Google binding을 가집니다.
+- 실제 Batch 6 완료/FSRS transaction과 activity event 연결을 확인했습니다.
+- 실제 Chrome 음성 gate 실패 때문에 이 160개는 Production 콘텐츠 수량에 포함하지 않습니다.
 
 ## Provenance와 release 감사
 

@@ -1034,6 +1034,40 @@ describe('learning activity and strict-level quiz strategy', () => {
     expect(insufficient.status).toBe(400);
   });
 
+  it('does not expose a canonical listening translation before submission', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const sourceCode = `LISTENING-NO-LEAK-${suffix}`;
+    await db.prepare(
+      `INSERT INTO sources (code, title, file_path, version)
+       VALUES (?, 'listening no-leak test', 'test/listening-no-leak', '1')`,
+    ).bind(sourceCode).run();
+    const source = await db.prepare('SELECT id FROM sources WHERE code = ?')
+      .bind(sourceCode).first<{ id: number }>();
+    await db.batch(Array.from({ length: 4 }, (_, index) => db.prepare(
+      `INSERT INTO sentences (source_id, level, register, seq_no, ja, ko)
+       VALUES (?, 'N4', 'test', ?, ?, ?)`,
+    ).bind(source!.id, index, `日本語の聴解文${suffix}-${index}`, `정답 번역 ${suffix}-${index}`)));
+
+    const response = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'listening', level: 'N4', count: 1 }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json<{
+      data: { questions: Array<{ answer?: string; script_ja?: string; script_ko?: string }> };
+    }>();
+    expect(body.data.questions).toHaveLength(1);
+    expect(body.data.questions[0]?.script_ja).toMatch(new RegExp(`^日本語の聴解文${suffix}`, 'u'));
+    expect(body.data.questions[0]).not.toHaveProperty('answer');
+    expect(body.data.questions[0]).not.toHaveProperty('script_ko');
+  });
+
   it('prefers a reviewed published N3 static bank item for weakest strategy', async () => {
     const db = (env as typeof env & { DB: D1Database }).DB;
     await db.prepare(
@@ -1113,10 +1147,244 @@ describe('learning activity and strict-level quiz strategy', () => {
       data: { questions: Array<{ item_id: string; prompt: string; choices: string[]; answer?: string }> };
     }>();
     expect(body.data.questions[0]).toMatchObject({ item_id: weakId, prompt: '静的漢字2' });
-    expect(body.data.questions[0]?.choices).toEqual([
+    expect(new Set(body.data.questions[0]?.choices)).toEqual(new Set([
       'よみ-2-0', 'よみ-2-1', 'よみ-2-2', 'よみ-2-3',
-    ]);
+    ]));
     expect(body.data.questions[0]).not.toHaveProperty('answer');
+  });
+
+  it('prefers the reviewed N2 static bank, rotates answers, fills 16-20 from same-level canonical data, and honors weakest', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const releaseId = `release-n2-static-${suffix}`;
+    const version = `n2-static-${suffix}`;
+    await db.prepare(
+      `INSERT INTO content_releases
+         (id, learning_track, content_version, release_state, manifest_sha256, parser_version)
+       VALUES (?, 'jlpt-ja', ?, 'approved', ?, 'test-validator')`,
+    ).bind(releaseId, version, 'a'.repeat(64)).run();
+    await db.prepare(
+      `INSERT INTO content_release_quality_requirements
+         (release_id, content_type, expected_audit_count, validator_version)
+       VALUES (?, 'jlpt-quiz', 15, 'test-validator')`,
+    ).bind(releaseId).run();
+
+    const correctById = new Map<string, string>();
+    for (let index = 0; index < 15; index++) {
+      const id = `n2-static-${suffix}-${index}`;
+      const answerIndex = index % 4;
+      const correct = `정답-${suffix}-${index}`;
+      correctById.set(id, correct);
+      const choices = Array.from({ length: 4 }, (_, choiceIndex) => ({
+        ko: choiceIndex === answerIndex ? correct : `오답-${suffix}-${index}-${choiceIndex}`,
+        ja: `選択肢-${suffix}-${index}-${choiceIndex}`,
+        en: `choice-${suffix}-${index}-${choiceIndex}`,
+      }));
+      const auditId = `audit-${id}`;
+      await db.prepare(
+        `INSERT INTO content_quality_audits
+           (id, learning_track, content_type, content_id, content_version, evidence_sha256,
+            validator_version, automated_status, author_review_status, adversarial_review_status,
+            author_reviewer, adversarial_reviewer, release_state, checked_at)
+         VALUES (?, 'jlpt-ja', 'jlpt-quiz', ?, ?, ?, 'test-validator', 'passed',
+                 'signed', 'signed', 'reviewer-a', 'reviewer-b', 'approved', '2026-08-23')`,
+      ).bind(auditId, id, version, 'b'.repeat(64)).run();
+      await db.prepare(
+        'INSERT INTO content_release_quality_audit_links (release_id, audit_id) VALUES (?, ?)',
+      ).bind(releaseId, auditId).run();
+      await db.prepare(
+        `INSERT INTO jlpt_practice_questions
+           (id, level, mode, skill, difficulty, prompt_ko, prompt_ja, prompt_en,
+            choices_json, answer_index, explanation_ko, explanation_ja, explanation_en,
+            source_code, source_evidence_sha256, bank_version, is_published)
+         VALUES (?, 'N2', 'vocab_mc', 'vocabulary', ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 'TEST-N2-STATIC', ?, ?, 1)`,
+      ).bind(
+        id,
+        (index % 5) + 1,
+        `한국어 질문 ${index}`,
+        `日本語質問${index}`,
+        `English prompt ${index}`,
+        JSON.stringify(choices),
+        answerIndex,
+        `한국어 해설 ${index}`,
+        `日本語解説${index}`,
+        `English explanation ${index}`,
+        'c'.repeat(64),
+        version,
+      ).run();
+    }
+
+    const staticOnly = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N2', count: 15 }),
+    });
+    expect(staticOnly.status).toBe(200);
+    const staticBody = await staticOnly.json<{
+      data: { questions: Array<{ item_id: string; choices: string[]; answer?: string }> };
+    }>();
+    const answerPositions = staticBody.data.questions.map((question) => (
+      question.choices.indexOf(correctById.get(question.item_id)!)
+    ));
+    expect(staticBody.data.questions).toHaveLength(15);
+    expect(staticBody.data.questions.every((question) => !('answer' in question))).toBe(true);
+    expect(answerPositions.every((position) => position >= 0)).toBe(true);
+    expect(Math.max(...[0, 1, 2, 3].map((position) => answerPositions.filter((value) => value === position).length))
+      - Math.min(...[0, 1, 2, 3].map((position) => answerPositions.filter((value) => value === position).length))).toBeLessThanOrEqual(1);
+
+    await db.prepare(
+      `INSERT OR IGNORE INTO sources (code, title, file_path, version)
+       VALUES ('N2-STATIC-MIX-TEST', 'N2 static mix test', 'test/n2-static-mix', '1')`,
+    ).run();
+    const source = await db.prepare('SELECT id FROM sources WHERE code = ?')
+      .bind('N2-STATIC-MIX-TEST').first<{ id: number }>();
+    await db.batch(Array.from({ length: 8 }, (_, index) => db.prepare(
+      `INSERT INTO vocab (source_id, level, ja, kana, ko, pos)
+       VALUES (?, 'N2', ?, ?, ?, 'test')`,
+    ).bind(source!.id, `n2-canonical-${suffix}-${index}`, `きゃのにかる-${index}`, `N2 canonical ${suffix}-${index}`)));
+
+    const mixed = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N2', count: 20 }),
+    });
+    expect(mixed.status).toBe(200);
+    const mixedBody = await mixed.json<{
+      data: { level: string; questions: Array<{ item_id: string | number; answer?: string; script_ko?: string }> };
+    }>();
+    expect(mixedBody.data.level).toBe('N2');
+    expect(mixedBody.data.questions).toHaveLength(20);
+    expect(mixedBody.data.questions.filter((question) => typeof question.item_id === 'string')).toHaveLength(15);
+    expect(mixedBody.data.questions.filter((question) => typeof question.item_id === 'number')).toHaveLength(5);
+    expect(mixedBody.data.questions.every((question) => !('answer' in question))).toBe(true);
+    expect(mixedBody.data.questions.every((question) => !('script_ko' in question))).toBe(true);
+
+    const weakId = [...correctById.keys()][7]!;
+    await db.prepare(
+      `INSERT INTO learning_activity_events
+         (event_id, user_id, learning_track, event_type, content_type, content_id, level_tag, mode, correct, occurred_at)
+       VALUES (?, 'owner', 'jlpt-ja', 'quiz_answered', 'vocab_mc', ?, 'N2', 'vocab_mc', 0, unixepoch())`,
+    ).bind(`n2-static-wrong:${suffix}`, weakId).run();
+    const weakest = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'vocab_mc', level: 'N2', count: 1, strategy: 'weakest' }),
+    });
+    expect(weakest.status).toBe(200);
+    expect(await weakest.json()).toMatchObject({ data: { questions: [{ item_id: weakId }] } });
+  });
+
+  it('serves reviewed N1 static questions for all four modes without leaking answers or crossing levels', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const releaseId = `release-n1-static-${suffix}`;
+    const version = `n1-static-${suffix}`;
+    const modes = ['vocab_mc', 'grammar_fill', 'kanji_reading', 'listening'] as const;
+    await db.prepare(
+      `INSERT INTO content_releases
+         (id, learning_track, content_version, release_state, manifest_sha256, parser_version)
+       VALUES (?, 'jlpt-ja', ?, 'approved', ?, 'test-validator')`,
+    ).bind(releaseId, version, 'd'.repeat(64)).run();
+    await db.prepare(
+      `INSERT INTO content_release_quality_requirements
+         (release_id, content_type, expected_audit_count, validator_version)
+       VALUES (?, 'jlpt-quiz', 12, 'test-validator')`,
+    ).bind(releaseId).run();
+
+    const correctById = new Map<string, string>();
+    for (const mode of modes) {
+      for (let index = 0; index < 3; index++) {
+        const id = `n1-static-${suffix}-${mode}-${index}`;
+        const answerIndex = index;
+        const localizedChoices = Array.from({ length: 4 }, (_, choiceIndex) => ({
+          ko: `${choiceIndex === answerIndex ? '정답' : '오답'}-${suffix}-${mode}-${index}-${choiceIndex}`,
+          ja: `${choiceIndex === answerIndex ? '正解' : '誤答'}-${suffix}-${mode}-${index}-${choiceIndex}`,
+          en: `${choiceIndex === answerIndex ? 'correct' : 'wrong'}-${suffix}-${mode}-${index}-${choiceIndex}`,
+        }));
+        const responseLanguage = mode === 'vocab_mc' || mode === 'listening' ? 'ko' : 'ja';
+        correctById.set(id, localizedChoices[answerIndex]![responseLanguage]);
+        const auditId = `audit-${id}`;
+        await db.prepare(
+          `INSERT INTO content_quality_audits
+             (id, learning_track, content_type, content_id, content_version, evidence_sha256,
+              validator_version, automated_status, author_review_status, adversarial_review_status,
+              author_reviewer, adversarial_reviewer, release_state, checked_at)
+           VALUES (?, 'jlpt-ja', 'jlpt-quiz', ?, ?, ?, 'test-validator', 'passed',
+                   'signed', 'signed', 'reviewer-a', 'reviewer-b', 'approved', '2026-08-23')`,
+        ).bind(auditId, id, version, 'e'.repeat(64)).run();
+        await db.prepare(
+          'INSERT INTO content_release_quality_audit_links (release_id, audit_id) VALUES (?, ?)',
+        ).bind(releaseId, auditId).run();
+        await db.prepare(
+          `INSERT INTO jlpt_practice_questions
+             (id, level, mode, skill, difficulty, prompt_ko, prompt_ja, prompt_en,
+              choices_json, answer_index, explanation_ko, explanation_ja, explanation_en,
+              audio_script_ja, source_code, source_evidence_sha256, bank_version, is_published)
+           VALUES (?, 'N1', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'TEST-N1-STATIC', ?, ?, 1)`,
+        ).bind(
+          id,
+          mode,
+          `test-${mode}`,
+          index + 1,
+          `한국어 ${mode} 질문 ${index}`,
+          `日本語 ${mode} 質問 ${index}`,
+          `English ${mode} prompt ${index}`,
+          JSON.stringify(localizedChoices),
+          answerIndex,
+          `한국어 ${mode} 해설 ${index}`,
+          `日本語 ${mode} 解説 ${index}`,
+          `English ${mode} explanation ${index}`,
+          mode === 'listening' ? `これはN1聴解の自作台本${index}です。` : null,
+          'f'.repeat(64),
+          version,
+        ).run();
+      }
+    }
+
+    for (const mode of modes) {
+      const response = await fetch('/api/v1/quiz/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, level: 'N1', count: 3 }),
+      });
+      expect(response.status, `${mode} status`).toBe(200);
+      const body = await response.json<{
+        data: { level: string; questions: Array<{ item_id: string; choices: string[]; answer?: string; script_ja?: string }> };
+      }>();
+      expect(body.data.level).toBe('N1');
+      expect(body.data.questions).toHaveLength(3);
+      expect(body.data.questions.every((question) => question.item_id.startsWith(`n1-static-${suffix}-${mode}-`))).toBe(true);
+      expect(body.data.questions.every((question) => !('answer' in question))).toBe(true);
+      const positions = body.data.questions.map((question) => question.choices.indexOf(correctById.get(question.item_id)!));
+      expect(positions.every((position) => position >= 0)).toBe(true);
+      expect(new Set(positions)).toHaveLength(3);
+      if (mode === 'listening') {
+        expect(body.data.questions.every((question) => question.script_ja?.includes('N1聴解'))).toBe(true);
+      }
+    }
+
+    const weakId = `n1-static-${suffix}-grammar_fill-1`;
+    await db.prepare(
+      `INSERT INTO learning_activity_events
+         (event_id, user_id, learning_track, event_type, content_type, content_id, level_tag, mode, correct, occurred_at)
+       VALUES (?, 'owner', 'jlpt-ja', 'quiz_answered', 'grammar_fill', ?, 'N1', 'grammar_fill', 0, unixepoch())`,
+    ).bind(`n1-static-wrong:${suffix}`, weakId).run();
+    const weakest = await fetch('/api/v1/quiz/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'grammar_fill', level: 'N1', count: 1, strategy: 'weakest' }),
+    });
+    expect(weakest.status).toBe(200);
+    expect(await weakest.json()).toMatchObject({ data: { level: 'N1', questions: [{ item_id: weakId }] } });
   });
 });
 

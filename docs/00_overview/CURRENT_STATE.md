@@ -2,7 +2,7 @@
 
 기준일: 2026-08-23 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
-> 2026-08-23 TOPIK Google 한국어 음성의 첫 클릭 실패를 Production에서 재현했습니다. 비동기 Google voice 준비, 취소, 실제 종료 기반 telemetry를 수정하고 로컬 전수 회귀, Pages preview, Production 배포와 사후 검증을 완료했습니다. 원인·운영 집계·검증 범위는 [TOPIK Google 한국어 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 따릅니다.
+> 2026-08-23 N2/N1 문제은행과 TOPIK owner Batch 6은 구현·독립 리뷰·로컬·Preview 검증까지 통과했습니다. 실제 Chrome 재검증에서는 `speechSynthesis=false`, Google 한국어·일본어 voice가 각각 0개였으므로 Production 배포는 차단했습니다. 기존 Production D1·Worker·Pages는 유지됩니다.
 
 ## 상태 요약
 
@@ -15,6 +15,7 @@
 | Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
+| 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
 ## Production 콘텐츠
 
@@ -64,11 +65,25 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 이후 콘텐츠도 fresh schema나 review test만으로 공개하지 않으며 release-quality link, G0–G4, preview, 명시적 production 승인을 요구합니다.
 
+## 2026-08-23 다음 증량 Preview
+
+- `jlpt-n2-practice-v1-2026-08-23`: 60문항, quality link 60, Preview published.
+- `jlpt-n1-practice-v1-2026-08-23`: 60문항, quality link 60, Preview published.
+- `topik-owner-batch6-2026-08-23`: 3–6급 40항목, quality link 40, Preview published.
+- N2/N1은 4개 모드×15, 모드별 난이도 1–5×3, 전체 정답 위치 `15/15/15/15`입니다.
+- TOPIK Batch 6은 급수별 10, 5영역×2이며 선택형 정답 위치는 급수별 `2/2/2/2`입니다. listening 8개만 `google-browser` binding을 가집니다.
+- Preview 기준 TOPIK owner는 1–6급 각각 30개, 급수·영역별 6개입니다.
+- Preview의 release-quality link `60/60/40`, G0–G4 `5/5/5`, release job `6/6/6`, FK 0, idempotent reseed를 확인했습니다.
+- 실제 Batch 6 item으로 `완료 → progress → FSRS card → review log → activity event`를 원격 Preview에서 대조했습니다.
+- Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`; Pages는 UI 변경이 없어 재배포하지 않았습니다.
+
+상세 증적은 [2026-08-23 다음 콘텐츠 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.
+
 ## Google-only 음성 정책
 
 발음은 Google 브라우저 음성만 사용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
 
-2026-08-23 수정본은 Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다. Production 최근 30일 집계는 TOPIK `played 0 / unavailable 13 / error 0`이므로, 2026-08-19의 fixture 기반 통과 기록만으로 실제 재생 성공을 주장하지 않습니다.
+2026-08-23 수정본은 Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다. Production 최근 30일 집계는 TOPIK `played 0 / unavailable 13 / error 0`입니다. 이번 실제 Chrome 재검증에서도 `speechSynthesis=false`, 한국어·일본어 Google voice 0개였으므로 fixture 기반 통과를 실제 재생 성공으로 주장하지 않습니다.
 
 수정본은 Production Pages `1c3bba90-8990-472b-8bf2-12a08759597f`에 반영했습니다. 자동화는 배포 bundle과 음성 lifecycle을 검증하지만 물리 스피커의 가청 출력을 증명하지 않으므로, 실제 `played` 운영 이벤트 관찰은 별도 후속 항목입니다.
 
@@ -132,6 +147,21 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - Production 직전 음성 단위 `10/10`, 영향 기능 E2E `44/2/0`, typecheck, OpenAPI, build, fresh D1 통과
 - 배포 후 canonical smoke 5회, remote DB/FK, Worker `7/7`, auth proxy, R2 pronunciation 0 통과
 
+### 2026-08-23 다음 콘텐츠 증량 후보
+
+- source final draft SHA `e95d4a7c814a850c770108183328904c85e4ea0bd4588a851ab97e7a5c33c070`
+- 서로 결과를 공유하지 않은 Reviewer A/B가 최종 160개 전부 승인
+- 레거시 정리 후 로컬 CI: ops 8, DB 112, web 88, API 131, fresh D1, content contract/control plane 통과
+- Preview D1/Worker 반영과 원격 품질·거래·Chromium/WebKit 각 14개 E2E 통과
+- 실제 Chrome Google 음성 gate 실패로 Production seed와 Worker 배포를 실행하지 않음
+
 ## 다음 단계
 
-[TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)의 음성 복구·preview·Production 반영은 완료했습니다. 이제 [NEXT_DEVELOPMENT_PLAN_2026-08-19.md](NEXT_DEVELOPMENT_PLAN_2026-08-19.md)의 실제 `played`, 7일 데이터 바인딩, 30일 학습 지표 관찰 순서를 따릅니다. 다음 release도 어느 gate에서든 실패하면 publication을 중단하고 draft를 유지합니다.
+다음 실행은 Google 한국어·일본어 voice가 실제 Chrome에서 준비되는 환경을 복구하고 두 언어 각각 최소 1건의 `played`를 확인하는 것입니다. 그 전에는 이번 증량을 Production에 반영하지 않습니다. 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+
+## 2026-08-23 저장소 정리
+
+- 현재 문서로 대체된 2026-07-29~08-19 이관 안내·완료 실행계획 7개와 잘못 남아 있던 루트 Figma attribution 파일을 제거했습니다.
+- TOPIK practice v2와 owner curriculum에 대체된 TOPIK I Preview 후보 전용 문서·JSON·seed·verifier·test를 제거했습니다.
+- 호출자가 없던 legacy R2 audio prefetch no-op과 그 전용 테스트를 제거했습니다. learner API의 `/api/v1/audio/*` 및 관리자 음성 생성 `410 Gone` 차단은 유지합니다.
+- 로컬 임시 `.m4a` 발음 파일과 Playwright 생성 보고서는 저장소 밖 휴지통으로 이동했습니다. source-of-truth 테스트와 release evidence는 보존했습니다.

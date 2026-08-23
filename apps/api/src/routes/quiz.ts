@@ -83,8 +83,9 @@ quiz.post('/quiz/generate', async (c) => {
     answerPositionOrdinal += 1;
     return choices;
   };
-  const ordering = (tableAlias: string): { sql: string; bindings: unknown[] } => {
-    if (strategy === 'random') return { sql: 'ORDER BY RANDOM() LIMIT ?', bindings: [count * 4] };
+  const ordering = (tableAlias: string, requestedCount: number): { sql: string; bindings: unknown[] } => {
+    const poolSize = Math.max(requestedCount * 4, requestedCount + 3);
+    if (strategy === 'random') return { sql: 'ORDER BY RANDOM() LIMIT ?', bindings: [poolSize] };
     return {
       sql: `ORDER BY (
         SELECT count(*) FROM learning_activity_events activity
@@ -96,13 +97,31 @@ quiz.post('/quiz/generate', async (c) => {
           AND activity.correct = 0
           AND activity.occurred_at >= unixepoch() - 2592000
       ) DESC, RANDOM() LIMIT ?`,
-      bindings: [userId, mode, count * 4],
+      bindings: [userId, mode, poolSize],
     };
   };
 
   try {
-    if (strategy === 'weakest' && level === 'N3' && (mode === 'kanji_reading' || mode === 'listening')) {
+    const staticBankEligible = (
+      level === 'N2'
+      || level === 'N1'
+      || (strategy === 'weakest' && level === 'N3' && (mode === 'kanji_reading' || mode === 'listening'))
+    );
+    if (staticBankEligible) {
       type LocalizedChoice = { ko: string; ja: string; en: string };
+      const staticLimit = level === 'N2' || level === 'N1' ? Math.min(count, 15) : count;
+      const staticOrder = strategy === 'weakest'
+        ? `ORDER BY (
+            SELECT count(*) FROM learning_activity_events activity
+             WHERE activity.user_id = ?
+               AND activity.learning_track = 'jlpt-ja'
+               AND activity.event_type = 'quiz_answered'
+               AND activity.content_type = ?
+               AND activity.content_id = bank.id
+               AND activity.correct = 0
+               AND activity.occurred_at >= unixepoch() - 2592000
+          ) DESC, RANDOM()`
+        : 'ORDER BY RANDOM()';
       const staticRows = await loadRows<{
         id: string;
         prompt_ko: string;
@@ -119,18 +138,11 @@ quiz.post('/quiz/generate', async (c) => {
             AND bank.level = ?
             AND bank.mode = ?
             AND bank.is_published = 1
-          ORDER BY (
-            SELECT count(*) FROM learning_activity_events activity
-             WHERE activity.user_id = ?
-               AND activity.learning_track = 'jlpt-ja'
-               AND activity.event_type = 'quiz_answered'
-               AND activity.content_type = ?
-               AND activity.content_id = bank.id
-               AND activity.correct = 0
-               AND activity.occurred_at >= unixepoch() - 2592000
-          ) DESC, RANDOM()
+          ${staticOrder}
           LIMIT ?`,
-        [level, mode, userId, mode, count],
+        strategy === 'weakest'
+          ? [level, mode, userId, mode, staticLimit]
+          : [level, mode, staticLimit],
       );
       const mapped = staticRows.flatMap((row): Question[] => {
         let localized: LocalizedChoice[];
@@ -139,25 +151,29 @@ quiz.post('/quiz/generate', async (c) => {
         } catch {
           return [];
         }
-        const language = mode === 'kanji_reading' ? 'ja' : 'ko';
+        const language = mode === 'vocab_mc' || mode === 'listening' ? 'ko' : 'ja';
         const choices = localized.map((choice) => choice?.[language]?.trim()).filter((choice): choice is string => Boolean(choice));
         const answer = choices[row.answer_index];
         if (choices.length !== 4 || new Set(choices).size !== 4 || !answer) return [];
         return [{
           id: `q_${row.id}`,
           type: mode,
-          prompt: mode === 'kanji_reading' ? row.prompt_ja : row.prompt_ko,
-          choices,
+          prompt: mode === 'listening' ? row.prompt_ko : row.prompt_ja,
+          choices: nextChoices(answer, choices.filter((choice) => choice !== answer)),
           answer,
           item_id: row.id,
           ...(mode === 'listening' && row.audio_script_ja ? { script_ja: row.audio_script_ja } : {}),
         }];
       });
-      if (mapped.length === count) questions.push(...mapped);
+      if (staticRows.length > 0 && mapped.length !== staticLimit) {
+        return badRequest(c, `${level} 레벨 ${mode} 검수 문제은행 데이터가 부족합니다`);
+      }
+      questions.push(...mapped);
     }
 
-    if (questions.length === 0 && mode === 'vocab_mc') {
-      const order = ordering('vocab');
+    const remaining = count - questions.length;
+    if (remaining > 0 && mode === 'vocab_mc') {
+      const order = ordering('vocab', remaining);
       const pool = await loadRows<{ id: number; word: string; meaning_ko: string }>(
         db,
         `SELECT id, ja AS word, ko AS meaning_ko FROM vocab
@@ -167,7 +183,7 @@ quiz.post('/quiz/generate', async (c) => {
          ${order.sql}`,
         [level, ...order.bindings],
       );
-      const answers = pool.slice(0, count);
+      const answers = pool.slice(0, remaining);
 
       for (const ans of answers) {
         const distractorCandidates = pool
@@ -183,8 +199,8 @@ quiz.post('/quiz/generate', async (c) => {
           item_id: ans.id,
         });
       }
-    } else if (questions.length === 0 && mode === 'kanji_reading') {
-      const order = ordering('kanji');
+    } else if (remaining > 0 && mode === 'kanji_reading') {
+      const order = ordering('kanji', remaining);
       const pool = await loadRows<{ id: number; kanji: string; primary_reading: string }>(
         db,
         `SELECT id, char AS kanji, COALESCE(on_yomi, kun_yomi, '') AS primary_reading FROM kanji
@@ -193,7 +209,7 @@ quiz.post('/quiz/generate', async (c) => {
          ${order.sql}`,
         [level, ...order.bindings],
       );
-      const answers = pool.slice(0, count);
+      const answers = pool.slice(0, remaining);
 
       for (const ans of answers) {
         const distractorCandidates = pool
@@ -209,8 +225,8 @@ quiz.post('/quiz/generate', async (c) => {
           item_id: ans.id,
         });
       }
-    } else if (questions.length === 0 && mode === 'grammar_fill') {
-      const order = ordering('grammar');
+    } else if (remaining > 0 && mode === 'grammar_fill') {
+      const order = ordering('grammar', remaining);
       const rawPool = await loadRows<{ id: number; pattern: string; examples: string }>(
         db,
         `SELECT id, pattern, examples FROM grammar
@@ -224,7 +240,7 @@ quiz.post('/quiz/generate', async (c) => {
       const pool = rawPool
         .map((row) => ({ ...row, example_ja: firstExampleJa(row.examples) }))
         .filter((row): row is { id: number; pattern: string; examples: string; example_ja: string } => Boolean(row.example_ja));
-      const answers = pool.slice(0, count);
+      const answers = pool.slice(0, remaining);
 
       for (const ans of answers) {
         const prompt = ans.example_ja.replace(ans.pattern, '＿＿＿');
@@ -241,8 +257,8 @@ quiz.post('/quiz/generate', async (c) => {
           item_id: ans.id,
         });
       }
-    } else if (questions.length === 0 && mode === 'listening') {
-      const order = ordering('sentences');
+    } else if (remaining > 0 && mode === 'listening') {
+      const order = ordering('sentences', remaining);
       const pool = await loadRows<{ id: number; sentence_ja: string; sentence_ko: string; level: string }>(
         db,
         `SELECT id, ja AS sentence_ja, ko AS sentence_ko, level
@@ -253,7 +269,7 @@ quiz.post('/quiz/generate', async (c) => {
          ${order.sql}`,
         [level, ...order.bindings],
       );
-      const answers = pool.slice(0, count);
+      const answers = pool.slice(0, remaining);
 
       for (const ans of answers) {
         const distractorCandidates = pool
@@ -311,7 +327,10 @@ quiz.post('/quiz/generate', async (c) => {
   }
 
   // 클라이언트에는 정답을 숨기고 반환
-  const clientQuestions = questions.map(({ answer: _a, ...q }) => q);
+  // `script_ko` on a canonical listening item is the correct translation.
+  // Keep it in the stored attempt for post-submit use, but never expose it in
+  // the generation response alongside the still-unanswered choices.
+  const clientQuestions = questions.map(({ answer: _answer, script_ko: _translation, ...question }) => question);
 
   return ok(c, { quiz_id: quizId, mode, level, questions: clientQuestions });
 });

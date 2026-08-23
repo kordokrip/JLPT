@@ -118,14 +118,22 @@ test.describe('퀴즈 기능 smoke', () => {
   test('일반 퀴즈는 선택지 풀이 후 제출하고 결과 화면으로 이동한다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.goto('/quiz/vocab_mc');
+      const generatedResponse = page.waitForResponse((response) =>
+        response.url().endsWith('/api/v1/quiz/generate') && response.request().method() === 'POST');
       await page.getByRole('button', { name: /시작하기|Start|開始/ }).click();
+      const generatedBody = await (await generatedResponse).json();
+      const questionIds = generatedBody.data.questions.map((question: { id: string }) => question.id);
+      expect(new Set(questionIds).size, 'generated question IDs are unique').toBe(questionIds.length);
 
       for (let i = 0; i < 5; i += 1) {
         await expect(page.getByRole('radiogroup')).toBeVisible({ timeout: 20_000 });
-        await page.getByRole('radio').first().click();
+        const firstChoice = page.getByRole('radio').first();
+        await firstChoice.click();
+        await expect(firstChoice).toHaveAttribute('aria-checked', 'true');
 
         const submit = page.getByRole('button', { name: /제출|Submit|提出/ });
         if (await submit.isVisible()) {
+          await expect(submit).toBeEnabled();
           await submit.click();
           break;
         }

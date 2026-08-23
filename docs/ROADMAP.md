@@ -1,6 +1,6 @@
 # 학습 콘텐츠·플랫폼 로드맵
 
-기준일: 2026-08-19 KST. 현재 production 완료 상태와 이후 관찰 순서를 구분합니다.
+기준일: 2026-08-23 KST. 현재 Production 기준선, Preview 완료 후보, 이후 관찰 순서를 구분합니다.
 
 ## Production 완료 기준선
 
@@ -29,15 +29,27 @@
 
 배포 후 remote DB/TOPIK verifier, question quality 332개·실패 0건, R2 pronunciation 참조 0건, Chromium/WebKit production E2E가 통과했습니다.
 
+## 2026-08-23 Preview 완료 후보
+
+- N2 `jlpt-n2-practice-v1` 60문항과 N1 `jlpt-n1-practice-v1` 60문항 구현 완료
+- TOPIK owner Batch 6: 3–6급 각 10개, 총 40항목 구현 완료
+- 두 독립 reviewer 160/160 승인, validator 통과, Preview quality link `60/60/40`
+- Preview 기준 TOPIK owner 전 급수 30개·급수/영역별 6개
+- Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`, 원격 smoke 21/21, Chromium/WebKit 각 14/14
+- 실제 Chrome `speechSynthesis=false`, Google 한국어·일본어 voice 0개로 Production 차단
+
+이번 첫 증량은 확정 정책에 따라 `50/10/5` 미달과 무관하게 품질 gate로 준비했습니다. 그러나 실제 Chrome Google 음성 gate는 별도 필수 조건이므로 Production은 아직 기존 기준선을 유지합니다.
+
 ## 다음 실행 순서
 
 1. **7일 안정성 관찰** — activity accepted/duplicate, API error, speech outcome, published link 수를 확인합니다.
 2. **데이터 바인딩 표본 확인** — N3 정답→activity, TOPIK complete→progress/card/activity, review→FSRS/activity를 원격 데이터에서 대조합니다.
 3. **브라우저 회귀 유지** — Chromium/WebKit에서 strict-level weakest, 다음 행동, Google speech, `/api/v1/audio/` 0건을 재확인합니다.
-4. **사용량 기반 다음 결정** — N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건 이후 확장 여부를 판단합니다. 30일 내 미달이면 콘텐츠보다 진입 UX를 먼저 점검합니다.
-5. **다음 증량** — 사용 지표를 충족한 뒤에만 N2 Batch 6, N1 Batch 5, TOPIK 급수별 증량의 우선순위를 정합니다.
+4. **실제 Chrome 음성 gate** — Google 한국어·일본어 voice와 각 1건의 `played`를 확인합니다. 실패 시 Production 배포를 계속 차단합니다.
+5. **조건부 Production 반영** — 음성 gate 통과 뒤 backup/restore drill, production-predeploy G4, D1 seed, 호환 Worker, postdeploy verifier를 수행합니다. UI 변경이 없으므로 Pages는 유지합니다.
+6. **D+1/D+7/D+30 관찰** — N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건을 재집계합니다. D+30 미달이면 Batch 7을 중단하고 진입 UX를 먼저 개선합니다.
 
-상세 명령, 중단 조건, 단계별 실행 프롬프트는 [2026-08-19 다음 개발 계획](00_overview/NEXT_DEVELOPMENT_PLAN_2026-08-19.md)에 있습니다.
+상세 증적, 중단 조건과 재개 순서는 [2026-08-23 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.
 
 ## 변하지 않는 완료 기준
 
