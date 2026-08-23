@@ -54,27 +54,28 @@ test.describe("반응형 UI 안전성", () => {
     test(`${device.name}: 주요 화면이 viewport를 넘지 않는다`, async ({
       page,
     }) => {
+      // This one test opens and validates nine independent routes. WebKit can
+      // legitimately exceed Playwright's 30 s per-test default even when each
+      // navigation succeeds, so budget the aggregate operation explicitly.
+      test.setTimeout(120_000);
+      await page.setViewportSize({
+        width: device.width,
+        height: device.height,
+      });
       await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
         await test.step(`${device.name} ${route}`, async () => {
-          const routePage = await page.context().newPage();
-          await routePage.setViewportSize({
-            width: device.width,
-            height: device.height,
-          });
-
-          try {
-            await waitForStableLayout(routePage, route);
-            await expect
-              .poll(() => routePage.evaluate(expectNoHorizontalOverflow), {
-                message: `${device.name} ${route} horizontal overflow`,
-                timeout: 10_000,
-              })
-              .toBe(true);
-          } finally {
-            await routePage.close();
-          }
+          // Reuse one page for the route matrix. Repeatedly creating and
+          // destroying WebKit pages caused allocator crashes and navigation
+          // stalls after several routes without adding isolation value.
+          await waitForStableLayout(page, route);
+          await expect
+            .poll(() => page.evaluate(expectNoHorizontalOverflow), {
+              message: `${device.name} ${route} horizontal overflow`,
+              timeout: 10_000,
+            })
+            .toBe(true);
         });
       }
     });

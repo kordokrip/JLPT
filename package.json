@@ -18,9 +18,9 @@
     "docs:check": "node scripts/check-markdown-links.mjs",
     "lint": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r lint",
     "verify": "pnpm typecheck && pnpm test && pnpm build",
-    "verify:ci": "pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh",
+    "verify:ci": "pnpm release:verify:audio-contract && pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh",
     "openapi:generate": "pnpm -F @nihongo-n3/api openapi:export && pnpm -F @nihongo-n3/web openapi:generate",
-    "openapi:check": "pnpm openapi:generate && git diff --exit-code -- apps/web/src/types/api.d.ts apps/web/src/types/admin-api.d.ts",
+    "openapi:check": "node scripts/check-openapi-generated.mjs",
     "dev:api": "pnpm -F @nihongo-n3/api dev",
     "dev:web": "pnpm -F @nihongo-n3/web dev",
     "db:seed": "pnpm -F @nihongo-n3/db seed:local",
@@ -29,7 +29,10 @@
     "ops:logpush": "node scripts/setup-logpush.mjs",
     "ops:alerts": "node scripts/setup-alerts.mjs",
     "ops:observe": "node scripts/post-deploy-observe.mjs",
-    "ops:verify-auth-proxy": "node scripts/verify-pages-auth-proxy.mjs"
+    "ops:verify-auth-proxy": "node scripts/verify-pages-auth-proxy.mjs",
+    "release:verify:audio-contract": "node scripts/verify-browser-audio-contract.mjs",
+    "release:verify:actual-audio": "node scripts/verify-actual-browser-audio-evidence.mjs",
+    "release:verify:audio-predeploy": "node scripts/verify-audio-production-predeploy.mjs"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

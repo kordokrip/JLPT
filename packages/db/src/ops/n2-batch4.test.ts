@@ -10,7 +10,7 @@ import {
   n2Batch4ContentRowsSql,
 } from '../seed/n2-batch4.js';
 
-test('N2 Batch 4 adds a self-authored digital-service and Google-only operations unit', () => {
+test('N2 Batch 4 adds a self-authored digital-service and browser-speech operations unit', () => {
   const plan = buildN2Batch4Plan();
   assert.deepEqual(plan.manifest.counts, {
     categories: 4, vocab: 24, grammar: 6, kanji: 9, sentences: 8,
@@ -18,7 +18,7 @@ test('N2 Batch 4 adds a self-authored digital-service and Google-only operations
   });
   const source = fs.readFileSync(N2_BATCH_4_PATH, 'utf8');
   assert.match(source, /공식 JLPT 문항.*포함하거나 변형하지 않습니다/u);
-  assert.match(source, /Google 일본어 음성이 있으면 즉시 재생한다/);
+  assert.match(source, /같은 언어의 일본어 브라우저 음성이 있으면 즉시 재생한다/);
   const sql = plan.statements.join('\n');
   assert.match(sql, new RegExp(N2_BATCH_4_SOURCE_ASSET_ID));
   assert.match(sql, /Google browser speech only/i);

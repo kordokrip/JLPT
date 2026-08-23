@@ -30,11 +30,13 @@ export default function QuizQuestionMC({
 }: Props) {
   const { t } = useTranslation();
   const [usingBrowserVoice, setUsingBrowserVoice] = useState(false);
+  const [audioFailed, setAudioFailed] = useState(false);
   const promptAudioText = audioText ?? (hasJapanese(prompt) ? prompt : undefined);
   const canPlayAudio = Boolean(promptAudioText);
 
   const handleAudio = () => {
     setUsingBrowserVoice(false);
+    setAudioFailed(false);
     audioPlayer
       .playPronunciation({
         text: promptAudioText,
@@ -43,6 +45,7 @@ export default function QuizQuestionMC({
       })
       .then((played) => {
         setUsingBrowserVoice(played);
+        setAudioFailed(!played);
         if (activityContext) {
           void recordLearningActivity({
             event_type: 'speech_attempted',
@@ -57,6 +60,7 @@ export default function QuizQuestionMC({
       })
       .catch(() => {
         setUsingBrowserVoice(false);
+        setAudioFailed(true);
         if (activityContext) {
           void recordLearningActivity({
             event_type: 'speech_attempted',
@@ -92,6 +96,11 @@ export default function QuizQuestionMC({
         {usingBrowserVoice && promptAudioText && (
           <p className="mb-3 text-[12px] text-[var(--muted-foreground)]" role="status">
             {t('quiz.browserSpeechPreferred')}
+          </p>
+        )}
+        {audioFailed && (
+          <p className="mb-3 text-[12px] text-[var(--destructive)]" role="alert">
+            {t('quiz.browserSpeechFallback')}
           </p>
         )}
         <p

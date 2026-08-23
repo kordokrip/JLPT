@@ -4,7 +4,7 @@
 
 ## 공통 단위 계약
 
-각 운영 batch는 자체 저작 원본, source asset, stable reference, 필수 학습 필드, audio text를 가진다. 듣기와 발음은 Google 음성만 사용하며 R2 activation이나 browser fallback을 사용하지 않는다.
+각 운영 batch는 자체 저작 원본, source asset, stable reference, 필수 학습 필드, audio text를 가진다. 듣기와 발음은 Google 브라우저 음성을 우선하고 같은 언어의 기기 음성으로 fallback하며, R2 activation/fallback은 사용하지 않는다.
 
 | 구성 | 현재 계약 |
 | --- | --- |
@@ -13,7 +13,7 @@
 | 학습 | 어휘·문법·문자/표기, 예문, 독해/듣기/쓰기, 확인·해설 |
 | 진행 | 계정별 완료 상태와 학습 시각 |
 | 복습 | FSRS card, due, rating, review log |
-| 오디오 | Google 음성만 사용; R2 binding·activation·fallback은 발음 경로에서 사용하지 않음 |
+| 오디오 | Google 우선 same-language browser speech; R2 binding·activation·fallback은 발음 경로에서 사용하지 않음 |
 
 ## JLPT 범위
 

@@ -10,7 +10,7 @@ import {
   n2Batch5ContentRowsSql,
 } from '../seed/n2-batch5.js';
 
-test('N2 Batch 5 adds self-authored public-service and opinion-coordination density with Google-only speech', () => {
+test('N2 Batch 5 adds self-authored public-service and opinion-coordination density with browser speech', () => {
   const plan = buildN2Batch5Plan();
   assert.deepEqual(plan.manifest.counts, {
     categories: 5, vocab: 24, grammar: 6, kanji: 10, sentences: 12,
@@ -18,7 +18,7 @@ test('N2 Batch 5 adds self-authored public-service and opinion-coordination dens
   });
   const source = fs.readFileSync(N2_BATCH_5_PATH, 'utf8');
   assert.match(source, /공식 JLPT 문항.*포함하거나 변형하지 않습니다/u);
-  assert.match(source, /Google 일본어 음성이 있을 때만 재생한다/u);
+  assert.match(source, /같은 언어의 일본어 브라우저 음성이 있을 때 재생한다/u);
   assert.match(source, /독해 3, 독해 문항 6/u);
   const sql = plan.statements.join('\n');
   assert.match(sql, new RegExp(N2_BATCH_5_SOURCE_ASSET_ID));

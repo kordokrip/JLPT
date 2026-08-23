@@ -71,15 +71,15 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 - `jlpt-n2-practice-v1-2026-08-23`: 60문항, quality link 60
 - `jlpt-n1-practice-v1-2026-08-23`: 60문항, quality link 60
 - `topik-owner-batch6-2026-08-23`: 3–6급 40항목, quality link 40
-- Preview에서는 세 release와 G0–G4, 실제 TOPIK 완료→progress→FSRS→activity transaction을 검증했습니다. 실제 Chrome Google 한·일 음성 gate 실패로 Production에는 반영하지 않았습니다.
+- Preview에서는 세 release와 G0–G4, 실제 TOPIK 완료→progress→FSRS→activity transaction을 검증했습니다. 음성 회귀 복구 릴리스가 Production에 반영되기 전까지 신규 콘텐츠도 Production에는 반영하지 않았습니다.
 
 ## 음성 불변 조건
 
-모든 발음은 Google 브라우저 음성만 사용합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`, web prefetch는 네트워크 없는 no-op이며 E2E는 `/api/v1/audio/` 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
+모든 발음은 Google 음성을 우선하고 같은 언어의 브라우저/기기 음성을 사용합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`, web prefetch는 네트워크 없는 no-op이며 E2E는 `/api/v1/audio/` 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
 
 ## 검증 상태와 다음 관찰
 
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 레거시 정리 후 2026-08-23 후보는 ops 8, DB 112, web 88, API 131과 fresh D1, Preview smoke 21/21, Chromium/WebKit Preview E2E 각 14/14를 통과했습니다. API route test는 event idempotency·track mismatch·strict-level weakest·N2/N1 정적/혼합 선택·정답 비노출을, DB test는 migration order·release link·160개 독립 review coverage·Google-only 계약을 고정합니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 레거시 정리 후 2026-08-23 후보는 DB 112, web 88과 fresh D1, Preview smoke 21/21, Chromium/WebKit Preview E2E 각 14/14를 통과했습니다. 음성 복구본은 Google 이름이 없는 동일 언어 voice fallback과 R2 요청 0건을 회귀 테스트로 고정합니다. 현재 격리 터미널의 API/fresh/E2E 재실행은 Miniflare listener `EPERM` 때문에 assertion 전에 중단됐으며 이를 기능 통과로 계산하지 않습니다.
 
 다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
 

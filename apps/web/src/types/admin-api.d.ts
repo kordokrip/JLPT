@@ -457,7 +457,7 @@ export interface paths {
         put?: never;
         /**
          * 폐기된 R2 발음 생성 경로
-         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
          */
         post: {
             parameters: {
@@ -514,7 +514,7 @@ export interface paths {
         put?: never;
         /**
          * 폐기된 R2 curriculum 발음 생성 경로
-         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
          */
         post: {
             parameters: {
@@ -569,7 +569,7 @@ export interface paths {
         };
         /**
          * 폐기된 서버 TTS provider 경로
-         * @description 발음은 브라우저의 Google 음성만 사용하며 서버 provider 탐색은 비활성이다.
+         * @description 발음은 Google 우선 동일 언어 브라우저 음성을 사용하며 서버 provider 탐색은 비활성이다.
          */
         get: {
             parameters: {
@@ -628,7 +628,7 @@ export interface paths {
         put?: never;
         /**
          * 폐기된 R2 QA 발음 생성 경로
-         * @description R2 발음 저장·생성은 정책상 비활성이다. 브라우저의 Google 음성만 사용한다.
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
          */
         post: {
             parameters: {

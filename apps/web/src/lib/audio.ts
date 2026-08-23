@@ -1,14 +1,14 @@
 /**
  * apps/web/src/lib/audio.ts
  *
- * Google browser speech playback helper.
- * - Google 브라우저 음성만 사용
+ * Browser speech playback helper.
+ * - 같은 언어의 Google voice를 우선하고 설치된 같은 언어 voice로 복구
  * - 재생 속도 0.75x / 1x / 1.25x
  * - R2 요청·저장·fallback은 사용하지 않음
  */
 
 import { getAudioPlaybackPolicy, type AudioSurface } from '@nihongo-n3/shared';
-import { isGoogleVoiceForLanguage, waitForGoogleBrowserVoice } from './google-browser-speech';
+import { isGoogleVoiceForLanguage, isVoiceForLanguage, waitForBrowserVoice } from './google-browser-speech';
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
@@ -76,15 +76,15 @@ class AudioPlayer {
     if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
   }
 
-  /** Google browser speech has no server object to prefetch. */
+  /** Browser speech has no server object to prefetch. */
   async prefetch(paths: string[]): Promise<void> {
-    // Kept as a no-op compatibility surface. Google browser speech is not an
+    // Kept as a no-op compatibility surface. Browser speech is not an
     // R2 object and must not be prefetched from /audio.
     void paths;
   }
 
   async warmVoices(language = 'ja'): Promise<void> {
-    await waitForGoogleBrowserVoice(language);
+    await waitForBrowserVoice(language);
   }
 
   async getJapaneseVoices(): Promise<JapaneseVoiceOption[]> {
@@ -153,26 +153,42 @@ class AudioPlayer {
       options.voiceURI ?? this._voiceURI,
       true,
     );
-    // Google voice only: do not fall through to another browser/provider.
-    if (!voice || !isGoogleJapaneseVoice(voice)) {
+    // Keep the old working behavior: prefer Google, then use an installed
+    // voice for the same language. Never read Japanese with another language.
+    if (voice && !isVoiceForLanguage(voice, language)) {
       options.onError?.();
       this._onEnd?.();
       return false;
     }
+    // Some browsers synthesize the requested utterance language even while
+    // getVoices() is empty. In that case, leave voice unset and let the browser
+    // resolve ja-JP/ko-KR instead of turning a playable utterance into silence.
     if (voice) utterance.voice = voice;
     return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const finish = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        if (result) options.onEnd?.();
+        else options.onError?.();
+        this._onEnd?.();
+        resolve(result);
+      };
       utterance.onstart = options.onStart ?? null;
-      utterance.onend = () => {
-        options.onEnd?.();
-        this._onEnd?.();
-        resolve(true);
-      };
-      utterance.onerror = () => {
-        options.onError?.();
-        this._onEnd?.();
-        resolve(false);
-      };
-      window.speechSynthesis.speak(utterance);
+      utterance.onend = () => finish(true);
+      utterance.onerror = () => finish(false);
+      const timeoutMs = Math.min(120_000, Math.max(15_000, text.length * 500));
+      const timeoutId = window.setTimeout(() => {
+        window.speechSynthesis.cancel();
+        finish(false);
+      }, timeoutMs);
+      try {
+        window.speechSynthesis.resume?.();
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        finish(false);
+      }
     });
   }
 
@@ -202,7 +218,7 @@ class AudioPlayer {
   /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
   async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<boolean> {
     // A legacy R2 path must never initiate a network request. A supplied
-    // transcript may be spoken only by a Google Japanese browser voice.
+    // transcript may be spoken only by a same-language browser voice.
     void path;
     return fallbackText ? this.speakText(fallbackText, { ...(options.rate !== undefined ? { rate: options.rate } : {}), preferGoogleVoice: true }) : false;
   }

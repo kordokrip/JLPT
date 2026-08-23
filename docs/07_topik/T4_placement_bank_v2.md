@@ -21,7 +21,7 @@
 1. 공식 기출 문항, 정답, 듣기 음원을 복제하지 않는다.
 2. 듣기 대본과 읽기 문항은 일상적인 초급 한국어 상황을 바탕으로 자체 저작한다.
 3. 공개 문제 DTO에는 정답과 해설을 포함하지 않는다. 제출 뒤에만 채점 결과를 반환한다.
-4. 이 placement v2 API는 `audio_script_ko`가 있는 listening question에 Google 음성 DTO를 반환하고, 재생 텍스트가 없으면 unavailable을 반환한다. R2 audio key와 browser fallback은 사용하지 않는다.
+4. 이 placement v2 API는 `audio_script_ko`가 있는 listening question에 호환용 Google 음성 DTO를 반환하고, 재생 텍스트가 없으면 unavailable을 반환한다. 클라이언트는 Google을 우선하고 같은 언어 기기 음성을 fallback하며 R2 audio key는 사용하지 않는다.
 5. 결과는 `starter`, `foundation`, `ready` 학습 밴드이며 공식 급수 판정이 아니다.
 
 ## 검증 계약

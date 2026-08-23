@@ -3,7 +3,7 @@
 
 이 문서는 개인 학습용 N2의 다섯 번째 unit 묶음입니다. 어휘 설명·예문·독해 지문·문제·보기·해설·청해 대본은 모두 새로 작성했으며, 공식 JLPT 문항·정답·지문·음원을 포함하거나 변형하지 않습니다.
 
-발음과 청해 대본은 재생 가능한 텍스트와 Google 일본어 음성이 있을 때만 재생한다. R2 발음 저장·activation·fallback은 사용하지 않으며, Google 일본어 음성을 찾을 수 없으면 텍스트로 학습한다.
+발음과 청해 대본은 재생 가능한 텍스트와 같은 언어의 일본어 브라우저 음성이 있을 때 재생한다. Google 음성을 우선하며 R2 발음 저장·activation·fallback은 사용하지 않는다.
 
 ## 카테고리 N2-AG. 공공 절차와 증명
 
@@ -134,4 +134,4 @@
 
 ## 독해와 청해 대본
 
-청해 대본은 `packages/db/src/seed/n2-batch5.ts`의 12개 sentence row로 seed한다. 독해 지문 3개와 각 2문항도 같은 builder에서 source checksum·stable reference·Google-only audio binding과 함께 seed한다. 이 문서와 해당 데이터는 하나의 자체 저작 Batch 5 원본으로 취급한다.
+청해 대본은 `packages/db/src/seed/n2-batch5.ts`의 12개 sentence row로 seed한다. 독해 지문 3개와 각 2문항도 같은 builder에서 source checksum·stable reference·Google 우선 browser-speech binding과 함께 seed한다. 이 문서와 해당 데이터는 하나의 자체 저작 Batch 5 원본으로 취급한다.

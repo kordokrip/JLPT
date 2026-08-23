@@ -17,7 +17,7 @@ export default function AudioQa() {
   const samples = audioQaSamples(language);
   const sample = samples[sampleIndex]!;
   const playing = language === 'ko' ? koreanAudio.playing : japanesePlaying;
-  const error = playbackError ?? (language === 'ko' && koreanAudio.error ? 'Google 한국어 음성을 사용할 수 없습니다. 텍스트로 확인하세요.' : null);
+  const error = playbackError ?? (language === 'ko' && koreanAudio.error ? '한국어 브라우저 음성을 사용할 수 없습니다. 기기 음성 설정을 확인하세요.' : null);
 
   const changeLanguage = (next: AudioQaLanguage) => {
     audioPlayer.stop();
@@ -30,7 +30,7 @@ export default function AudioQa() {
   const playSample = async () => {
     setPlaybackError(null);
     if (language === 'ko') {
-      if (!await koreanAudio.speakText(sample)) setPlaybackError('Google 한국어 음성을 사용할 수 없습니다. 텍스트로 확인하세요.');
+      if (!await koreanAudio.speakText(sample)) setPlaybackError('한국어 브라우저 음성을 사용할 수 없습니다. 기기 음성 설정을 확인하세요.');
       return;
     }
     const played = await audioPlayer.speakText(sample, {
@@ -40,16 +40,16 @@ export default function AudioQa() {
       onEnd: () => setJapanesePlaying(false),
       onError: () => setJapanesePlaying(false),
     });
-    if (!played) setPlaybackError('Google 일본어 음성을 사용할 수 없습니다. 텍스트로 확인하세요.');
+    if (!played) setPlaybackError('일본어 브라우저 음성을 사용할 수 없습니다. 기기 음성 설정을 확인하세요.');
   };
 
   return (
     <div className="mx-auto max-w-[760px] px-5 py-8 pb-24 sm:px-8">
       <header className="mb-8">
-        <p className="mb-2 font-pretendard text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--accent)]">Google voice check</p>
-        <h1 className="font-pretendard text-[32px] font-semibold leading-tight text-foreground">Google 발음 음성 확인</h1>
+        <p className="mb-2 font-pretendard text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--accent)]">Browser voice check</p>
+        <h1 className="font-pretendard text-[32px] font-semibold leading-tight text-foreground">브라우저 발음 음성 확인</h1>
         <p className="mt-3 max-w-[680px] font-pretendard text-[14px] leading-relaxed text-[var(--muted-foreground)]">
-          발음 재생은 브라우저의 Google 일본어·한국어 음성만 사용합니다. 서버/R2 오디오, 다른 음성 공급자, fallback은 사용하지 않습니다.
+          발음은 Google 음성을 우선하며, 없으면 기기에 설치된 같은 언어의 브라우저 음성으로 재생합니다. 서버/R2 오디오는 사용하지 않습니다.
         </p>
       </header>
 
@@ -70,7 +70,7 @@ export default function AudioQa() {
           </select>
         </div>
         <button type="button" disabled={playing} onClick={() => void playSample()} className="mt-6 min-h-11 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40">
-          {playing ? '재생 중' : 'Google 음성으로 재생'}
+          {playing ? '재생 중' : '브라우저 음성으로 재생'}
         </button>
       </section>
 

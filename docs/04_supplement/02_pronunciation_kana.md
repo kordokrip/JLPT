@@ -1,5 +1,5 @@
 # 발음·박(モーラ)·카나 학습 원본
-<!-- 운영 메타데이터(2026-08-09): 일반 JLPT 문자 표면은 Google 일본어 음성만 사용하며 R2 및 비-Google fallback은 금지한다. 재생 정책은 packages/shared/src/audio-policy.ts가 기준이다. -->
+<!-- 운영 메타데이터(2026-08-23): 일반 JLPT 문자 표면은 Google 일본어 음성을 우선하고 같은 언어의 기기 음성을 fallback으로 사용한다. R2 fallback은 금지하며 packages/shared/src/audio-policy.ts가 기준이다. -->
 
 ## PART A. 박(モーラ) 감각 — 일본어 리듬의 기본
 

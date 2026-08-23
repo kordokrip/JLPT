@@ -48,13 +48,13 @@ N2/N1은 모드별 난이도 1–5를 각 3문항으로 배치했고 급수 전�
 2. Preview smoke가 Google OAuth 비활성 설정에서도 302를 강제했습니다. `/auth/config.google_enabled=false`이면 `/google/start` 503을 정상 계약으로 검사하도록 수정했습니다. Google OAuth와 Google 브라우저 음성은 서로 다른 기능입니다.
 3. 퀴즈 E2E가 선택 상태 렌더링 전에 이동해 `4/5` 레이스를 만들었습니다. 생성된 question ID 유일성과 각 `aria-checked=true`를 기다리도록 강화했습니다.
 
-## Production 차단 사유
+## Production 대기 사유
 
-실제 Chrome의 기존 탭과 새 탭에서 모두 `speechSynthesis=false`, Google 한국어·일본어 voice 0개였습니다. 따라서 두 언어 각각 최소 1건의 실제 `played` 기록을 만들 수 없었습니다.
+이전 실제 Chrome 검사에서는 브라우저 제어 환경에 `speechSynthesis=false`가 표시됐습니다. 그러나 코드 이력을 재검토한 결과 직접 원인은 voice 제공 환경이 아니라 리팩터링에서 정상적인 같은 언어 기기 voice fallback을 제거한 회귀였습니다.
 
-문서·코드 정리 뒤 실제 로그인된 Chrome에서 Production TOPIK 학습 화면의 재생 버튼까지 다시 실행했지만 같은 환경 제약이 유지됐습니다. fixture나 합성 이벤트를 Production 승인 증거로 사용하지 않습니다.
+복구본은 `Google 우선 → 같은 언어 기기 음성` 선택을 되살리고 한국어·일본어 모두 Google 이름이 없는 voice로 회귀 테스트했습니다. fixture나 합성 이벤트는 lifecycle/R2 미사용 증거로만 사용하고 물리 가청 증거로 사용하지 않습니다.
 
-Production D1 backup/seed, Worker 배포, Pages 재배포는 실행하지 않았습니다. 기존 Production 릴리스를 유지합니다. Google voice 제공 환경이 복구된 뒤 실제 `onend → played` 두 언어를 확인하고 production-predeploy gate를 새로 생성해야 합니다. R2 발음과 `/api/v1/audio/` fallback은 금지합니다.
+Production D1 backup/seed, Worker 배포, Pages 재배포는 아직 실행하지 않았습니다. 먼저 음성 복구 Pages를 Preview와 Production에서 검증한 뒤 production-predeploy gate를 새로 생성합니다. R2 발음과 `/api/v1/audio/` fallback은 금지합니다.
 
 ## 저장소 최신화
 

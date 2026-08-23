@@ -11,7 +11,7 @@
  *
  * JSON 컬럼: SQLite text 저장, .$type<T>()로 타입 힌트.
  * FSRS-6:   stability / difficulty 필드가 srs_cards에 있음.
- * 발음:     브라우저 Google 음성만 사용하며 D1에는 텍스트 eligibility만 기록.
+ * 발음:     Google 우선 동일 언어 브라우저 음성을 사용하며 D1에는 텍스트 eligibility만 기록.
  */
 import {
   sqliteTable,

@@ -60,7 +60,7 @@ TOPIK Batch 5는 선택형 16개와 쓰기 4개입니다. listening 4개만 `aud
 
 ## 음성 감사
 
-발음은 Google 브라우저 음성만 사용합니다. R2 발음 asset/key, 생성, 저장, 재생, fallback은 허용하지 않습니다. 배포 후 production R2 pronunciation 참조는 0건입니다. production `0027`은 provider `google-browser`와 state `ready|unavailable`만 허용하고 legacy audio binding 신규 쓰기를 차단합니다.
+발음은 Google 브라우저 음성을 우선하고 같은 언어의 기기 음성으로 fallback합니다. R2 발음 asset/key, 생성, 저장, 재생, fallback은 허용하지 않습니다. 배포 후 production R2 pronunciation 참조는 0건입니다. production `0027`의 provider `google-browser`는 이 browser-speech 계약의 호환용 식별자이며 state `ready|unavailable`만 허용하고 legacy audio binding 신규 쓰기를 차단합니다.
 
 ## 재현 명령
 

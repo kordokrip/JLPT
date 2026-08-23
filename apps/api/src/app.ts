@@ -238,7 +238,7 @@ const openApiBase = {
     { name: 'Sentences', description: '예문' },
     { name: 'Homophones', description: '검수 완료 동음이의어 변별' },
     { name: 'Content', description: '검수 완료 학습 콘텐츠 (sysprog, sources)' },
-    { name: 'Audio', description: 'Google 브라우저 음성 정책; R2 발음 경로는 폐기됨' },
+    { name: 'Audio', description: 'Google 우선 동일 언어 브라우저 음성 정책; R2 발음 경로는 폐기됨' },
     { name: 'SRS', description: 'FSRS-6 간격반복학습' },
     { name: 'Logs', description: '학습 로그 및 퀴즈 기록' },
     { name: 'Activity', description: '개인정보를 제외한 학습 활동 및 집계' },

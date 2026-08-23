@@ -43,7 +43,7 @@
 
 ## 발음 정책
 
-발음은 브라우저의 Google 음성만 사용한다. R2는 발음 데이터의 수집·생성·저장·재생·fallback 대상이 아니며, v2 listening 행의 `audio_r2_key`는 항상 `NULL`이다. report/evidence 용도와 무관한 R2 버킷은 이 발음 정책의 삭제 대상이 아니다.
+발음은 Google 브라우저 음성을 우선하고 같은 언어의 기기 음성으로 fallback한다. R2는 발음 데이터의 수집·생성·저장·재생·fallback 대상이 아니며, v2 listening 행의 `audio_r2_key`는 항상 `NULL`이다. report/evidence 용도와 무관한 R2 버킷은 이 발음 정책의 삭제 대상이 아니다.
 
 ## 2026-08-17 production release 결과
 
@@ -57,7 +57,7 @@
 ## release gate 순서
 
 1. source intake, 자체 저작, 자동 validator, 서로 다른 두 reviewer artifact를 확인한다.
-2. full fresh D1, API/web test, Chromium·WebKit E2E, Google-only/R2=0 검사를 통과한다.
+2. full fresh D1, API/web test, Chromium·WebKit E2E, 동일 언어 browser-speech/R2=0 검사를 통과한다.
 3. preview D1 verifier를 통과한다.
 4. D1 backup과 restore drill, 이전 Worker/Pages version을 rollback plan에 기록한다.
 5. migration 0022~0023, canonical seed, TOPIK v2 seed를 원격에 적용한 뒤 remote verifier·API/Pages smoke를 통과한다.
@@ -68,5 +68,5 @@
 - N2/N1 정적 문제은행은 각 60문항, 전체 정답 위치 `15/15/15/15`, 모드별 난이도 1–5 각 3문항을 강제합니다.
 - TOPIK owner Batch 6은 3–6급 각 10개이며, 선택형 정답 위치는 급수별 `2/2/2/2`입니다.
 - 최종 160개는 서로 결과를 공유하지 않은 Reviewer A/B가 모두 승인했고 release-quality link `60/60/40`으로 Preview에 연결했습니다.
-- Preview 콘텐츠·FK·거래·Chromium/WebKit 검증은 통과했지만, 실제 Chrome에서 Google 한국어·일본어 voice가 0개라 Production은 차단했습니다.
+- Preview 콘텐츠·FK·거래·Chromium/WebKit 검증은 통과했습니다. Production 전에는 Google 우선 동일 언어 browser-speech 회귀와 R2 요청 0건을 다시 검사합니다.
 - 사용처가 없던 legacy R2 audio prefetch 테스트는 호환 모듈과 함께 제거했습니다. `/api/v1/audio/*` 410과 R2 reference 0 회귀 검사는 계속 필수입니다.

@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "build": "wrangler deploy --dry-run --config wrangler.toml --env=\"\"",
-    "deploy": "wrangler deploy --config wrangler.toml --env=\"\"",
-    "deploy:observability-receiver": "wrangler deploy --config wrangler.observability-receiver.toml",
+    "dev": "WRANGLER_WRITE_LOGS=0 wrangler dev",
+    "build": "WRANGLER_WRITE_LOGS=0 wrangler deploy --dry-run --config wrangler.toml --env=\"\"",
+    "deploy": "node ../../scripts/deploy-worker-with-release.mjs",
+    "deploy:preview": "node ../../scripts/deploy-worker-with-release.mjs --env=topik-preview",
+    "deploy:observability-receiver": "WRANGLER_WRITE_LOGS=0 wrangler deploy --config wrangler.observability-receiver.toml",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "openapi:export": "tsx scripts/export-openapi.ts"
+    "openapi:export": "node --import=tsx scripts/export-openapi.ts"
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.18.0",

@@ -1,9 +1,9 @@
 name: Local verification
 
+# Repository Actions are disabled. This file is retained only as an explicit
+# manual recovery recipe and must never trigger from push or pull requests.
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

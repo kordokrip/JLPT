@@ -7,6 +7,8 @@
 | 목적 | 문서 |
 | --- | --- |
 | 현재 구현, 데이터 모델, 운영 명령 | [현재 상태](00_overview/CURRENT_STATE.md) |
+| 현재 오류, 잘못된 판정, 강제 배포 차단 gate | [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md) |
+| GitHub 무료 원격 범위와 로컬 commit·release·rollback 원장 | [로컬 형상관리·릴리스 원장](00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md) |
 | 2026-08-23 TOPIK 음성 장애와 수정 검증 | [TOPIK Google 한국어 음성 장애 기록](00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md) |
 | 2026-08-23 N2/N1·TOPIK Batch 6 Preview 릴리스 | [다음 콘텐츠 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md) |
 | 콘텐츠 수와 원본-시드 대응 | [콘텐츠 감사](00_overview/CONTENT_AUDIT.md) |
@@ -31,4 +33,4 @@ pnpm -F @nihongo-n3/db verify:audio:provenance
 pnpm docs:check
 ~~~
 
-학습 발음은 Google 음성만 사용한다. R2는 발음 저장·재생·fallback에 사용하지 않으며, report/evidence 버킷과는 분리해서 관리한다.
+학습 발음은 같은 언어의 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용한다. R2는 발음 저장·재생·fallback에 사용하지 않으며 report/evidence 버킷과 분리한다.

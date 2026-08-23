@@ -33,7 +33,7 @@ GOOGLE_REDIRECT_URI = "https://nihongo-n3.pages.dev/api/v1/auth/google/callback"
 # Set AUTH_MODE = "cf-access" after both secrets are configured.
 # 주간 리포트 이메일 수신 주소 (MailChannels, 비어 있으면 발송 안 함)
 NOTIFY_EMAIL = ""
-# 발음은 클라이언트의 Google 브라우저 음성만 사용한다.
+# 발음은 클라이언트에서 Google 우선 동일 언어 브라우저 음성을 사용한다.
 FSRS_OPTIMIZER_URL = ""
 # AI learning assistance is fail-closed. This non-secret flag must remain false
 # until an operator completes the P5 privacy, budget, and evaluation gates.

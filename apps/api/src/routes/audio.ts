@@ -14,7 +14,7 @@ function r2AudioDisabled(): Response {
     type: 'https://nihongo-n3.example.com/errors/r2-audio-disabled',
     title: 'Gone',
     status: 410,
-    detail: 'R2 발음 저장소는 사용하지 않습니다. Google 음성만 사용할 수 있습니다.',
+    detail: 'R2 발음 저장소는 사용하지 않습니다. Google 우선 동일 언어 브라우저 음성을 사용합니다.',
   }, {
     status: 410,
     headers: { 'Cache-Control': 'no-store' },

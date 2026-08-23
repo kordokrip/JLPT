@@ -6,7 +6,7 @@ import {
   buildNextContentExpansionQualityReport,
 } from './next-content-expansion-quality.js';
 
-test('next expansion draft passes all structural and Google-only quality checks', () => {
+test('next expansion draft passes all structural and browser-speech/R2-free quality checks', () => {
   const report = buildNextContentExpansionQualityReport('2026-08-23T00:00:00.000Z');
   assert.equal(report.passed, true, report.errors.join('\n'));
   assert.deepEqual(report.counts, {

@@ -68,7 +68,7 @@ export function TopikOwnerAuthoredCurriculum({ initialGrade = 1 }: { initialGrad
     <section id="topik-owner-curriculum" className="mt-10 max-w-[960px] scroll-mt-24 border-t border-[var(--border)] pt-8" aria-labelledby="topik-owner-curriculum-title">
       <p className="text-sm font-bold text-[var(--accent)]">TOPIK 1–6</p>
       <h2 id="topik-owner-curriculum-title" className="mt-2 text-2xl font-black">자체 저작 학습 단위</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">기존 TOPIK I/II 문제은행과 별도인 학습용 단위입니다. 발음 텍스트가 있는 항목은 브라우저의 Google 한국어 음성으로만 재생하며, R2 오디오와 다른 음성 fallback은 사용하지 않습니다.</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted-foreground)]">기존 TOPIK I/II 문제은행과 별도인 학습용 단위입니다. 발음 텍스트는 Google 음성을 우선하고 같은 언어의 기기 음성으로 재생하며 R2 오디오는 사용하지 않습니다.</p>
 
       <div className="mt-5 flex flex-wrap gap-2" role="tablist" aria-label="TOPIK 목표 급">
         {GRADES.map((item) => (
@@ -125,7 +125,7 @@ export function TopikOwnerAuthoredCurriculum({ initialGrade = 1 }: { initialGrad
                   <p className="text-xs font-bold text-[var(--muted-foreground)]">{index + 1} · {item.item_type}</p>
                   <h4 className="mt-3 text-lg font-black leading-8">{localized(item, language)}</h4>
                   {item.audio?.kind === 'google' ? (
-                    <button type="button" onClick={() => void audio.play(item.audio!, { contentType: 'topik_owner_item', contentId: item.id, levelTag: String(item.target_grade), section: selectedUnit.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />Google 한국어 음성 재생</button>
+                    <button type="button" onClick={() => void audio.play(item.audio!, { contentType: 'topik_owner_item', contentId: item.id, levelTag: String(item.target_grade), section: selectedUnit.section })} className="mt-4 touch-target inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 font-bold text-white"><Volume2 aria-hidden="true" size={18} />한국어 음성 재생</button>
                   ) : item.audio?.kind === 'unavailable' ? (
                     <p role="status" className="mt-4 inline-flex items-center gap-2 text-sm text-[var(--muted-foreground)]"><Headphones aria-hidden="true" size={17} />{item.audio.reason === 'preparing' ? '오디오 준비 중' : '오디오를 제공하지 않습니다'}</p>
                   ) : null}

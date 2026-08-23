@@ -1,5 +1,5 @@
 /**
- * Local verifier for the Google-only pronunciation contract. It never invokes
+ * Local verifier for the Google-preferred browser-speech contract. It never invokes
  * a TTS provider or R2.
  */
 import { countSqlBatch, parseD1Target } from '../seed/d1-cli.js';

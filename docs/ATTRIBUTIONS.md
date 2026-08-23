@@ -23,7 +23,7 @@ TOPIK owner curriculum은 practice bank나 공개 content release와 분리된�
 
 ## 오디오
 
-발음은 Google 음성만 사용한다. 일반 JLPT·QA·TOPIK owner item은 R2 asset·fallback을 사용하지 않으며, `audio_text_ko`가 있으면 Google 음성으로 재생하고 없으면 unavailable로 처리한다.
+발음은 같은 언어의 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용한다. JLPT·QA·TOPIK owner item은 R2 asset·fallback을 사용하지 않으며, `audio_text_ko`가 있으면 브라우저 음성으로 재생하고 없으면 unavailable로 처리한다.
 
 발음용 R2 asset의 immutable key, license, input/source hash, output bytes hash, activation은 더 이상 생성·승인하지 않는다. 과거 자산의 provenance 기록은 감사 이력으로만 보존하며, 새 발음 asset 등록 기준으로 사용하지 않는다.
 

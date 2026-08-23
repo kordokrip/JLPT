@@ -25,7 +25,7 @@ const R2_AUDIO_GONE = {
   type: 'https://nihongo-n3.example.com/errors/r2-audio-disabled',
   title: 'Gone',
   status: 410,
-  detail: 'R2 발음 생성·저장·재생은 정책상 비활성입니다. Google 브라우저 음성만 사용합니다.',
+  detail: 'R2 발음 생성·저장·재생은 정책상 비활성입니다. Google 우선 동일 언어 브라우저 음성을 사용합니다.',
 } as const;
 
 // ── GET /dashboard ──────────────────────────────────────────

@@ -2,7 +2,11 @@
 
 기준일: 2026-08-23 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
-> 2026-08-23 N2/N1 문제은행과 TOPIK owner Batch 6은 구현·독립 리뷰·로컬·Preview 검증까지 통과했습니다. 실제 Chrome 재검증에서는 `speechSynthesis=false`, Google 한국어·일본어 voice가 각각 0개였으므로 Production 배포는 차단했습니다. 기존 Production D1·Worker·Pages는 유지됩니다.
+> 2026-08-23 N2/N1 문제은행과 TOPIK owner Batch 6은 구현·독립 리뷰·로컬·Preview 검증까지 통과했습니다. 음성 장애의 직접 원인은 같은 언어 기기 voice fallback을 제거한 회귀였으며, `Google 우선 → 같은 언어 기기 음성` 계약으로 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
+
+현재 오류와 배포 차단 조건의 단일 원장은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)입니다. 미실행·인프라 실패·mock 결과는 통과로 간주하지 않습니다.
+
+GitHub는 공개 원격 commit·branch·tag 보관에만 사용하며 저장소 Actions는 비활성화했습니다. 자동 CI/CD 대신 로컬 검증 종료 코드와 Cloudflare deployment ID를 [로컬 형상관리·릴리스 원장](LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)에 기록합니다.
 
 ## 상태 요약
 
@@ -80,22 +84,22 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 상세 증적은 [2026-08-23 다음 콘텐츠 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.
 
-## Google-only 음성 정책
+## 브라우저 음성 정책
 
-발음은 Google 브라우저 음성만 사용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
+발음은 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용합니다. 한국어에는 `ko-*`, 일본어에는 `ja-*`만 허용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
 
-2026-08-23 수정본은 Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다. Production 최근 30일 집계는 TOPIK `played 0 / unavailable 13 / error 0`입니다. 이번 실제 Chrome 재검증에서도 `speechSynthesis=false`, 한국어·일본어 Google voice 0개였으므로 fixture 기반 통과를 실제 재생 성공으로 주장하지 않습니다.
+`0027`의 provider `google-browser`와 API의 `kind: "google"`은 데이터/클라이언트 호환용 식별자입니다. 런타임에서 Google 이름을 강제한다는 뜻이 아닙니다. Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다.
 
-수정본은 Production Pages `1c3bba90-8990-472b-8bf2-12a08759597f`에 반영했습니다. 자동화는 배포 bundle과 음성 lifecycle을 검증하지만 물리 스피커의 가청 출력을 증명하지 않으므로, 실제 `played` 운영 이벤트 관찰은 별도 후속 항목입니다.
+Pages `1c3bba90-8990-472b-8bf2-12a08759597f` 배포 당시에는 동일 언어 fallback이 없고 실제 가청 확인도 없었습니다. 그 배포를 검증 완료라고 보고한 판단은 잘못이며, 복구 릴리스는 mock 자동화·실제 Chrome callback·사용자 가청 결과를 구분해 기록합니다.
 
 ## 배포 후 검증 기록 — 2026-08-19
 
 - web unit: 34파일, 86테스트 통과
 - web production build와 typecheck 통과
 - focused Playwright: `learning-activity.spec.ts`, `quiz-modes.spec.ts`, `topik-owner-curriculum.spec.ts`를 Chromium/WebKit에서 24/24 통과
-- 브라우저 검증에 Google 일본어·한국어 speech와 `/api/v1/audio/` 요청 0건 포함
+- 브라우저 검증에 Google 우선 동일 언어 일본어·한국어 speech와 `/api/v1/audio/` 요청 0건 포함
 - API route tests에 event idempotency/track guard/summary/strict-level weakest 포함
-- DB tests에 migration order, release link gate, N3/TOPIK 140개 review coverage, Google-only speech contract 포함
+- DB tests에 migration order, release link gate, N3/TOPIK 140개 review coverage, browser-speech/R2 금지 contract 포함
 - remote DB verifier와 TOPIK v2 verifier 통과
 - remote question quality 332개 검사, 실패 0건
 - remote R2 pronunciation 참조 0건
@@ -145,7 +149,7 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - web source SHA `595fcd735824116fff6047e9e59f1d6acd90cb46`
 - D1 migration/seed와 Worker는 변경하지 않음
 - rollback Pages `7b0e9050-f36c-42a3-aab9-7d09f70df2af`; Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` 유지
-- Production 직전 음성 단위 `10/10`, 영향 기능 E2E `44/2/0`, typecheck, OpenAPI, build, fresh D1 통과
+- Production 직전 음성 단위 `10/10`, 영향 기능 E2E `44/2/0`, typecheck, OpenAPI, build, fresh D1 통과. 단, 음성 테스트는 mocked voice이므로 실제 가청 재생 증거가 아니며 배포 승인에 사용한 것은 오류였습니다.
 - 배포 후 canonical smoke 5회, remote DB/FK, Worker `7/7`, auth proxy, R2 pronunciation 0 통과
 
 ### 2026-08-23 다음 콘텐츠 증량 후보
@@ -154,11 +158,11 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - 서로 결과를 공유하지 않은 Reviewer A/B가 최종 160개 전부 승인
 - 레거시 정리 후 로컬 CI: ops 8, DB 112, web 88, API 131, fresh D1, content contract/control plane 통과
 - Preview D1/Worker 반영과 원격 품질·거래·Chromium/WebKit 각 14개 E2E 통과
-- 실제 Chrome Google 음성 gate 실패로 Production seed와 Worker 배포를 실행하지 않음
+- 음성 회귀 복구 릴리스 전이므로 Production seed와 Worker 배포를 실행하지 않음
 
 ## 다음 단계
 
-다음 실행은 Google 한국어·일본어 voice가 실제 Chrome에서 준비되는 환경을 복구하고 두 언어 각각 최소 1건의 `played`를 확인하는 것입니다. 그 전에는 이번 증량을 Production에 반영하지 않습니다. 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+다음 실행은 음성 복구 Pages를 Preview/Production에 반영하고 한국어·일본어 각각 최소 1건의 `onend → played`와 사용자 가청 결과를 분리해 확인하는 것입니다. 그 전에는 이번 증량을 Production에 반영하지 않습니다. 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 2026-08-23 저장소 정리
 

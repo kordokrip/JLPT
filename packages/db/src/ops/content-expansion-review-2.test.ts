@@ -39,7 +39,7 @@ test('reviewer 2 independent expected answers match all authored answers without
   assert.equal(CONTENT_EXPANSION_ADVERSARIAL_REVIEW_2.checks.publication_state_changed, false);
 });
 
-test('reviewer 2 verifies constructed-response and browser-Google-only speech contracts', () => {
+test('reviewer 2 verifies constructed-response and browser-speech/R2-free contracts', () => {
   const writing = TOPIK_OWNER_BATCH_5.filter((item) => item.section === 'writing');
   assert.equal(writing.length, 4);
   assert.equal(writing.every((item) => (

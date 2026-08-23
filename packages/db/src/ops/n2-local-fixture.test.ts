@@ -10,7 +10,7 @@ import {
 } from '../seed/n2-local-fixture.js';
 import { REPO_ROOT } from '../seed/constants.js';
 
-test('N2 local fixture has self-authored provenance, stable IDs, and explicit Google-only pending audio bindings', () => {
+test('N2 local fixture has self-authored provenance, stable IDs, and explicit browser-speech pending audio bindings', () => {
   const plan = buildN2LocalFixturePlan();
   assert.equal(plan.manifest.counts.vocab, 3);
   assert.equal(plan.manifest.counts.grammar, 1);

@@ -1,6 +1,6 @@
 # JLPT · TOPIK 개인 학습 PWA
 
-JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, Google 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
+JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
 
 ## Production 기준 — 2026-08-23 KST
 
@@ -15,7 +15,7 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
 
-2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 실제 Chrome이 Google 한국어·일본어 음성을 제공하지 않아 Production 반영은 차단되어 있으며, 상세 상태와 재개 조건은 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. Production 반영 전 음성 회귀를 우선 복구 중이며, 상세 상태와 재개 조건은 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 구조
 
@@ -41,7 +41,7 @@ apps/web React PWA ← apps/api Hono Worker ← packages/shared DTO·FSRS
 
 ## 오디오 정책
 
-발음은 브라우저의 Google 음성만 사용합니다. R2 발음의 수집·생성·저장·조회·재생·fallback은 금지합니다. 기존 `/api/v1/audio/*`와 관리자 생성 경로는 호환 목적으로 `410 Gone`을 유지합니다. `0027`의 신규 계약은 provider `google-browser`, 상태 `ready|unavailable`만 허용하며 R2 asset/key 필드를 두지 않습니다. report/evidence용 R2는 발음 경로가 아닙니다.
+발음은 브라우저 음성을 사용합니다. 같은 언어의 Google 음성을 우선하고, 없으면 기기에 설치된 같은 언어 음성으로 재생합니다. R2 발음의 수집·생성·저장·조회·재생·fallback은 금지합니다. 기존 `/api/v1/audio/*`와 관리자 생성 경로는 호환 목적으로 `410 Gone`을 유지합니다. `0027`의 provider `google-browser`는 호환용 식별자이며 실제 계약은 `Google 우선 browser speech`입니다. 상태는 `ready|unavailable`만 허용하고 R2 asset/key 필드를 두지 않습니다.
 
 ## 로컬 실행과 검증
 
@@ -57,6 +57,10 @@ pnpm -F @nihongo-n3/db content:contract:verify
 pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
 
-2026-08-23 실제 Production에서 TOPIK Google 한국어 음성의 첫 클릭 실패를 재현했습니다. 당시 테스트는 음성 목록이 즉시 준비된 fixture만 사용해 Chromium의 비동기 `voiceschanged` 경합을 놓쳤습니다. 수정본은 Google 한국어 음성을 기다리고 실제 `onend` 이후에만 성공을 기록하며, 단위·전체 기능·Chromium/WebKit 회귀와 Production 사후 검증을 거쳐 Pages에 반영했습니다. 다만 현재 실제 Chrome은 Web Speech API와 Google 한국어·일본어 voice를 제공하지 않아 신규 콘텐츠 Production 배포의 실재생 gate는 여전히 실패합니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+2026-08-23 실제 Production에서 TOPIK/JLPT 첫 클릭 실패를 재현했습니다. 원인은 정상 동작하던 같은 언어 기기 음성 fallback을 제거하고 이름/URI에 `Google`이 있는 voice만 허용한 회귀였습니다. 복구본은 `Google 우선 → 같은 언어 기기 음성` 순서로 선택하고 실제 `onend` 이후에만 성공을 기록하며 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+
+현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER_2026-08-23.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
+
+GitHub는 공개 원격 형상 보관에만 사용하고 Actions 자동 실행은 비활성화했습니다. 로컬 검증, commit/tag, Cloudflare deployment와 rollback 기록은 [로컬 형상관리·릴리스 원장](./docs/00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)을 따릅니다.
 
 문서 탐색은 [docs/README.md](./docs/README.md), 코드 구조는 [PROJECT_CODEBASE_ANALYSIS.md](./PROJECT_CODEBASE_ANALYSIS.md), 실제 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md)를 기준으로 합니다.

@@ -1815,7 +1815,7 @@ describe('TOPIK official reference', () => {
   });
 });
 
-describe('Google-only pronunciation audio policy', () => {
+describe('Google-preferred browser pronunciation audio policy', () => {
   it('returns 410 for every legacy R2 audio path', async () => {
     const res = await fetch('/api/v1/audio/audio/vocab/n3/not-generated.mp3');
     expect(res.status).toBe(410);

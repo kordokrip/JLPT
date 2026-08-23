@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TopikPlacementAudioDto } from '@nihongo-n3/shared';
 import { recordLearningActivity } from '../../lib/activity-events';
-import { isGoogleVoiceForLanguage, waitForGoogleBrowserVoice } from '../../lib/google-browser-speech';
+import {
+  isGoogleVoiceForLanguage,
+  isVoiceForLanguage,
+  selectBrowserVoiceForLanguage,
+  waitForBrowserVoice,
+} from '../../lib/google-browser-speech';
 
 export interface KoreanSpeechActivityContext {
   contentType: string;
@@ -16,15 +21,15 @@ export function isGoogleKoreanVoice(
   return isGoogleVoiceForLanguage(voice, 'ko-KR');
 }
 
-function currentGoogleKoreanVoice(): SpeechSynthesisVoice | null {
+function currentKoreanVoice(): SpeechSynthesisVoice | null {
   if (!('speechSynthesis' in window)) return null;
-  return window.speechSynthesis.getVoices().find(isGoogleKoreanVoice) ?? null;
+  return selectBrowserVoiceForLanguage(window.speechSynthesis.getVoices(), 'ko-KR') ?? null;
 }
 
-export async function waitForGoogleKoreanVoice(
+export async function waitForKoreanVoice(
   timeoutMs?: number,
 ): Promise<SpeechSynthesisVoice | null> {
-  return waitForGoogleBrowserVoice('ko-KR', timeoutMs);
+  return waitForBrowserVoice('ko-KR', timeoutMs);
 }
 
 export function useKoreanAudio() {
@@ -35,10 +40,10 @@ export function useKoreanAudio() {
   const voicePromiseRef = useRef<Promise<SpeechSynthesisVoice | null> | null>(null);
 
   const resolveVoice = useCallback(() => {
-    const immediate = currentGoogleKoreanVoice();
+    const immediate = currentKoreanVoice();
     if (immediate) return Promise.resolve(immediate);
     if (voicePromiseRef.current) return voicePromiseRef.current;
-    const pending = waitForGoogleKoreanVoice();
+    const pending = waitForKoreanVoice();
     voicePromiseRef.current = pending;
     void pending.finally(() => {
       if (voicePromiseRef.current === pending) voicePromiseRef.current = null;
@@ -79,8 +84,9 @@ export function useKoreanAudio() {
 
     const voice = await resolveVoice();
     if (operation !== operationRef.current) return false;
-    // Google voice only: never fall through to another provider or language.
-    if (!voice || !isGoogleKoreanVoice(voice)) {
+    // Prefer Google, but restore the same-language browser fallback that was
+    // removed by the regression. Never use another language's default voice.
+    if (voice && !isVoiceForLanguage(voice, 'ko-KR')) {
       setPlaying(false);
       setError('unavailable');
       if (context) void recordSpeechActivity(context, 'unavailable');
@@ -92,13 +98,16 @@ export function useKoreanAudio() {
     utterance.rate = 0.86;
     utterance.pitch = 1;
     utterance.volume = 1;
-    utterance.voice = voice;
+    // getVoices() may be empty while the browser can still resolve ko-KR from
+    // utterance.lang. Keep voice unset in that case and verify success on onend.
+    if (voice) utterance.voice = voice;
 
     return new Promise<boolean>((resolve) => {
       let settled = false;
       const finish = (result: boolean, outcome?: 'played' | 'error') => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(timeoutId);
         if (pendingCancelRef.current === cancelPending) pendingCancelRef.current = null;
         if (operation === operationRef.current) {
           setPlaying(false);
@@ -111,6 +120,11 @@ export function useKoreanAudio() {
       pendingCancelRef.current = cancelPending;
       utterance.onend = () => finish(true, 'played');
       utterance.onerror = () => finish(false, 'error');
+      const timeoutMs = Math.min(120_000, Math.max(15_000, text.length * 500));
+      const timeoutId = window.setTimeout(() => {
+        window.speechSynthesis.cancel();
+        finish(false, 'error');
+      }, timeoutMs);
 
       try {
         window.speechSynthesis.resume?.();

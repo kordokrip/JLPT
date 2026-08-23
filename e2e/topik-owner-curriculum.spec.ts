@@ -112,13 +112,13 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     expect(JSON.stringify(payload)).not.toContain('해설');
 
     const section = ownerCurriculumSection(page);
-    await expect(section.getByRole('button', { name: 'Google 한국어 음성 재생' })).toHaveCount(2);
+    await expect(section.getByRole('button', { name: '한국어 음성 재생' })).toHaveCount(2);
     await expect(section.getByText('오디오를 제공하지 않습니다')).toHaveCount(1);
     const activityRequest = page.waitForRequest((request) =>
       request.url().endsWith('/api/v1/activity/events') && request.method() === 'POST');
     await section.locator('article')
       .filter({ hasText: 'Which meaning best matches 안녕하세요?' })
-      .getByRole('button', { name: 'Google 한국어 음성 재생' })
+      .getByRole('button', { name: '한국어 음성 재생' })
       .click();
     expect((await activityRequest).postDataJSON()).toEqual({
       events: [expect.objectContaining({
@@ -211,7 +211,7 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     await section.getByRole('button', { name: `${BATCH4_GRADE6_UNIT_TITLE} 학습 시작` }).click();
     const batch4Card = section.locator('article').filter({ hasText: '자료 해석' });
     await expect(batch4Card).toBeVisible();
-    await batch4Card.getByRole('button', { name: 'Google 한국어 음성 재생' }).click();
+    await batch4Card.getByRole('button', { name: '한국어 음성 재생' }).click();
     await expect.poll(() => page.evaluate(() => window.__topikSpeechCalls ?? 0)).toBe(1);
     await expect.poll(() => page.evaluate(() => window.__topikSpeechVoiceNames ?? [])).toEqual(['Google Korean']);
     await batch4Card.getByRole('radio', { name: '자료 해석' }).click();

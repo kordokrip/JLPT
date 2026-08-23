@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { audioPlayer, isGoogleJapaneseVoice, selectJapaneseVoice, voiceSortScore, type JapaneseVoiceOption } from '../audio';
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -60,7 +61,7 @@ describe('audio voice selection', () => {
     })?.name).toBe('Google 日本語');
   });
 
-  it('waits for a delayed Google Japanese voice instead of accepting an early system voice', async () => {
+  it('uses an installed Japanese voice when a Google voice is unavailable', async () => {
     class MockUtterance {
       lang = '';
       rate = 1;
@@ -73,8 +74,7 @@ describe('audio voice selection', () => {
       constructor(public text: string) {}
     }
     vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
-    let voices = [{ lang: 'ja-JP', name: 'Kyoko', voiceURI: 'apple-ja', default: true }] as SpeechSynthesisVoice[];
-    const voiceListeners: Array<() => void> = [];
+    const voices = [{ lang: 'ja-JP', name: 'Kyoko', voiceURI: 'apple-ja', default: true }] as SpeechSynthesisVoice[];
     const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
@@ -82,18 +82,48 @@ describe('audio voice selection', () => {
         cancel: vi.fn(),
         speak,
         getVoices: () => voices,
-        addEventListener: (_name: string, listener: () => void) => { voiceListeners.push(listener); },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+
+    await expect(audioPlayer.speakText('こんにちは。')).resolves.toBe(true);
+    expect((speak.mock.calls[0]?.[0] as MockUtterance).voice?.voiceURI).toBe('apple-ja');
+  });
+
+  it('lets the browser resolve ja-JP when the voice list stays empty', async () => {
+    vi.useFakeTimers();
+    class MockUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      volume = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(public text: string) {}
+    }
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        resume: vi.fn(),
+        speak,
+        getVoices: () => [],
+        addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
       },
     });
 
     const playback = audioPlayer.speakText('こんにちは。');
-    expect(speak).not.toHaveBeenCalled();
-    voices = [{ lang: 'ja-JP', name: 'Google 日本語', voiceURI: 'google-ja' }] as SpeechSynthesisVoice[];
-    voiceListeners.forEach((listener) => listener());
-
+    await vi.runAllTimersAsync();
     await expect(playback).resolves.toBe(true);
-    expect((speak.mock.calls[0]?.[0] as MockUtterance).voice?.voiceURI).toBe('google-ja');
+    const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
+    expect(utterance.lang).toBe('ja-JP');
+    expect(utterance.voice).toBeNull();
   });
 
 });

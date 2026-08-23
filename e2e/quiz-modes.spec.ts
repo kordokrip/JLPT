@@ -28,7 +28,7 @@ async function expectNoConsoleErrors(page: Page, run: () => Promise<void>) {
   expect(pageErrors, 'uncaught page errors').toEqual([]);
 }
 
-async function installGoogleJapaneseSpeechMock(page: Page): Promise<void> {
+async function installJapaneseSystemSpeechMock(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const spoken: Array<{ lang: string; voice: string | null }> = [];
     Object.defineProperty(window, '__quizGoogleSpeech', { configurable: true, value: spoken });
@@ -43,12 +43,12 @@ async function installGoogleJapaneseSpeechMock(page: Page): Promise<void> {
 
       constructor(_text: string) {}
     }
-    const googleJapanese = {
+    const japaneseSystemVoice = {
       default: true,
       lang: 'ja-JP',
       localService: true,
-      name: 'Google 日本語',
-      voiceURI: 'google-ja-jp',
+      name: 'Kyoko',
+      voiceURI: 'apple-ja-jp',
     } as SpeechSynthesisVoice;
     Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: FakeSpeechSynthesisUtterance });
     Object.defineProperty(window, 'speechSynthesis', {
@@ -57,7 +57,7 @@ async function installGoogleJapaneseSpeechMock(page: Page): Promise<void> {
         addEventListener: () => undefined,
         removeEventListener: () => undefined,
         cancel: () => undefined,
-        getVoices: () => [googleJapanese],
+        getVoices: () => [japaneseSystemVoice],
         speak: (utterance: FakeSpeechSynthesisUtterance) => {
           spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
           utterance.onstart?.(new Event('start'));
@@ -169,9 +169,9 @@ test.describe('퀴즈 기능 smoke', () => {
     }));
   });
 
-  test('청해 전용 화면은 Google 일본어 음성만 재생하고 R2 오디오를 요청하지 않는다', async ({ page }) => {
+  test('청해 전용 화면은 같은 언어의 브라우저 음성으로 재생하고 R2 오디오를 요청하지 않는다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
-      await installGoogleJapaneseSpeechMock(page);
+      await installJapaneseSystemSpeechMock(page);
       const serverAudioRequests: string[] = [];
       page.on('request', (request) => {
         if (new URL(request.url()).pathname.startsWith('/api/v1/audio/')) {
@@ -180,7 +180,7 @@ test.describe('퀴즈 기능 smoke', () => {
       });
       await page.goto('/quiz/listening');
       await expect(page.getByRole('heading', { name: /청해 퀴즈|Listening Quiz|聴解クイズ/ })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByText(/Google 일본어 음성으로만 재생합니다|Google Japanese voice only|Google 日本語音声だけ/)).toBeVisible();
+      await expect(page.getByText(/Google 일본어 음성을 우선|prefers Google Japanese|Google 日本語音声を優先/)).toBeVisible();
       const play = page.getByRole('button', { name: /재생|Play|再生/ });
       await expect(play).toBeEnabled();
       const activityRequest = page.waitForRequest((request) =>
@@ -195,7 +195,7 @@ test.describe('퀴즈 기능 smoke', () => {
         })],
       });
       await expect.poll(() => page.evaluate(() => window.__quizGoogleSpeech ?? [])).toEqual([
-        { lang: 'ja-JP', voice: 'google-ja-jp' },
+        { lang: 'ja-JP', voice: 'apple-ja-jp' },
       ]);
       expect(serverAudioRequests, 'must not request an R2 path').toEqual([]);
       await expect(page.locator('audio[src]')).toHaveCount(0);

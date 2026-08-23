@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { isGoogleKoreanVoice, useKoreanAudio, waitForGoogleKoreanVoice } from './useKoreanAudio';
+import { isGoogleKoreanVoice, useKoreanAudio, waitForKoreanVoice } from './useKoreanAudio';
 
 const activityMocks = vi.hoisted(() => ({ record: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('../../lib/activity-events', () => ({ recordLearningActivity: activityMocks.record }));
@@ -87,20 +87,43 @@ describe('useKoreanAudio', () => {
     expect(utterance.voice?.voiceURI).toBe('google-ko');
   });
 
-  it('does not fall back to a non-Google Korean voice', async () => {
-    vi.useFakeTimers();
+  it('falls back to an installed Korean voice when Google is unavailable', async () => {
+    const systemKorean = { lang: 'ko-KR', name: 'Yuna', voiceURI: 'apple-ko', default: true } as SpeechSynthesisVoice;
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: {
-        getVoices: () => [{ lang: 'ko-KR', name: 'Korean system', voiceURI: 'ko-system' }],
+        getVoices: () => [systemKorean],
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
       },
     });
 
-    const pending = waitForGoogleKoreanVoice(100);
-    await vi.advanceTimersByTimeAsync(100);
-    await expect(pending).resolves.toBeNull();
+    await expect(waitForKoreanVoice(100)).resolves.toBe(systemKorean);
+  });
+
+  it('lets the browser resolve ko-KR when the voice list stays empty', async () => {
+    vi.useFakeTimers();
+    const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        resume: vi.fn(),
+        speak,
+        getVoices: () => [],
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+    const { result } = renderHook(() => useKoreanAudio());
+
+    let playback: Promise<boolean> | undefined;
+    act(() => { playback = result.current.speakText('안녕하세요'); });
+    await act(async () => { await vi.runAllTimersAsync(); });
+    await expect(playback).resolves.toBe(true);
+    const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
+    expect(utterance.lang).toBe('ko-KR');
+    expect(utterance.voice).toBeNull();
   });
 
   it('records played only after real playback completion', async () => {

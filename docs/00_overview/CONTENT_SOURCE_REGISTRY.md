@@ -13,7 +13,7 @@
 
 ## 등록 규칙
 
-외부 source asset은 URL, license ID와 URL, required attribution, allowed use, source SHA-256, retrieval/generated time 없이 등록하지 않는다. 발음은 Google 음성만 사용하며 R2 key·stored bytes hash·audio activation을 새 등록 기준으로 추가하지 않는다.
+외부 source asset은 URL, license ID와 URL, required attribution, allowed use, source SHA-256, retrieval/generated time 없이 등록하지 않는다. 발음은 Google 우선 동일 언어 브라우저 음성을 사용하며 R2 key·stored bytes hash·audio activation을 새 등록 기준으로 추가하지 않는다.
 
 JMdict와 KANJIDIC2의 현재 일반 라이선스는 EDRDG가 안내하는 CC BY-SA 4.0이며, significant extract를 쓰는 앱은 Sources/About 등에서 attribution을 제공해야 한다. KanjiVG와 한국어기초사전의 실제 이용 조건은 자료·응답·파일 단위로 재확인한다. 상세 출처 링크는 [Attributions](../ATTRIBUTIONS.md)를 따른다.
 

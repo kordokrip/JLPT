@@ -1,7 +1,7 @@
 /**
  * Legacy R2 pronunciation absence verifier.
  *
- * Pronunciation playback is Google-only.  This script intentionally verifies
+ * Pronunciation playback is Google-preferred same-language browser speech. This script verifies
  * that the D1 references which formerly enabled the R2 path are empty; it
  * never reads an R2 object or requires R2 credentials.
  */

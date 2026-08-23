@@ -6,7 +6,7 @@ import { MAX_LISTENING_PLAYS } from './types';
 import { recordLearningActivity } from '../../lib/activity-events';
 import type { JlptLevel } from '@nihongo-n3/shared';
 
-/** Listening playback is Google browser speech only; it never requests R2 audio. */
+/** Listening prefers Google and falls back to the same-language browser voice; it never requests R2 audio. */
 export function ListeningAudioPlayer({
   fallbackText,
   questionId,
@@ -21,20 +21,26 @@ export function ListeningAudioPlayer({
   const { t } = useTranslation();
   const [playing, setPlaying] = useState(false);
   const [playCount, setPlayCount] = useState(0);
+  const [playbackFailed, setPlaybackFailed] = useState(false);
 
   const handlePlay = useCallback(() => {
     if (!fallbackText || playCount >= MAX_LISTENING_PLAYS) {
       if (playCount >= MAX_LISTENING_PLAYS) onPlaysExhausted?.();
       return;
     }
+    setPlaybackFailed(false);
     setPlayCount((count) => count + 1);
     void audioPlayer.speakText(fallbackText, {
       lang: 'ja-JP',
       preferGoogleVoice: true,
       onStart: () => setPlaying(true),
       onEnd: () => setPlaying(false),
-      onError: () => setPlaying(false),
+      onError: () => {
+        setPlaying(false);
+        setPlaybackFailed(true);
+      },
     }).then((played) => {
+      if (!played) setPlaybackFailed(true);
       void recordLearningActivity({
         event_type: 'speech_attempted',
         learning_track: 'jlpt-ja',
@@ -45,6 +51,8 @@ export function ListeningAudioPlayer({
         speech_outcome: played ? 'played' : 'unavailable',
       }).catch(() => undefined);
     }).catch(() => {
+      setPlaying(false);
+      setPlaybackFailed(true);
       void recordLearningActivity({
         event_type: 'speech_attempted',
         learning_track: 'jlpt-ja',
@@ -84,6 +92,7 @@ export function ListeningAudioPlayer({
         </div>
       </div>
       {playCount >= MAX_LISTENING_PLAYS && <p className="text-center text-[12px] text-[var(--destructive)] font-pretendard">{t('quiz.maxPlaysReached')}</p>}
+      {playbackFailed && <p role="alert" className="text-center text-[12px] text-[var(--destructive)] font-pretendard">{t('quiz.browserSpeechFallback')}</p>}
     </div>
   );
 }
