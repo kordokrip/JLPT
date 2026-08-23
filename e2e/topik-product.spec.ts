@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { mockTopikReadApis, registerTopikUser } from './topik-helper';
 
 const ATTEMPT_ID = '10000000-0000-4000-8000-000000000001';
+const isExternalDeployment = Boolean(process.env.E2E_BASE_URL);
 
 declare global {
   interface Window {
@@ -101,6 +102,7 @@ test.describe('TOPIK product flow', () => {
   });
 
   test('dashboard, offline lesson, placement and result keep the TOPIK track contract', async ({ page }) => {
+    test.skip(isExternalDeployment, 'this scenario deliberately combines local route fixtures with the isolated local E2E database');
     await installKoreanSystemSpeechMock(page);
     const unexpectedAudioRequests: string[] = [];
     page.on('request', (request) => {
@@ -159,7 +161,7 @@ test.describe('TOPIK product flow', () => {
     await page.goto('/track/topik-ko/learn');
     const practice = page.locator('section[aria-labelledby="topik-practice-title"]');
     await expect(practice).toBeVisible();
-    await practice.getByRole('button', { name: /한국어 음성 재생|韓国語音声を再生|Play Korean audio/ }).click();
+    await practice.getByRole('button', { name: /한국어 음성 재생|韓国語音声を再生|Play Korean audio/ }).first().click();
     await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
       { lang: 'ko-KR', voice: 'apple-ko-kr' },
     ]);
@@ -167,7 +169,7 @@ test.describe('TOPIK product flow', () => {
       has: page.getByRole('heading', { name: '자체 저작 학습 단위' }),
     });
     await expect(ownerCurriculum).toBeVisible();
-    await ownerCurriculum.getByRole('button', { name: '인사와 자기소개 학습 시작' }).click();
+    await ownerCurriculum.getByRole('button', { name: /학습 시작|学習開始|Start learning/ }).first().click();
     const koreanPlay = ownerCurriculum.getByRole('button', { name: '한국어 음성 재생' }).first();
     await expect(koreanPlay).toBeVisible();
     await koreanPlay.click();

@@ -80,6 +80,10 @@ export default function App() {
         <Route path="welcome" element={<Welcome />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        {/* Public, read-only browser speech diagnostic. It has no account data
+            or server audio path, so critical playback can be verified without
+            creating a test account. */}
+        <Route path="audio-qa" element={<AudioQa />} />
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
           <Route path="settings"         element={<Settings />} />
           <Route path="admin/users"  element={<AdminUsers />} />
@@ -110,7 +114,6 @@ export default function App() {
             <Route path="reading/:id"  element={<ReadingDetail />} />
             <Route path="stats"        element={<Stats />} />
             <Route path="add-word"     element={<AddWord />} />
-            <Route path="audio-qa"     element={<AudioQa />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFound />} />

@@ -1,6 +1,6 @@
 # JLPT·TOPIK 브라우저 음성 회귀 기록 — 2026-08-23
 
-상태: **회귀 원인 확인 및 복구 구현 완료. Preview/실제 Chrome/Production 검증 결과는 이 문서의 릴리스 증적에만 기록한다.**
+상태: **회귀 원인 확인·복구 구현·로컬 및 1차 Preview 자동 검증 완료. 최종 SHA 실제 Chrome과 Production 사후 검증 전이다.**
 
 현재 오류 전체 목록과 강제 차단 조건은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)을 단일 기준으로 사용합니다.
 
@@ -49,22 +49,28 @@ Git 이력과 현재 코드를 대조했습니다.
 - 동일 언어 fallback과 오류 UI 보강 뒤 Chromium/WebKit 영향 기능 E2E `28/28` 통과. TOPIK 학습·placement·owner, JLPT 퀴즈·청해와 R2 요청 0건을 포함합니다.
 - API `8 files / 131 tests`, Web `33 files / 90 tests`, DB `112/112`, Ops `18/18`, OpenAPI `72 public / 12 admin`, production build 통과. API 성공 기록은 listener 자원 고갈 전 실행이며, 아래 현재 재실행 실패와 구분합니다.
 - fresh D1은 migration `0000–0027`, canonical seed, FK/FTS, TOPIK practice 300, question quality 332/실패 0, content release contract/control-plane을 종료 코드 0으로 통과했습니다.
-- 전체 데스크톱 E2E 첫 실행은 Chromium 전 범위를 통과했지만 WebKit에서 테스트 자원 관리 문제 2건이 발생했습니다. 실패 spec 새 실행은 `11/11` 통과했고, 반복 재현된 다중 page 자원 고갈을 한 page 순회 방식으로 수정했습니다. 수정 후 전체 WebKit·원격 Preview 결과는 확인 전까지 통과로 기록하지 않습니다.
+- 전체 E2E는 데스크톱 Chromium·WebKit, 모바일, 시각 회귀를 포함해 `171 passed / 32 skipped / 0 failed`로 종료 코드 0을 확인했습니다. skip은 project 범위와 의도적으로 비활성화된 환경 fixture입니다.
+- 익명 `/audio-qa` 양언어 호출·오류 UI·R2 미사용을 포함한 영향 E2E는 Chromium·WebKit `14/14`를 통과했습니다.
+- 1차 Preview 실제 기능 세트는 Chromium·WebKit `32 passed / 8 skipped / 0 failed`입니다. skip은 격리 로컬 DB fixture와 환경 제한이며 실제 N1/N2, TOPIK Batch 4 owner→FSRS, 퀴즈, 청해, SRS는 실행됐습니다.
 
 ## 릴리스 증적
 
 - 잘못 배포된 Pages: `1c3bba90-8990-472b-8bf2-12a08759597f`.
 - 이전 rollback Pages: `7b0e9050-f36c-42a3-aab9-7d09f70df2af`.
 - D1 migration/seed와 Worker는 이 음성 복구에서 변경하지 않습니다.
-- 새 Preview/Production 배포 ID, 실제 Chrome callback과 사용자 가청 결과는 확인 후 이 절에 추가합니다. 확인되지 않은 항목은 `완료`로 기록하지 않습니다.
+- 1차 Preview Worker: `48b49518-f374-4c59-a652-f73d136689f3`, release `a427af8c963660d9ebfdbec8c7cacf5e9858f749`, Worker smoke `21/21`.
+- 유효한 1차 Preview Pages: `7de4c852-82c1-4c24-a787-e504174702ea`. `apps/web` cwd에서 Functions bundle을 포함했으며 auth/API proxy를 확인했습니다.
+- 잘못된 첫 Pages `367eb0f4-d336-4b63-8d3a-b073e7290ca8`은 Functions가 빠져 릴리스 증적에서 제외합니다.
+- 최종 SHA Preview/Production deployment ID, 실제 Chrome callback과 사용자 가청 결과는 확인 후 추가합니다. 확인되지 않은 항목은 `완료`로 기록하지 않습니다.
 
-### 현재 배포 차단 증거
+### 현재 남은 배포 gate
 
 - 이전 격리 터미널의 GitHub·Cloudflare DNS 실패는 현재 실행 환경에서 해소됐고 remote·DNS·Cloudflare OAuth 인증을 다시 확인했습니다.
-- Chrome의 Cloudflare Dashboard 접근은 브라우저 보안 권한에서 허용되지 않아 실행하지 않았습니다. 보안 차단을 다른 브라우저나 간접 경로로 우회하지 않습니다.
-- 따라서 이 복구본은 아직 Preview/Production에 쓰이지 않았으며 Production Pages는 위의 잘못 배포된 기준선을 유지합니다. 로컬 빌드 성공을 원격 배포 성공으로 보고하지 않습니다.
-- 현재 원래 checkout의 `.git` 쓰기는 복구됐습니다. `verify:ci`와 Chromium·WebKit 기능 E2E를 통과한 변경만 원자적 commit으로 고정하며, 실제 push SHA를 확보하기 전에는 원격 반영으로 기록하지 않습니다.
+- Cloudflare Dashboard 대신 Wrangler와 실제 배포 URL에서 version, release header, proxy와 smoke를 검증합니다.
+- 복구본 1차 Preview는 배포됐지만 Production Pages는 잘못 배포된 기준선을 유지합니다. Preview 결과를 Production 완료로 보고하지 않습니다.
+- 원래 checkout의 `.git` 쓰기는 복구됐고 `a427af8...`을 원격 branch에 push했습니다. 익명 QA route를 포함한 최종 commit은 동일 gate 재검증 후 별도로 고정합니다.
 - 실제 Chrome에서 현재 Production `/audio-qa`의 일본어·한국어 버튼을 각각 눌렀지만 성공·실패 UI 변화가 없었고 페이지 문구도 회귀 배포의 `Google-only` 상태였습니다. 자동화 isolated world의 `speechSynthesis=false` 결과는 앱 main world의 기능 근거로 재사용하지 않습니다.
-- 동일 84개 변경 파일은 별도 writable clone의 안전 커밋으로 고정하고 검증된 bundle/patch를 `.artifacts/recovery/audio-2026-08-23/`에 보존했습니다. 원격 branch에는 반영되지 않았으므로 배포 증거가 아닙니다.
-- 새 실행 환경의 로컬 재검증은 Ops `18/18`, DB `112/112`, Web `90/90`, API `131/131`, typecheck, build, OpenAPI, fresh D1, 문서 링크를 종료 코드 0으로 통과했습니다. Chromium·WebKit 전체 기능 E2E도 `128 passed / 2 skipped`로 통과했습니다.
+- 동일 84개 복구 변경은 검증된 bundle/patch로도 `.artifacts/recovery/audio-2026-08-23/`에 보존했습니다. bundle은 비상 복구물이며 현재 원격 commit과 deployment ID가 공식 증적입니다.
+- 새 실행 환경의 로컬 재검증은 Ops `18/18`, DB `112/112`, Web `90/90`, API `131/131`, typecheck, build, OpenAPI, fresh D1, 문서 링크를 종료 코드 0으로 통과했습니다. 전체 데스크톱·모바일·시각 E2E도 `171 passed / 32 skipped / 0 failed`로 통과했습니다.
 - Worker 배포 명령은 현재 clean HEAD와 동일한 40자 `RELEASE_SHA`를 필수로 받고 Wrangler CLI 변수로 주입하도록 교체했습니다. 운영 기준선 SHA가 새 코드의 관측 release로 잘못 재사용되면 업로드 전에 실패합니다.
+- 실제 Chrome 1차 접근은 인증 route 때문에 `/welcome`으로 이동했습니다. 이를 성공으로 기록하지 않고, 데이터·계정 의존성이 없는 QA route를 공개 진단 경로로 분리한 뒤 최종 Preview에서 다시 실행합니다.

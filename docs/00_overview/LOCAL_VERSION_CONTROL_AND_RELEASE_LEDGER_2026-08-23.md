@@ -64,12 +64,14 @@ pnpm docs:check
 | release | `audio-recovery-2026-08-23` |
 | source branch | `feature/topik-product-expansion` |
 | 안전 복구 bundle ref | `4108edbd1f4c87b38963a904b1dd9d62ac9fcc2f`; 작업 유실 방지용, 정식 release SHA 아님 |
-| 정식 source commit/tag | 원래 checkout commit 후 기록 |
+| 정식 source commit/tag | 1차 `a427af8c963660d9ebfdbec8c7cacf5e9858f749`; 익명 QA 후속 SHA/tag는 최종 gate 후 기록 |
 | Actions | repository `enabled=false`; 자동 CI/CD 중단 |
 | local gates | `verify:ci` exit `0`; Ops `18/18`, DB `112/112`, Web `90/90`, API `131/131`, fresh D1 완료 |
-| browser gates | Chromium·WebKit 기능 E2E `128 passed / 2 skipped`, exit `0` |
+| browser gates | 전체 데스크톱·모바일·시각 E2E `171 passed / 32 skipped / 0 failed`; 익명 음성 QA 포함 영향 기능 `14/14`; 1차 Preview 실제 기능 `32 passed / 8 skipped / 0 failed` |
+| Preview Worker | `48b49518-f374-4c59-a652-f73d136689f3`, release `a427af8...`, smoke `21/21` |
+| Preview Pages | 유효 `7de4c852-82c1-4c24-a787-e504174702ea`; 잘못된 `367eb0f4-d336-4b63-8d3a-b073e7290ca8`은 Functions 누락으로 제외 |
 | Production | 아직 회귀 Pages 유지; 새 deployment ID 없음 |
-| status | `draft` |
+| status | `preview` |
 
 배포가 진행될 때 이 표를 실제 commit, Preview/Production deployment ID, 음성 증적과 rollback 대상으로 갱신한다. 빈 값이나 `미확인`을 성공으로 해석하지 않는다.
 

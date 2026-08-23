@@ -6,6 +6,7 @@ const FIXTURE_UNIT_TITLE = '인사와 자기소개';
 const FIXTURE_VOCAB_ID = 'topik-owner-grade1-vocab-annyeonghaseyo-v1';
 const BATCH4_GRADE6_UNIT_TITLE = '자료 해석';
 const BATCH4_GRADE6_VOCAB_ID = 'topik-owner-batch4-item-6-vocab';
+const isExternalDeployment = Boolean(process.env.E2E_BASE_URL);
 
 declare global {
   interface Window {
@@ -81,6 +82,7 @@ async function openFixtureUnit(page: Page): Promise<void> {
 
 test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
   test('returns Google Korean speech and unavailable audio separately without any R2 or audio endpoint request', async ({ page }) => {
+    test.skip(isExternalDeployment, 'the grade-1 three-item fixture exists only in the isolated local E2E database');
     await installGoogleKoreanSpeechMock(page);
     await mockTopikReadApis(page);
     await registerTopikUser(page);
@@ -134,6 +136,7 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
   });
 
   test('completes an owner item, persists FSRS progress, records a rating, and isolates another user', async ({ page, browser }) => {
+    test.skip(isExternalDeployment, 'the grade-1 three-item fixture exists only in the isolated local E2E database');
     await installGoogleKoreanSpeechMock(page);
     await mockTopikReadApis(page);
     await registerTopikUser(page);

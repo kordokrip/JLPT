@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장 — 2026-08-23
 
 기준 시각: 2026-08-23 KST
-현재 상태: **음성 복구본은 전체 로컬 `verify:ci`와 Chromium·WebKit 기능 E2E를 통과했고, 아직 Preview/Production에는 배포되지 않았다. 아래 실제 Chrome·가청 gate가 미확인이므로 Production 배포를 금지한다.**
+현재 상태: **음성 복구본은 전체 로컬 gate와 Preview Worker/Pages 자동 검증을 통과했다. 실제 Chrome 검증을 위해 익명·읽기 전용 `/audio-qa`를 추가했으며 최종 SHA의 Preview 재배포 전이다. 실제 Chrome과 Production 사후 검증이 끝나기 전에는 복구 완료로 판정하지 않는다.**
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -24,6 +24,10 @@
 | `INC-REL-013` | 검증된 복구본을 당시 checkout/원격 branch에 기록하거나 배포하지 못함 | 제한된 실행 환경의 `.git`·DNS·브라우저 접근 차단 | 동일 파일을 안전 bundle로 보존했고 현재 원래 checkout·GitHub·Cloudflare 접근이 복구되어 정식 commit/Preview 진행 | 원격 branch SHA·Preview deployment ID·Production deployment ID가 없으면 배포 완료 금지 |
 | `INC-BROWSER-014` | 실제 Chrome Production에서 한국어·일본어 버튼 클릭 뒤 성공·실패 UI가 없고 현재 문구도 `Google-only` 상태 | `https://nihongo-n3.pages.dev/audio-qa`가 회귀 배포를 제공하며 두 언어 버튼 클릭 후 DOM 상태 변화가 없음; 브라우저 자동화 isolated world의 Web Speech 부재는 main-world 장애 근거로 사용하지 않음 | 복구본은 실패 UI를 추가했고 Preview 실제 페이지에서 다시 검증 예정 | Production URL의 새 asset/문구, real-page `onend`, 양 언어 재생, R2/legacy 요청 0건 확인 필수 |
 | `INC-REL-015` | Worker를 새 코드로 배포해도 관측 release가 회귀 SHA `3485c6e...`로 남을 수 있음 | production `wrangler.toml`의 `RELEASE_SHA`는 현재 운영 기준선을 기록하므로 일반 `wrangler deploy`가 이를 그대로 재사용 | Worker deploy를 전용 스크립트로 교체해 현재 clean HEAD와 일치하는 40자 SHA를 필수화하고 CLI `--var`로 주입 | SHA 누락·HEAD 불일치·dirty checkout이면 업로드 전에 실패해야 함 |
+| `INC-REL-016` | 첫 Preview Pages가 SPA만 배포하고 Functions proxy를 누락 | 저장소 루트에서 `wrangler pages deploy apps/web/dist`를 실행해 `apps/web/functions`가 배포 문맥에 포함되지 않음 | `apps/web`를 cwd로 고정해 다시 배포; 잘못된 deployment `367eb0f4-d336-4b63-8d3a-b073e7290ca8`은 증적에서 제외 | Pages `/api/v1/auth/config`와 인증 API가 JSON으로 proxy되지 않으면 Preview 실패 |
+| `INC-QA-017` | Worker 전용 smoke를 Pages origin에 실행해 OpenAPI 4건을 제품 오류로 오인 | `r1-preview-smoke`는 Worker의 `/openapi*` 직접 route를 전제로 함 | Worker URL에서 다시 실행해 `21 passed / 0 failed`; Pages는 auth proxy 전용 smoke로 분리 | smoke 종류별 올바른 origin을 원장에 기록 |
+| `INC-E2E-018` | 원격 WebKit에서 TOPIK 복합 시나리오가 로컬 fixture와 실제 Preview DB를 섞어 실패 | `page.route`로 mock practice를 주입하면서 owner curriculum은 실제 원격 DB를 사용하고, 로컬 전용 1급 문구까지 하드코딩 | 로컬 fixture 계약은 외부 배포에서 명시적으로 skip하고 실제 Batch 4 owner/FSRS, quiz, SRS 검증을 별도 유지 | skip 사유 없는 원격 fixture 실패를 통과로 바꾸지 않음 |
+| `INC-QA-019` | 실제 Chrome이 `/audio-qa`에서 `/welcome`으로 이동해 음성 버튼을 검증할 수 없음 | 수동 음성 QA가 JLPT track 인증 route 안에 있었음 | 계정·쓰기·개인 데이터가 없는 `/audio-qa`만 공개 진단 route로 분리하고 익명 양언어 E2E 추가 | 익명 QA가 양언어 호출, 오류 UI, R2/`/api/v1/audio/` 0건을 통과해야 함 |
 
 ## 현재 복구 검증 스냅샷
 
@@ -42,11 +46,15 @@
 | API unit | `8 files / 131 tests` | 통과 |
 | `pnpm build` | Web build와 Worker dry-run 종료 코드 `0` | 통과 |
 | fresh D1 재실행 | migration `0000–0027`, seed, FK/FTS, release contract/control-plane 완료 | 통과 |
-| Chromium·WebKit 기능 E2E | `128 passed / 2 skipped`, 종료 코드 `0` | 통과 |
-| 현재 checkout commit | `.git` 쓰기 복구; 원자적 commit 진행 중 | 진행 중 |
+| 전체 Chromium·WebKit·모바일·시각 E2E | `171 passed / 32 skipped / 0 failed`, 종료 코드 `0` | 통과 |
+| 익명 음성 QA 포함 영향 E2E | `14/14`, 종료 코드 `0` | 통과 |
+| 현재 checkout commit | `a427af8c963660d9ebfdbec8c7cacf5e9858f749`을 원격 branch에 push; QA route 후속 commit 전 | 진행 중 |
 | GitHub/Cloudflare 연결 | remote·DNS·OAuth 인증 확인 | 통과 |
 | GitHub Actions | repository `enabled=false`; 자동 push/PR trigger 제거 | 비활성화 |
-| Preview/Production | deployment ID 없음 | **미배포** |
+| Preview Worker | `48b49518-f374-4c59-a652-f73d136689f3`, `/health` 200, release SHA `a427af8...`, Worker smoke `21/21` | 통과 |
+| Preview Pages | 유효 deployment `7de4c852-82c1-4c24-a787-e504174702ea`; auth/API proxy 200 | 통과 |
+| Preview 기능 E2E | Chromium·WebKit `32 passed / 8 skipped / 0 failed`; skip은 로컬 fixture·환경 제한 | 통과 |
+| Production | 기존 회귀 Pages 유지 | **미배포** |
 
 ## 강제 릴리스 gate
 
