@@ -1,94 +1,14 @@
-name: Local verification
+name: Disabled local verification workflow
 
-# Repository Actions are disabled. This file is retained only as an explicit
-# manual recovery recipe and must never trigger from push or pull requests.
+# CI/CD 실행은 프로젝트 정책상 금지입니다.
+# GitHub Actions는 형상관리 보조 수단으로만 사용하고, 실제 검증/배포 게이트는
+# 로컬 터미널 + docs 원장(아래 MD 파일들)에서만 운영합니다.
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-concurrency:
-  group: local-verification-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  verification:
-    name: API, web, DB, build, and documentation
+  disabled:
     runs-on: ubuntu-latest
+    if: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm docs:check
-      - run: pnpm verify:ci
-
-  e2e:
-    name: E2E (${{ matrix.project }})
-    needs: verification
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project: [chromium, webkit]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir e2e exec playwright install --with-deps ${{ matrix.project }}
-      # The macOS and Linux screenshot baselines are intentionally distinct.
-      # Functional E2E remains a required cross-browser gate; the Linux visual
-      # comparison below publishes its expected/actual/diff images for review.
-      - run: pnpm --dir e2e exec playwright test --project=${{ matrix.project }} --grep-invert="핵심 화면 시각 회귀"
-      - name: Upload Playwright artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-${{ matrix.project }}
-          path: |
-            e2e/playwright-report
-            e2e/test-results
-          if-no-files-found: ignore
-          retention-days: 14
-
-  visual-baseline-observer:
-    name: Linux visual baseline observer
-    needs: verification
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir e2e exec playwright install --with-deps chromium
-      - name: Compare the committed Linux visual baseline
-        id: visual-baseline
-        continue-on-error: true
-        run: pnpm --dir e2e exec playwright test visual-regression.spec.ts --project=chromium
-      - name: Upload Linux visual comparison artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-visual-linux
-          path: |
-            e2e/playwright-report
-            e2e/test-results
-          if-no-files-found: ignore
-          retention-days: 14
+      - run: echo "CI/CD intentionally disabled for JLPT/TOPIK."

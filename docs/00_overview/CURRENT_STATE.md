@@ -6,7 +6,9 @@
 
 현재 오류와 배포 차단 조건의 단일 원장은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)입니다. 미실행·인프라 실패·mock 결과는 통과로 간주하지 않습니다.
 
-GitHub는 공개 원격 commit·branch·tag 보관에만 사용하며 저장소 Actions는 비활성화했습니다. 자동 CI/CD 대신 로컬 검증 종료 코드와 Cloudflare deployment ID를 [로컬 형상관리·릴리스 원장](LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)에 기록합니다.
+GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용합니다. 저장소 Actions는 실행이 차단된 상태로 운영하며, 자동 CI/CD 대신 로컬 검증 종료 코드와 Cloudflare deployment ID를 [로컬 형상관리·릴리스 원장](LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)에 기록합니다.
+
+CI/CD 비사용 운영 기준은 [Git 무료 모드 운영 매뉴얼](GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md)에 정리했습니다.
 
 ## 상태 요약
 

@@ -8,9 +8,9 @@
 
 - 저장소: 공개 `kordokrip/JLPT`
 - 용도: commit, branch, tag와 원격 백업
-- GitHub Actions: 저장소 수준 `enabled=false`
+- GitHub Actions: 정책상 실행 금지 (`workflow_dispatch`는 문서 보관용 비상 호출만 허용)
 - 자동 CI/CD, Actions artifact/cache, Actions 기반 Cloudflare 배포: 사용하지 않음
-- `.github/workflows/ci.yml`: 자동 trigger를 제거하고 `workflow_dispatch`만 남긴 비상용 절차. 저장소 Actions가 비활성화되어 현재 실행되지 않음
+- `.github/workflows/ci.yml`: 실행 job을 `if: false`로 잠궜고, 배포·검증의 실질 근거는 로컬 MD 원장 사용
 - Cloudflare 배포와 검증: 승인된 로컬 터미널에서만 실행
 
 공개 저장소의 표준 GitHub-hosted runner는 공식 정책상 무료지만, 이 프로젝트는 형상관리와 릴리스 판정을 분리하기 위해 사용하지 않는다. GitHub 상태 badge나 workflow 결과를 릴리스 통과 증거로 사용하지 않는다.
@@ -24,6 +24,13 @@
 5. 원격에는 검증된 commit과 명시적 tag만 push한다. 강제 push는 금지한다.
 6. release tag는 `release/YYYY-MM-DD/<scope>` 형식을 사용한다.
 7. 비밀값, `.env*`, D1 backup 원문, 실제 사용자 데이터와 Wrangler 인증 정보는 Git과 이 문서에 기록하지 않는다.
+
+### GitHub 무료 계정 사용 원칙 (현재 운영 모드)
+
+- 원격 Git은 최소 범위만 사용한다: **commit, branch, tag** 생성 및 `push` 동기화.
+- PR, PR 기반 자동 검증, Actions 배포/배포 게이트는 사용하지 않는다.
+- 로컬 형상기록이 최우선이다. 모든 release gate 결과(로그, 증거 경로, 배포 ID, rollback target)는 반드시 아래 항목에 md로 즉시 기록한다.
+- Git 장애/권한 이슈가 있어 remote 반영이 지연되면, 로컬 원장에 `remote_sync_status: failed`로 남기고, 네트워크 복구 후 동일 SHA 기준으로 재동기화한다.
 
 ## 로컬 검증 순서
 
@@ -56,6 +63,12 @@ pnpm docs:check
 | Pages | 이전 production deployment, Preview deployment, 새 production deployment |
 | smoke | Worker, auth proxy, Pages, remote DB/FK/FTS 결과 |
 | status | draft, preview, published, rolled_back 중 하나 |
+
+### 운영 설정 갱신(로컬-only SCM)
+
+- SHA: `2fb05b321c33c8bd885703393ef82785c2012052`
+- 범위: `.github/workflows/ci.yml` 실행 비활성화, CI/CD 회피 문서 추가
+- 적용 내용: GitHub Actions 실질 게이트 배제 및 `GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md` 원칙 반영
 
 ## 2026-08-23 음성 복구 릴리스
 

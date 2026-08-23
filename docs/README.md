@@ -9,6 +9,7 @@
 | 현재 구현, 데이터 모델, 운영 명령 | [현재 상태](00_overview/CURRENT_STATE.md) |
 | 현재 오류, 잘못된 판정, 강제 배포 차단 gate | [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md) |
 | GitHub 무료 원격 범위와 로컬 commit·release·rollback 원장 | [로컬 형상관리·릴리스 원장](00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md) |
+| CI/CD 비사용 운영 프로토콜(로컬 우선) | [Git 무료 모드 운영 매뉴얼](00_overview/GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md) |
 | 2026-08-23 TOPIK 음성 장애와 수정 검증 | [TOPIK Google 한국어 음성 장애 기록](00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md) |
 | 2026-08-23 N2/N1·TOPIK Batch 6 Preview 릴리스 | [다음 콘텐츠 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md) |
 | 콘텐츠 수와 원본-시드 대응 | [콘텐츠 감사](00_overview/CONTENT_AUDIT.md) |
