@@ -35,7 +35,7 @@
 - TOPIK owner Batch 6: 3–6급 각 10개, 총 40항목 구현 완료
 - 두 독립 reviewer 160/160 승인, validator 통과, Preview quality link `60/60/40`
 - Preview 기준 TOPIK owner 전 급수 30개·급수/영역별 6개
-- Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`, 원격 smoke 21/21, Chromium/WebKit 각 14/14
+- Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`, 원격 smoke 21/21, Chromium/WebKit 각 14/14
 - 실제 Chrome `speechSynthesis=false`, Google 한국어·일본어 voice 0개로 Production 차단
 
 이번 첫 증량은 확정 정책에 따라 `50/10/5` 미달과 무관하게 품질 gate로 준비했습니다. 그러나 실제 Chrome Google 음성 gate는 별도 필수 조건이므로 Production은 아직 기존 기준선을 유지합니다.

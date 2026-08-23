@@ -37,7 +37,8 @@ N2/N1은 모드별 난이도 1–5를 각 3문항으로 배치했고 급수 전�
 - Preview 기존 기준선 누락을 canonical seed로 보강한 뒤 TOPIK owner 전 급수 30개·급수/영역별 6개 확인
 - Preview TOPIK practice v2 300 audit ledger를 내용 변경 없이 복구하고 verifier 통과
 - Preview question quality 332개, 실패 0; R2 pronunciation 참조 0; FK 0
-- Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`, smoke 21/21
+- Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`, smoke 21/21
+- 직전 Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`은 Worker rollback 대상으로 기록했습니다.
 - 현재 UI와 Preview Worker/D1 조합 E2E: Chromium 14/14, WebKit 14/14
 - 로컬 전수 영향 E2E: Chromium 17/17, WebKit 17/17
 

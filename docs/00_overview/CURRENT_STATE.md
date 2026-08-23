@@ -75,7 +75,8 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 - Preview 기준 TOPIK owner는 1–6급 각각 30개, 급수·영역별 6개입니다.
 - Preview의 release-quality link `60/60/40`, G0–G4 `5/5/5`, release job `6/6/6`, FK 0, idempotent reseed를 확인했습니다.
 - 실제 Batch 6 item으로 `완료 → progress → FSRS card → review log → activity event`를 원격 Preview에서 대조했습니다.
-- Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`; Pages는 UI 변경이 없어 재배포하지 않았습니다.
+- Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`; Pages는 UI 변경이 없어 재배포하지 않았습니다.
+- 직전 Preview Worker `0de3eaeb-b44c-4eda-b333-e75c639e39a1`은 rollback 대상으로 보존했습니다.
 
 상세 증적은 [2026-08-23 다음 콘텐츠 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.
 
