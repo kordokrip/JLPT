@@ -173,8 +173,8 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 
 - JLPT 공용 음성과 TOPIK 한국어 음성의 첫 클릭에서 비동기 voice 대기를 제거하고 즉시 `speak()`를 호출합니다.
 - 음성 시작 신호가 8초 안에 없으면 실패로 종료해 무한 대기를 막습니다.
-- PWA service worker는 즉시 update를 확인하고 `speech-2026-08-24` marker가 없는 기존 client만 1회 reload합니다.
-- 로컬 unit은 Web `91/91`, 영향 E2E는 Chromium/WebKit `40 passed / 2 skipped`, 전체 E2E는 `171 passed / 32 skipped`입니다.
+- PWA service worker는 즉시 update를 확인하고, 배포 전부터 기존 worker가 제어하던 client만 `controllerchange` 때 1회 reload합니다. 첫 방문자는 초기 설치 때 reload하지 않습니다.
+- 1차 Preview `efbc8db5`에서 신규 client까지 강제 reload한 결함을 발견해 Production을 중단하고 위 계약으로 수정했습니다. 수정 뒤 Web `93/93`, 영향 E2E Chromium/WebKit `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 재검증했습니다.
 - 현재 Production 실제 Chrome에서는 양 언어 버튼의 `재생 중 → 정상 종료` lifecycle과 console error 0건을 확인했습니다. 물리 가청은 자동 증거로 기록하지 않으며 최종 SHA 배포 뒤 다시 확인합니다.
 - 이 변경은 D1 schema/data와 Worker를 변경하지 않는 Pages 전용 복구입니다. 신규 deployment ID는 배포 후 아래 원장과 함께 기록합니다.
 - Production D1 checksum backup을 만들고 임시 로컬 D1에 `65` regular tables를 복원해 행 수·FTS·FK를 대조했습니다. 첫 drill에서 발견한 output buffer와 immutable trigger replay 문제는 restore 도구에서 수정하고 재실행해 통과했습니다.

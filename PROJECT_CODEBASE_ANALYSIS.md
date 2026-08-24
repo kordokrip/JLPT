@@ -79,7 +79,7 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 
 ## 검증 상태와 다음 관찰
 
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, PWA 1회 client 갱신과 R2 요청 0건을 회귀 계약으로 고정합니다. Ops `18/18`, DB `112/112`, Web `91/91`, API `131/131`, fresh D1, Chromium/WebKit 영향 E2E `40 passed / 2 skipped`, 데스크톱·모바일·시각 전체 E2E `171 passed / 32 skipped`를 종료 코드 0으로 재실행했습니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, 기존 controller가 있는 PWA만 1회 갱신, 첫 방문자 무중단과 R2 요청 0건을 회귀 계약으로 고정합니다. 첫 Preview에서 신규 client 강제 reload를 발견해 Production을 중단했고, 수정 뒤 Web `93/93`, 영향 E2E `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 다시 통과했습니다.
 
 다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
 

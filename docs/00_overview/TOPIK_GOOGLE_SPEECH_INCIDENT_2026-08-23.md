@@ -30,7 +30,7 @@ Git 이력과 현재 코드를 대조했습니다.
 - 재생 전에 `speechSynthesis.resume()`을 호출하고, 재생 시간에 비례한 timeout을 둡니다.
 - `onstart`가 8초 안에 오지 않으면 시작 실패로 처리해 영구적인 `재생 중` 상태를 막습니다.
 - `played`는 실제 utterance `onend` 뒤에만 기록합니다. 부재는 `unavailable`, 예외·`onerror`·timeout은 `error`로 기록합니다.
-- 서비스 워커는 즉시 등록하고 online/visibility 때 update를 확인합니다. `speech-2026-08-24` 복구 marker가 없는 열린 client만 한 번 reload해 새 bundle로 전환하며, marker가 있으면 반복 reload하지 않습니다.
+- 서비스 워커는 즉시 등록하고 online/visibility 때 update를 확인합니다. 이미 이전 worker가 제어하던 PWA만 `controllerchange` 때 한 번 reload하며, 첫 방문자의 초기 설치는 reload하지 않습니다.
 - JLPT 발음·청해도 실패를 조용히 무시하지 않고 화면의 오류 상태로 표시합니다.
 - R2 발음 수집·생성·저장·조회·재생·fallback과 `/api/v1/audio/` 요청은 계속 0건이어야 합니다.
 - API의 `kind: "google"`, D1의 provider `google-browser`는 기존 클라이언트·데이터 호환을 위한 식별자입니다. 런타임 의미는 `Google 우선 same-language browser speech`이며 Google 이름 강제 조건이 아닙니다.
@@ -56,6 +56,8 @@ Git 이력과 현재 코드를 대조했습니다.
 - 전체 E2E는 데스크톱 Chromium·WebKit, 모바일, 시각 회귀를 포함해 `171 passed / 32 skipped / 0 failed`로 종료 코드 0을 확인했습니다. skip은 project 범위와 의도적으로 비활성화된 환경 fixture입니다.
 - 익명 `/audio-qa` 양언어 호출·오류 UI·R2 미사용을 포함한 영향 E2E는 Chromium·WebKit `14/14`를 통과했습니다.
 - 2026-08-24 수정 뒤 음성·퀴즈·복습·TOPIK owner 영향 E2E는 Chromium/WebKit `40 passed / 2 skipped / 0 failed`, 전체 데스크톱·모바일·시각 E2E는 `171 passed / 32 skipped / 0 failed`입니다. 최초 영향 E2E에서 2건이 이전의 “voice를 기다린 뒤 첫 재생” 계약을 기대해 실패했고, 제품 계약을 즉시 첫 재생으로 수정한 뒤 전체를 재실행해 종료 코드 0을 확인했습니다.
+- 첫 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`에서는 새 방문자도 강제 reload하는 PWA 복구 코드 때문에 browse/quiz 원격 검사가 중단됐습니다. Production에는 반영하지 않았고, 기존 controller가 있는 PWA만 갱신하도록 범위를 축소한 새 SHA/Preview에서 전부 재검증합니다.
+- 범위 축소 뒤 Web unit `34 files / 93 tests`, 음성·PWA·offline·퀴즈·복습·TOPIK owner Chromium/WebKit `50 passed / 2 skipped / 0 failed`, 전체 데스크톱·모바일·시각 `171 passed / 32 skipped / 0 failed`로 다시 통과했습니다.
 - 1차 Preview 실제 기능 세트는 Chromium·WebKit `32 passed / 8 skipped / 0 failed`입니다. skip은 격리 로컬 DB fixture와 환경 제한이며 실제 N1/N2, TOPIK Batch 4 owner→FSRS, 퀴즈, 청해, SRS는 실행됐습니다.
 
 ## 릴리스 증적
@@ -79,6 +81,6 @@ Git 이력과 현재 코드를 대조했습니다.
 - 원래 checkout의 `.git` 쓰기는 복구됐고 `a427af8...`을 원격 branch에 push했습니다. 익명 QA route를 포함한 최종 commit은 동일 gate 재검증 후 별도로 고정합니다.
 - 실제 Chrome에서 현재 Production `/audio-qa`의 일본어·한국어 버튼을 각각 눌렀지만 성공·실패 UI 변화가 없었고 페이지 문구도 회귀 배포의 `Google-only` 상태였습니다. 자동화 isolated world의 `speechSynthesis=false` 결과는 앱 main world의 기능 근거로 재사용하지 않습니다.
 - 동일 84개 복구 변경은 검증된 bundle/patch로도 `.artifacts/recovery/audio-2026-08-23/`에 보존했습니다. bundle은 비상 복구물이며 현재 원격 commit과 deployment ID가 공식 증적입니다.
-- 새 실행 환경의 로컬 재검증은 Ops `18/18`, DB `112/112`, Web `91/91`, API `131/131`, typecheck, build, OpenAPI, fresh D1을 종료 코드 0으로 통과했습니다. 전체 데스크톱·모바일·시각 E2E도 `171 passed / 32 skipped / 0 failed`로 통과했습니다.
+- 새 실행 환경의 로컬 재검증은 Ops `18/18`, DB `112/112`, Web `93/93`, API `131/131`, typecheck, build, OpenAPI, fresh D1을 종료 코드 0으로 통과했습니다. 전체 데스크톱·모바일·시각 E2E도 `171 passed / 32 skipped / 0 failed`로 통과했습니다.
 - Worker 배포 명령은 현재 clean HEAD와 동일한 40자 `RELEASE_SHA`를 필수로 받고 Wrangler CLI 변수로 주입하도록 교체했습니다. 운영 기준선 SHA가 새 코드의 관측 release로 잘못 재사용되면 업로드 전에 실패합니다.
 - 실제 Chrome 1차 접근은 인증 route 때문에 `/welcome`으로 이동했습니다. 이를 성공으로 기록하지 않고, 데이터·계정 의존성이 없는 QA route를 공개 진단 경로로 분리한 뒤 최종 Preview에서 다시 실행합니다.

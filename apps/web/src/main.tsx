@@ -7,6 +7,7 @@ import { initSync } from './lib/sync';
 import { flushActivityEvents } from './lib/activity-events';
 import { initDeviceProfile } from './lib/device-profile';
 import { audioPlayer } from './lib/audio';
+import { reloadWhenControlledServiceWorkerChanges } from './lib/pwa-update';
 import { db, setActiveLearningTrack } from './lib/db';
 import { useUiStore } from './stores/ui-store';
 import { useSettingsStore } from './stores/settings-store';
@@ -21,6 +22,9 @@ import './i18n'; // i18n 초기화 (앱 시작 전 로드)
 // ─────────────────────────────────────────────
 import i18n from './i18n';
 if (import.meta.env.VITE_PWA_DEV_SW !== 'false') {
+  if ('serviceWorker' in navigator) {
+    reloadWhenControlledServiceWorkerChanges(navigator.serviceWorker);
+  }
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {

@@ -97,8 +97,8 @@ pnpm docs:check
 | source commit/tag | gate 완료 후 고정 예정 |
 | 변경 범위 | Pages web만 변경; D1 schema/data와 Worker 변경 없음 |
 | 원인 | voice 준비 `await`로 사용자 활성화 소실 가능; 열린 설치형 PWA가 이전 JS 유지 |
-| local gates | OpenAPI `72/12`, Ops `18/18`, DB `112/112`, Web `91/91`, API `131/131`, typecheck/build/fresh D1/content/audio contract 종료 코드 `0` |
-| browser gates | 영향 Chromium/WebKit `40 passed / 2 skipped`; 전체 데스크톱·모바일·시각 `171 passed / 32 skipped`, 실패 `0` |
+| local gates | OpenAPI `72/12`, Ops `18/18`, DB `112/112`, Web `93/93`, API `131/131`, typecheck/build/fresh D1/content/audio contract 종료 코드 `0` |
+| browser gates | 음성·PWA 영향 Chromium/WebKit `50 passed / 2 skipped`; 전체 데스크톱·모바일·시각 `171 passed / 32 skipped`, 실패 `0` |
 | actual Chrome before deploy | 현재 Production 일본어·한국어 `재생 중 → 정상 종료`, console error `0`; 물리 가청은 자동 판정하지 않음 |
 | D1 safety | `.artifacts/d1-backups/audio-first-click-pwa-2026-08-24`; SHA-256 manifest와 `65` regular tables restore drill 통과 |
 | rollback Pages | `485b9f00-a8b1-4bbb-9001-a238651fb212`, source `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
@@ -106,6 +106,8 @@ pnpm docs:check
 | status | `draft` |
 
 배포 직전 source commit, 직전 Production Pages deployment, Preview와 새 Production deployment ID를 채운다. 배포 뒤 실제 Chrome lifecycle, 배포 asset, `/api/v1/audio/`와 R2 발음 요청 0건을 같은 행에 추가한다.
+
+1차 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`는 신규 client까지 강제 reload해 원격 browse/quiz를 중단시켰으므로 폐기했습니다. Production에는 반영하지 않았고 rollback은 필요하지 않았습니다. 후속 Preview는 기존 controller가 있는 PWA만 reload하는 수정 commit으로 새로 생성합니다.
 
 ## 오류·rollback 연결
 
