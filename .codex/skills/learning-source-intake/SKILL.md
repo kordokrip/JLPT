@@ -26,7 +26,7 @@ Record evidence, not source-derived exercises. Read [source-policy.md](reference
 - Write every learning question, passage, choice, answer, and explanation from scratch. Official JLPT/TOPIK questions, answers, passages, and audio are excluded even for personal use.
 - Treat the project registry as the candidate list; re-check the actual source terms at intake time. See `docs/00_overview/CONTENT_SOURCE_REGISTRY.md` in the repository.
 - Preserve a source's attribution and allowed-use statement in the intake artifact; do not publish the source body in it.
-- Pronunciation is browser Google speech only. Never put pronunciation audio, an R2 key, stored audio bytes, activation, or fallback metadata into an intake record.
+- Pronunciation is Google-preferred same-language browser speech; same-language installed voice fallback is allowed. Never put pronunciation audio, an R2 key, stored audio bytes, activation, or R2 fallback metadata into an intake record.
 
 ## Record format
 

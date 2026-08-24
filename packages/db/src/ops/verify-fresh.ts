@@ -26,6 +26,7 @@ fs.mkdirSync(artifacts, { recursive: true });
 function runWrangler(args: string[]): void {
   execFileSync('pnpm', ['--dir', 'packages/db', 'exec', 'wrangler', ...args], {
     cwd: REPO_ROOT,
+    env: { ...process.env, CI: 'true', WRANGLER_WRITE_LOGS: '0' },
     stdio: 'inherit',
   });
 }
@@ -86,6 +87,10 @@ runDbScript('src/seed/seed-topik-grade1-local-fixture.ts', [
 runDbScript('src/ops/verify-topik-grade1-local-fixture.ts', [
   '--local',
   `--persist-to=${persistTo}`, `--report=${topikFixtureReport}`,
+]);
+runDbScript('src/ops/verify-learning-audio-provenance.ts', [
+  '--local',
+  `--persist-to=${persistTo}`,
 ]);
 runDbScript('src/ops/verify-content-release-contract.ts', []);
 runDbScript('src/ops/verify-content-release-control-plane.ts', []);

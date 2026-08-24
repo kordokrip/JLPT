@@ -41,7 +41,7 @@ function applyMigrations(): void {
   execFileSync(
     'pnpm',
     ['exec', 'wrangler', 'd1', 'migrations', 'apply', target.database, '--local', '--persist-to', persistTo, '--config', target.config],
-    { cwd: REPO_ROOT, stdio: 'pipe' },
+    { cwd: REPO_ROOT, env: { ...process.env, CI: 'true', WRANGLER_WRITE_LOGS: '0' }, stdio: 'pipe' },
   );
 }
 

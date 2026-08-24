@@ -14,4 +14,4 @@ Every source needs its exact URL, licence ID and URL, attribution, allowed-use s
 
 ## Pronunciation
 
-Use browser Google speech only. R2 pronunciation storage, generation, playback, activation, and fallback are prohibited. R2 report and evidence buckets are unrelated and must not be changed by this workflow.
+Use Google-preferred same-language browser speech, with same-language installed voice fallback when Google is not enumerated. R2 pronunciation storage, generation, playback, activation, and fallback are prohibited. R2 report and evidence buckets are unrelated and must not be changed by this workflow.

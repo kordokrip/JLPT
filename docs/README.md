@@ -1,6 +1,6 @@
 # JLPT · TOPIK 문서
 
-기준일: 2026-08-23 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다.
+기준일: 2026-08-24 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다.
 
 ## 먼저 읽을 문서
 
@@ -8,6 +8,7 @@
 | --- | --- |
 | 현재 구현, 데이터 모델, 운영 명령 | [현재 상태](00_overview/CURRENT_STATE.md) |
 | 현재 오류, 잘못된 판정, 강제 배포 차단 gate | [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md) |
+| 운영 Sub Agent, 버그·리팩터링, 로컬 CI/CD와 Cloudflare 추적 | [운영관리 runbook](00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md) |
 | GitHub 무료 원격 범위와 로컬 commit·release·rollback 원장 | [로컬 형상관리·릴리스 원장](00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md) |
 | CI/CD 비사용 운영 프로토콜(로컬 우선) | [Git 무료 모드 운영 매뉴얼](00_overview/GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md) |
 | 2026-08-23 TOPIK 음성 장애와 수정 검증 | [TOPIK Google 한국어 음성 장애 기록](00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md) |
@@ -28,10 +29,16 @@
 ## 최소 검증
 
 ~~~sh
-pnpm verify:ci
+pnpm ops:verify
 pnpm -F @nihongo-n3/db content:next:quality
 pnpm -F @nihongo-n3/db verify:audio:provenance
-pnpm docs:check
+~~~
+
+운영 기준선 점검은 다음 명령을 사용합니다.
+
+~~~sh
+pnpm ops:status
+pnpm ops:status:remote
 ~~~
 
 학습 발음은 같은 언어의 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용한다. R2는 발음 저장·재생·fallback에 사용하지 않으며 report/evidence 버킷과 분리한다.

@@ -10,6 +10,8 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 
 CI/CD 비사용 운영 기준은 [Git 무료 모드 운영 매뉴얼](GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md)에 정리했습니다.
 
+운영·버그·리팩터링 추적은 루트 `AGENTS.md`, 프로젝트 스킬 `.codex/skills/project-operations-steward`, [운영관리 runbook](OPERATIONS_MANAGEMENT_RUNBOOK.md)을 단일 절차로 사용합니다. `pnpm ops:status`는 로컬 계약을, `pnpm ops:status:remote`는 Git·Cloudflare Production의 읽기 전용 상태를 JSON artifact로 기록합니다.
+
 ## 상태 요약
 
 | 구분 | Production 기준 |
@@ -185,7 +187,7 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 
 ## 다음 단계
 
-음성 복구 Pages 배포는 완료했습니다. 다음 실행은 실제 사용자 장치의 가청 확인과 speech telemetry를 사후 관찰하고, 현재 HEAD 문서 hash와 운영 콘텐츠 manifest를 source SHA에 고정해 검증하도록 verifier 인터페이스를 보강하는 것입니다. N2/N1/TOPIK 증량 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+음성 복구 Pages 배포는 완료했습니다. 다음 실행은 실제 사용자 장치의 가청 확인과 speech telemetry를 사후 관찰하고, 현재 HEAD 문서 hash와 운영 콘텐츠 manifest를 source SHA에 고정해 검증하도록 verifier 인터페이스를 보강하는 것입니다. 운영 작업은 먼저 `pnpm ops:status`, 구현 종료 후 `pnpm ops:verify`, 배포 전후 `pnpm ops:status:remote`로 증적을 남깁니다. N2/N1/TOPIK 증량 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 2026-08-23 저장소 정리
 
@@ -193,3 +195,11 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - TOPIK practice v2와 owner curriculum에 대체된 TOPIK I Preview 후보 전용 문서·JSON·seed·verifier·test를 제거했습니다.
 - 호출자가 없던 legacy R2 audio prefetch no-op과 그 전용 테스트를 제거했습니다. learner API의 `/api/v1/audio/*` 및 관리자 음성 생성 `410 Gone` 차단은 유지합니다.
 - 로컬 임시 `.m4a` 발음 파일과 Playwright 생성 보고서는 저장소 밖 휴지통으로 이동했습니다. source-of-truth 테스트와 release evidence는 보존했습니다.
+
+## 2026-08-24 운영관리 기준선
+
+- 전담 `project-operations-steward` Sub Agent 스킬과 루트 `AGENTS.md`를 추가해 모든 후속 작업이 현재 상태·오류 원장·runbook·릴리스 원장을 먼저 읽도록 고정했습니다.
+- 로컬 상태 명령 `pnpm ops:status`, 전체 로컬 gate `pnpm ops:verify`, 원격 읽기 전용 상태 명령 `pnpm ops:status:remote`를 추가했습니다.
+- 원격 상태 명령은 Git branch SHA, Production Pages deployment/source, Worker version, D1 migration, Pages/audio/auth/legacy smoke와 Production D1의 R2 발음 참조 0건을 확인합니다.
+- GitHub Actions는 계속 비활성 placeholder이고, 검증 결과는 `.artifacts/operations/ops-status-latest.json`과 history에 저장하되 Git에는 포함하지 않습니다.
+- Production backup, recovery, release, source-intake, quality evidence는 보존했습니다. 추적되지 않는 `.DS_Store` 3개, 내용 없는 legacy `apps/d1-backup` 의존성/cache, 검증 후 재생성 가능한 web `dist`와 Playwright report/test-results를 `/Users/sunghokang/.Trash/JLPT-cleanup-2026-08-24-ops`로 이동해 복구 가능하게 정리했습니다.

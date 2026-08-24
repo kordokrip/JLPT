@@ -1,16 +1,16 @@
 # 학습 콘텐츠·플랫폼 로드맵
 
-현재 음성 복구 및 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md)을 따릅니다. 오류 원장에 미확인 또는 실패 항목이 있으면 다음 콘텐츠·Production 배포보다 복구를 우선합니다.
+모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-기준일: 2026-08-23 KST. 현재 Production 기준선, Preview 완료 후보, 이후 관찰 순서를 구분합니다.
+기준일: 2026-08-24 KST. 현재 Production 기준선, Preview 완료 후보, 이후 관찰 순서를 구분합니다.
 
 ## Production 완료 기준선
 
 - D1 `nihongo-n3-prod-v2` migration `0000–0027`
 - Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`
-- Pages `https://1c3bba90.nihongo-n3.pages.dev` (음성 회귀가 포함된 현재 기준, rollback `7b0e9050-f36c-42a3-aab9-7d09f70df2af`)
-- web source SHA `595fcd735824116fff6047e9e59f1d6acd90cb46`; Worker/content SHA `3485c6ef8addda3cd3e209730646c296175cf3c9`
-- JLPT N2 Batch 1–5, N1 Batch 1–4, TOPIK owner Batch 1–4
+- Pages `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback `485b9f00-a8b1-4bbb-9001-a238651fb212`)
+- web source SHA `2bd657e96d8a43c6d28efe414acd468c1abd0861`; Worker/content SHA `3485c6ef8addda3cd3e209730646c296175cf3c9`
+- JLPT N2 Batch 1–5, N1 Batch 1–4, TOPIK owner Batch 1–5
 - TOPIK practice v2 300문항 공개, v1 28문항 보존·비공개
 - TOPIK v2 선택형 영역별 `15/15/15/15`, JLPT 정적 독해 정답 위치 편향 검사 통과
 - R2 발음 D1 참조 0건, Google 우선 동일 언어 브라우저 음성 사용
@@ -39,18 +39,18 @@
 - 두 독립 reviewer 160/160 승인, validator 통과, Preview quality link `60/60/40`
 - Preview 기준 TOPIK owner 전 급수 30개·급수/영역별 6개
 - Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`, 원격 smoke 21/21, Chromium/WebKit 각 14/14
-- 음성 회귀 원인은 Google 이름 강제로 같은 언어 기기 voice fallback을 제거한 코드이며 복구본 검증·배포를 최우선 처리
+- 음성 회귀 복구는 Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`에 완료했고 Production 영향 기능 Chromium/WebKit `44 passed / 8 skipped / 0 failed`를 확인
 
-이번 첫 증량은 확정 정책에 따라 `50/10/5` 미달과 무관하게 품질 gate로 준비했습니다. 음성 회귀 복구와 Production 검증이 끝날 때까지 Production은 기존 기준선을 유지합니다.
+이번 첫 증량은 확정 정책에 따라 `50/10/5` 미달과 무관하게 품질 gate로 준비했습니다. 다만 Preview의 과거 증적을 재사용하지 않고 현재 source의 production-predeploy, backup/restore와 source-pinned remote verifier를 새로 통과해야 합니다.
 
 ## 다음 실행 순서
 
-1. **7일 안정성 관찰** — activity accepted/duplicate, API error, speech outcome, published link 수를 확인합니다.
-2. **데이터 바인딩 표본 확인** — N3 정답→activity, TOPIK complete→progress/card/activity, review→FSRS/activity를 원격 데이터에서 대조합니다.
-3. **브라우저 회귀 유지** — Chromium/WebKit에서 strict-level weakest, 다음 행동, Google 우선 동일 언어 speech, `/api/v1/audio/` 0건을 재확인합니다.
-4. **실제 Chrome 음성 gate** — mock 없는 실제 Chrome에서 한국어·일본어 voice, 각 1건의 완료 재생, 사용자의 양 언어 가청 확인을 `release:verify:actual-audio`로 검증합니다. 자동 callback과 물리 가청 증거는 분리합니다.
-5. **음성 회귀 금지** — voice 이름에 `Google`이 없다는 이유로 같은 언어 기기 음성을 차단하는 변경을 금지하고 단위/E2E 회귀 테스트로 유지합니다.
-6. **조건부 Production 반영** — 음성 gate 통과 뒤 backup/restore drill, production-predeploy G4, D1 seed, 호환 Worker, postdeploy verifier를 수행합니다. UI 변경이 없으면 Pages는 유지합니다.
+1. **운영관리 기준선** — `project-operations-steward`가 작업 전후 local/remote status와 문서 drift를 기록합니다.
+2. **manifest verifier 보강** — `INC-DATA-024`를 해결하도록 immutable release SHA/manifest를 명시하는 remote 검증 인터페이스를 구현합니다.
+3. **7일 안정성 관찰** — activity accepted/duplicate, API error, speech outcome, published link 수를 확인합니다.
+4. **데이터 바인딩 표본 확인** — N3 정답→activity, TOPIK complete→progress/card/activity, review→FSRS/activity를 원격 데이터에서 대조합니다.
+5. **브라우저 회귀 유지** — Chromium/WebKit에서 strict-level weakest, 다음 행동, Google 우선 동일 언어 speech, `/api/v1/audio/` 0건을 재확인합니다.
+6. **조건부 콘텐츠 Production 반영** — 새 backup/restore drill, production-predeploy G4, D1 seed, 호환 Worker, source-pinned postdeploy verifier를 수행합니다. UI 변경이 없으면 Pages는 유지합니다.
 7. **D+1/D+7/D+30 관찰** — N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건을 재집계합니다. D+30 미달이면 Batch 7을 중단하고 진입 UX를 먼저 개선합니다.
 
 상세 증적, 중단 조건과 재개 순서는 [2026-08-23 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.

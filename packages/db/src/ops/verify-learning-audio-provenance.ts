@@ -29,7 +29,7 @@ const checks = [
          OR stored_audio_bytes_sha256 IS NOT NULL`,
   },
   {
-    name: 'TOPIK 1-6 spoken items have a stable ref and matching Google speech binding',
+    name: 'TOPIK 1-6 spoken items have a stable ref and matching ready or unavailable Google speech binding',
     sql: `SELECT count(*) AS count
       FROM topik_owner_authored_curriculum_items i
       WHERE i.target_grade BETWEEN 1 AND 6 AND i.audio_required = 1
@@ -43,7 +43,7 @@ const checks = [
             AND b.item_id = i.id
             AND b.language = 'ko'
             AND b.speech_role = CASE WHEN i.item_type = 'listening' THEN 'listening' ELSE 'pronunciation' END
-            AND b.provider = 'google-browser' AND b.binding_state = 'ready'
+            AND b.provider = 'google-browser' AND b.binding_state IN ('ready', 'unavailable')
         )`,
   },
   {

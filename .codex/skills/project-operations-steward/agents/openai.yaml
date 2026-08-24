@@ -1,0 +1,6 @@
+interface:
+  display_name: "JLPT Operations Steward"
+  short_description: "JLPT/TOPIK 운영 상태와 릴리스 증적 추적"
+  default_prompt: "Use $project-operations-steward to audit the current JLPT/TOPIK operating state and update its local release evidence."
+policy:
+  allow_implicit_invocation: true

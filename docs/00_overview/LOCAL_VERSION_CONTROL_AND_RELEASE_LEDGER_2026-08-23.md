@@ -70,7 +70,7 @@ pnpm docs:check
 - 범위: `.github/workflows/ci.yml` 실행 비활성화, CI/CD 회피 문서 추가
 - 적용 내용: GitHub Actions 실질 게이트 배제 및 `GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md` 원칙 반영
 
-## 2026-08-23 음성 복구 릴리스
+## 2026-08-23 음성 복구 1차 Preview — 2026-08-24 최종 릴리스로 대체
 
 | 항목 | 현재 값 |
 | --- | --- |
@@ -83,10 +83,10 @@ pnpm docs:check
 | browser gates | 전체 데스크톱·모바일·시각 E2E `171 passed / 32 skipped / 0 failed`; 익명 음성 QA 포함 영향 기능 `14/14`; 1차 Preview 실제 기능 `32 passed / 8 skipped / 0 failed` |
 | Preview Worker | `48b49518-f374-4c59-a652-f73d136689f3`, release `a427af8...`, smoke `21/21` |
 | Preview Pages | 유효 `7de4c852-82c1-4c24-a787-e504174702ea`; 잘못된 `367eb0f4-d336-4b63-8d3a-b073e7290ca8`은 Functions 누락으로 제외 |
-| Production | 아직 회귀 Pages 유지; 새 deployment ID 없음 |
-| status | `preview` |
+| Production | 당시 회귀 Pages 유지; 이 1차 단계에서는 미배포 |
+| status | `superseded`; 아래 2026-08-24 최종 릴리스 참조 |
 
-배포가 진행될 때 이 표를 실제 commit, Preview/Production deployment ID, 음성 증적과 rollback 대상으로 갱신한다. 빈 값이나 `미확인`을 성공으로 해석하지 않는다.
+이 표는 1차 Preview의 역사 기록입니다. 실제 Production 결과는 아래 2026-08-24 표가 현재 기준이며, 과거 빈 값이나 `미확인`을 성공으로 해석하지 않습니다.
 
 ## 2026-08-24 첫 클릭·PWA 추가 복구
 
@@ -113,6 +113,23 @@ pnpm docs:check
 Pages 복구 배포에는 D1/Worker write가 없었습니다. 현재 HEAD manifest drift를 없애려고 운영 D1을 재시드하지 않았고, 운영 콘텐츠 source에 고정한 verifier 결과와 HEAD drift를 함께 보존합니다.
 
 1차 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`는 신규 client까지 강제 reload해 원격 browse/quiz를 중단시켰으므로 폐기했습니다. Production에는 반영하지 않았고 rollback은 필요하지 않았습니다. 후속 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`에서 기존 controller가 있는 PWA만 reload하는 계약을 검증한 뒤 Production에 반영했습니다.
+
+## 2026-08-24 운영관리 기준선
+
+| 항목 | 값 |
+| --- | --- |
+| release | `operations-steward-baseline-2026-08-24` |
+| source branch/tag | `feature/topik-product-expansion`, `release/2026-08-24/operations-steward` |
+| pre-change synchronized HEAD | `951c19f70fbf1ef40a1b11fecdfd3387239cc51f` = origin |
+| 변경 범위 | `AGENTS.md`, `project-operations-steward` 스킬, 운영 runbook, status/verify 명령과 테스트, 현재 상태·분석·감사·로드맵·릴리스 문서 동기화 |
+| local status | `37 passed / 2 known warnings / 0 failed`; warning은 dirty worktree와 `INC-DATA-024` |
+| remote read-only | `47 passed / 2 known warnings / 0 failed`; Pages/Worker/D1 migration/HTTP·auth JSON/R2 참조 0 확인 |
+| full local gate | Ops `23/23`, DB `112/112`, Web `34 files / 93`, API `8 files / 131`, OpenAPI `72/12`, typecheck, build, fresh D1 `0000–0027`, 음성 provenance 6개, FK/FTS, content contract/control plane 모두 exit `0` |
+| local fresh manifest | `content-v3-d091a7c5a9a6f17d7078`; Production manifest `content-v3-d102868e3d43b9b3c1a4`와의 차이는 `INC-DATA-024`로 유지하며 Production을 재시드하지 않음 |
+| cleanup | `.DS_Store` 3개, source 없는 legacy `apps/d1-backup` dependency/cache, 검증 후 재생성 가능한 web `dist`·Playwright report/test-results를 `/Users/sunghokang/.Trash/JLPT-cleanup-2026-08-24-ops`로 이동; Production backup/recovery/release/intake/quality artifact 보존 |
+| Production | D1·Worker·Pages write/deploy 없음; 기존 `9cc58a1f` Pages와 Worker `6bbe4bbd` 유지 |
+| independent acceptance | 1차 검토의 Wrangler `--yes`, auth body, 음성 provenance, current-HEAD 원격 alias 지적을 모두 교정. 최종 독립 재감사에서 전체 gate, backup 65개 checksum, restore `passed=true`/FK 0, recovery patch·bundle checksum을 확인하고 commit 차단 결함 `0` 판정 |
+| status | 전체 local/remote gate와 독립 acceptance 완료; 이 기준선을 commit/tag/push로 형상 고정 |
 
 ## 오류·rollback 연결
 

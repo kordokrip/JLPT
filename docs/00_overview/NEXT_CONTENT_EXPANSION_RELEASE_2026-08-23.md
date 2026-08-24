@@ -1,6 +1,6 @@
 # N2/N1 문제은행·TOPIK Batch 6 릴리스 기록 — 2026-08-23
 
-상태: **구현·독립 리뷰·로컬·Preview 완료, Production 차단**.
+상태: **구현·독립 리뷰·로컬·Preview 완료. 음성 선행 장애는 해결됐으며, 새 production-predeploy·backup/restore·immutable manifest verifier 전까지 Production 대기**.
 
 ## 범위
 
@@ -50,11 +50,16 @@ N2/N1은 모드별 난이도 1–5를 각 3문항으로 배치했고 급수 전�
 
 ## Production 대기 사유
 
-이전 실제 Chrome 검사에서는 브라우저 제어 환경에 `speechSynthesis=false`가 표시됐습니다. 그러나 코드 이력을 재검토한 결과 직접 원인은 voice 제공 환경이 아니라 리팩터링에서 정상적인 같은 언어 기기 voice fallback을 제거한 회귀였습니다.
+음성 회귀는 source `2bd657e96d8a43c6d28efe414acd468c1abd0861`, Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`으로 복구했고 실제 Chrome 양언어 lifecycle과 Production 영향 기능을 통과했습니다. 따라서 음성 자체는 이 콘텐츠 후보의 현재 차단 사유가 아닙니다.
 
-복구본은 `Google 우선 → 같은 언어 기기 음성` 선택을 되살리고 한국어·일본어 모두 Google 이름이 없는 voice로 회귀 테스트했습니다. fixture나 합성 이벤트는 lifecycle/R2 미사용 증거로만 사용하고 물리 가청 증거로 사용하지 않습니다.
+남은 차단 조건은 다음과 같습니다.
 
-Production D1 backup/seed, Worker 배포, Pages 재배포는 아직 실행하지 않았습니다. 먼저 음성 복구 Pages를 Preview와 Production에서 검증한 뒤 production-predeploy gate를 새로 생성합니다. R2 발음과 `/api/v1/audio/` fallback은 금지합니다.
+- Preview 이후 코드·문서가 변경됐으므로 현재 source에서 local full gate와 production-predeploy G0–G4를 새로 생성해야 합니다.
+- Production D1 backup/restore drill과 직전 Worker/Pages rollback 대상을 다시 기록해야 합니다.
+- `INC-DATA-024` 때문에 current HEAD `verify:remote`를 그대로 성공 기준으로 사용할 수 없습니다. immutable content release SHA/manifest와 실제 seed run을 명시하는 verifier가 필요합니다.
+- 사용자 현재 세션의 명시적 Production 승인 전에는 D1 seed/Worker 배포를 실행하지 않습니다.
+
+R2 발음과 `/api/v1/audio/` fallback은 계속 금지합니다.
 
 ## 저장소 최신화
 

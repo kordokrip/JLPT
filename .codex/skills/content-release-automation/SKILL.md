@@ -10,7 +10,7 @@ Run releases as the **Release Steward** only after independent source intake, au
 ## Gate flow
 
 1. Collect passed source-intake, self-authorship, quality-validator, and two-reviewer artifacts from the earlier roles.
-2. Run the local gate: OpenAPI check, typecheck, tests, build, fresh D1, content contract, and Google-only audio provenance.
+2. Run the local gate: OpenAPI check, typecheck, tests, build, fresh D1, content contract, and Google-preferred same-language browser-speech provenance.
 3. Run the preview gate against the designated preview target and its verifier. Keep production unchanged if any preview check fails.
 4. Before production, create a D1 backup and run a restore drill. Record the previous Worker and Pages versions plus the backup location.
 5. Only with explicit current-session production authorization, apply the production migration/seed and then run remote verifier, R2-pronunciation-reference verifier, Worker smoke, auth-proxy smoke, and Pages smoke.
@@ -26,7 +26,7 @@ python3 .codex/skills/content-release-automation/scripts/check_release_gates.py 
 - Do not bypass a failed gate, weaken a test, or treat a generated draft as release-ready.
 - Do not run production writes or deploys merely because this skill is invoked. Require explicit current-session authorization and a passed `production-predeploy` report.
 - Use `verify:remote:audio:r2` only as a zero-reference guard. Never create, upload, reactivate, play, or fall back to R2 pronunciation objects.
-- Browser Google speech is the only pronunciation route. Report/evidence R2 buckets are out of scope and must not be deleted.
+- Google-preferred same-language browser speech is the only pronunciation route. A same-language installed voice fallback is allowed; server/R2 audio is not. Report/evidence R2 buckets are out of scope and must not be deleted.
 - If remote manifest, FK/FTS, audio guard, E2E, auth, or smoke checks fail, stop publication and restore the D1 backup and prior Worker/Pages versions recorded in the rollback plan.
 
 ## Project commands

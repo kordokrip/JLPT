@@ -147,7 +147,7 @@ export function auditQuestionRows(rows: readonly QualityQuestionRow[]): Question
         code: 'R2_PRONUNCIATION_REFERENCE',
         family: row.family,
         id: row.id,
-        details: { policy: 'google-only-pronunciation' },
+        details: { policy: 'google-preferred-same-language-browser-pronunciation-no-r2' },
       });
     }
 

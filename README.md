@@ -15,7 +15,7 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
 
-2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. Production 반영 전 음성 회귀를 우선 복구 중이며, 상세 상태와 재개 조건은 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 구조
 
@@ -50,16 +50,17 @@ CI=true pnpm install --frozen-lockfile
 pnpm dev:api
 pnpm dev:web
 
-pnpm verify:ci
-pnpm docs:check
+pnpm ops:verify
 pnpm -F @nihongo-n3/db question:quality
-pnpm -F @nihongo-n3/db content:contract:verify
-pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
+
+`ops:verify`의 fresh D1 단계는 음성 provenance, content contract/control plane까지 포함합니다. 운영 콘텐츠는 `INC-DATA-024`가 열린 동안 일반 `verify:remote:audio`로 판정하지 않고 immutable release source에 고정한 verifier와 별도의 `verify:remote:audio:r2` 차단 검사만 사용합니다.
 
 2026-08-24 추가 조사에서 TOPIK/JLPT 첫 클릭이 voice 준비 Promise를 기다리며 사용자 활성화를 잃는 문제와 설치형 PWA가 이전 JS를 계속 실행하는 문제를 확인했습니다. 복구본은 click task 안에서 즉시 `speak()`를 호출하고, voice는 background에서 준비하며, 배포 전부터 기존 worker가 제어하던 PWA만 controller 교체 때 한 번 갱신합니다. 첫 방문자는 reload하지 않습니다. 이 복구본은 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`을 거쳐 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에 배포됐습니다. 실제 Chrome에서 한국어·일본어 모두 `재생 중 → onend 정상 종료`, 경고·콘솔 오류 0건을 확인했으며, 물리 스피커 가청 여부는 자동 증거와 구분합니다. 성공은 실제 `onend` 이후에만 기록하고 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER_2026-08-23.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
+
+운영 감사, 버그·리팩터링 gate, 로컬 CI/CD와 Cloudflare 상태 추적은 [운영관리 runbook](./docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md)과 프로젝트 전담 `project-operations-steward` Sub Agent가 담당합니다. 작업 전후 `pnpm ops:status`, 전체 로컬 gate는 `pnpm ops:verify`, 원격 read-only 확인은 `pnpm ops:status:remote`를 사용합니다.
 
 GitHub는 공개 원격 형상 보관에만 사용하고 Actions 자동 실행은 비활성화했습니다. 로컬 검증, commit/tag, Cloudflare deployment와 rollback 기록은 [로컬 형상관리·릴리스 원장](./docs/00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)을 따릅니다.
 

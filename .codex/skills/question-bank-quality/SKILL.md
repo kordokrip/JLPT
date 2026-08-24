@@ -1,6 +1,6 @@
 ---
 name: question-bank-quality
-description: Audit self-authored JLPT and TOPIK question banks before seed or release. Use when validating choices, answers, translations, difficulty, provenance, independent review, duplicate items, answer-position balance, or Google-only pronunciation constraints.
+description: Audit self-authored JLPT and TOPIK question banks before seed or release. Use when validating choices, answers, translations, difficulty, provenance, independent review, duplicate items, answer-position balance, or browser-speech pronunciation constraints.
 ---
 
 # Question Bank Quality
@@ -29,7 +29,7 @@ Use this skill before a draft becomes seedable or publishable. Read [quality-con
 - For constructed-response questions require a multilingual rubric and two approvals; do not invent a multiple-choice answer index.
 - Use the report to catch mechanical properties. Semantic answer/explanation consistency is established by the independent reviewer attestations, not by a model guess.
 - Do not accept copied official-exam questions, source passages, answer keys, audio, or scraped banks.
-- Require browser Google speech or unavailable for pronunciation. R2 pronunciation keys, assets, generation, activation, playback, and fallback are invalid.
+- Require Google-preferred same-language browser speech. Same-language installed voice fallback is allowed; R2 pronunciation keys, assets, generation, activation, playback, and fallback are invalid.
 
 ## Data contract
 

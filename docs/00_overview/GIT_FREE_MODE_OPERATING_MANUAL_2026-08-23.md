@@ -1,6 +1,6 @@
 # Git 무료 계정 운영 모드 — 2026-08-23
 
-기준일: 2026-08-23 KST  
+기준일: 2026-08-24 KST
 목적: GitHub 유료/CI/CD 자동화를 쓰지 않고도 복구·배포 트래킹을 끊김 없이 운영한다.
 
 ## 핵심 원칙
@@ -41,10 +41,11 @@
 
 ## 최소 실행 루틴 (CI/CD 대체)
 
-- `pnpm verify:ci`
-- `pnpm docs:check`
-- `pnpm -F @nihongo-n3/db question:quality`
-- `pnpm -F @nihongo-n3/db content:contract:verify`
-- `pnpm -F @nihongo-n3/db content:control-plane:verify`
+- 시작·종료 상태: `pnpm ops:status`
+- 전체 로컬 gate: `pnpm ops:verify`
+- 원격 읽기 전용 기준선: `pnpm ops:status:remote`
+- 콘텐츠 변경 추가 gate: `pnpm -F @nihongo-n3/db question:quality`
 - Chromium/WebKit E2E 핵심군
 - `scripts/r1-preview-smoke.mjs` 또는 `release:verify:audio-predeploy` 결과를 증적에 첨부
+
+세부 절차와 담당 Sub Agent 계약은 [운영관리 runbook](OPERATIONS_MANAGEMENT_RUNBOOK.md), 루트 `AGENTS.md`, `.codex/skills/project-operations-steward`를 따른다. 상태 JSON은 `.artifacts/operations/`에 보존하며 비밀·사용자 데이터·artifact 원문은 원격 Git에 올리지 않는다.

@@ -37,7 +37,7 @@ const rows = querySql<CountRow>(target, `
 
 const total = rows.reduce((sum, row) => sum + Number(row.count), 0);
 const report = {
-  policy: 'google-only-pronunciation',
+  policy: 'google-preferred-same-language-browser-pronunciation-no-r2',
   target: { database: target.database, remote: target.remote },
   references: rows.map((row) => ({ source: row.source, count: Number(row.count) })),
   total,

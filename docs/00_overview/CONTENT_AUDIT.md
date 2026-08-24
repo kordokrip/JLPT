@@ -1,6 +1,6 @@
 # 콘텐츠·출처 현재 감사
 
-기준일: 2026-08-23 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
+기준일: 2026-08-24 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
 
 ## Production 콘텐츠 감사
 
@@ -47,7 +47,7 @@ TOPIK Batch 5는 선택형 16개와 쓰기 4개입니다. listening 4개만 `aud
 - Reviewer A/B는 서로 결과를 공유하지 않고 최종 160개에 대해 모두 승인했습니다.
 - Preview TOPIK owner는 각 급수 30개, 급수·영역별 6개이며 Batch 6 listening 8개만 Google binding을 가집니다.
 - 실제 Batch 6 완료/FSRS transaction과 activity event 연결을 확인했습니다.
-- 실제 Chrome 음성 gate 실패 때문에 이 160개는 Production 콘텐츠 수량에 포함하지 않습니다.
+- 음성 회귀는 2026-08-24 Production Pages에서 복구됐지만 이 160개는 아직 별도 Production D1/Worker release를 거치지 않았으므로 Production 콘텐츠 수량에 포함하지 않습니다.
 
 ## Provenance와 release 감사
 

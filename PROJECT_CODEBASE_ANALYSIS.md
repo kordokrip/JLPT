@@ -29,6 +29,7 @@ packages/shared DTO·FSRS ── apps/api Worker
 | `packages/shared` | 요청/응답 Zod schema, activity event 타입, FSRS 계산 |
 | `packages/db` | D1 schema/migration, source/seed plan, release gate, verifier |
 | `e2e` | 브라우저별 데이터 바인딩·학습 흐름·R2 요청 차단 검증 |
+| 운영 제어 | `AGENTS.md`, `.codex/skills/project-operations-steward`, `scripts/project-ops-status.mjs`, 운영 runbook과 로컬 원장 |
 
 ## Production 데이터 모델
 
@@ -88,3 +89,13 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 - Batch 6 Production 반영 뒤 실제 사용량이 N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건에 도달해야 Batch 7을 판단할 수 있습니다. D+30 미달이면 추가 증량보다 진입 UX를 우선합니다.
 
 현재 운영 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md), 후보 배포 재개 순서는 [NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)를 따릅니다.
+
+## 운영관리와 로컬 CI/CD 대체 계층
+
+모든 에이전트는 루트 `AGENTS.md`의 선독 순서와 `.codex/skills/project-operations-steward` 계약을 따릅니다. 운영 상태의 진실 우선순위는 현재 실행/원격 읽기 결과 → 코드·schema·test → `CURRENT_STATE` → 오류·릴리스 원장 → 과거 계획입니다.
+
+- `pnpm ops:status`: 필수 문서, 현재 배포 식별자 5개가 README와 분석 문서 각각에 있는지, package scripts, Actions 비활성, 보존해야 할 로컬 backup/release/recovery 증적, 문서 링크, 음성 계약, Git 상태와 알려진 manifest drift를 확인합니다.
+- `pnpm ops:verify`: 상태 검사 뒤 OpenAPI, typecheck, 전체 unit, build, fresh D1을 순서대로 실행합니다. fresh D1은 음성 provenance와 content contract/control plane을 포함합니다.
+- `pnpm ops:status:remote`: local/origin SHA, Production Pages·Worker·D1 migration, public/audio QA/legacy smoke, auth proxy의 JSON content-type과 `google_enabled=true`, `auth_mode=app-session`, D1 R2 발음 참조 0건을 읽기 전용으로 확인합니다.
+- `verify:remote:audio`는 `INC-DATA-024`가 열린 동안 fail-closed입니다. 운영 콘텐츠는 immutable release source/manifest verifier로만 판정하고 R2 부재는 target이 명시된 `verify:remote:audio:r2`로 별도 확인합니다.
+- 결과 JSON은 `.artifacts/operations/`에 보존하고 Git에 커밋하지 않습니다. Production write/deploy는 이 계층의 자동 동작이 아니며 기존 승인·Preview·backup/restore·rollback 절차를 요구합니다.

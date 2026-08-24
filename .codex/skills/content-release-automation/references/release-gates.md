@@ -6,11 +6,11 @@ Run `pnpm openapi:check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm -F 
 
 ## Preview
 
-Use the dedicated preview D1 target only. Apply migrations to `nihongo-n3-topik-preview`, then run `topik:practice:seed:preview` with `ALLOW_TOPIK_PREVIEW_CHANGE=topik-practice-v2-seed`; run `topik:practice:verify` and `audit-question-bank-quality` against that preview target and capture their reports. Do not substitute production as preview.
+Use the dedicated Preview D1 and release profile for the content being shipped. Do not substitute Production as Preview. The `topik:practice:seed:preview` and `ALLOW_TOPIK_PREVIEW_CHANGE=topik-practice-v2-seed` commands apply only to the historical TOPIK practice v2 profile; N2/N1 practice and TOPIK owner batches must use their own release seed, quality requirements, G0–G4 and verifier. Capture the exact profile, database, release IDs and reports.
 
 ## Production
 
-Require explicit current-session authorization. First inspect migration ledger and manifest; then run `d1:backup` and `d1:restore-drill`. Apply remote migrations with their required production guard, seed remotely with its required guard, then run `verify:remote`, `verify:remote:audio:r2`, migration-ledger verification, `ops:observe -- --smoke-only`, and `ops:verify-auth-proxy`.
+Require explicit current-session authorization. First inspect migration ledger and immutable release manifest; then run `d1:backup` and `d1:restore-drill`. Apply remote migrations with their required production guard, seed remotely with its required guard, then run the verifier pinned to that release source/manifest, `verify:remote:audio:r2`, migration-ledger verification, `ops:observe -- --smoke-only`, and `ops:verify-auth-proxy`. Until `INC-DATA-024` is resolved, do not use a current-HEAD manifest comparison as Production proof for a Pages-only release.
 
 Deploy the Worker and Pages only after these pre-deploy gates pass. Re-run remote verifier and smoke checks after deployment.
 
@@ -20,4 +20,4 @@ Before any production write, record the D1 backup path, previous Worker version,
 
 ## Audio policy
 
-`verify:remote:audio:r2` must report zero D1-referenced pronunciation keys. It is a blocklist verifier, not an instruction to use R2. Google browser speech is the sole pronunciation provider.
+`verify:remote:audio:r2` must report zero D1-referenced pronunciation keys. It is a blocklist verifier, not an instruction to use R2. Pronunciation uses Google-preferred same-language browser speech, with same-language installed voice fallback when Google is not enumerated.
