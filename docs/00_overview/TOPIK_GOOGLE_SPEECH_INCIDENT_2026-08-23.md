@@ -1,6 +1,6 @@
 # JLPT·TOPIK 브라우저 음성 회귀 기록 — 2026-08-23
 
-상태: **2026-08-24 추가 원인까지 복구하고 전체 로컬 검증 완료. 최종 SHA Preview·Production 배포와 사후 실제 Chrome 검증 전이다.**
+상태: **2026-08-24 추가 원인까지 복구하고 source `2bd657e...`를 Preview와 Production에 배포했다. 로컬 전체 검증, Production Chromium/WebKit 영향 기능, 실제 Chrome 한국어·일본어 lifecycle을 통과했다. 물리 스피커 가청 여부는 자동 증거와 구분한다.**
 
 현재 오류 전체 목록과 강제 차단 조건은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)을 단일 기준으로 사용합니다.
 
@@ -58,29 +58,24 @@ Git 이력과 현재 코드를 대조했습니다.
 - 2026-08-24 수정 뒤 음성·퀴즈·복습·TOPIK owner 영향 E2E는 Chromium/WebKit `40 passed / 2 skipped / 0 failed`, 전체 데스크톱·모바일·시각 E2E는 `171 passed / 32 skipped / 0 failed`입니다. 최초 영향 E2E에서 2건이 이전의 “voice를 기다린 뒤 첫 재생” 계약을 기대해 실패했고, 제품 계약을 즉시 첫 재생으로 수정한 뒤 전체를 재실행해 종료 코드 0을 확인했습니다.
 - 첫 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`에서는 새 방문자도 강제 reload하는 PWA 복구 코드 때문에 browse/quiz 원격 검사가 중단됐습니다. Production에는 반영하지 않았고, 기존 controller가 있는 PWA만 갱신하도록 범위를 축소한 새 SHA/Preview에서 전부 재검증합니다.
 - 범위 축소 뒤 Web unit `34 files / 93 tests`, 음성·PWA·offline·퀴즈·복습·TOPIK owner Chromium/WebKit `50 passed / 2 skipped / 0 failed`, 전체 데스크톱·모바일·시각 `171 passed / 32 skipped / 0 failed`로 다시 통과했습니다.
-- 1차 Preview 실제 기능 세트는 Chromium·WebKit `32 passed / 8 skipped / 0 failed`입니다. skip은 격리 로컬 DB fixture와 환경 제한이며 실제 N1/N2, TOPIK Batch 4 owner→FSRS, 퀴즈, 청해, SRS는 실행됐습니다.
+- 최종 Preview 실제 기능 세트는 최초 `33 passed / 8 skipped / 1 failed`였습니다. 실패 1건은 Chromium N2 browse의 synthetic registration/home readiness timeout이었고 같은 단일 검사를 즉시 재실행해 통과했습니다. skip은 격리 로컬 DB fixture와 환경 제한입니다.
+- Production에서는 음성 단독 Chromium/WebKit `2/2`, JLPT N1/N2·퀴즈·청해·SRS·TOPIK owner→FSRS·PWA·offline 영향 기능 `44 passed / 8 skipped / 0 failed`를 통과했습니다.
 
 ## 릴리스 증적
 
-- 잘못 배포된 Pages: `1c3bba90-8990-472b-8bf2-12a08759597f`.
-- 현재 배포 전 기준선 Pages: `485b9f00-a8b1-4bbb-9001-a238651fb212`, source `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`. 형상관리 문서 변경만 추가돼 음성 runtime은 `1c3bba90` 계열과 같습니다.
-- 이전 rollback Pages: `7b0e9050-f36c-42a3-aab9-7d09f70df2af`.
-- D1 migration/seed와 Worker는 이 음성 복구에서 변경하지 않습니다.
-- 1차 Preview Worker: `48b49518-f374-4c59-a652-f73d136689f3`, release `a427af8c963660d9ebfdbec8c7cacf5e9858f749`, Worker smoke `21/21`.
-- 유효한 1차 Preview Pages: `7de4c852-82c1-4c24-a787-e504174702ea`. `apps/web` cwd에서 Functions bundle을 포함했으며 auth/API proxy를 확인했습니다.
-- 잘못된 첫 Pages `367eb0f4-d336-4b63-8d3a-b073e7290ca8`은 Functions가 빠져 릴리스 증적에서 제외합니다.
-- 최종 SHA Preview/Production deployment ID, 실제 Chrome callback과 사용자 가청 결과는 확인 후 추가합니다. 확인되지 않은 항목은 `완료`로 기록하지 않습니다.
+- 복구 source commit: `2bd657e96d8a43c6d28efe414acd468c1abd0861` (`feature/topik-product-expansion`, 원격 push 완료).
+- 폐기한 Preview: `efbc8db5-f9fd-444d-8d27-d433372002aa`. 첫 방문자 강제 reload를 발견해 Production에 반영하지 않았습니다.
+- 최종 Preview: `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0` (`https://d53c3b4f.nihongo-n3.pages.dev`).
+- Production: `9cc58a1f-4772-4129-b90d-c819ca20d700` (`https://9cc58a1f.nihongo-n3.pages.dev`, canonical `https://nihongo-n3.pages.dev`).
+- rollback Pages: `485b9f00-a8b1-4bbb-9001-a238651fb212`.
+- Production asset: `assets/index-DprkUCgI.js`; `/audio-qa`와 auth proxy `200`, legacy `/api/v1/audio/test` `410`.
+- 실제 Chrome Production `/audio-qa`: 일본어·한국어 모두 클릭 0.3초·2.8초 뒤 `재생 중`, 이후 `onend` 정상 종료, alert `0`, console error `0`.
+- 원격 R2 발음 참조는 vocab/kanji/sentences/reading/audio log 합계 `0`입니다.
+- D1 migration/seed와 Worker는 이 Pages 전용 복구에서 변경하지 않았습니다. Worker는 `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`를 유지합니다.
+- Production D1은 실제 콘텐츠 source `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4`, 운영 seed run에 고정한 remote verifier `280/280`을 통과했습니다.
 
-2026-08-24 배포 전 실제 Chrome에서 현재 Production `485b9f00`의 `/audio-qa` 일본어·한국어 버튼은 각각 `재생 중`으로 전환된 뒤 정상 종료됐고 console error는 없었습니다. 이는 페이지 lifecycle 확인이며 물리 스피커 가청 여부를 자동으로 증명하지 않습니다. 최종 SHA 배포 뒤 같은 검사를 다시 수행합니다.
+## 사후 확인과 남은 공개 항목
 
-### 현재 남은 배포 gate
-
-- 이전 격리 터미널의 GitHub·Cloudflare DNS 실패는 현재 실행 환경에서 해소됐고 remote·DNS·Cloudflare OAuth 인증을 다시 확인했습니다.
-- Cloudflare Dashboard 대신 Wrangler와 실제 배포 URL에서 version, release header, proxy와 smoke를 검증합니다.
-- 복구본 1차 Preview는 배포됐지만 Production Pages는 잘못 배포된 기준선을 유지합니다. Preview 결과를 Production 완료로 보고하지 않습니다.
-- 원래 checkout의 `.git` 쓰기는 복구됐고 `a427af8...`을 원격 branch에 push했습니다. 익명 QA route를 포함한 최종 commit은 동일 gate 재검증 후 별도로 고정합니다.
-- 실제 Chrome에서 현재 Production `/audio-qa`의 일본어·한국어 버튼을 각각 눌렀지만 성공·실패 UI 변화가 없었고 페이지 문구도 회귀 배포의 `Google-only` 상태였습니다. 자동화 isolated world의 `speechSynthesis=false` 결과는 앱 main world의 기능 근거로 재사용하지 않습니다.
-- 동일 84개 복구 변경은 검증된 bundle/patch로도 `.artifacts/recovery/audio-2026-08-23/`에 보존했습니다. bundle은 비상 복구물이며 현재 원격 commit과 deployment ID가 공식 증적입니다.
-- 새 실행 환경의 로컬 재검증은 Ops `18/18`, DB `112/112`, Web `93/93`, API `131/131`, typecheck, build, OpenAPI, fresh D1을 종료 코드 0으로 통과했습니다. 전체 데스크톱·모바일·시각 E2E도 `171 passed / 32 skipped / 0 failed`로 통과했습니다.
-- Worker 배포 명령은 현재 clean HEAD와 동일한 40자 `RELEASE_SHA`를 필수로 받고 Wrangler CLI 변수로 주입하도록 교체했습니다. 운영 기준선 SHA가 새 코드의 관측 release로 잘못 재사용되면 업로드 전에 실패합니다.
-- 실제 Chrome 1차 접근은 인증 route 때문에 `/welcome`으로 이동했습니다. 이를 성공으로 기록하지 않고, 데이터·계정 의존성이 없는 QA route를 공개 진단 경로로 분리한 뒤 최종 Preview에서 다시 실행합니다.
+- 실제 Chrome lifecycle은 성공했지만 물리 스피커로 소리가 들렸는지는 자동화가 판정하지 않습니다. 사용자 장치의 가청 확인과 실제 `played` telemetry는 별도 사후 증거로 남깁니다.
+- 현재 HEAD로 새 manifest를 생성해 운영 D1과 직접 비교하면 15개 repository-managed 문서의 음성 정책 문구 변경 때문에 차단 검사 45건이 실패합니다. DB를 재시드해 숨기지 않고 `INC-DATA-024`로 기록했습니다. verifier가 immutable release SHA/manifest를 명시적으로 입력받도록 후속 보강합니다.
+- 동일 복구 변경은 `.artifacts/recovery/audio-2026-08-23/`의 bundle/patch에도 보존했지만, 공식 증적은 원격 commit과 위 Cloudflare deployment ID입니다.

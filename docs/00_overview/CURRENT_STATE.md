@@ -16,8 +16,8 @@ CI/CD 비사용 운영 기준은 [Git 무료 모드 운영 매뉴얼](GIT_FREE_M
 | --- | --- |
 | D1 migration | `0000–0027` |
 | Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| Pages | `https://485b9f00.nihongo-n3.pages.dev` |
-| web source SHA | `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
+| Pages | `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `2bd657e96d8a43c6d28efe414acd468c1abd0861` |
 | Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
@@ -169,19 +169,23 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - GitHub Actions 비활성화와 로컬 형상관리 문서 변경만 포함하며 D1/Worker/음성 런타임은 변경하지 않았습니다.
 - 이번 음성 추가 복구의 직전 Production Pages이므로 rollback 대상으로 보존합니다.
 
-### 2026-08-24 음성 추가 복구 — 배포 전
+### 2026-08-24 음성 추가 복구 — Production 배포 완료
 
 - JLPT 공용 음성과 TOPIK 한국어 음성의 첫 클릭에서 비동기 voice 대기를 제거하고 즉시 `speak()`를 호출합니다.
 - 음성 시작 신호가 8초 안에 없으면 실패로 종료해 무한 대기를 막습니다.
 - PWA service worker는 즉시 update를 확인하고, 배포 전부터 기존 worker가 제어하던 client만 `controllerchange` 때 1회 reload합니다. 첫 방문자는 초기 설치 때 reload하지 않습니다.
 - 1차 Preview `efbc8db5`에서 신규 client까지 강제 reload한 결함을 발견해 Production을 중단하고 위 계약으로 수정했습니다. 수정 뒤 Web `93/93`, 영향 E2E Chromium/WebKit `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 재검증했습니다.
-- 현재 Production 실제 Chrome에서는 양 언어 버튼의 `재생 중 → 정상 종료` lifecycle과 console error 0건을 확인했습니다. 물리 가청은 자동 증거로 기록하지 않으며 최종 SHA 배포 뒤 다시 확인합니다.
-- 이 변경은 D1 schema/data와 Worker를 변경하지 않는 Pages 전용 복구입니다. 신규 deployment ID는 배포 후 아래 원장과 함께 기록합니다.
+- 최종 Preview는 `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`, Production은 `9cc58a1f-4772-4129-b90d-c819ca20d700`, source는 `2bd657e96d8a43c6d28efe414acd468c1abd0861`입니다. rollback Pages는 `485b9f00-a8b1-4bbb-9001-a238651fb212`입니다.
+- Production 실제 Chrome에서 일본어·한국어 모두 클릭 0.3초와 2.8초 뒤 `재생 중`을 확인하고 `onend` 정상 종료, alert 0건, console error 0건을 확인했습니다. 물리 스피커 가청 여부는 자동 lifecycle 증거와 구분합니다.
+- Production 영향 기능은 Chromium/WebKit `44 passed / 8 skipped / 0 failed`입니다. JLPT N1/N2, 퀴즈 4모드, 청해, SRS, TOPIK 첫 한국어 재생·owner→FSRS, PWA·offline을 포함합니다. Production 음성 전용 검사는 `2/2` 통과했습니다.
+- 배포 asset은 `assets/index-DprkUCgI.js`, `/audio-qa`와 `/api/v1/auth/config`는 `200`, legacy `/api/v1/audio/test`는 `410`, 원격 R2 발음 참조 합계는 `0`입니다.
+- 이 변경은 D1 schema/data와 Worker를 변경하지 않은 Pages 전용 복구입니다.
 - Production D1 checksum backup을 만들고 임시 로컬 D1에 `65` regular tables를 복원해 행 수·FTS·FK를 대조했습니다. 첫 drill에서 발견한 output buffer와 immutable trigger replay 문제는 restore 도구에서 수정하고 재실행해 통과했습니다.
+- 현재 HEAD로 생성한 새 manifest를 운영 D1에 직접 비교하면 문서 source hash drift 때문에 차단 검사 `45`건이 실패합니다. 운영 콘텐츠 source `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4`, 실제 운영 seed run에 고정한 remote verifier는 `280/280` 통과했습니다. 운영 D1은 이번 Pages 배포에서 재시드하지 않았고 drift는 `INC-DATA-024`로 추적합니다.
 
 ## 다음 단계
 
-다음 실행은 음성 복구 Pages를 Preview/Production에 반영하고 한국어·일본어 각각 최소 1건의 `onend → played`와 사용자 가청 결과를 분리해 확인하는 것입니다. 그 전에는 이번 증량을 Production에 반영하지 않습니다. 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+음성 복구 Pages 배포는 완료했습니다. 다음 실행은 실제 사용자 장치의 가청 확인과 speech telemetry를 사후 관찰하고, 현재 HEAD 문서 hash와 운영 콘텐츠 manifest를 source SHA에 고정해 검증하도록 verifier 인터페이스를 보강하는 것입니다. N2/N1/TOPIK 증량 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
 ## 2026-08-23 저장소 정리
 

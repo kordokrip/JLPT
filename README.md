@@ -8,8 +8,8 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 | --- | --- |
 | production D1 | `nihongo-n3-prod-v2`, migration `0000–0027` |
 | production Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| production Pages | `https://485b9f00.nihongo-n3.pages.dev` |
-| web source SHA | `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
+| production Pages | `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `2bd657e96d8a43c6d28efe414acd468c1abd0861` |
 | Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
 
@@ -57,7 +57,7 @@ pnpm -F @nihongo-n3/db content:contract:verify
 pnpm -F @nihongo-n3/db content:control-plane:verify
 ```
 
-2026-08-24 추가 조사에서 TOPIK/JLPT 첫 클릭이 voice 준비 Promise를 기다리며 사용자 활성화를 잃는 문제와 설치형 PWA가 이전 JS를 계속 실행하는 문제를 확인했습니다. 복구본은 현재 click task 안에서 즉시 `speak()`를 호출하고, voice는 background에서 준비하며, 배포 전부터 기존 worker가 제어하던 PWA만 controller 교체 때 한 번 갱신합니다. 첫 방문자는 reload하지 않습니다. 성공은 실제 `onend` 이후에만 기록하고 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+2026-08-24 추가 조사에서 TOPIK/JLPT 첫 클릭이 voice 준비 Promise를 기다리며 사용자 활성화를 잃는 문제와 설치형 PWA가 이전 JS를 계속 실행하는 문제를 확인했습니다. 복구본은 click task 안에서 즉시 `speak()`를 호출하고, voice는 background에서 준비하며, 배포 전부터 기존 worker가 제어하던 PWA만 controller 교체 때 한 번 갱신합니다. 첫 방문자는 reload하지 않습니다. 이 복구본은 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`을 거쳐 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에 배포됐습니다. 실제 Chrome에서 한국어·일본어 모두 `재생 중 → onend 정상 종료`, 경고·콘솔 오류 0건을 확인했으며, 물리 스피커 가청 여부는 자동 증거와 구분합니다. 성공은 실제 `onend` 이후에만 기록하고 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER_2026-08-23.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
 

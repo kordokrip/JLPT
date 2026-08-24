@@ -6,10 +6,10 @@
 
 | 상태 | DB/런타임 | 콘텐츠 |
 | --- | --- | --- |
-| production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://485b9f00.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
+| production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://9cc58a1f.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
 | preview candidate | Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a` | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
 
-Worker/content source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`, 현재 Pages source SHA는 `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`입니다.
+Worker/content source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`, 현재 Pages source SHA는 `2bd657e96d8a43c6d28efe414acd468c1abd0861`입니다.
 
 ## 계층과 데이터 흐름
 
@@ -79,7 +79,7 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 
 ## 검증 상태와 다음 관찰
 
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, 기존 controller가 있는 PWA만 1회 갱신, 첫 방문자 무중단과 R2 요청 0건을 회귀 계약으로 고정합니다. 첫 Preview에서 신규 client 강제 reload를 발견해 Production을 중단했고, 수정 뒤 Web `93/93`, 영향 E2E `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 다시 통과했습니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, 기존 controller가 있는 PWA만 1회 갱신, 첫 방문자 무중단과 R2 요청 0건을 회귀 계약으로 고정합니다. 첫 Preview에서 신규 client 강제 reload를 발견해 Production을 중단했고, 수정 뒤 Web `93/93`, 영향 E2E `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 다시 통과했습니다. 최종 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`과 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에서 검증했으며, Production 영향 기능은 Chromium/WebKit `44 passed / 8 skipped / 0 failed`였습니다.
 
 다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
 

@@ -90,24 +90,29 @@ pnpm docs:check
 
 ## 2026-08-24 첫 클릭·PWA 추가 복구
 
-| 항목 | 배포 전 값 |
+| 항목 | 최종 값 |
 | --- | --- |
 | release | `audio-first-click-pwa-recovery-2026-08-24` |
 | source branch | `feature/topik-product-expansion` |
-| source commit/tag | gate 완료 후 고정 예정 |
+| source commit/tag | `2bd657e96d8a43c6d28efe414acd468c1abd0861`, `release/2026-08-24/audio-recovery`, 원격 push |
 | 변경 범위 | Pages web만 변경; D1 schema/data와 Worker 변경 없음 |
 | 원인 | voice 준비 `await`로 사용자 활성화 소실 가능; 열린 설치형 PWA가 이전 JS 유지 |
 | local gates | OpenAPI `72/12`, Ops `18/18`, DB `112/112`, Web `93/93`, API `131/131`, typecheck/build/fresh D1/content/audio contract 종료 코드 `0` |
 | browser gates | 음성·PWA 영향 Chromium/WebKit `50 passed / 2 skipped`; 전체 데스크톱·모바일·시각 `171 passed / 32 skipped`, 실패 `0` |
-| actual Chrome before deploy | 현재 Production 일본어·한국어 `재생 중 → 정상 종료`, console error `0`; 물리 가청은 자동 판정하지 않음 |
+| Preview | `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`; 실제 Chrome 양언어 lifecycle 정상, console error `0` |
+| Production | `9cc58a1f-4772-4129-b90d-c819ca20d700`; source `2bd657e...`; asset `assets/index-DprkUCgI.js` |
+| Production browser gates | Chromium/WebKit 음성 `2/2`; 영향 기능 `44 passed / 8 skipped / 0 failed` |
+| actual Chrome after deploy | 일본어·한국어 각각 클릭 0.3초·2.8초 뒤 `재생 중`, `onend` 정상 종료, alert·console error `0`; 물리 가청은 자동 판정하지 않음 |
+| audio/R2 smoke | `/audio-qa` `200`, `/api/v1/audio/test` `410`, 원격 R2 발음 참조 합계 `0` |
 | D1 safety | `.artifacts/d1-backups/audio-first-click-pwa-2026-08-24`; SHA-256 manifest와 `65` regular tables restore drill 통과 |
+| D1 remote verifier | release source `3485c6e...`·manifest `content-v3-d102868...` 고정 `280/280`; 현재 HEAD 직접 비교는 문서 hash drift로 차단 45건 실패(`INC-DATA-024`) |
 | rollback Pages | `485b9f00-a8b1-4bbb-9001-a238651fb212`, source `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
-| Preview/Production | 최종 deployment ID 대기 |
-| status | `draft` |
+| Worker | 변경 없음 `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
+| status | `published` |
 
-배포 직전 source commit, 직전 Production Pages deployment, Preview와 새 Production deployment ID를 채운다. 배포 뒤 실제 Chrome lifecycle, 배포 asset, `/api/v1/audio/`와 R2 발음 요청 0건을 같은 행에 추가한다.
+Pages 복구 배포에는 D1/Worker write가 없었습니다. 현재 HEAD manifest drift를 없애려고 운영 D1을 재시드하지 않았고, 운영 콘텐츠 source에 고정한 verifier 결과와 HEAD drift를 함께 보존합니다.
 
-1차 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`는 신규 client까지 강제 reload해 원격 browse/quiz를 중단시켰으므로 폐기했습니다. Production에는 반영하지 않았고 rollback은 필요하지 않았습니다. 후속 Preview는 기존 controller가 있는 PWA만 reload하는 수정 commit으로 새로 생성합니다.
+1차 Preview `efbc8db5-f9fd-444d-8d27-d433372002aa`는 신규 client까지 강제 reload해 원격 browse/quiz를 중단시켰으므로 폐기했습니다. Production에는 반영하지 않았고 rollback은 필요하지 않았습니다. 후속 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`에서 기존 controller가 있는 PWA만 reload하는 계약을 검증한 뒤 Production에 반영했습니다.
 
 ## 오류·rollback 연결
 

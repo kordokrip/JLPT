@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장 — 2026-08-23
 
 기준 시각: 2026-08-24 KST
-현재 상태: **첫 클릭 사용자 활성화 소실과 설치형 PWA의 이전 JS 잔존을 추가 원인으로 확인해 복구했다. 전체 로컬 gate와 데스크톱·모바일 브라우저 검증은 통과했으며, 최종 SHA의 Preview·Production 배포와 사후 실제 Chrome 검증 전이다. 그 전에는 복구 완료로 판정하지 않는다.**
+현재 상태: **첫 클릭 사용자 활성화 소실과 설치형 PWA의 이전 JS 잔존을 복구해 source `2bd657e...`를 Preview와 Production에 배포했다. 전체 로컬 gate, Production Chromium/WebKit 영향 기능, 실제 Chrome 한국어·일본어 lifecycle을 통과했다. 물리 스피커 가청 여부는 자동 검증과 구분하고, 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.**
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -32,6 +32,7 @@
 | `INC-PWA-021` | 새 Pages 배포 뒤에도 열린 설치형 PWA가 회귀 JS를 계속 실행할 수 있음 | 서비스 워커 업데이트는 사용자 confirm에 의존했고 열린 client를 새 bundle로 전환하는 복구 절차가 없었음 | SW를 즉시 등록하고 online/visibility 때 update 확인; 이미 이전 SW가 제어하던 client만 `controllerchange` 때 1회 reload | 기존 PWA는 1회 갱신하고 첫 방문자는 reload하지 않는 unit/PWA E2E와 실제 Production asset 확인을 통과해야 함 |
 | `INC-PWA-023` | 첫 Preview에서 일부 browse/quiz 원격 검사가 navigation 중단으로 실패 | activate handler가 `includeUncontrolled` client까지 강제 `navigate()`해 첫 방문자도 reload함 | Preview를 Production에 올리지 않고 강제 navigate/marker 방식 제거; controller가 배포 전부터 존재한 client로 범위 제한 | 신규 Preview에서 동일 원격 suite를 처음부터 재실행해 실패 0이어야 함 |
 | `INC-OPS-022` | Production D1 backup의 첫 restore drill이 import 단계에서 중단 | full import의 Wrangler 결과가 Node 기본 1MiB buffer를 넘었고, published/immutable 행 replay는 정상 runtime trigger와 충돌할 수 있었음 | restore buffer를 64MiB로 확대; migrated trigger DDL을 보존한 뒤 임시 로컬 import 동안만 중지하고 동일 DDL을 재설치 | 전체 테이블 행 수, 재설치 trigger, FTS, FK를 실제 restore drill로 검증해야 함 |
+| `INC-DATA-024` | 현재 HEAD 기준 remote verifier가 운영 D1에 대해 차단 검사 45건 실패 | 운영 DB는 콘텐츠 source `3485c6e...`의 manifest `content-v3-d102868...`를 유지하지만 이후 15개 repository-managed 문서의 음성 정책 문구가 바뀌어 현재 HEAD manifest가 달라짐 | 운영 release source·manifest·실제 seed run에 고정해 `280/280` 재검증; Pages-only 복구에서 D1 재시드 금지 | verifier는 immutable source SHA/manifest를 입력받아야 하며, HEAD drift를 운영 데이터 손상이나 배포 성공으로 오판하지 않음 |
 
 ## 현재 복구 검증 스냅샷
 
@@ -53,14 +54,17 @@
 | Production D1 backup/restore drill | checksum manifest 생성; `65` regular tables 복원, FTS/FK 대조 | 통과 |
 | 음성·PWA·offline·퀴즈·복습·TOPIK owner 영향 E2E | Chromium/WebKit `50 passed / 2 skipped / 0 failed`, 종료 코드 `0` | 통과 |
 | 전체 Chromium·WebKit·모바일·시각 E2E 재실행 | `171 passed / 32 skipped / 0 failed`, 종료 코드 `0` | 통과 |
-| 실제 Chrome 현재 Production `485b9f00` | 일본어·한국어 버튼 모두 `재생 중` 진입 뒤 정상 종료, console error `0`; 물리 가청은 자동 판정하지 않음 | lifecycle 통과·가청 미확인 |
-| 현재 checkout | 기준선 `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`; 이번 복구 commit 전 | 진행 중 |
+| 실제 Chrome 새 Production `9cc58a1f` | 일본어·한국어 모두 클릭 0.3초·2.8초 뒤 `재생 중`, 이후 정상 종료; alert `0`, console error `0`; 물리 가청은 자동 판정하지 않음 | lifecycle 통과·가청 미확인 |
+| Production web source | `2bd657e96d8a43c6d28efe414acd468c1abd0861`; 첫 클릭과 PWA 범위 수정 2개 commit을 원격 branch에 push | 통과 |
 | GitHub/Cloudflare 연결 | remote·DNS·OAuth 인증 확인 | 통과 |
 | GitHub Actions | repository `enabled=false`; 자동 push/PR trigger 제거 | 비활성화 |
 | Preview Worker | `48b49518-f374-4c59-a652-f73d136689f3`, `/health` 200, release SHA `a427af8...`, Worker smoke `21/21` | 통과 |
-| Preview Pages | 유효 deployment `7de4c852-82c1-4c24-a787-e504174702ea`; auth/API proxy 200 | 통과 |
-| Preview 기능 E2E | Chromium·WebKit `32 passed / 8 skipped / 0 failed`; skip은 로컬 fixture·환경 제한 | 통과 |
-| 최종 SHA Preview/Production | 신규 deployment ID 없음 | **미배포** |
+| 최종 Preview Pages | `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`, source `2bd657e...`; 실제 Chrome 양언어 lifecycle·console error 0 | 통과 |
+| Preview 기능 E2E | 최초 `33 passed / 8 skipped / 1` 환경성 timeout, 해당 단일 검사를 재실행해 통과; skip은 로컬 fixture·환경 제한 | 통과 |
+| Production 영향 기능 E2E | Chromium·WebKit `44 passed / 8 skipped / 0 failed`; 음성 단독 `2/2` | 통과 |
+| Production Pages | `9cc58a1f-4772-4129-b90d-c819ca20d700`, asset `assets/index-DprkUCgI.js`; rollback `485b9f00-a8b1-4bbb-9001-a238651fb212` | 배포·smoke 통과 |
+| R2/legacy audio | 원격 R2 발음 참조 합계 `0`; `/api/v1/audio/test` `410` | 통과 |
+| Production D1 verifier | release source 고정 `280/280` 통과; 현재 HEAD 직접 비교는 source hash drift로 차단 `45`건 실패 | DB 정상·`INC-DATA-024` 추적 |
 
 ## 강제 릴리스 gate
 
