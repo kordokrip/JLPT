@@ -139,7 +139,11 @@ class AudioPlayer {
   async speakText(text: string, options: SpeechOptions = {}): Promise<boolean> {
     if (!text.trim() || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return false;
     const language = options.lang ?? 'ja-JP';
-    await this.warmVoices(language);
+    // Do not await voice discovery here. WebKit and some installed-PWA
+    // contexts require speechSynthesis.speak() to run in the original click
+    // task. Waiting for Chromium's asynchronous voice list can consume that
+    // user activation and turn the first click into silence.
+    void this.warmVoices(language);
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = language;
@@ -151,7 +155,7 @@ class AudioPlayer {
       options.voiceGender ?? this._voiceGender,
       utterance.lang,
       options.voiceURI ?? this._voiceURI,
-      true,
+      options.preferGoogleVoice ?? true,
     );
     // Keep the old working behavior: prefer Google, then use an installed
     // voice for the same language. Never read Japanese with another language.
@@ -166,19 +170,30 @@ class AudioPlayer {
     if (voice) utterance.voice = voice;
     return new Promise<boolean>((resolve) => {
       let settled = false;
+      let started = false;
       const finish = (result: boolean) => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(startupTimeoutId);
         window.clearTimeout(timeoutId);
         if (result) options.onEnd?.();
         else options.onError?.();
         this._onEnd?.();
         resolve(result);
       };
-      utterance.onstart = options.onStart ?? null;
+      utterance.onstart = () => {
+        started = true;
+        window.clearTimeout(startupTimeoutId);
+        options.onStart?.();
+      };
       utterance.onend = () => finish(true);
       utterance.onerror = () => finish(false);
       const timeoutMs = Math.min(120_000, Math.max(15_000, text.length * 500));
+      const startupTimeoutId = window.setTimeout(() => {
+        if (started) return;
+        window.speechSynthesis.cancel();
+        finish(false);
+      }, 8_000);
       const timeoutId = window.setTimeout(() => {
         window.speechSynthesis.cancel();
         finish(false);

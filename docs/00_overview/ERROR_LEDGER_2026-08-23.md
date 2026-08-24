@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장 — 2026-08-23
 
-기준 시각: 2026-08-23 KST
-현재 상태: **음성 복구본은 전체 로컬 gate와 Preview Worker/Pages 자동 검증을 통과했다. 실제 Chrome 검증을 위해 익명·읽기 전용 `/audio-qa`를 추가했으며 최종 SHA의 Preview 재배포 전이다. 실제 Chrome과 Production 사후 검증이 끝나기 전에는 복구 완료로 판정하지 않는다.**
+기준 시각: 2026-08-24 KST
+현재 상태: **첫 클릭 사용자 활성화 소실과 설치형 PWA의 이전 JS 잔존을 추가 원인으로 확인해 복구했다. 전체 로컬 gate와 데스크톱·모바일 브라우저 검증은 통과했으며, 최종 SHA의 Preview·Production 배포와 사후 실제 Chrome 검증 전이다. 그 전에는 복구 완료로 판정하지 않는다.**
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -28,43 +28,50 @@
 | `INC-QA-017` | Worker 전용 smoke를 Pages origin에 실행해 OpenAPI 4건을 제품 오류로 오인 | `r1-preview-smoke`는 Worker의 `/openapi*` 직접 route를 전제로 함 | Worker URL에서 다시 실행해 `21 passed / 0 failed`; Pages는 auth proxy 전용 smoke로 분리 | smoke 종류별 올바른 origin을 원장에 기록 |
 | `INC-E2E-018` | 원격 WebKit에서 TOPIK 복합 시나리오가 로컬 fixture와 실제 Preview DB를 섞어 실패 | `page.route`로 mock practice를 주입하면서 owner curriculum은 실제 원격 DB를 사용하고, 로컬 전용 1급 문구까지 하드코딩 | 로컬 fixture 계약은 외부 배포에서 명시적으로 skip하고 실제 Batch 4 owner/FSRS, quiz, SRS 검증을 별도 유지 | skip 사유 없는 원격 fixture 실패를 통과로 바꾸지 않음 |
 | `INC-QA-019` | 실제 Chrome이 `/audio-qa`에서 `/welcome`으로 이동해 음성 버튼을 검증할 수 없음 | 수동 음성 QA가 JLPT track 인증 route 안에 있었음 | 계정·쓰기·개인 데이터가 없는 `/audio-qa`만 공개 진단 route로 분리하고 익명 양언어 E2E 추가 | 익명 QA가 양언어 호출, 오류 UI, R2/`/api/v1/audio/` 0건을 통과해야 함 |
+| `INC-AUD-020` | voice 목록이 늦게 준비되는 브라우저에서 첫 클릭이 무음으로 끝날 수 있음 | click handler가 `voiceschanged`/polling을 최대 2.5초 `await`한 뒤 `speechSynthesis.speak()`를 호출해 브라우저의 짧은 사용자 활성화 구간을 벗어남 | voice warm-up은 background로만 실행하고 원래 click task 안에서 `utterance.lang`과 현재 same-language voice로 즉시 `speak()` 호출; 8초 안에 `onstart`가 없으면 명시적 오류 처리 | TOPIK·JLPT 단위 테스트와 Chromium/WebKit에서 첫 호출이 동기적으로 `speak()`에 도달해야 함 |
+| `INC-PWA-021` | 새 Pages 배포 뒤에도 열린 설치형 PWA가 회귀 JS를 계속 실행할 수 있음 | 서비스 워커 업데이트는 사용자 confirm에 의존했고 열린 client를 새 bundle로 전환하는 복구 절차가 없었음 | SW를 즉시 등록하고 online/visibility 때 update 확인; `speech-2026-08-24` marker가 없는 기존 client만 1회 현재 URL로 reload | 새 SW가 1회 복구 후 반복 reload하지 않고 PWA/offline E2E와 실제 Production asset 확인을 통과해야 함 |
+| `INC-OPS-022` | Production D1 backup의 첫 restore drill이 import 단계에서 중단 | full import의 Wrangler 결과가 Node 기본 1MiB buffer를 넘었고, published/immutable 행 replay는 정상 runtime trigger와 충돌할 수 있었음 | restore buffer를 64MiB로 확대; migrated trigger DDL을 보존한 뒤 임시 로컬 import 동안만 중지하고 동일 DDL을 재설치 | 전체 테이블 행 수, 재설치 trigger, FTS, FK를 실제 restore drill로 검증해야 함 |
 
 ## 현재 복구 검증 스냅샷
 
-2026-08-23 KST에 현재 작업 트리에서 다시 실행한 결과다.
+2026-08-24 KST에 현재 작업 트리에서 다시 실행한 결과다. 아래 실제 Chrome 행은 현재 Production의 페이지 lifecycle 증거이며 물리 스피커 가청 증거와 구분한다.
 
 | 검사 | 결과 | 판정 |
 | --- | --- | --- |
 | 복구 소스 84개와 안전 커밋 파일 SHA-256 비교 | 불일치 `0` | 통과 |
 | bundle/patch `SHA256SUMS`, `git bundle verify` | 모두 `OK`, complete history | 통과 |
-| `pnpm docs:check` | 문서 48개, 상대 링크 36개 | 통과 |
+| `pnpm docs:check` | 문서 50개, 상대 링크 45개 | 통과 |
 | `pnpm release:verify:audio-contract` | same-language fallback/R2 금지 | 통과 |
 | `pnpm test:ops` | `18/18` | 통과 |
 | `pnpm typecheck` | Web/API/DB/shared 종료 코드 `0` | 통과 |
 | DB unit | `112/112` | 통과 |
-| Web unit | `90/90` | 통과 |
+| Web unit | `33 files / 91 tests` | 통과 |
 | API unit | `8 files / 131 tests` | 통과 |
 | `pnpm build` | Web build와 Worker dry-run 종료 코드 `0` | 통과 |
 | fresh D1 재실행 | migration `0000–0027`, seed, FK/FTS, release contract/control-plane 완료 | 통과 |
-| 전체 Chromium·WebKit·모바일·시각 E2E | `171 passed / 32 skipped / 0 failed`, 종료 코드 `0` | 통과 |
-| 익명 음성 QA 포함 영향 E2E | `14/14`, 종료 코드 `0` | 통과 |
-| 현재 checkout commit | `a427af8c963660d9ebfdbec8c7cacf5e9858f749`을 원격 branch에 push; QA route 후속 commit 전 | 진행 중 |
+| Production D1 backup/restore drill | checksum manifest 생성; `65` regular tables 복원, FTS/FK 대조 | 통과 |
+| 음성·퀴즈·복습·TOPIK owner 영향 E2E | Chromium/WebKit `40 passed / 2 skipped / 0 failed`, 종료 코드 `0` | 통과 |
+| 전체 Chromium·WebKit·모바일·시각 E2E 재실행 | `171 passed / 32 skipped / 0 failed`, 종료 코드 `0` | 통과 |
+| 실제 Chrome 현재 Production `485b9f00` | 일본어·한국어 버튼 모두 `재생 중` 진입 뒤 정상 종료, console error `0`; 물리 가청은 자동 판정하지 않음 | lifecycle 통과·가청 미확인 |
+| 현재 checkout | 기준선 `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`; 이번 복구 commit 전 | 진행 중 |
 | GitHub/Cloudflare 연결 | remote·DNS·OAuth 인증 확인 | 통과 |
 | GitHub Actions | repository `enabled=false`; 자동 push/PR trigger 제거 | 비활성화 |
 | Preview Worker | `48b49518-f374-4c59-a652-f73d136689f3`, `/health` 200, release SHA `a427af8...`, Worker smoke `21/21` | 통과 |
 | Preview Pages | 유효 deployment `7de4c852-82c1-4c24-a787-e504174702ea`; auth/API proxy 200 | 통과 |
 | Preview 기능 E2E | Chromium·WebKit `32 passed / 8 skipped / 0 failed`; skip은 로컬 fixture·환경 제한 | 통과 |
-| Production | 기존 회귀 Pages 유지 | **미배포** |
+| 최종 SHA Preview/Production | 신규 deployment ID 없음 | **미배포** |
 
 ## 강제 릴리스 gate
 
 1. `pnpm release:verify:audio-contract`: same-language fallback과 R2/server 음성 경로 금지를 소스에서 검사한다. `pnpm verify:ci`의 첫 단계다.
 2. 단위 테스트: Google 이름이 없는 `Yuna(ko-KR)`, `Kyoko(ja-JP)`, 빈 voice 목록, 다른 언어 거부, 실제 `onend` 전 성공 금지를 검사한다.
 3. Chromium·WebKit E2E: TOPIK 학습·placement·owner, JLPT 발음·퀴즈·청해·복습과 실패 UI를 검사한다.
-4. 실제 Chrome Preview: mock 없이 한국어·일본어 각각 최소 1회 `real-page-onend`를 기록하고 `/api/v1/audio/`와 R2 발음 요청 0건을 확인한다.
-5. 실제 가청: 사용자가 같은 Preview에서 양 언어가 들렸음을 확인한다. callback 결과와 별도로 기록한다.
-6. `pnpm release:verify:audio-predeploy -- --input <evidence.json>`: 증적을 불변 `release_sha`와 `deployment_id`에 묶는다. 과거 또는 이동 branch 증적 재사용을 금지한다.
-7. Preview의 모든 gate 통과 뒤에만 Production Pages를 배포한다. Production에서도 동일 smoke를 반복하며 실패하면 직전 Pages 기준으로 rollback한다.
+4. 첫 클릭 활성화: voice 준비 Promise를 기다리지 않고 원래 click task 안에서 `speak()`가 호출되는지 양 언어에서 검사한다.
+5. PWA 교체: 새 service worker가 기존 열린 client를 정확히 한 번 갱신하고 이후 반복 reload하지 않는지 검사한다.
+6. 실제 Chrome Preview: mock 없이 한국어·일본어 각각 최소 1회 `real-page-onend`를 기록하고 `/api/v1/audio/`와 R2 발음 요청 0건을 확인한다.
+7. 실제 가청: 사용자가 같은 Preview에서 양 언어가 들렸음을 확인한다. callback 결과와 별도로 기록한다.
+8. `pnpm release:verify:audio-predeploy -- --input <evidence.json>`: 증적을 불변 `release_sha`와 `deployment_id`에 묶는다. 과거 또는 이동 branch 증적 재사용을 금지한다.
+9. Preview의 모든 gate 통과 뒤에만 Production Pages를 배포한다. Production에서도 동일 smoke를 반복하며 실패하면 직전 Pages 기준으로 rollback한다.
 
 ## 완료 판정 규칙
 

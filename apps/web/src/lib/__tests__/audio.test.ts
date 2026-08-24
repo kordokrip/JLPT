@@ -92,7 +92,6 @@ describe('audio voice selection', () => {
   });
 
   it('lets the browser resolve ja-JP when the voice list stays empty', async () => {
-    vi.useFakeTimers();
     class MockUtterance {
       lang = '';
       rate = 1;
@@ -119,11 +118,42 @@ describe('audio voice selection', () => {
     });
 
     const playback = audioPlayer.speakText('こんにちは。');
-    await vi.runAllTimersAsync();
+    expect(speak).toHaveBeenCalledTimes(1);
     await expect(playback).resolves.toBe(true);
     const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
     expect(utterance.lang).toBe('ja-JP');
     expect(utterance.voice).toBeNull();
+  });
+
+  it('starts Japanese speech synchronously so the click activation is preserved', async () => {
+    class MockUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      volume = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onstart: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(public text: string) {}
+    }
+    vi.stubGlobal('SpeechSynthesisUtterance', MockUtterance);
+    const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        cancel: vi.fn(),
+        resume: vi.fn(),
+        speak,
+        getVoices: () => [],
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+
+    const playback = audioPlayer.speakText('最初のクリックで再生します。');
+    expect(speak).toHaveBeenCalledTimes(1);
+    await expect(playback).resolves.toBe(true);
   });
 
 });

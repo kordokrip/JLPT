@@ -88,6 +88,25 @@ pnpm docs:check
 
 배포가 진행될 때 이 표를 실제 commit, Preview/Production deployment ID, 음성 증적과 rollback 대상으로 갱신한다. 빈 값이나 `미확인`을 성공으로 해석하지 않는다.
 
+## 2026-08-24 첫 클릭·PWA 추가 복구
+
+| 항목 | 배포 전 값 |
+| --- | --- |
+| release | `audio-first-click-pwa-recovery-2026-08-24` |
+| source branch | `feature/topik-product-expansion` |
+| source commit/tag | gate 완료 후 고정 예정 |
+| 변경 범위 | Pages web만 변경; D1 schema/data와 Worker 변경 없음 |
+| 원인 | voice 준비 `await`로 사용자 활성화 소실 가능; 열린 설치형 PWA가 이전 JS 유지 |
+| local gates | OpenAPI `72/12`, Ops `18/18`, DB `112/112`, Web `91/91`, API `131/131`, typecheck/build/fresh D1/content/audio contract 종료 코드 `0` |
+| browser gates | 영향 Chromium/WebKit `40 passed / 2 skipped`; 전체 데스크톱·모바일·시각 `171 passed / 32 skipped`, 실패 `0` |
+| actual Chrome before deploy | 현재 Production 일본어·한국어 `재생 중 → 정상 종료`, console error `0`; 물리 가청은 자동 판정하지 않음 |
+| D1 safety | `.artifacts/d1-backups/audio-first-click-pwa-2026-08-24`; SHA-256 manifest와 `65` regular tables restore drill 통과 |
+| rollback Pages | `485b9f00-a8b1-4bbb-9001-a238651fb212`, source `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
+| Preview/Production | 최종 deployment ID 대기 |
+| status | `draft` |
+
+배포 직전 source commit, 직전 Production Pages deployment, Preview와 새 Production deployment ID를 채운다. 배포 뒤 실제 Chrome lifecycle, 배포 asset, `/api/v1/audio/`와 R2 발음 요청 0건을 같은 행에 추가한다.
+
 ## 오류·rollback 연결
 
 - 모든 오류와 배포 차단 조건: [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)

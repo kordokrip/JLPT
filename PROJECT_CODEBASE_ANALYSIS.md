@@ -1,15 +1,15 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-기준일: 2026-08-23 KST. 이 문서는 현재 Production, 검증이 끝난 Preview 후보, 로컬 코드·schema·route·test를 구분한 구조 지도입니다.
+기준일: 2026-08-24 KST. 이 문서는 현재 Production, 검증이 끝난 Preview 후보, 로컬 코드·schema·route·test를 구분한 구조 지도입니다.
 
 ## Production 기준선
 
 | 상태 | DB/런타임 | 콘텐츠 |
 | --- | --- | --- |
-| production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://1c3bba90.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
+| production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://485b9f00.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
 | preview candidate | Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a` | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
 
-배포 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다.
+Worker/content source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`, 현재 Pages source SHA는 `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`입니다.
 
 ## 계층과 데이터 흐름
 
@@ -75,11 +75,11 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 
 ## 음성 불변 조건
 
-모든 발음은 Google 음성을 우선하고 같은 언어의 브라우저/기기 음성을 사용합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`, web prefetch는 네트워크 없는 no-op이며 E2E는 `/api/v1/audio/` 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
+모든 발음은 Google 음성을 우선하고 같은 언어의 브라우저/기기 음성을 사용합니다. click handler는 voice 준비를 `await`하지 않고 같은 task 안에서 즉시 `speak()`를 호출하며, 비동기 voice discovery는 다음 재생을 위해 background에서만 실행합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`이며 E2E는 해당 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
 
 ## 검증 상태와 다음 관찰
 
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 레거시 정리 후 2026-08-23 후보는 DB 112, web 88과 fresh D1, Preview smoke 21/21, Chromium/WebKit Preview E2E 각 14/14를 통과했습니다. 음성 복구본은 Google 이름이 없는 동일 언어 voice fallback과 R2 요청 0건을 회귀 테스트로 고정합니다. 현재 격리 터미널의 API/fresh/E2E 재실행은 Miniflare listener `EPERM` 때문에 assertion 전에 중단됐으며 이를 기능 통과로 계산하지 않습니다.
+2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, PWA 1회 client 갱신과 R2 요청 0건을 회귀 계약으로 고정합니다. Ops `18/18`, DB `112/112`, Web `91/91`, API `131/131`, fresh D1, Chromium/WebKit 영향 E2E `40 passed / 2 skipped`, 데스크톱·모바일·시각 전체 E2E `171 passed / 32 skipped`를 종료 코드 0으로 재실행했습니다.
 
 다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
 

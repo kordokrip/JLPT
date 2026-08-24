@@ -11,6 +11,11 @@ interface BackupManifest {
   files: Array<{ table: string; file: string; rowCount: number; sha256: string }>;
 }
 
+interface SqliteTrigger {
+  name: string;
+  sql: string;
+}
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const input = process.argv.find((arg) => arg.startsWith('--input='))?.slice('--input='.length);
 if (!input) throw new Error('--input=<backup directory> is required');
@@ -31,9 +36,34 @@ function wrangler(args: string[], label: string): string {
       cwd: root,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      // A full D1 import returns one JSON result per statement. Production
+      // backups legitimately exceed Node's 1 MiB execFileSync default.
+      maxBuffer: 64 * 1024 * 1024,
     }) ?? '';
-  } catch {
-    throw new Error(`Restore drill failed while ${label}`);
+  } catch (error) {
+    const stdout = typeof error === 'object' && error !== null && 'stdout' in error
+      ? String((error as { stdout?: unknown }).stdout ?? '')
+      : '';
+    const stderr = typeof error === 'object' && error !== null && 'stderr' in error
+      ? String((error as { stderr?: unknown }).stderr ?? '')
+      : '';
+    let stdoutDiagnostic = stdout;
+    try {
+      const jsonStart = stdout.indexOf('[');
+      const parsed = JSON.parse(jsonStart >= 0 ? stdout.slice(jsonStart) : stdout) as Array<{
+        success?: boolean;
+        error?: string;
+      }>;
+      stdoutDiagnostic = JSON.stringify(parsed.filter((entry) => entry.success === false || entry.error));
+    } catch {
+      stdoutDiagnostic = stdout.slice(-2_000);
+    }
+    const sanitized = `${stdoutDiagnostic}\n${stderr}`
+      .replace(/https?:\/\/\S+/gu, '[url]')
+      .replace(/Bearer\s+\S+/giu, 'Bearer [redacted]')
+      .trim()
+      .slice(-2_000);
+    throw new Error(`Restore drill failed while ${label}${sanitized ? `: ${sanitized}` : ''}`);
   }
 }
 
@@ -61,6 +91,19 @@ function queryCounts(): Record<string, number> {
   return parsed[0]?.results?.[0] ?? {};
 }
 
+function quoteIdentifier(value: string): string {
+  return `\`${value.replaceAll('`', '``')}\``;
+}
+
+function readTriggers(): SqliteTrigger[] {
+  const raw = wrangler([
+    'd1', 'execute', 'DB', ...localArgs(), '--json', '--command',
+    "SELECT name, sql FROM sqlite_schema WHERE type = 'trigger' AND sql IS NOT NULL ORDER BY name",
+  ], 'reading trigger definitions');
+  const parsed = JSON.parse(raw) as Array<{ results?: SqliteTrigger[] }>;
+  return parsed[0]?.results ?? [];
+}
+
 try {
   const expectedTables = D1_TRANSFER_TABLES.map((table) => table.name).sort();
   const manifestTables = manifest.files.map((entry) => entry.table).sort();
@@ -70,6 +113,19 @@ try {
   }
 
   wrangler(['d1', 'migrations', 'apply', 'DB', ...localArgs()], 'applying migrations');
+  // A backup contains already-validated immutable and published rows. Runtime
+  // insert/delete gates intentionally reject replaying those rows into a fresh
+  // schema (for example legacy audio bindings and published JLPT questions).
+  // Preserve the exact migrated trigger DDL, suspend it only for the local
+  // restore transaction, then restore every trigger before verification.
+  const triggers = readTriggers();
+  const dropTriggersPath = path.join(persistTo, 'drop-triggers.sql');
+  fs.writeFileSync(
+    dropTriggersPath,
+    `${triggers.map((trigger) => `DROP TRIGGER IF EXISTS ${quoteIdentifier(trigger.name)};`).join('\n')}\n`,
+    'utf8',
+  );
+  wrangler(['d1', 'execute', 'DB', ...localArgs(), '--file', dropTriggersPath], 'suspending restore-time triggers');
   const deletes = [...D1_TRANSFER_TABLES]
     .reverse()
     .map((table) => `DELETE FROM ${table.name}`)
@@ -91,6 +147,14 @@ try {
   }
   fs.writeFileSync(restoreSqlPath, `${restoreSql.join('\n')}\n`, 'utf8');
   wrangler(['d1', 'execute', 'DB', ...localArgs(), '--file', restoreSqlPath], 'importing backup SQL');
+
+  const restoreTriggersPath = path.join(persistTo, 'restore-triggers.sql');
+  fs.writeFileSync(
+    restoreTriggersPath,
+    `${triggers.map((trigger) => `${trigger.sql.replace(/;\s*$/, '')};`).join('\n')}\n`,
+    'utf8',
+  );
+  wrangler(['d1', 'execute', 'DB', ...localArgs(), '--file', restoreTriggersPath], 'restoring runtime triggers');
 
   wrangler([
     'd1', 'execute', 'DB', ...localArgs(), '--command',
@@ -123,6 +187,7 @@ try {
     generatedAt: new Date().toISOString(),
     backup: inputDir,
     tables: manifest.files.length,
+    restoredTriggers: triggers.length,
     counts,
     fts: {
       vocab: { source: queryCount('vocab'), index: queryCount('vocab_fts') },

@@ -203,16 +203,20 @@ test.describe('TOPIK product flow', () => {
     await expect(page.getByText('100').first()).toBeVisible();
   });
 
-  test('first Korean playback waits for a delayed Google browser voice', async ({ page }) => {
+  test('first Korean playback preserves the click while a delayed Google voice warms for the next play', async ({ page }) => {
     await installDelayedGoogleKoreanSpeechMock(page);
     await registerTopikUser(page);
     await page.goto('/track/topik-ko/learn');
 
     await page.getByRole('button', { name: '안녕하세요? 재생' }).click();
-    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech?.length ?? 0)).toBe(0);
+    await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
+      { lang: 'ko-KR', voice: null },
+    ]);
     await page.evaluate(() => window.__releaseTopikProductGoogleVoice?.());
+    await page.getByRole('button', { name: '안녕하세요? 재생' }).click();
 
     await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
+      { lang: 'ko-KR', voice: null },
       { lang: 'ko-KR', voice: 'google-ko-kr' },
     ]);
     await expect(page.getByRole('alert')).toHaveCount(0);

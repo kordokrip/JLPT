@@ -1,8 +1,8 @@
 # 현재 구현 상태
 
-기준일: 2026-08-23 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
+기준일: 2026-08-24 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
-> 2026-08-23 N2/N1 문제은행과 TOPIK owner Batch 6은 구현·독립 리뷰·로컬·Preview 검증까지 통과했습니다. 음성 장애의 직접 원인은 같은 언어 기기 voice fallback을 제거한 회귀였으며, `Google 우선 → 같은 언어 기기 음성` 계약으로 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
+> 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 
 현재 오류와 배포 차단 조건의 단일 원장은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)입니다. 미실행·인프라 실패·mock 결과는 통과로 간주하지 않습니다.
 
@@ -16,8 +16,8 @@ CI/CD 비사용 운영 기준은 [Git 무료 모드 운영 매뉴얼](GIT_FREE_M
 | --- | --- |
 | D1 migration | `0000–0027` |
 | Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| Pages | `https://1c3bba90.nihongo-n3.pages.dev` |
-| web source SHA | `595fcd735824116fff6047e9e59f1d6acd90cb46` |
+| Pages | `https://485b9f00.nihongo-n3.pages.dev` |
+| web source SHA | `b8d41acb1cbd77da1a428ade0d07c27c910f84e3` |
 | Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
@@ -90,7 +90,7 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 발음은 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용합니다. 한국어에는 `ko-*`, 일본어에는 `ja-*`만 허용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
 
-`0027`의 provider `google-browser`와 API의 `kind: "google"`은 데이터/클라이언트 호환용 식별자입니다. 런타임에서 Google 이름을 강제한다는 뜻이 아닙니다. Chromium의 비동기 voice list를 최대 2.5초 기다리고 실제 `onend` 이후에만 `played`를 기록합니다.
+`0027`의 provider `google-browser`와 API의 `kind: "google"`은 데이터/클라이언트 호환용 식별자입니다. 런타임에서 Google 이름을 강제한다는 뜻이 아닙니다. 재생 click에서는 voice 준비를 기다리지 않고 같은 task 안에서 즉시 `speak()`를 호출합니다. 비동기 voice list는 background에서 다음 재생을 위해 준비하며 실제 `onend` 이후에만 `played`를 기록합니다.
 
 Pages `1c3bba90-8990-472b-8bf2-12a08759597f` 배포 당시에는 동일 언어 fallback이 없고 실제 가청 확인도 없었습니다. 그 배포를 검증 완료라고 보고한 판단은 잘못이며, 복구 릴리스는 mock 자동화·실제 Chrome callback·사용자 가청 결과를 구분해 기록합니다.
 
@@ -161,6 +161,23 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 - 레거시 정리 후 로컬 CI: ops 8, DB 112, web 88, API 131, fresh D1, content contract/control plane 통과
 - Preview D1/Worker 반영과 원격 품질·거래·Chromium/WebKit 각 14개 E2E 통과
 - 음성 회귀 복구 릴리스 전이므로 Production seed와 Worker 배포를 실행하지 않음
+
+### 2026-08-24 형상관리 문서 배포
+
+- Pages `485b9f00-a8b1-4bbb-9001-a238651fb212` (`https://485b9f00.nihongo-n3.pages.dev`)
+- source SHA `b8d41acb1cbd77da1a428ade0d07c27c910f84e3`
+- GitHub Actions 비활성화와 로컬 형상관리 문서 변경만 포함하며 D1/Worker/음성 런타임은 변경하지 않았습니다.
+- 이번 음성 추가 복구의 직전 Production Pages이므로 rollback 대상으로 보존합니다.
+
+### 2026-08-24 음성 추가 복구 — 배포 전
+
+- JLPT 공용 음성과 TOPIK 한국어 음성의 첫 클릭에서 비동기 voice 대기를 제거하고 즉시 `speak()`를 호출합니다.
+- 음성 시작 신호가 8초 안에 없으면 실패로 종료해 무한 대기를 막습니다.
+- PWA service worker는 즉시 update를 확인하고 `speech-2026-08-24` marker가 없는 기존 client만 1회 reload합니다.
+- 로컬 unit은 Web `91/91`, 영향 E2E는 Chromium/WebKit `40 passed / 2 skipped`, 전체 E2E는 `171 passed / 32 skipped`입니다.
+- 현재 Production 실제 Chrome에서는 양 언어 버튼의 `재생 중 → 정상 종료` lifecycle과 console error 0건을 확인했습니다. 물리 가청은 자동 증거로 기록하지 않으며 최종 SHA 배포 뒤 다시 확인합니다.
+- 이 변경은 D1 schema/data와 Worker를 변경하지 않는 Pages 전용 복구입니다. 신규 deployment ID는 배포 후 아래 원장과 함께 기록합니다.
+- Production D1 checksum backup을 만들고 임시 로컬 D1에 `65` regular tables를 복원해 행 수·FTS·FK를 대조했습니다. 첫 drill에서 발견한 output buffer와 immutable trigger replay 문제는 restore 도구에서 수정하고 재실행해 통과했습니다.
 
 ## 다음 단계
 

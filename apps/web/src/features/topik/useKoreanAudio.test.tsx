@@ -57,7 +57,7 @@ describe('useKoreanAudio', () => {
     expect(result.current.error).toBe('unavailable');
   });
 
-  it('waits for Chromium voiceschanged before selecting Google Korean', async () => {
+  it('warms Chromium voices without delaying the first Korean speak call', async () => {
     let voices: SpeechSynthesisVoice[] = [];
     let voicesChanged: (() => void) | null = null;
     const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
@@ -76,6 +76,7 @@ describe('useKoreanAudio', () => {
 
     await act(async () => {
       const playback = result.current.speakText('안녕하세요');
+      expect(speak).toHaveBeenCalledTimes(1);
       voices = [googleKorean];
       voicesChanged?.();
       expect(await playback).toBe(true);
@@ -84,7 +85,7 @@ describe('useKoreanAudio', () => {
     const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
     expect(utterance.text).toBe('안녕하세요');
     expect(utterance.lang).toBe('ko-KR');
-    expect(utterance.voice?.voiceURI).toBe('google-ko');
+    expect(utterance.voice).toBeNull();
   });
 
   it('falls back to an installed Korean voice when Google is unavailable', async () => {
@@ -102,7 +103,6 @@ describe('useKoreanAudio', () => {
   });
 
   it('lets the browser resolve ko-KR when the voice list stays empty', async () => {
-    vi.useFakeTimers();
     const speak = vi.fn((utterance: MockUtterance) => utterance.onend?.());
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
@@ -119,7 +119,7 @@ describe('useKoreanAudio', () => {
 
     let playback: Promise<boolean> | undefined;
     act(() => { playback = result.current.speakText('안녕하세요'); });
-    await act(async () => { await vi.runAllTimersAsync(); });
+    expect(speak).toHaveBeenCalledTimes(1);
     await expect(playback).resolves.toBe(true);
     const utterance = speak.mock.calls[0]?.[0] as MockUtterance;
     expect(utterance.lang).toBe('ko-KR');

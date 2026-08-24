@@ -28,6 +28,25 @@ declare const self: ServiceWorkerGlobalScope;
 self.skipWaiting();
 clientsClaim();
 
+// One-time recovery for clients that are still executing the broken speech
+// bundle. The marker survives later service-worker releases, so only this
+// incident build forces a reload; normal future deployments are unaffected.
+const SPEECH_RECOVERY_RELOAD_MARKER = '/__pwa-recovery__/speech-2026-08-24';
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil((async () => {
+    const recoveryCache = await caches.open('nihongo-pwa-recovery');
+    const marker = new Request(new URL(SPEECH_RECOVERY_RELOAD_MARKER, self.registration.scope));
+    if (await recoveryCache.match(marker)) return;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true }) as WindowClient[];
+    await Promise.all(windows.map(async (client) => {
+      await client.navigate(client.url);
+    }));
+    // Persist only after every current client accepted the navigation. If the
+    // browser rejects activation navigation, a later activation may retry.
+    await recoveryCache.put(marker, new Response('applied'));
+  })());
+});
+
 // ── 구버전 캐시 정리 ─────────────────────────────────────────────────
 cleanupOutdatedCaches();
 

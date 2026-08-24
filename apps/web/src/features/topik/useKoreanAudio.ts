@@ -82,8 +82,11 @@ export function useKoreanAudio() {
       return false;
     }
 
-    const voice = await resolveVoice();
-    if (operation !== operationRef.current) return false;
+    // Voice discovery is warmed in the background, but the actual speak call
+    // must remain in the original click task. Awaiting voices here can lose
+    // user activation in installed PWAs and Safari/WebKit.
+    void resolveVoice();
+    const voice = currentKoreanVoice();
     // Prefer Google, but restore the same-language browser fallback that was
     // removed by the regression. Never use another language's default voice.
     if (voice && !isVoiceForLanguage(voice, 'ko-KR')) {
@@ -104,9 +107,11 @@ export function useKoreanAudio() {
 
     return new Promise<boolean>((resolve) => {
       let settled = false;
+      let started = false;
       const finish = (result: boolean, outcome?: 'played' | 'error') => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(startupTimeoutId);
         window.clearTimeout(timeoutId);
         if (pendingCancelRef.current === cancelPending) pendingCancelRef.current = null;
         if (operation === operationRef.current) {
@@ -118,9 +123,18 @@ export function useKoreanAudio() {
       };
       const cancelPending = () => finish(false);
       pendingCancelRef.current = cancelPending;
+      utterance.onstart = () => {
+        started = true;
+        window.clearTimeout(startupTimeoutId);
+      };
       utterance.onend = () => finish(true, 'played');
       utterance.onerror = () => finish(false, 'error');
       const timeoutMs = Math.min(120_000, Math.max(15_000, text.length * 500));
+      const startupTimeoutId = window.setTimeout(() => {
+        if (started) return;
+        window.speechSynthesis.cancel();
+        finish(false, 'error');
+      }, 8_000);
       const timeoutId = window.setTimeout(() => {
         window.speechSynthesis.cancel();
         finish(false, 'error');

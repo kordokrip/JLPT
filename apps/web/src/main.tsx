@@ -22,10 +22,22 @@ import './i18n'; // i18n 초기화 (앱 시작 전 로드)
 import i18n from './i18n';
 if (import.meta.env.VITE_PWA_DEV_SW !== 'false') {
   const updateSW = registerSW({
+    immediate: true,
     onNeedRefresh() {
-      if (window.confirm(i18n.t('pwa.updateAvailable'))) {
-        updateSW(true);
-      }
+      // Critical runtime fixes must replace a stale installed-PWA bundle.
+      // updateSW(true) activates the waiting worker and reloads the client.
+      void updateSW(true);
+    },
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const checkForUpdate = () => {
+        if (navigator.onLine) void registration.update().catch(() => undefined);
+      };
+      checkForUpdate();
+      window.addEventListener('online', checkForUpdate);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
     },
     onOfflineReady() {
       console.info('[PWA]', i18n.t('pwa.offlineReady'));
