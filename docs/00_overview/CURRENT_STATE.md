@@ -64,7 +64,7 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 - Production read-only 조회에서 TOPIK practice v2 300개는 공개지만 `/tracks/topik-ko/status`가 legacy v1을 조회해 `placement-v2`, TOPIK I만 반환하는 결함을 확인했습니다. 로컬 코드는 v2 다섯 영역 각 60개를 기준으로 `topik-i-ii`, TOPIK I·II와 쓰기를 공개하도록 수정했고 300행 회귀 테스트를 추가했습니다.
 - quiz submit의 activity batch 실패를 quiz 결과만 저장하는 성공으로 숨기던 fallback을 제거했습니다. 이제 attempt 결과와 문항별 activity가 함께 반영되지 않으면 500을 반환하며, 완료된 quiz를 다른 답으로 다시 제출하면 409를 반환합니다. guarded update, rollback과 재제출 불변성 테스트가 이를 고정합니다.
 - R2 부재 verifier와 purge inventory는 JLPT 열뿐 아니라 TOPIK placement/practice, source asset과 legacy binding까지 집계합니다. immutable legacy metadata가 발견되면 purge 도구는 임의 변조하지 않고 additive D1 purge migration을 요구합니다. API CSP는 `media-src 'none'`이며 server/R2 발음 media origin을 허용하지 않습니다.
-- 최종 로컬 gate는 Ops `24/24`, DB `114/114`, Web `93/93`, API `134/134`, OpenAPI `72/12`, build와 fresh D1 `0000–0027`을 통과했습니다. Chromium/WebKit 전체 E2E는 `171 passed / 32 skipped / 0 failed`입니다. Production read-only 상태는 `49 passed / 2 known warnings / 2 failed`이며 두 실패가 바로 미배포 TOPIK status와 CSP입니다. D1의 R2 발음 참조는 확대된 9개 표면 모두 `0`입니다.
+- 최종 로컬 gate는 Ops `24/24`, DB `114/114`, Web `93/93`, API `134/134`, OpenAPI `72/12`, build와 fresh D1 `0000–0027`을 통과했습니다. Chromium/WebKit 전체 E2E는 `171 passed / 32 skipped / 0 failed`입니다. 검증 source `58b0ae153a548f942c07b16132eaf9f66beb24f5`를 원격 branch에 push한 뒤 Production read-only 상태는 `50 passed / 1 known warning / 2 failed`이며 두 실패가 바로 미배포 TOPIK status와 CSP입니다. D1의 R2 발음 참조는 확대된 9개 표면 모두 `0`입니다.
 - 이 세 변경은 현재 branch의 Worker 후보이며 아직 Production Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`에 반영하지 않았습니다. Production 상태가 고쳐졌다고 보고하려면 새 승인·Preview·배포·postdeploy status가 필요합니다.
 
 ## 퀴즈 전략과 strict-level 규칙

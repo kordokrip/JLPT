@@ -1,6 +1,6 @@
 # 저장소 최신화·문서 정리 기록 — 2026-08-30
 
-상태: 로컬 검증 완료, commit·push 전. Production은 변경하지 않았고 현재 Worker의 TOPIK status/CSP 두 결함은 배포 전까지 열린 상태다.
+상태: 로컬 검증·독립 acceptance·main source commit/push 완료. Production은 변경하지 않았고 현재 Worker의 TOPIK status/CSP 두 결함은 배포 전까지 열린 상태다.
 
 ## 삭제 전 교차검증
 
@@ -44,7 +44,7 @@
 - Sub Agent 재검증: 동시 tmp cleanup으로 오염된 첫 실행은 폐기하고 안정화 뒤 핵심 6개 spec을 양 브라우저에서 `38 passed / 2 intentionally skipped / 0 failed`로 재실행했다.
 - `pnpm -F @nihongo-n3/db question:quality`: `11`개 local 정적 독해, failure `0`
 - `verify:remote:audio:r2`: Production D1 9개 발음 참조 표면 합계 `0`
-- `pnpm ops:status:remote -- --no-write`: `49 passed / 2 known warnings / 2 failed`. 실패는 현재 Production Worker의 legacy TOPIK status와 R2 origin 허용 CSP이며 로컬 후보를 배포하지 않았음을 정확히 차단한다.
+- `pnpm ops:status:remote -- --no-write`: main source push 뒤 `50 passed / 1 known warning / 2 failed`. 실패는 현재 Production Worker의 legacy TOPIK status와 R2 origin 허용 CSP이며 로컬 후보를 배포하지 않았음을 정확히 차단한다.
 - 정리: 재생성 가능한 build, Wrangler tmp, 이전 CI/E2E report와 비어 있는 미등록 package 껍데기 `61MB`를 `/Users/sunghokang/.Trash/JLPT-cleanup-2026-08-30-maintenance`로 이동했다. Production backup, release/rollback, recovery, intake/quality/operations artifact는 보존했다.
 
-commit SHA와 origin 동기화 상태는 push가 실제 성공한 뒤 이 문서와 로컬 릴리스 원장에 추가한다. 실행하지 않은 검사는 통과로 기재하지 않는다.
+main source commit은 `58b0ae153a548f942c07b16132eaf9f66beb24f5`이며 `origin/feature/topik-product-expansion` push와 SHA 동기화를 확인했다. 이 증적 갱신은 후속 문서 commit으로 같은 branch에 push한다. 실행하지 않은 검사는 통과로 기재하지 않는다.

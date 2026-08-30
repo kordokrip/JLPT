@@ -138,13 +138,14 @@ Pages 복구 배포에는 D1/Worker write가 없었습니다. 현재 HEAD manife
 | focused tests | docs lifecycle/links, Ops `24/24`, DB `114/114`, Web `93/93`, API `134/134`, OpenAPI `72/12`, audio/CSP contract 통과 |
 | full local gate | `pnpm ops:verify` exit `0`; typecheck, build, fresh D1 migration `0000–0027`, seed, FK/FTS, manifest, provenance, content contract/control-plane 통과 |
 | browser E2E | Chromium/WebKit 전체 `171 passed / 32 skipped / 0 failed`, exit `0`; 한국어·일본어 browser speech와 R2/audio endpoint 요청 0 계약 포함 |
-| Production read-only | `49 passed / 2 known warnings / 2 failed`; v2 300 공개·R2 9개 표면 실제 참조 합계 0. 현재 Worker의 `placement-v2` status와 R2 허용 CSP만 실패해 `INC-TOPIK-031`, `INC-AUD-033` 미배포 상태 |
+| Production read-only | source push 뒤 `50 passed / 1 known warning / 2 failed`; v2 300 공개·R2 9개 표면 실제 참조 합계 0. 현재 Worker의 `placement-v2` status와 R2 허용 CSP만 실패해 `INC-TOPIK-031`, `INC-AUD-033` 미배포 상태 |
 | Production mutation | 없음. D1 `0000–0027`, Worker `6bbe4bbd`, Pages `9cc58a1f` 유지 |
 | cleanup | 교차검증 뒤 재생성 가능한 build/Wrangler tmp/이전 CI·E2E report와 비어 있는 미등록 package 껍데기 61MB를 `/Users/sunghokang/.Trash/JLPT-cleanup-2026-08-30-maintenance`로 이동; 복구 가능 |
 | verifier correction | 첫 원격 전수 검사에서 compound SELECT 한도를 발견(`INC-OPS-035`); 표면별 count로 수정 후 DB `114/114`, Production 9개 표면 합계 0 재통과 |
 | independent acceptance | 첫 검토가 완료 quiz 재제출 시 attempt/activity 불일치를 발견해 commit을 차단; 409·guarded update·재제출 회귀 테스트로 교정. 핵심 음성/TOPIK/quiz/activity E2E는 Chromium/WebKit `38 passed / 2 intentionally skipped / 0 failed` |
-| commit/push | 최종 실행 뒤 SHA와 origin 동기화 상태로 갱신 |
-| status | `validated-local`; commit·push 전이며 Production release는 차단 유지 |
+| commit/push | main source `58b0ae153a548f942c07b16132eaf9f66beb24f5`; `origin/feature/topik-product-expansion` push 성공·동기화 확인. 이 행을 추가하는 follow-up 문서 commit도 같은 branch에 push |
+| final clean status | main source 기준 local `40 passed / 1 known warning / 0 failed`; remote `50 passed / 1 known warning / 2 failed` |
+| status | `versioned-and-pushed`; Production release는 두 원격 계약 실패와 `INC-DATA-024` 때문에 차단 유지 |
 
 ## 오류·rollback 연결
 
