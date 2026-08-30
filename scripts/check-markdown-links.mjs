@@ -4,7 +4,13 @@ import path from 'node:path';
 import process from 'node:process';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const scannedRoots = [path.join(repoRoot, 'README.md'), path.join(repoRoot, 'docs')];
+const scannedRoots = [
+  path.join(repoRoot, 'AGENTS.md'),
+  path.join(repoRoot, 'README.md'),
+  path.join(repoRoot, 'PROJECT_CODEBASE_ANALYSIS.md'),
+  path.join(repoRoot, 'docs'),
+  path.join(repoRoot, '.codex', 'skills'),
+];
 const markdownLink = /\[[^\]]*\]\(\s*(?:<([^>]+)>|([^\s)]+))/g;
 const files = await collectMarkdown(scannedRoots);
 const failures = [];

@@ -1,6 +1,6 @@
-# 로컬 형상관리·릴리스 원장 — 2026-08-23
+# 로컬 형상관리·릴리스 원장
 
-기준 시각: 2026-08-23 KST
+최종 점검: 2026-08-30 KST
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
@@ -35,15 +35,11 @@
 ## 로컬 검증 순서
 
 ~~~sh
-pnpm release:verify:audio-contract
-pnpm openapi:check
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm -F @nihongo-n3/db verify:fresh
-pnpm -F @nihongo-n3/db content:contract:verify
-pnpm -F @nihongo-n3/db verify:audio:provenance
-pnpm docs:check
+pnpm ops:verify
+pnpm -F @nihongo-n3/e2e test:chromium
+pnpm -F @nihongo-n3/e2e test:webkit
+# 콘텐츠 변경에만 추가
+pnpm -F @nihongo-n3/db question:quality
 ~~~
 
 이후 Chromium·WebKit 영향 E2E를 실행한다. mock `onend`는 실제 가청 증거가 아니며, Preview URL에서 Chrome의 한국어·일본어 `real-page-onend`, 사용자 가청 확인과 `/api/v1/audio/`·R2 발음 요청 0건을 별도로 기록한다.
@@ -68,7 +64,7 @@ pnpm docs:check
 
 - SHA: `2fb05b321c33c8bd885703393ef82785c2012052`
 - 범위: `.github/workflows/ci.yml` 실행 비활성화, CI/CD 회피 문서 추가
-- 적용 내용: GitHub Actions 실질 게이트 배제 및 `GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md` 원칙 반영
+- 적용 내용: GitHub Actions 실질 게이트 배제. 현재 기준은 `LOCAL_CICD_OPERATIONS.md`로 통합
 
 ## 2026-08-23 음성 복구 1차 Preview — 2026-08-24 최종 릴리스로 대체
 
@@ -131,9 +127,28 @@ Pages 복구 배포에는 D1/Worker write가 없었습니다. 현재 HEAD manife
 | independent acceptance | 1차 검토의 Wrangler `--yes`, auth body, 음성 provenance, current-HEAD 원격 alias 지적을 모두 교정. 최종 독립 재감사에서 전체 gate, backup 65개 checksum, restore `passed=true`/FK 0, recovery patch·bundle checksum을 확인하고 commit 차단 결함 `0` 판정 |
 | status | 전체 local/remote gate와 독립 acceptance 완료; 이 기준선을 commit/tag/push로 형상 고정 |
 
+## 2026-08-30 저장소 최신화와 런타임 계약 교정
+
+| 항목 | 값 |
+| --- | --- |
+| scope | 활성 문서 영구 경로, 로컬 CI/CD·Sub Agent handoff, TOPIK v2 status, quiz/activity 원자성, R2 전수 gate/CSP, legacy source 정리 |
+| pre-change source | branch `feature/topik-product-expansion`, HEAD/origin `3a1dedfde1dd68ba6f9c6ed3fe451709c5d2a650` |
+| pre-deletion cross-check | DB source 36개 직접 문서 참조, seed checksum, Git 추적, 전체 `rg` 참조를 확인; TOPIK v1 source·ADR·incident·release evidence 보존 |
+| deleted/retired | 중복 Git 매뉴얼 1개, OA 이전 미등록 route 5개, canonical migration 밖의 구 migrate 파일 4개; 활성 원장 3개는 내용 보존 rename |
+| focused tests | docs lifecycle/links, Ops `24/24`, DB `114/114`, Web `93/93`, API `134/134`, OpenAPI `72/12`, audio/CSP contract 통과 |
+| full local gate | `pnpm ops:verify` exit `0`; typecheck, build, fresh D1 migration `0000–0027`, seed, FK/FTS, manifest, provenance, content contract/control-plane 통과 |
+| browser E2E | Chromium/WebKit 전체 `171 passed / 32 skipped / 0 failed`, exit `0`; 한국어·일본어 browser speech와 R2/audio endpoint 요청 0 계약 포함 |
+| Production read-only | `49 passed / 2 known warnings / 2 failed`; v2 300 공개·R2 9개 표면 실제 참조 합계 0. 현재 Worker의 `placement-v2` status와 R2 허용 CSP만 실패해 `INC-TOPIK-031`, `INC-AUD-033` 미배포 상태 |
+| Production mutation | 없음. D1 `0000–0027`, Worker `6bbe4bbd`, Pages `9cc58a1f` 유지 |
+| cleanup | 교차검증 뒤 재생성 가능한 build/Wrangler tmp/이전 CI·E2E report와 비어 있는 미등록 package 껍데기 61MB를 `/Users/sunghokang/.Trash/JLPT-cleanup-2026-08-30-maintenance`로 이동; 복구 가능 |
+| verifier correction | 첫 원격 전수 검사에서 compound SELECT 한도를 발견(`INC-OPS-035`); 표면별 count로 수정 후 DB `114/114`, Production 9개 표면 합계 0 재통과 |
+| independent acceptance | 첫 검토가 완료 quiz 재제출 시 attempt/activity 불일치를 발견해 commit을 차단; 409·guarded update·재제출 회귀 테스트로 교정. 핵심 음성/TOPIK/quiz/activity E2E는 Chromium/WebKit `38 passed / 2 intentionally skipped / 0 failed` |
+| commit/push | 최종 실행 뒤 SHA와 origin 동기화 상태로 갱신 |
+| status | `validated-local`; commit·push 전이며 Production release는 차단 유지 |
+
 ## 오류·rollback 연결
 
-- 모든 오류와 배포 차단 조건: [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)
+- 모든 오류와 배포 차단 조건: [오류·회귀 차단 원장](ERROR_LEDGER.md)
 - 음성 직접 원인과 실제 Chrome 판정: [TOPIK Google 음성 장애 기록](TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)
 - 전체 Production 기준선: [현재 상태](CURRENT_STATE.md)
 - 콘텐츠 증량과 G0–G4: [N2·N1·TOPIK 증량 릴리스](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)

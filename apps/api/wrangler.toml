@@ -50,8 +50,9 @@ OBSERVABILITY_WORKER_NAME = "nihongo-n3-api"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # D1 Database
-# Blue/Green cutover target. The previous nihongo-n3-prod database remains
-# unbound and retained for 30 days after production writes resume on v2.
+# Blue/Green production target. The previous nihongo-n3-prod database is not
+# bound in production; the read-only observability-preview environment below
+# still names it explicitly and must never be treated as Production truth.
 # ─────────────────────────────────────────────────────────────────────────────
 [[d1_databases]]
 binding = "DB"

@@ -65,7 +65,7 @@ async function getTopikRelease(db: AppEnv['Bindings']['DB']) {
       db.prepare(
         `SELECT exam_level, section, COUNT(*) AS count
            FROM topik_practice_questions
-          WHERE learning_track = 'topik-ko' AND bank_version = 'v1' AND is_published = 1
+          WHERE learning_track = 'topik-ko' AND bank_version = 'v2' AND is_published = 1
           GROUP BY exam_level, section`,
       ).all<{ exam_level: string; section: string; count: number }>(),
     ]);
@@ -73,8 +73,8 @@ async function getTopikRelease(db: AppEnv['Bindings']['DB']) {
     const placementAvailable = (placementCounts.get('listening') ?? 0) >= 12 && (placementCounts.get('reading') ?? 0) >= 12;
     const practiceCounts = new Map((practiceResult.results ?? []).map((row) => [`${row.exam_level}:${row.section}`, row.count]));
     const practiceRequirements: ReadonlyArray<readonly [string, number]> = [
-      ['TOPIK-I:listening', 6], ['TOPIK-I:reading', 6],
-      ['TOPIK-II:listening', 6], ['TOPIK-II:writing', 4], ['TOPIK-II:reading', 6],
+      ['TOPIK-I:listening', 60], ['TOPIK-I:reading', 60],
+      ['TOPIK-II:listening', 60], ['TOPIK-II:writing', 60], ['TOPIK-II:reading', 60],
     ];
     const practiceAvailable = practiceRequirements.every(([key, minimum]) => (practiceCounts.get(key) ?? 0) >= minimum);
     if (practiceAvailable) {

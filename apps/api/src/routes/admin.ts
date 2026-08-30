@@ -382,8 +382,8 @@ export async function sendReportEmail(
 ): Promise<void> {
   if (!notifyEmail) return;
 
-  // Cloudflare MailChannels integration
-  // 사전 조건: DNS SPF/DKIM 설정 필요 (docs/00_overview/logpush-r2-setup.md 참고)
+  // Cloudflare MailChannels integration. DNS SPF/DKIM configuration is an
+  // operator-owned prerequisite; see the operations runbook before enabling.
   await fetch('https://api.mailchannels.net/tx/v1/send', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

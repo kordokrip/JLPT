@@ -12,6 +12,8 @@ const CONTRACT_FILES = {
   korean: 'apps/web/src/features/topik/useKoreanAudio.ts',
   shared: 'packages/shared/src/audio-policy.ts',
   legacyAudio: 'apps/api/src/routes/audio.ts',
+  security: 'apps/api/src/middleware/security.ts',
+  purge: 'scripts/purge-r2-pronunciation.mjs',
 };
 
 export async function validateBrowserAudioContract(projectRoot = root) {
@@ -49,6 +51,27 @@ export async function validateBrowserAudioContract(projectRoot = root) {
   }
   if (!/status: 410/.test(source.legacyAudio)) {
     errors.push('legacy server audio route must remain 410 Gone');
+  }
+  if (!/"media-src 'none'"/.test(source.security)
+    || /r2\.cloudflarestorage\.com/iu.test(source.security)) {
+    errors.push('CSP must not authorize server or R2 pronunciation media');
+  }
+  for (const reference of [
+    'topik_placement_questions',
+    'topik_practice_questions',
+    'content_source_assets',
+    'content_audio_bindings',
+  ]) {
+    if (!source.purge.includes(reference)) {
+      errors.push(`R2 purge inventory must cover ${reference}`);
+    }
+  }
+  if (!/approved additive D1 purge migration/.test(source.purge)) {
+    errors.push('immutable legacy R2 metadata must fail closed to an additive D1 purge migration');
+  }
+  if (!/stored_audio_bytes_sha256 IS NOT NULL/.test(source.purge)
+    || !/sourceAssetMetadataCount > 0/.test(source.purge)) {
+    errors.push('R2 purge must block on source-asset key or hash metadata regardless of key prefix');
   }
 
   const runtimeAudio = `${source.selector}\n${source.japanese}\n${source.korean}`;

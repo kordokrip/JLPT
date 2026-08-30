@@ -1,11 +1,11 @@
-# 오류·회귀 차단 원장 — 2026-08-23
+# 오류·회귀 차단 원장
 
-기준 시각: 2026-08-24 KST
+최종 점검: 2026-08-30 KST
 현재 상태: **첫 클릭 사용자 활성화 소실과 설치형 PWA의 이전 JS 잔존을 복구해 source `2bd657e...`를 Preview와 Production에 배포했다. 전체 로컬 gate, Production Chromium/WebKit 영향 기능, 실제 Chrome 한국어·일본어 lifecycle을 통과했다. 물리 스피커 가청 여부는 자동 검증과 구분하고, 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.**
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
-현재 열린 운영 결함은 `INC-DATA-024` 하나입니다. `INC-OPS-025`–`INC-OPS-030`은 이번 기준선에서 발견 즉시 수정하고 fresh/remote gate로 재검증하며, 나머지 항목은 복구 완료 후 회귀 차단 조건으로 계속 보존합니다. 실제 사용자 장치의 물리 가청 확인은 자동 lifecycle 검사와 별도인 사후 관찰 항목입니다.
+현재 Production에서 열린 결함은 manifest drift `INC-DATA-024`, TOPIK v2 상태 오판 `INC-TOPIK-031`, quiz 활동 유실 가능성 `INC-ACT-032`, R2 검사/CSP 공백 `INC-AUD-033`입니다. 031–033은 로컬 코드와 회귀 테스트를 수정했지만 아직 Worker Production에 배포하지 않았으므로 완료로 표시하지 않습니다. `INC-LEGACY-034`의 파일 정리는 이번 후보에 포함했고 legacy DB 열·테이블 제거는 별도 additive migration 전까지 보류합니다. `INC-OPS-035`는 이번 검증 중 발견해 표면별 D1 쿼리와 회귀 테스트로 즉시 닫았습니다. 실제 사용자 장치의 물리 가청 확인은 자동 lifecycle 검사와 별도인 사후 관찰 항목입니다.
 
 ## 오류 원장
 
@@ -41,6 +41,11 @@
 | `INC-OPS-028` | auth proxy가 HTML 오류 문서를 HTTP 200으로 반환해도 remote 상태 검사가 통과 가능 | status code만 검사하고 content-type과 API body를 읽지 않음 | JSON content-type, `google_enabled=true`, `auth_mode=app-session`을 구조적으로 검사 | 세 계약 중 하나라도 다르면 remote gate 실패 |
 | `INC-OPS-029` | `ops:verify`를 전체 gate라 기록했지만 음성 provenance는 별도 수동 명령 | fresh D1이 speech binding/legacy R2 provenance verifier를 호출하지 않음 | disposable D1의 모든 fixture 적용 후 provenance verifier를 `verify:fresh`에 편입 | 음성 provenance 6개 검사 중 하나라도 실패하면 전체 gate 실패 |
 | `INC-OPS-030` | 음성 provenance 편입 첫 실행에서 의도적 `unavailable` TOPIK fixture 1건을 오류로 오판 | schema는 `ready|unavailable`을 허용하고 unavailable 사유를 강제하지만 verifier가 `ready`만 허용 | stable ref/provider/role과 `ready|unavailable` 상태를 허용하고 별도 메타데이터 검사로 unavailable 사유 검증 | 의도한 unavailable과 실제 binding 누락을 구분하지 못하면 배포 차단 |
+| `INC-TOPIK-031` | Production TOPIK status가 v2 300문항 공개 상태인데 `placement-v2`, TOPIK I만 반환하고 쓰기를 비활성화 | track status 쿼리만 비공개 legacy `bank_version='v1'`을 검사; practice API는 v2를 읽고 web cache key는 잘못된 release를 사용 | 로컬 후보는 v2 다섯 영역 각 60개를 요구하고 `topik-i-ii`를 반환하도록 수정, 300행 통합 테스트와 원격 status gate 추가 | Worker 배포 뒤 TOPIK I·II, 3영역, `write_enabled=true`가 실제 응답에 없으면 미해결 |
+| `INC-ACT-032` | quiz 결과 저장 batch가 실패해도 결과만 저장하거나 완료된 attempt를 다른 답으로 재제출해 N3 응답·weakest·성장 지표가 어긋날 수 있음 | activity 실패 catch가 quiz만 update했고, 완료 여부 검사 없이 attempt는 덮어쓰면서 결정적 event ID는 첫 값을 유지 | 구 schema fallback 제거, 결과+activity batch 실패는 500, 완료 attempt 재제출은 409; guarded update와 rollback·다른 답 재제출 회귀 테스트 추가 | quiz 결과와 activity 중 한쪽만 저장되거나 실패를 2xx로 숨기거나 완료 attempt가 다시 변경되면 배포 차단 |
+| `INC-AUD-033` | R2 참조 0건 verifier와 CSP가 TOPIK·source asset·legacy binding을 포함하지 않아 전체 차단으로 오인 가능 | verifier는 JLPT 5개 열만 집계하고 CSP는 R2 media origin을 허용 | 전수 SQL을 9개 surface로 확대하고 purge inventory도 같은 범위로 정렬, CSP `media-src 'none'`, 정적·원격 gate 추가; 현재 Production 실제 참조 0건은 read-only로 별도 확인 | 전수 합계 0, CSP R2 미허용, legacy API 410 중 하나라도 없으면 배포 차단 |
+| `INC-LEGACY-034` | OA 전환 전 중복 route, 비canonical migration, client `audio_path`/server-source no-op이 현재 구조처럼 남음 | 과거 호환 코드를 계약 종료 후 정리하지 않음 | 참조 0을 독립 감사로 확인한 route 5개와 migrate 4개 삭제, browser text-only DTO/UI로 축소 | DB legacy 열·테이블은 schema만 삭제하지 않고 별도 migration+upgrade/fresh 검증 전까지 보존 |
+| `INC-OPS-035` | 확대된 R2 원격 verifier가 실제 참조 0건인 Production에서 SQLite `too many terms in compound SELECT`로 실패 | 9개 표면을 한 `UNION ALL`로 묶어 legacy view 확장 시 D1 planner 제한을 넘음 | 각 표면을 독립 read-only count로 실행하고 결과 수·타입을 검증; DB `114/114`와 Production 9개 표면 합계 `0` 재확인 | 여러 legacy 표면을 하나의 compound SELECT로 합치지 않고 모든 결과 집합을 구조적으로 확인 |
 
 ## 현재 복구 검증 스냅샷
 

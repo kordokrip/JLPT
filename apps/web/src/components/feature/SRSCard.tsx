@@ -18,7 +18,6 @@ interface SRSCardProps {
   partOfSpeech?: string;
   example?:  string;   /** 예문 (일본어) */
   exampleKo?: string;  /** 예문 번역 */
-  audioPath?: string | undefined;
   onRate:    (rating: Rating) => void;
   loading?:  boolean;
 }
@@ -35,7 +34,7 @@ const STATE_LABEL: Record<string, string> = {
 };
 
 export function SRSCard({
-  card, heading, reading, meaning, partOfSpeech, example, exampleKo, audioPath, onRate, loading = false,
+  card, heading, reading, meaning, partOfSpeech, example, exampleKo, onRate, loading = false,
 }: SRSCardProps) {
   const { t } = useTranslation();
   const autoPronounce = useSettingsStore((s) => s.autoPronounce);
@@ -64,12 +63,11 @@ export function SRSCard({
     if (autoPronounce) {
       audioPlayer.playPronunciation({
         text: reading || heading,
-        audioPath,
         surface: 'vocab',
         preferGoogleVoice: true,
       }).catch(() => {/* ignore */});
     }
-  }, [audioPath, autoPronounce, heading, reading]);
+  }, [autoPronounce, heading, reading]);
 
   /* 키보드 단축키 */
   useEffect(() => {
@@ -166,7 +164,6 @@ export function SRSCard({
                 <PronunciationButton
                   compact
                   text={reading || heading}
-                  audioPath={audioPath}
                   surface="vocab"
                   label={t('browse.playPronunciation')}
                   className="border-0 bg-transparent p-1"

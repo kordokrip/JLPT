@@ -30,7 +30,6 @@ export interface SentenceItem {
   item_id: number;
   jp: string;
   ko: string;
-  audio_path?: string;
 }
 
 export interface SysprogItem {

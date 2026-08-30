@@ -1,6 +1,6 @@
 # 콘텐츠·출처 현재 감사
 
-기준일: 2026-08-24 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
+최종 점검: 2026-08-30 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
 
 ## Production 콘텐츠 감사
 

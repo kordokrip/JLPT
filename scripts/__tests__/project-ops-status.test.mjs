@@ -5,6 +5,7 @@ import {
   parseCurrentState,
   parseR2AbsenceReport,
   validateAuthProxyResponse,
+  validateTopikTrackStatusResponse,
   validateWorkflowPolicy,
 } from '../project-ops-status.mjs';
 
@@ -68,5 +69,29 @@ test('validateAuthProxyResponse verifies JSON and the production auth contract',
     'content-type text/html, expected application/json',
     'data.google_enabled must be true',
     'data.auth_mode must be app-session',
+  ]);
+});
+
+test('validateTopikTrackStatusResponse requires the complete published v2 surface', () => {
+  assert.deepEqual(validateTopikTrackStatusResponse(200, 'application/json', {
+    data: {
+      content_release: 'topik-i-ii',
+      write_enabled: true,
+      available_levels: ['TOPIK-I', 'TOPIK-II'],
+      available_sections: ['listening', 'writing', 'reading'],
+    },
+  }), []);
+  assert.deepEqual(validateTopikTrackStatusResponse(200, 'application/json', {
+    data: {
+      content_release: 'placement-v2',
+      write_enabled: false,
+      available_levels: ['TOPIK-I'],
+      available_sections: ['listening', 'reading'],
+    },
+  }), [
+    'data.content_release must be topik-i-ii',
+    'data.write_enabled must be true',
+    'data.available_levels must include TOPIK-I and TOPIK-II',
+    'data.available_sections must include listening, writing, and reading',
   ]);
 });

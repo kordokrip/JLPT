@@ -1,8 +1,8 @@
 # 학습 콘텐츠·플랫폼 로드맵
 
-모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER_2026-08-23.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
+모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-기준일: 2026-08-24 KST. 현재 Production 기준선, Preview 완료 후보, 이후 관찰 순서를 구분합니다.
+최종 점검: 2026-08-30 KST. 현재 Production 기준선, Preview 완료 후보, 이후 관찰 순서를 구분합니다.
 
 ## Production 완료 기준선
 
@@ -15,6 +15,13 @@
 - TOPIK v2 선택형 영역별 `15/15/15/15`, JLPT 정적 독해 정답 위치 편향 검사 통과
 - R2 발음 D1 참조 0건, Google 우선 동일 언어 브라우저 음성 사용
 - CI/CD 자동 게이트는 운영 정책상 비활성화했고, 증거는 로컬 MD 원장에서만 채택합니다.
+
+## P1 Worker 교정 후보 — 2026-08-30
+
+- TOPIK track status를 비공개 v1이 아니라 공개 v2 300문항으로 판정
+- quiz result와 activity event의 원자성 보장, 부분 성공 fallback 제거
+- TOPIK·source asset·legacy binding을 포함한 R2 참조 전수 gate와 CSP `media-src 'none'`
+- 로컬 회귀 검증·Preview·명시적 Production 승인을 마치기 전에는 현재 Production이 교정됐다고 표시하지 않음
 
 2026-08-09와 2026-08-17 배포 ID·백업·rollback 기록은 [현재 상태](00_overview/CURRENT_STATE.md#production-릴리스-기록)에 보존합니다.
 

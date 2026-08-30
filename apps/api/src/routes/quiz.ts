@@ -12,7 +12,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
-import { ok, created, notFound, badRequest, internalError } from '../lib/response.js';
+import { ok, created, notFound, badRequest, conflict, internalError } from '../lib/response.js';
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
 import { safeErrorName } from '../lib/safe-log.js';
 import { buildBalancedChoices, cryptoRandomIndex, rotatingAnswerIndex } from '../lib/quiz-choice-order.js';
@@ -301,7 +301,6 @@ quiz.post('/quiz/generate', async (c) => {
   const now = new Date().toISOString();
   const questionsJson = JSON.stringify(questions);
 
-  let quizId: number;
   try {
     const result = await db
       .prepare(
@@ -312,27 +311,18 @@ quiz.post('/quiz/generate', async (c) => {
       )
       .bind(userId, learningTrack, mode, mode, level, questions.length, questionsJson, now, now, now)
       .run();
-    quizId = result.meta.last_row_id as number;
-  } catch {
-    // mode/level 컬럼이 아직 없으면 기존 스키마로 폴백
-    const result = await db
-      .prepare(
-        `INSERT INTO quiz_attempts
-           (user_id, learning_track, quiz_type, total, correct, detail_json, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 0, ?, ?, ?)`,
-      )
-      .bind(userId, learningTrack, mode, questions.length, questionsJson, now, now)
-      .run();
-    quizId = result.meta.last_row_id as number;
+    const quizId = result.meta.last_row_id as number;
+
+    // 클라이언트에는 정답을 숨기고 반환
+    // `script_ko` on a canonical listening item is the correct translation.
+    // Keep it in the stored attempt for post-submit use, but never expose it in
+    // the generation response alongside the still-unanswered choices.
+    const clientQuestions = questions.map(({ answer: _answer, script_ko: _translation, ...question }) => question);
+    return ok(c, { quiz_id: quizId, mode, level, questions: clientQuestions });
+  } catch (error) {
+    console.error({ event: 'quiz_attempt_create_error', error_name: safeErrorName(error) });
+    return internalError(c, '퀴즈 시도를 저장하지 못했습니다');
   }
-
-  // 클라이언트에는 정답을 숨기고 반환
-  // `script_ko` on a canonical listening item is the correct translation.
-  // Keep it in the stored attempt for post-submit use, but never expose it in
-  // the generation response alongside the still-unanswered choices.
-  const clientQuestions = questions.map(({ answer: _answer, script_ko: _translation, ...question }) => question);
-
-  return ok(c, { quiz_id: quizId, mode, level, questions: clientQuestions });
 });
 
 // ───────────────────────────────────────────────────────
@@ -362,6 +352,7 @@ quiz.post('/quiz/submit', async (c) => {
     detail_json: string | null;
     mode: string | null;
     level: string | null;
+    finished_at: string | null;
   };
 
   const attempt = await db
@@ -370,6 +361,7 @@ quiz.post('/quiz/submit', async (c) => {
     .first<StoredAttempt>();
 
   if (!attempt) return notFound(c, `quiz_id=${quiz_id} 를 찾을 수 없습니다`);
+  if (attempt.finished_at) return conflict(c, '이미 제출된 퀴즈입니다');
 
   const raw = attempt.questions_json ?? attempt.detail_json ?? '[]';
   type StoredQ = { id: string; type: string; answer: string; item_id: string | number };
@@ -394,16 +386,17 @@ quiz.post('/quiz/submit', async (c) => {
 
   const now = new Date().toISOString();
   const score = attempt.total > 0 ? Math.round((correctCount / attempt.total) * 100) : 0;
+  const detailJson = JSON.stringify(detail);
 
   // 결과와 문항별 활동 기록을 하나의 D1 batch로 반영한다. 이벤트 ID는
   // attempt 범위에서 결정적이므로 같은 제출이 재전송되어도 중복되지 않는다.
   try {
     const update = db.prepare(
         `UPDATE quiz_attempts
-           SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
-         WHERE id = ? AND learning_track = ?`,
+         SET correct = ?, detail_json = ?, finished_at = ?, updated_at = ?
+         WHERE id = ? AND learning_track = ? AND finished_at IS NULL`,
       )
-      .bind(correctCount, JSON.stringify(detail), now, now, quiz_id, learningTrack);
+      .bind(correctCount, detailJson, now, now, quiz_id, learningTrack);
     const activityStatements = storedQuestions.map((question) => {
       const submitted = answerMap.get(question.id) ?? '';
       return db.prepare(
@@ -422,16 +415,13 @@ quiz.post('/quiz/submit', async (c) => {
         Number(submitted === question.answer),
       );
     });
-    await db.batch([update, ...activityStatements]);
-  } catch {
-    await db
-      .prepare(
-        `UPDATE quiz_attempts
-           SET correct = ?, detail_json = ?, updated_at = ?
-         WHERE id = ? AND learning_track = ?`,
-      )
-      .bind(correctCount, JSON.stringify(detail), now, quiz_id, learningTrack)
-      .run();
+    const results = await db.batch([update, ...activityStatements]);
+    if (Number(results[0]?.meta.changes ?? 0) !== 1) {
+      return conflict(c, '이미 제출된 퀴즈입니다');
+    }
+  } catch (error) {
+    console.error({ event: 'quiz_submission_write_error', error_name: safeErrorName(error) });
+    return internalError(c, '퀴즈 결과와 학습 활동을 저장하지 못했습니다');
   }
 
   return ok(c, {

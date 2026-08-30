@@ -1068,6 +1068,114 @@ describe('learning activity and strict-level quiz strategy', () => {
     expect(body.data.questions[0]).not.toHaveProperty('script_ko');
   });
 
+  it('rolls back the quiz result when an activity event cannot be stored', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const attempt = await db.prepare(
+      `INSERT INTO quiz_attempts
+         (user_id, learning_track, quiz_type, mode, level, total, correct,
+          questions_json, started_at, created_at, updated_at)
+       VALUES ('owner', 'jlpt-ja', 'vocab_mc', 'vocab_mc', 'N3', 1, 0, ?, ?, ?, ?)`,
+    ).bind(
+      JSON.stringify([{ id: `atomic-question-${suffix}`, type: 'vocab_mc', answer: '정답', item_id: 1 }]),
+      new Date().toISOString(),
+      new Date().toISOString(),
+      new Date().toISOString(),
+    ).run();
+    const quizId = Number(attempt.meta.last_row_id);
+    const triggerName = `block_quiz_activity_${suffix}`;
+    await db.prepare(
+      `CREATE TRIGGER ${triggerName}
+       BEFORE INSERT ON learning_activity_events
+       WHEN NEW.event_id = 'quiz:${quizId}:atomic-question-${suffix}'
+       BEGIN
+         SELECT RAISE(ABORT, 'test activity failure');
+       END`,
+    ).run();
+
+    try {
+      const response = await fetch('/api/v1/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quiz_id: quizId,
+          answers: [{ question_id: `atomic-question-${suffix}`, answer: '정답' }],
+        }),
+      });
+      expect(response.status).toBe(500);
+      const stored = await db.prepare(
+        'SELECT correct, finished_at FROM quiz_attempts WHERE id = ?',
+      ).bind(quizId).first<{ correct: number; finished_at: string | null }>();
+      expect(stored).toEqual({ correct: 0, finished_at: null });
+      const events = await db.prepare(
+        `SELECT count(*) AS count FROM learning_activity_events
+          WHERE event_id = ?`,
+      ).bind(`quiz:${quizId}:atomic-question-${suffix}`).first<{ count: number }>();
+      expect(events?.count).toBe(0);
+    } finally {
+      await db.prepare(`DROP TRIGGER ${triggerName}`).run();
+    }
+  });
+
+  it('rejects a changed quiz resubmission without diverging from the first activity event', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.prepare(
+      `INSERT OR IGNORE INTO users (id, email, display_name, learning_track)
+       VALUES ('owner', 'owner@nihongo-n3.local', 'test owner', 'jlpt-ja')`,
+    ).run();
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const questionId = `single-submit-question-${suffix}`;
+    const attempt = await db.prepare(
+      `INSERT INTO quiz_attempts
+         (user_id, learning_track, quiz_type, mode, level, total, correct,
+          questions_json, started_at, created_at, updated_at)
+       VALUES ('owner', 'jlpt-ja', 'vocab_mc', 'vocab_mc', 'N3', 1, 0, ?, ?, ?, ?)`,
+    ).bind(
+      JSON.stringify([{ id: questionId, type: 'vocab_mc', answer: '정답', item_id: 1 }]),
+      new Date().toISOString(),
+      new Date().toISOString(),
+      new Date().toISOString(),
+    ).run();
+    const quizId = Number(attempt.meta.last_row_id);
+
+    const first = await fetch('/api/v1/quiz/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quiz_id: quizId,
+        answers: [{ question_id: questionId, answer: '정답' }],
+      }),
+    });
+    expect(first.status).toBe(200);
+
+    const repeated = await fetch('/api/v1/quiz/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quiz_id: quizId,
+        answers: [{ question_id: questionId, answer: '오답' }],
+      }),
+    });
+    expect(repeated.status).toBe(409);
+
+    const stored = await db.prepare(
+      'SELECT correct, detail_json, finished_at FROM quiz_attempts WHERE id = ?',
+    ).bind(quizId).first<{ correct: number; detail_json: string; finished_at: string | null }>();
+    expect(stored?.correct).toBe(1);
+    expect(stored?.finished_at).not.toBeNull();
+    expect(JSON.parse(stored!.detail_json)).toMatchObject([{ submitted: '정답', is_correct: true }]);
+
+    const activity = await db.prepare(
+      `SELECT correct, count(*) AS count FROM learning_activity_events
+        WHERE event_id = ? GROUP BY correct`,
+    ).bind(`quiz:${quizId}:${questionId}`).first<{ correct: number; count: number }>();
+    expect(activity).toEqual({ correct: 1, count: 1 });
+  });
+
   it('prefers a reviewed published N3 static bank item for weakest strategy', async () => {
     const db = (env as typeof env & { DB: D1Database }).DB;
     await db.prepare(
@@ -1455,6 +1563,80 @@ describe('TOPIK placement V2', () => {
 });
 
 describe('TOPIK self-authored practice bank', () => {
+  it('reports the complete published v2 300-question bank as TOPIK I-II', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    await db.batch([
+      db.prepare(
+        `INSERT INTO track_content_sources (learning_track, source_code, title, file_path, source_version, provenance_json)
+         VALUES ('topik-ko', 'TOPIK-PRACTICE-V2-STATUS', 'status fixture', 'test/topik-practice-v2-status', 'v2', '{}')
+         ON CONFLICT(learning_track, source_code) DO UPDATE SET source_version = excluded.source_version`,
+      ),
+      db.prepare(
+        `INSERT INTO track_exam_levels (learning_track, exam_level, sort_order, label_en, label_ko, sections_json)
+         VALUES ('topik-ko', 'TOPIK-I', 1, 'TOPIK I', 'TOPIK I', '["listening","reading"]')
+         ON CONFLICT(learning_track, exam_level) DO UPDATE SET sections_json = excluded.sections_json`,
+      ),
+      db.prepare(
+        `INSERT INTO track_exam_levels (learning_track, exam_level, sort_order, label_en, label_ko, sections_json)
+         VALUES ('topik-ko', 'TOPIK-II', 2, 'TOPIK II', 'TOPIK II', '["listening","writing","reading"]')
+         ON CONFLICT(learning_track, exam_level) DO UPDATE SET sections_json = excluded.sections_json`,
+      ),
+    ]);
+
+    const groups = [
+      ['TOPIK-I', 'listening', 'choice'],
+      ['TOPIK-I', 'reading', 'choice'],
+      ['TOPIK-II', 'listening', 'choice'],
+      ['TOPIK-II', 'writing', 'writing'],
+      ['TOPIK-II', 'reading', 'choice'],
+    ] as const;
+    for (const [examLevel, section, questionType] of groups) {
+      const prefix = `status-${examLevel.toLowerCase()}-${section}`;
+      await db.prepare(
+        `WITH RECURSIVE seq(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 60)
+         INSERT OR IGNORE INTO topik_practice_questions
+           (id, learning_track, exam_level, section, question_type, skill, difficulty,
+            prompt_ko, prompt_ja, prompt_en, choices_json, answer_index,
+            explanation_ko, explanation_ja, explanation_en,
+            sample_answer_ko, sample_answer_ja, sample_answer_en, audio_script_ko,
+            source_code, author_reviewer, second_reviewer, reviewed_at, bank_version, is_published)
+         SELECT ? || '-' || n, 'topik-ko', ?, ?, ?, 'status', ((n - 1) % 5) + 1,
+                ? || ' 한국어 ' || n, ? || ' 日本語 ' || n, ? || ' English ' || n,
+                CASE WHEN ? = 'choice' THEN '["정답","오답1","오답2","오답3"]' ELSE '[]' END,
+                CASE WHEN ? = 'choice' THEN (n - 1) % 4 ELSE NULL END,
+                '한국어 해설', '日本語解説', 'English explanation',
+                CASE WHEN ? = 'writing' THEN '한국어 예시' ELSE NULL END,
+                CASE WHEN ? = 'writing' THEN '日本語例' ELSE NULL END,
+                CASE WHEN ? = 'writing' THEN 'English sample' ELSE NULL END,
+                CASE WHEN ? = 'choice' AND ? = 'listening' THEN '한국어 듣기 대본' ELSE NULL END,
+                'TOPIK-PRACTICE-V2-STATUS', 'reviewer-a', 'reviewer-b', '2026-08-30', 'v2', 1
+           FROM seq`,
+      ).bind(
+        prefix, examLevel, section, questionType,
+        prefix, prefix, prefix,
+        questionType, questionType,
+        questionType, questionType, questionType,
+        questionType, section,
+      ).run();
+    }
+
+    const status = await json<{ data: {
+      available: boolean;
+      content_release: string;
+      available_levels: string[];
+      available_sections: string[];
+      write_enabled: boolean;
+    } }>('/api/v1/tracks/topik-ko/status');
+    expect(status.data).toEqual({
+      track: 'topik-ko',
+      available: true,
+      content_release: 'topik-i-ii',
+      available_levels: ['TOPIK-I', 'TOPIK-II'],
+      available_sections: ['listening', 'writing', 'reading'],
+      write_enabled: true,
+    });
+  });
+
   it('keeps answers private until a learner explicitly opens a reviewed solution', async () => {
     const db = (env as typeof env & { DB: D1Database }).DB;
     await db.batch([
@@ -1487,8 +1669,8 @@ describe('TOPIK self-authored practice bank', () => {
     const listed = await fetch('/api/v1/tracks/topik-ko/practice?exam_level=TOPIK-II&section=reading', { headers });
     expect(listed.status).toBe(200);
     const listBody = await listed.json<{ data: { questions: Array<{ id: string; prompt_ja: string }> } }>();
-    expect(listBody.data.questions).toHaveLength(1);
-    expect(listBody.data.questions[0]?.prompt_ja).toBe('日本語の質問');
+    const authoredQuestion = listBody.data.questions.find((question) => question.id === 'topik-practice-test-001');
+    expect(authoredQuestion?.prompt_ja).toBe('日本語の質問');
     expect(JSON.stringify(listBody)).not.toContain('answer_index');
     expect(JSON.stringify(listBody)).not.toContain('explanation_ja');
 

@@ -56,7 +56,6 @@ export function VocabCard({ item, onClick, className }: VocabCardProps) {
         <PronunciationButton
           compact
           text={pronunciationText}
-          audioPath={item.audio_path}
           surface="vocab"
           label={`${item.word} ${t('browse.playPronunciation')}`}
           className="border-0 bg-transparent p-1"

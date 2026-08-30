@@ -168,9 +168,9 @@ export const learningContentStableRefs = sqliteTable(
 );
 
 /**
- * Stable audio metadata for authored content. Production accepts pending
- * metadata only; playback is browser Google speech and no R2-ready binding
- * may be inserted.
+ * Legacy audio metadata retained for migration compatibility only. Migration
+ * 0027 blocks every new insert; playback uses browser speech through
+ * contentSpeechBindings instead.
  */
 export const contentAudioBindings = sqliteTable(
   'content_audio_bindings',

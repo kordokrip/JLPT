@@ -81,7 +81,6 @@ describe('Review page baseline', () => {
       part_of_speech: 'noun',
       example_jp: '内容を確認します。',
       example_ko: '내용을 확인합니다.',
-      audio_path: null,
     };
 
     const { asFragment } = renderReview();

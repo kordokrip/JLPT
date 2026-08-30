@@ -130,7 +130,6 @@ function VocabReviewCard({
       {...(item.part_of_speech ? { partOfSpeech: item.part_of_speech } : {})}
       {...(item.example_jp ? { example: item.example_jp } : {})}
       {...(item.example_ko ? { exampleKo: item.example_ko } : {})}
-      {...(item.audio_path ? { audioPath: item.audio_path } : {})}
       onRate={onRate}
       loading={loading}
     />

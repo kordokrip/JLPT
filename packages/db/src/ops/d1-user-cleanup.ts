@@ -77,11 +77,17 @@ function resolveFromRoot(value: string): string {
   return path.isAbsolute(value) ? value : path.resolve(root, value);
 }
 
+export function requireExplicitDatabase(value: string | undefined): string {
+  if (!value) throw new Error("--database=<explicit D1 name> is required");
+  if (!/^[a-z0-9][a-z0-9_-]{0,62}$/i.test(value)) {
+    throw new Error("invalid D1 database name");
+  }
+  return value;
+}
+
 function parseOptions(): Options {
   const execute = process.argv.includes("--execute");
-  const database = argument("database") ?? "nihongo-n3-prod";
-  if (!/^[a-z0-9][a-z0-9_-]{0,62}$/i.test(database))
-    throw new Error("invalid D1 database name");
+  const database = requireExplicitDatabase(argument("database"));
 
   const credentialsFile = argument("credentials-file");
   if (credentialsFile) {
@@ -152,7 +158,6 @@ function wranglerRaw(
   database: string,
   sql: string,
   config: string,
-  yes = false,
 ): string {
   if (!process.env["CLOUDFLARE_API_TOKEN"]) {
     throw new Error("CLOUDFLARE_API_TOKEN is required for remote D1 access");
@@ -170,9 +175,13 @@ function wranglerRaw(
         "--json",
         `--command=${sql}`,
         `--config=${config}`,
-        ...(yes ? ["--yes"] : []),
       ],
-      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, CI: "true", WRANGLER_WRITE_LOGS: "0" },
+      },
     );
   } catch (error) {
     throw safeWranglerFailure(error);
@@ -563,7 +572,6 @@ function executePlan(options: Options): void {
       options.database,
       cleanupSql(candidateIds),
       options.config,
-      true,
     );
 
     const remainingUsers = readUsers(source);

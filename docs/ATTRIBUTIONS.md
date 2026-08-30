@@ -1,6 +1,6 @@
 # 라이선스와 콘텐츠 출처
 
-기준일: 2026-08-23 KST. 이 문서는 현재 seed와 external source 후보의 경계를 기록한다. source asset의 실제 승인 값은 D1의 `content_source_assets`, intake artifact와 해당 manifest가 최종 기준이다.
+최종 점검: 2026-08-30 KST. 이 문서는 현재 seed와 external source 후보의 경계를 기록한다. source asset의 실제 승인 값은 D1의 `content_source_assets`, intake artifact와 해당 manifest가 최종 기준이다.
 
 ## 기본 원칙
 
@@ -15,7 +15,7 @@
 
 N5~N3 원본, N2 Batch 1~5, N1 Batch 1~4, TOPIK owner curriculum Batch 1~5, TOPIK placement/practice bank의 예문·지문·대본·문제·보기·정답·해설은 프로젝트의 교육용 자체 저작이다. source manifest는 각 파일 SHA-256과 source provenance를 저장한다.
 
-2026-08-23 Preview 후보인 N2/N1 정적 문제은행 120문항과 TOPIK owner Batch 6 40항목도 전부 자체 저작이며, 별도 intake hash·최종 draft hash·두 reviewer artifact에 연결됩니다. 실제 Chrome 음성 gate 실패로 Production에는 아직 포함되지 않습니다.
+2026-08-23 Preview 후보인 N2/N1 정적 문제은행 120문항과 TOPIK owner Batch 6 40항목도 전부 자체 저작이며, 별도 intake hash·최종 draft hash·두 reviewer artifact에 연결됩니다. 2026-08-24 Production 음성 복구와는 별개로, 이 후보는 새 predeploy·backup/restore·immutable release verifier와 명시적 승인이 필요해 Production에는 아직 포함되지 않습니다.
 
 ### TOPIK 자체 저작 콘텐츠
 
@@ -25,10 +25,10 @@ TOPIK owner curriculum은 practice bank나 공개 content release와 분리된�
 
 발음은 같은 언어의 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용한다. JLPT·QA·TOPIK owner item은 R2 asset·fallback을 사용하지 않으며, `audio_text_ko`가 있으면 브라우저 음성으로 재생하고 없으면 unavailable로 처리한다.
 
-발음용 R2 asset의 immutable key, license, input/source hash, output bytes hash, activation은 더 이상 생성·승인하지 않는다. 과거 자산의 provenance 기록은 감사 이력으로만 보존하며, 새 발음 asset 등록 기준으로 사용하지 않는다.
+발음용 R2 asset의 immutable key, license, input/source hash, output bytes hash, activation은 더 이상 생성·승인하지 않는다. 아래 필드는 과거 provenance 감사 항목일 뿐 신규 발음 등록 체크리스트가 아니다.
 
 ~~~text
-source URL or TTS provider/model/voice/version
+historical source URL or TTS provider/model/voice/version
 license ID and license URL
 required attribution and allowed use
 source or input SHA-256

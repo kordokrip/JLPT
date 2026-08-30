@@ -11,9 +11,11 @@ const REQUIRED_DOCS = [
   'AGENTS.md',
   'docs/README.md',
   'docs/00_overview/CURRENT_STATE.md',
-  'docs/00_overview/ERROR_LEDGER_2026-08-23.md',
-  'docs/00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md',
+  'docs/00_overview/ERROR_LEDGER.md',
   'docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md',
+  'docs/00_overview/LOCAL_CICD_OPERATIONS.md',
+  'docs/00_overview/LOCAL_RELEASE_LEDGER.md',
+  'docs/00_overview/SUB_AGENT_HANDOFF.md',
 ];
 
 const REQUIRED_SCRIPTS = [
@@ -103,6 +105,22 @@ export function validateAuthProxyResponse(status, contentType, payload) {
   return errors;
 }
 
+export function validateTopikTrackStatusResponse(status, contentType, payload) {
+  const errors = [];
+  const data = payload?.data;
+  if (status !== 200) errors.push(`HTTP ${status}, expected 200`);
+  if (!/application\/json/iu.test(contentType)) errors.push(`content-type ${contentType || 'missing'}, expected application/json`);
+  if (data?.content_release !== 'topik-i-ii') errors.push('data.content_release must be topik-i-ii');
+  if (data?.write_enabled !== true) errors.push('data.write_enabled must be true');
+  if (!['TOPIK-I', 'TOPIK-II'].every((level) => data?.available_levels?.includes?.(level))) {
+    errors.push('data.available_levels must include TOPIK-I and TOPIK-II');
+  }
+  if (!['listening', 'writing', 'reading'].every((section) => data?.available_sections?.includes?.(section))) {
+    errors.push('data.available_sections must include listening, writing, and reading');
+  }
+  return errors;
+}
+
 async function localChecks() {
   const checks = [];
   const docs = new Map();
@@ -171,7 +189,7 @@ async function localChecks() {
     }
   }
 
-  const errorLedger = docs.get('docs/00_overview/ERROR_LEDGER_2026-08-23.md') ?? '';
+  const errorLedger = docs.get('docs/00_overview/ERROR_LEDGER.md') ?? '';
   addCheck(
     checks,
     'db:manifest-drift',
@@ -269,6 +287,35 @@ async function remoteChecks(context) {
     );
   } catch (error) {
     addCheck(checks, 'remote:auth-proxy', 'fail', error instanceof Error ? error.message : String(error));
+  }
+
+  try {
+    const response = await fetch('https://nihongo-n3.pages.dev/api/v1/tracks/topik-ko/status', { redirect: 'manual' });
+    const contentType = response.headers.get('content-type') ?? '';
+    const csp = response.headers.get('content-security-policy') ?? '';
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      // The validator records an invalid or non-JSON response.
+    }
+    const errors = validateTopikTrackStatusResponse(response.status, contentType, payload);
+    addCheck(
+      checks,
+      'remote:topik-release-status',
+      errors.length === 0 ? 'pass' : 'fail',
+      errors.join('; ') || 'TOPIK v2 exposes TOPIK I-II with listening/writing/reading',
+    );
+    const cspBlocksPronunciationMedia = /media-src 'none'/u.test(csp) && !/r2\.cloudflarestorage\.com/iu.test(csp);
+    addCheck(
+      checks,
+      'remote:csp-no-r2-pronunciation',
+      cspBlocksPronunciationMedia ? 'pass' : 'fail',
+      cspBlocksPronunciationMedia ? "media-src 'none'; no R2 media origin" : (csp || 'Content-Security-Policy missing'),
+    );
+  } catch (error) {
+    addCheck(checks, 'remote:topik-release-status', 'fail', error instanceof Error ? error.message : String(error));
+    addCheck(checks, 'remote:csp-no-r2-pronunciation', 'fail', error instanceof Error ? error.message : String(error));
   }
 
   const r2Check = command('pnpm', ['-F', '@nihongo-n3/db', 'verify:remote:audio:r2']);

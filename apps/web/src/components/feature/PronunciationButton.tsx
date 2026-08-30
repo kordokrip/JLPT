@@ -2,48 +2,38 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { audioPlayer } from '../../lib/audio';
 import type { MouseEvent } from 'react';
-import type { AudioSourcePreference } from '../../lib/audio';
 import type { AudioSurface } from '@nihongo-n3/shared';
 
 interface PronunciationButtonProps {
   text?: string | undefined;
-  audioPath?: string | undefined;
   label?: string;
   className?: string;
   compact?: boolean;
   surface?: AudioSurface;
-  prefer?: AudioSourcePreference;
-  forceBrowser?: boolean;
   slow?: boolean;
   repeat?: number;
 }
 
 export function PronunciationButton({
   text,
-  audioPath,
   label,
   className = '',
   compact = false,
   surface,
-  prefer,
-  forceBrowser = false,
   slow = false,
   repeat = 1,
 }: PronunciationButtonProps) {
   const { t } = useTranslation();
   const [playbackFailed, setPlaybackFailed] = useState(false);
   const playableText = text?.trim();
-  if (!playableText && !audioPath) return null;
+  if (!playableText) return null;
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setPlaybackFailed(false);
     void audioPlayer.playPronunciation({
       text: playableText,
-      audioPath,
       ...(surface ? { surface } : {}),
-      ...(prefer ? { prefer } : {}),
-      forceBrowser,
       slow,
       repeat,
       preferGoogleVoice: true,

@@ -1,14 +1,14 @@
 # 현재 구현 상태
 
-기준일: 2026-08-24 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
+기준일: 2026-08-30 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
 
 > 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 
-현재 오류와 배포 차단 조건의 단일 원장은 [오류·회귀 차단 원장](ERROR_LEDGER_2026-08-23.md)입니다. 미실행·인프라 실패·mock 결과는 통과로 간주하지 않습니다.
+현재 오류와 배포 차단 조건의 단일 원장은 [오류·회귀 차단 원장](ERROR_LEDGER.md)입니다. 미실행·인프라 실패·mock 결과는 통과로 간주하지 않습니다.
 
-GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용합니다. 저장소 Actions는 실행이 차단된 상태로 운영하며, 자동 CI/CD 대신 로컬 검증 종료 코드와 Cloudflare deployment ID를 [로컬 형상관리·릴리스 원장](LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)에 기록합니다.
+GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용합니다. 저장소 Actions는 실행이 차단된 상태로 운영하며, 로컬 검증은 [로컬 CI/CD 운영 기준](LOCAL_CICD_OPERATIONS.md), Cloudflare deployment와 rollback ID는 [로컬 형상관리·릴리스 원장](LOCAL_RELEASE_LEDGER.md)에 기록합니다.
 
-CI/CD 비사용 운영 기준은 [Git 무료 모드 운영 매뉴얼](GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md)에 정리했습니다.
+새 작업자와 Sub Agent의 단일 진입점은 [Sub Agent 운영 인수인계](SUB_AGENT_HANDOFF.md)입니다.
 
 운영·버그·리팩터링 추적은 루트 `AGENTS.md`, 프로젝트 스킬 `.codex/skills/project-operations-steward`, [운영관리 runbook](OPERATIONS_MANAGEMENT_RUNBOOK.md)을 단일 절차로 사용합니다. `pnpm ops:status`는 로컬 계약을, `pnpm ops:status:remote`는 Git·Cloudflare Production의 읽기 전용 상태를 JSON artifact로 기록합니다.
 
@@ -55,9 +55,17 @@ release-link trigger는 `0026`에서만 생성되므로 `0025 → 0026` migratio
 
 `POST /api/v1/activity/events`는 1–100개 idempotent event batch를 받고 `{accepted,duplicates}`를 반환합니다. 인증된 사용자의 현재 track과 각 event의 `learning_track`이 다르면 거부합니다. `GET /api/v1/activity/summary?window=7d|30d`는 totals와 track/level/section/mode groups만 반환합니다.
 
-웹은 Dexie v6에 queue-first로 저장합니다. 처리 중 종료된 항목을 복구하고, offline/실패 시 보존하며, 동일 event ID로 재전송합니다. 큐와 조회 캐시는 계정×트랙으로 격리됩니다. 퀴즈 응답, TOPIK complete, FSRS rating은 서버 데이터 변경과 같은 transaction에서 각각 activity event를 기록합니다.
+웹은 Dexie 4의 로컬 schema version 6에 queue-first로 저장합니다. 처리 중 종료된 항목을 복구하고, offline/실패 시 보존하며, 동일 event ID로 재전송합니다. 큐와 조회 캐시는 계정×트랙으로 격리됩니다. 퀴즈 응답, TOPIK complete, FSRS rating은 서버 데이터 변경과 같은 D1 batch에서 각각 activity event를 기록하며, 어느 문장이라도 실패하면 성공 응답을 반환하지 않습니다.
 
 TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest area`입니다. `weakest`는 최근 30일 activity를 사용합니다.
+
+## 2026-08-30 로컬 수정 후보 — Production 미배포
+
+- Production read-only 조회에서 TOPIK practice v2 300개는 공개지만 `/tracks/topik-ko/status`가 legacy v1을 조회해 `placement-v2`, TOPIK I만 반환하는 결함을 확인했습니다. 로컬 코드는 v2 다섯 영역 각 60개를 기준으로 `topik-i-ii`, TOPIK I·II와 쓰기를 공개하도록 수정했고 300행 회귀 테스트를 추가했습니다.
+- quiz submit의 activity batch 실패를 quiz 결과만 저장하는 성공으로 숨기던 fallback을 제거했습니다. 이제 attempt 결과와 문항별 activity가 함께 반영되지 않으면 500을 반환하며, 완료된 quiz를 다른 답으로 다시 제출하면 409를 반환합니다. guarded update, rollback과 재제출 불변성 테스트가 이를 고정합니다.
+- R2 부재 verifier와 purge inventory는 JLPT 열뿐 아니라 TOPIK placement/practice, source asset과 legacy binding까지 집계합니다. immutable legacy metadata가 발견되면 purge 도구는 임의 변조하지 않고 additive D1 purge migration을 요구합니다. API CSP는 `media-src 'none'`이며 server/R2 발음 media origin을 허용하지 않습니다.
+- 최종 로컬 gate는 Ops `24/24`, DB `114/114`, Web `93/93`, API `134/134`, OpenAPI `72/12`, build와 fresh D1 `0000–0027`을 통과했습니다. Chromium/WebKit 전체 E2E는 `171 passed / 32 skipped / 0 failed`입니다. Production read-only 상태는 `49 passed / 2 known warnings / 2 failed`이며 두 실패가 바로 미배포 TOPIK status와 CSP입니다. D1의 R2 발음 참조는 확대된 9개 표면 모두 `0`입니다.
+- 이 세 변경은 현재 branch의 Worker 후보이며 아직 Production Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`에 반영하지 않았습니다. Production 상태가 고쳐졌다고 보고하려면 새 승인·Preview·배포·postdeploy status가 필요합니다.
 
 ## 퀴즈 전략과 strict-level 규칙
 

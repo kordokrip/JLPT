@@ -15,7 +15,7 @@
     "test": "pnpm test:ops && pnpm -F @nihongo-n3/db test && pnpm -F @nihongo-n3/web test:run && pnpm -F @nihongo-n3/api test",
     "test:ops": "node --test scripts/__tests__/*.test.mjs",
     "test:e2e": "pnpm -F @nihongo-n3/e2e test",
-    "docs:check": "node scripts/check-markdown-links.mjs",
+    "docs:check": "node scripts/check-markdown-links.mjs && node scripts/check-doc-lifecycle.mjs",
     "lint": "pnpm --filter @nihongo-n3/web --filter @nihongo-n3/api -r lint",
     "verify": "pnpm typecheck && pnpm test && pnpm build",
     "verify:ci": "pnpm release:verify:audio-contract && pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh",

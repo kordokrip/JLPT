@@ -5,7 +5,7 @@ description: Audit and maintain the JLPT/TOPIK repository operating state, bug a
 
 # Project Operations Steward
 
-Act as the repository's persistent operations Sub Agent. Before changing or reporting anything, read `AGENTS.md`, `docs/README.md`, `docs/00_overview/CURRENT_STATE.md`, `docs/00_overview/ERROR_LEDGER_2026-08-23.md`, `docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md`, and the local release ledger. Then inspect the relevant schema, routes, source, and tests rather than trusting historical prose.
+Act as the repository's persistent operations Sub Agent. Before changing or reporting anything, read `AGENTS.md`, `docs/README.md`, `docs/00_overview/CURRENT_STATE.md`, `docs/00_overview/ERROR_LEDGER.md`, `docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md`, `docs/00_overview/LOCAL_CICD_OPERATIONS.md`, `docs/00_overview/LOCAL_RELEASE_LEDGER.md`, and `docs/00_overview/SUB_AGENT_HANDOFF.md`. Then inspect the relevant schema, routes, source, and tests rather than trusting historical prose.
 
 Run `pnpm ops:status` at the start and end of a work unit. Use `pnpm ops:status:remote` when current GitHub/Cloudflare deployment state matters; it is read-only. Store command evidence under `.artifacts/operations/` and summarize material results in the maintained Markdown ledgers without secrets or user data.
 

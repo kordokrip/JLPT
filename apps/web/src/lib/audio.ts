@@ -12,8 +12,6 @@ import { isGoogleVoiceForLanguage, isVoiceForLanguage, waitForBrowserVoice } fro
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
-/** Compatibility type: a server source is never available. */
-export type AudioSourcePreference = 'browser';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
@@ -38,10 +36,7 @@ interface SpeechOptions {
 
 interface PronunciationOptions {
   text?: string | undefined;
-  audioPath?: string | undefined;
   surface?: AudioSurface;
-  prefer?: AudioSourcePreference;
-  forceBrowser?: boolean;
   slow?: boolean;
   repeat?: number;
   preferGoogleVoice?: boolean;
@@ -51,7 +46,6 @@ class AudioPlayer {
   private _rate: PlaybackRate = 1.0;
   private _voiceGender: VoiceGender = 'female';
   private _voiceURI: string | null = null;
-  private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
 
   get rate(): PlaybackRate { return this._rate; }
@@ -60,27 +54,16 @@ class AudioPlayer {
   set voiceGender(v: VoiceGender) { this._voiceGender = v; }
   get voiceURI(): string | null { return this._voiceURI; }
   set voiceURI(v: string | null) { this._voiceURI = v; }
-  get sourcePreference(): AudioSourcePreference { return this._sourcePreference; }
-  set sourcePreference(v: AudioSourcePreference) { this._sourcePreference = v; }
   set onEnd(cb: () => void) { this._onEnd = cb; }
 
   configure(options: {
     rate?: PlaybackRate;
     voiceGender?: VoiceGender;
     voiceURI?: string | null;
-    sourcePreference?: AudioSourcePreference;
   }): void {
     if (options.rate !== undefined) this._rate = options.rate;
     if (options.voiceGender !== undefined) this._voiceGender = options.voiceGender;
     if (options.voiceURI !== undefined) this._voiceURI = options.voiceURI;
-    if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
-  }
-
-  /** Browser speech has no server object to prefetch. */
-  async prefetch(paths: string[]): Promise<void> {
-    // Kept as a no-op compatibility surface. Browser speech is not an
-    // R2 object and must not be prefetched from /audio.
-    void paths;
   }
 
   async warmVoices(language = 'ja'): Promise<void> {
@@ -209,33 +192,19 @@ class AudioPlayer {
 
   async playPronunciation({
     text,
-    audioPath,
     surface,
-    prefer,
-    forceBrowser = false,
     slow = false,
     repeat = 1,
     preferGoogleVoice = true,
   }: PronunciationOptions): Promise<boolean> {
     const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
-    void audioPath;
-    void prefer;
-    void forceBrowser;
     const useSlow = slow || policy.slow;
     const spokenText = normalized && repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
     return spokenText ? this.speakText(spokenText, {
       ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
       preferGoogleVoice: preferGoogleVoice && policy.preferGoogleVoice,
     }) : false;
-  }
-
-  /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
-  async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<boolean> {
-    // A legacy R2 path must never initiate a network request. A supplied
-    // transcript may be spoken only by a same-language browser voice.
-    void path;
-    return fallbackText ? this.speakText(fallbackText, { ...(options.rate !== undefined ? { rate: options.rate } : {}), preferGoogleVoice: true }) : false;
   }
 
   stop(): void {

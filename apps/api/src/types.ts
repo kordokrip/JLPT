@@ -19,7 +19,7 @@ export type Env = {
   CONTENT_RELEASE_DLQ: Queue<ContentReleaseQueueMessage>;
   /** Human-gated orchestration; it creates preview candidates only. */
   CONTENT_RELEASE_WORKFLOW: Workflow<ContentReleaseWorkflowParams>;
-  /** Cloudflare Workers AI 바인딩 (TTS, 이미지 등) */
+  /** Opt-in text learning assistance. Never used for pronunciation or TTS. */
   AI:                  Ai;
   /** Server-side AI assistance is opt-in and disabled unless exactly "true". */
   AI_ASSISTANCE_ENABLED?: string;

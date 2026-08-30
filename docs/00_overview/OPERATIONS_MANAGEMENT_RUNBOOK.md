@@ -4,7 +4,7 @@
 
 **Frequency:** 작업 시작·종료, 버그 수정, 리팩터링, Preview/Production 전후, 주 1회
 
-**Last Updated:** 2026-08-24 KST
+**Last Updated:** 2026-08-30 KST
 
 **Last Run:** 이 관리체계 도입 검증은 아래 History에 기록
 
@@ -12,7 +12,7 @@
 
 코드·문서·D1·Worker·Pages가 서로 다른 상태로 보고되는 일을 막고, 버그 수정과 리팩터링이 기존 학습·FSRS·음성 계약을 훼손하지 않게 관리합니다. GitHub Actions 대신 로컬 gate와 Cloudflare read-only 상태를 추적하며 Production 변경에는 기존 명시적 승인 절차를 유지합니다.
 
-현재 Production 값의 단일 기준은 [현재 상태](CURRENT_STATE.md)입니다. 이 문서는 절차를, [오류 원장](ERROR_LEDGER_2026-08-23.md)은 버그 상태를, [로컬 릴리스 원장](LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md)은 실행 이력을 관리합니다.
+현재 Production 값의 단일 기준은 [현재 상태](CURRENT_STATE.md)입니다. 이 문서는 절차를, [오류 원장](ERROR_LEDGER.md)은 버그 상태를, [로컬 CI/CD 기준](LOCAL_CICD_OPERATIONS.md)은 gate를, [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)은 실행 이력을 관리합니다.
 
 ## 책임 구조
 
@@ -30,10 +30,12 @@
 1. `AGENTS.md`
 2. `docs/README.md`
 3. `CURRENT_STATE.md`
-4. `ERROR_LEDGER_2026-08-23.md`
+4. `ERROR_LEDGER.md`
 5. 이 runbook
-6. `LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md`
-7. 작업 관련 schema, route, source, test
+6. `LOCAL_CICD_OPERATIONS.md`
+7. `LOCAL_RELEASE_LEDGER.md`
+8. `SUB_AGENT_HANDOFF.md`
+9. 작업 관련 schema, route, source, test
 
 콘텐츠 변경일 때만 `CONTENT_AUDIT.md`, `00_source_map.md`, `CONTENT_SOURCE_REGISTRY.md`와 source/quality/release 스킬을 추가로 읽습니다.
 

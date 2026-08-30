@@ -4,10 +4,12 @@
 
 1. `docs/README.md`
 2. `docs/00_overview/CURRENT_STATE.md`
-3. `docs/00_overview/ERROR_LEDGER_2026-08-23.md`
+3. `docs/00_overview/ERROR_LEDGER.md`
 4. `docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md`
-5. `docs/00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md`
-6. 작업과 관련된 schema, route, source, test
+5. `docs/00_overview/LOCAL_CICD_OPERATIONS.md`
+6. `docs/00_overview/LOCAL_RELEASE_LEDGER.md`
+7. `docs/00_overview/SUB_AGENT_HANDOFF.md`
+8. 작업과 관련된 schema, route, source, test
 
 운영 감사, 버그, 리팩터링, CI/CD 추적 또는 릴리스 작업에는 `.codex/skills/project-operations-steward`를 사용합니다. 콘텐츠 배포에는 `.codex/skills/content-release-automation`을 추가로 사용합니다.
 

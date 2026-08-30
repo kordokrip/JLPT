@@ -11,7 +11,6 @@ export interface VocabContentItem {
   part_of_speech?: string;
   example_jp?: string;
   example_ko?: string;
-  audio_path?: string;
   source_id?: number;
   category_id?: number;
 }
@@ -36,7 +35,6 @@ export interface KanjiContentItem {
   meaning: string;
   stroke_count?: number;
   level: ContentLevel;
-  audio_path?: string;
   source_id?: number;
 }
 
@@ -67,14 +65,6 @@ function numberValue(row: ApiRawContentRecord, ...keys: string[]): number | unde
     if (typeof value === 'number' && Number.isFinite(value)) return value;
   }
   return undefined;
-}
-
-function reviewedAudioPath(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  return (/^audio\/(?:vocab|kanji|sentence)\/n[1-5]\/\d+-[a-f0-9]{16}\.mp3$/i.test(value)
-    || /^private-audio\/(?:ja|ko)\/[a-z0-9-]+\/[a-f0-9]{16,64}\.(?:mp3|wav|ogg)$/i.test(value))
-    ? value
-    : undefined;
 }
 
 function contentLevel(value: string | undefined): ContentLevel {

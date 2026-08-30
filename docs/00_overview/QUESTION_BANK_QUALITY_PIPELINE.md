@@ -1,6 +1,6 @@
 # JLPT·TOPIK 문제은행 품질 파이프라인
 
-기준일: 2026-08-23 KST. TOPIK practice v2의 2026-08-17 Production 기록과 이후 JLPT N2/N1·TOPIK Batch 6 확장에 적용한 현재 품질 계약을 함께 기록한다.
+최종 점검: 2026-08-30 KST. TOPIK practice v2의 2026-08-17 Production 기록과 이후 JLPT N2/N1·TOPIK Batch 6 확장에 적용한 현재 품질 계약을 함께 기록한다.
 
 ## 완료한 교정
 
@@ -10,7 +10,7 @@
 - 새 `content_quality_audits` ledger는 evidence SHA-256, validator version, 자동 검사, 작성·독립 검수자, release state를 기록한다. `approved`/`published`는 통과한 자동 검사와 서로 다른 두 검수자의 signed 판정 없이는 DB trigger가 거부한다.
 - JLPT 정적 독해는 seed 후 level·immutable row id 순서로 올바른 선택지를 0→3 위치로 회전한다. 지문·질문·해설·정답 의미는 바꾸지 않는다. 동적 JLPT 퀴즈도 한 요청 안에서 같은 회전 규칙을 사용한다.
 
-## 교차 검증 결과
+## 2026-08-17 교차 검증 결과
 
 새 D1에 migration 0000~0023, 전체 canonical seed, TOPIK v2 seed를 순서대로 적용했다. 읽기와 placement/practice를 읽기 전용 validator로 다시 대조한 결과는 다음과 같다.
 
@@ -54,13 +54,13 @@
 - 보호: `.artifacts/d1-backups/topik-v2-2026-08-17/manifest.json` backup과 23-table restore drill 통과
 - 배포 뒤: TOPIK verifier, R2 pronunciation reference 0, Worker 7/7 smoke, Pages auth proxy smoke 통과
 
-## release gate 순서
+## 현재 release gate 순서
 
 1. source intake, 자체 저작, 자동 validator, 서로 다른 두 reviewer artifact를 확인한다.
 2. full fresh D1, API/web test, Chromium·WebKit E2E, 동일 언어 browser-speech/R2=0 검사를 통과한다.
 3. preview D1 verifier를 통과한다.
 4. D1 backup과 restore drill, 이전 Worker/Pages version을 rollback plan에 기록한다.
-5. migration 0022~0023, canonical seed, TOPIK v2 seed를 원격에 적용한 뒤 remote verifier·API/Pages smoke를 통과한다.
+5. 현재 migration 기준선 `0000–0027` 위에 승인된 additive migration/seed만 적용하고 release-quality link와 G0–G4를 확인한 뒤 remote verifier·API/Pages smoke를 통과한다.
 6. 하나라도 실패하면 production 반영을 중단하고 직전 D1 backup과 Worker/Pages version으로 되돌린다.
 
 ## 2026-08-23 확장 적용
@@ -68,5 +68,5 @@
 - N2/N1 정적 문제은행은 각 60문항, 전체 정답 위치 `15/15/15/15`, 모드별 난이도 1–5 각 3문항을 강제합니다.
 - TOPIK owner Batch 6은 3–6급 각 10개이며, 선택형 정답 위치는 급수별 `2/2/2/2`입니다.
 - 최종 160개는 서로 결과를 공유하지 않은 Reviewer A/B가 모두 승인했고 release-quality link `60/60/40`으로 Preview에 연결했습니다.
-- Preview 콘텐츠·FK·거래·Chromium/WebKit 검증은 통과했습니다. Production 전에는 Google 우선 동일 언어 browser-speech 회귀와 R2 요청 0건을 다시 검사합니다.
+- Preview 콘텐츠·FK·거래·Chromium/WebKit 검증은 통과했습니다. 2026-08-24 음성 복구는 별도 Production Pages에 반영됐지만, 이 후보의 Production 반영 전에는 새 predeploy·backup/restore·immutable release verifier와 Google 우선 동일 언어 browser-speech/R2 요청 0건을 다시 검사합니다.
 - 사용처가 없던 legacy R2 audio prefetch 테스트는 호환 모듈과 함께 제거했습니다. `/api/v1/audio/*` 410과 R2 reference 0 회귀 검사는 계속 필수입니다.

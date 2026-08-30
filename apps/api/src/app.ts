@@ -14,13 +14,15 @@
  *   /api/v1/sentences   (공개, 엣지 캐시)
  *   /api/v1/homophones  (공개, 엣지 캐시)
  *   /api/v1/sysprog     (공개, 엣지 캐시)
- *   /api/v1/audio       (공개, 엣지 캐시 30일)
+ *   /api/v1/audio       (폐기된 발음 API, 410 Gone)
  *   /api/v1/auth        (앱 로그인/회원가입/SSO)
  *   /api/v1/srs         (인증 필요)
  *   /api/v1/logs        (인증 필요)
  *   /api/v1/quiz        (인증 필요)
  *   /api/v1/self-check  (인증 필요)
  *   /api/v1/sync        (인증 필요)
+ *   /api/v1/activity    (인증 필요, idempotent event/summary)
+ *   /api/v1/topik       (placement, practice, owner curriculum)
  */
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { apiReference } from '@scalar/hono-api-reference';
@@ -28,7 +30,7 @@ import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 
 import type { AppEnv, Env } from './types.js';
-import { contentCacheMiddleware, audioCacheMiddleware } from './middleware/cache.js';
+import { contentCacheMiddleware } from './middleware/cache.js';
 
 // ── Phase 6 완료: sources, vocab, grammar, kanji, sentences ─────────
 import { vocabOA } from './routes/vocab-oa.js';
@@ -183,8 +185,6 @@ v1.route('/', homophonesOA); // /homophones (검수 완료 동음이의어)
 
 // ── Phase B: 공개 콘텐츠 (캐시 + OA 라우트) ─────────────────────────
 v1.use('/sysprog*', contentCacheMiddleware);
-v1.use('/audio*', audioCacheMiddleware);
-
 v1.route('/', sysprogOA);
 v1.route('/', audioOA);
 
@@ -224,7 +224,7 @@ const openApiBase = {
   info: {
     title: 'JLPT · TOPIK Learning API',
     version: '1.0.0',
-    description: 'JLPT · TOPIK 학습 PWA — Cloudflare Workers API\n\nCloudflare Workers + D1 + R2 기반의 트랙 분리 학습 서비스 API입니다.',
+    description: 'JLPT · TOPIK 학습 PWA — Cloudflare Workers API\n\nCloudflare Workers + D1 기반의 트랙 분리 학습 서비스 API입니다. 발음은 Google 우선 동일 언어 브라우저 음성을 사용하며 서버/R2 발음 경로는 제공하지 않습니다.',
     contact: { name: 'nihongo-n3', url: 'https://nihongo-n3.pages.dev' },
   },
   servers: [
@@ -238,11 +238,14 @@ const openApiBase = {
     { name: 'Sentences', description: '예문' },
     { name: 'Homophones', description: '검수 완료 동음이의어 변별' },
     { name: 'Content', description: '검수 완료 학습 콘텐츠 (sysprog, sources)' },
+    { name: 'Sources', description: '콘텐츠 source와 manifest 정보' },
+    { name: 'Curriculum', description: 'JLPT 학습 커리큘럼' },
     { name: 'Audio', description: 'Google 우선 동일 언어 브라우저 음성 정책; R2 발음 경로는 폐기됨' },
     { name: 'SRS', description: 'FSRS-6 간격반복학습' },
     { name: 'Logs', description: '학습 로그 및 퀴즈 기록' },
     { name: 'Activity', description: '개인정보를 제외한 학습 활동 및 집계' },
     { name: 'SelfCheck', description: '주차별 자가진단' },
+    { name: 'Quiz', description: '급수 고정 JLPT 퀴즈 생성·제출·이력' },
     { name: 'Sync', description: '오프라인 동기화' },
     { name: 'Admin',   description: '관리자 (주간 리포트)' },
     { name: 'Reading', description: '독해 지문 + 퀘즈' },
@@ -251,6 +254,10 @@ const openApiBase = {
     { name: 'Auth', description: '앱 세션 및 Google OAuth' },
     { name: 'Tracks', description: 'JLPT 일본어 및 TOPIK 한국어 학습 트랙' },
     { name: 'TOPIK Placement', description: '자체 저작 TOPIK I 배치 진단' },
+    { name: 'TOPIK Practice', description: '자체 저작 TOPIK I·II v2 문제은행' },
+    { name: 'TOPIK Content', description: '공개 TOPIK 학습 콘텐츠' },
+    { name: 'TOPIK Owner-authored Curriculum', description: '1–6급 owner curriculum과 진행률·FSRS' },
+    { name: 'TOPIK Owner-private', description: '소유자 한정 비공개 콘텐츠 release' },
   ],
 } satisfies Parameters<typeof app.getOpenAPI31Document>[0];
 

@@ -1,6 +1,6 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-기준일: 2026-08-24 KST. 이 문서는 현재 Production, 검증이 끝난 Preview 후보, 로컬 코드·schema·route·test를 구분한 구조 지도입니다.
+최종 점검: 2026-08-30 KST. 이 문서는 현재 Production, 검증이 끝난 Preview 후보, 로컬 코드·schema·route·test를 구분한 구조 지도입니다.
 
 ## Production 기준선
 
@@ -44,7 +44,7 @@ packages/shared DTO·FSRS ── apps/api Worker
 
 ## 활동·퀴즈·학습 연결
 
-클라이언트는 활동 이벤트를 Dexie v6 큐에 먼저 기록합니다. flush 실패 시 항목을 보존하고, 다음 온라인 전환/앱 재개 때 동일 `event_id`로 재전송합니다. 서버의 `(user_id,event_id)` 고유 키가 중복을 흡수하며 queue는 계정×트랙으로 격리됩니다.
+클라이언트는 Dexie 4의 로컬 schema version 6 큐에 활동 이벤트를 먼저 기록합니다. flush 실패 시 항목을 보존하고, 다음 온라인 전환/앱 재개 때 동일 `event_id`로 재전송합니다. 서버의 `(user_id,event_id)` 고유 키가 중복을 흡수하며 queue는 계정×트랙으로 격리됩니다.
 
 - `POST /api/v1/activity/events`: 1–100개 batch, 인증 track과 이벤트 track이 다르면 거부, `{accepted, duplicates}` 반환
 - `GET /api/v1/activity/summary?window=7d|30d`: totals와 track/level/section/mode groups 반환
@@ -54,6 +54,8 @@ packages/shared DTO·FSRS ── apps/api Worker
 퀴즈 생성의 `strategy`는 선택 사항입니다. `random`은 기존 요청에 필드를 추가하지 않아 호환성을 유지합니다. `weakest`는 최근 30일 오답/복습을 우선하지만 요청한 급수 내부에서만 고르며, 데이터가 없거나 부족해도 다른 급수로 fallback하지 않습니다. N3 `kanji_reading`/`listening`과 N2/N1 네 모드는 공개·검토된 정적 bank를 우선합니다. N2/N1에서 16–20개를 요청하면 정적 15개 뒤를 같은 급수 canonical 항목으로만 채우고, 정답과 listening 정답 번역은 제출 전에 노출하지 않습니다.
 
 TOPIK 대시보드는 서버 due, 미완료 owner 목록, 30일 activity summary를 합쳐 `due review → incomplete owner → weakest area`의 고정 순서로 하나의 다음 행동을 만듭니다.
+
+2026-08-30 감사에서 TOPIK status만 legacy practice v1을 조회하고 quiz activity 실패를 성공으로 숨기는 두 계약 공백을 발견했습니다. 로컬 후보는 status를 공개 v2 300행 기준으로 바꾸고 quiz result+activity를 fail-closed D1 batch로 고정했습니다. 독립 감사에서 완료 attempt 재제출 불일치까지 찾아 409와 guarded update로 차단했으며 API `134/134` 회귀 테스트를 통과했습니다. 이 수정은 아직 Production Worker에는 배포하지 않았습니다.
 
 ## 콘텐츠와 release control
 
@@ -72,7 +74,7 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 - `jlpt-n2-practice-v1-2026-08-23`: 60문항, quality link 60
 - `jlpt-n1-practice-v1-2026-08-23`: 60문항, quality link 60
 - `topik-owner-batch6-2026-08-23`: 3–6급 40항목, quality link 40
-- Preview에서는 세 release와 G0–G4, 실제 TOPIK 완료→progress→FSRS→activity transaction을 검증했습니다. 음성 회귀 복구 릴리스가 Production에 반영되기 전까지 신규 콘텐츠도 Production에는 반영하지 않았습니다.
+- Preview에서는 세 release와 G0–G4, 실제 TOPIK 완료→progress→FSRS→activity transaction을 검증했습니다. 음성 회귀 복구는 2026-08-24 Production Pages에 반영됐지만, 신규 콘텐츠는 새 predeploy·backup/restore·immutable release verifier와 명시적 승인을 다시 확보해야 하므로 Production에는 반영하지 않았습니다.
 
 ## 음성 불변 조건
 
@@ -96,6 +98,6 @@ production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner B
 
 - `pnpm ops:status`: 필수 문서, 현재 배포 식별자 5개가 README와 분석 문서 각각에 있는지, package scripts, Actions 비활성, 보존해야 할 로컬 backup/release/recovery 증적, 문서 링크, 음성 계약, Git 상태와 알려진 manifest drift를 확인합니다.
 - `pnpm ops:verify`: 상태 검사 뒤 OpenAPI, typecheck, 전체 unit, build, fresh D1을 순서대로 실행합니다. fresh D1은 음성 provenance와 content contract/control plane을 포함합니다.
-- `pnpm ops:status:remote`: local/origin SHA, Production Pages·Worker·D1 migration, public/audio QA/legacy smoke, auth proxy의 JSON content-type과 `google_enabled=true`, `auth_mode=app-session`, D1 R2 발음 참조 0건을 읽기 전용으로 확인합니다.
+- `pnpm ops:status:remote`: local/origin SHA, Production Pages·Worker·D1 migration, public/audio QA/legacy smoke, auth proxy 계약, TOPIK v2 release status, CSP R2 media 차단과 D1의 9개 R2 발음 surface 참조 0건을 읽기 전용으로 확인합니다.
 - `verify:remote:audio`는 `INC-DATA-024`가 열린 동안 fail-closed입니다. 운영 콘텐츠는 immutable release source/manifest verifier로만 판정하고 R2 부재는 target이 명시된 `verify:remote:audio:r2`로 별도 확인합니다.
 - 결과 JSON은 `.artifacts/operations/`에 보존하고 Git에 커밋하지 않습니다. Production write/deploy는 이 계층의 자동 동작이 아니며 기존 승인·Preview·backup/restore·rollback 절차를 요구합니다.

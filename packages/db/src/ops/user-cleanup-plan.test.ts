@@ -9,9 +9,16 @@ import {
 } from "./user-cleanup-plan.js";
 import {
   collectRelatedCounts,
+  requireExplicitDatabase,
   safeWranglerFailure,
   type QuerySource,
 } from "./d1-user-cleanup.js";
+
+test("requires an explicit validated D1 target for destructive cleanup tooling", () => {
+  assert.equal(requireExplicitDatabase("nihongo-n3-prod-v2"), "nihongo-n3-prod-v2");
+  assert.throws(() => requireExplicitDatabase(undefined), /explicit D1 name/);
+  assert.throws(() => requireExplicitDatabase("../prod"), /invalid D1 database name/);
+});
 
 function user(id: string, email: string): CleanupUserRow {
   return {

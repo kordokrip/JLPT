@@ -309,7 +309,7 @@ export const topikPracticeApi = {
     api.get<TopikPracticeSolutionDto>(`/tracks/topik-ko/practice/questions/${encodeURIComponent(questionId)}/solution`),
 };
 
-/** Additive TOPIK 1–6 curriculum; intentionally independent from the 28-item practice bank. */
+/** Additive TOPIK 1–6 curriculum; intentionally independent from every practice bank version. */
 export const topikOwnerCurriculumApi = {
   list: (targetGrade: number) =>
     api.get<TopikOwnerCurriculumListDto>('/tracks/topik-ko/curriculum', { target_grade: targetGrade }),

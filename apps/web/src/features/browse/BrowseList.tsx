@@ -169,7 +169,6 @@ function VocabListItem({ item, onOpen }: { item: VocabItem; onOpen: () => void }
             <PronunciationButton
               compact
               text={item.reading || item.word}
-              audioPath={item.audio_path}
               surface="vocab"
               label={`${item.word} ${t('browse.playPronunciation')}`}
               className="border-0 bg-transparent p-0"
@@ -211,7 +210,6 @@ function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }
         <PronunciationButton
           compact
           text={item.reading_on || item.reading_kun || item.character}
-          audioPath={item.audio_path}
           surface="kanji"
           label={`${item.character} ${t('browse.playPronunciation')}`}
           className="text-[var(--muted-foreground)]"
