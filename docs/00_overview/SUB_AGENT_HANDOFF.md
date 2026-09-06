@@ -1,6 +1,6 @@
 # Sub Agent 운영 인수인계
 
-최종 점검: 2026-09-06 KST
+최종 점검: 2026-09-07 KST
 
 이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
 
@@ -31,6 +31,8 @@
 ## 코드·데이터 지도
 
 ### 새 학습 UX Preview 후보
+
+**2026-09-07 백업 후속이 우선:** 운영 점검 승인을 받았고 임시 동일-code Worker232ec50d/Queue정지→65개 백업→원래Worker6bbe4bbd/Queue복귀를 실행했습니다. `.artifacts/operations/production-backup-2026-09-07-{execution,postcheck,restore,ops-remote}.json`을 참조합니다. 첫 wrapper의 health mismatch exit1은 보존했고 후속 off/configtrue·설정동일 확인과 실제 local0028 복원(FK0·FTS일치·새5개0행)은 exit0입니다. 백업은 schema0027이며70-table 백업이 아닙니다. 앱·Pages·DB0028·콘텐츠 공개·최종push는 미실행입니다. 최신555 사람 가청, release-pinned live manifest, 최종predeploy가 남았고 운영 쓰기가 재개됐으므로 이후 백업 신선도를 확인합니다. 아래09-06의 점검 승인 대기는 과거 상태입니다.
 
 **2026-09-06 OAuth 후속 포인터:** Preview Worker는87f8fbf5로 변경됐습니다(앱source793b671/Pages555fc0c4 불변). 별도 `JLPT Preview` client의 전용 callback과 secret 두 개만 연결했습니다. 실제 Chrome JLPT Google 로그인·홈 재조회, TOPIK 선택 후 재로그인 및 D1 계정 id/role/Google 연결·FSRS 설정 hash 동일을 확인했습니다. 실제 계정의 학습17테이블은 모두0행이라는 한계가 있습니다. provider mock 로컬14개는 별도 통과이며 원격187개 최종 재실행은181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0입니다. 시각60개는 별도 제외입니다.
 

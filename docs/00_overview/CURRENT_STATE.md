@@ -1,6 +1,6 @@
 # 현재 구현 상태
 
-문서 갱신: 2026-09-06 KST. 아래 Production 기준선과 새 로컬 후보를 구분합니다. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 운영 기준입니다.
+문서 갱신: 2026-09-07 KST. 아래 Production 기준선과 새 로컬 후보를 구분합니다. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 운영 기준입니다.
 
 > 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 
@@ -25,7 +25,15 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
-## 최신 후속 — Preview 전용 OAuth 연결 (2026-09-06)
+## 최신 후속 — 승인된 운영 백업·점검 종료 (2026-09-07)
+
+사용자의 명시적 점검 승인으로 00:21–00:27 KST에 기존 코드의 임시 읽기 전용 Worker232ec50d와 두 Queue 일시정지를 적용했습니다. 코드 etag/runtime/점검 이외 binding은 기존6bbe4bbd와 일치했고 활성 Workflow·release job·Queue backlog는0이었습니다. 새 앱/Pages/콘텐츠/migration은 반영하지 않았습니다.
+
+새 백업 `.artifacts/d1-backups/learning-ux-2026-09-07-pre0028`은65개 테이블·checksum을 확인했습니다. 임시 로컬0028 복원은65개 행 수·56개 trigger·FK0·FTS 일치로 통과했습니다. 새5개 테이블은0행이며 `coversLocalSchema=false`인0027 백업입니다. 백업 후 원래 Worker6bbe4bbd·두 Queue를 복귀했고 별도 원격 확인에서 maintenance=off, health/auth config200, Google설정true와 비인가 activity401을 확인했습니다. 운영 설정도 사전 hash와 일치합니다.
+
+첫 wrapper는 원복 직후 `Maintenance health mismatch`로 exit1이었으며 원인은 미확정입니다. 검증기의 별도 auth envelope 오류(`INC-OPS-058`)를 교정한 postcheck는 exit0이고 최초 실패를 보존합니다. 최종 remote ops는48/2/3으로 기존 미push SHA·TOPIK status·CSP 실패만 남습니다. 최신555fc0c4 사람 가청, release-source 고정 live manifest 및 최종 predeploy는 아직 미완료이며 신규 Production 배포·최종 push를 실행하지 않았습니다. 점검 승인은 가청 확인을 대체하지 않습니다. 다음 배포 시 백업 이후 쓰기가 재개됐음을 고려해 백업 신선도를 다시 확인해야 합니다.
+
+## 이전 후속 — Preview 전용 OAuth 연결 (2026-09-06)
 
 사용자는 운영 OAuth 보존과 Preview 전용 클라이언트 생성·비밀키 다운로드/등록을 명시 승인했습니다. Google Cloud의 새 `JLPT Preview`는 Preview Worker callback 하나만 등록하며 기존 `JLPT` 클라이언트를 수정하지 않았습니다. Preview Worker **`87f8fbf5-97e3-4a99-96cb-3cf607911d48`**을 활성화했습니다. 직전 `b02f3674`와 script etag·runtime·OAuth 두 secret 이외의 versioned binding이 일치하고 앱 source793b671, Pages555fc0c4, D1을 유지합니다. CLI가 Preview의 non-versioned logging 설정도 config에 동기화했으므로 그 사전 값까지 동일하다고 주장하지 않습니다.
 

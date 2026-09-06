@@ -1,10 +1,21 @@
 # 로컬 형상관리·릴리스 원장
 
-최종 점검: 2026-09-06 KST
+최종 점검: 2026-09-07 KST
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
-## 최신 포인터 — 안정성 수정본의 전용 Preview
+## 최신 작업 — 운영 백업·점검 종료, 신규 릴리스 미배포
+
+- 승인: 사용자가 운영 백업 동안 잠시 학습 저장을 중지하도록 명시 허용. 최신555fc0c4의 가청 확인은 여전히 미응답.
+- 실행: 2026-09-07 00:21–00:27 KST(UTC09-06 15:21–15:27). 기존Worker6bbe4bbd의 코드 etag/runtime/나머지binding 동일을 확인한 점검 전용 버전 `232ec50d-1d78-4cf8-9c40-39f0a7d72dc1`, 임시 deployment `03e2a6a4-9116-4e1e-8904-9334d2c372b2`. 두 Queue를 일시정지하고 backlog/활성Workflow/releasejob0, HTTP 변경·OAuth 시작503을 확인 후 export.
+- 백업: `.artifacts/d1-backups/learning-ux-2026-09-07-pre0028`, schema0027/65개. manifest 파일 SHA-256 `1747b2ebfd9af836755e0d3f898454d2e141d0193656342a0e67500b6c280278`, SQL65개 checksum 일치. 사용자 데이터 원문은 Git 제외·보존.
+- 원복: deployment `bfa3b03b-b283-4443-8be8-c4c346a69a65`로 기존Worker6bbe4bbd 100% 복귀, 두Queue는 원래 paused=false. non-versioned 설정 hash동일. 최초 wrapper exit1(`Maintenance health mismatch`) 보존; 후속 read-only postcheck는 off/health200/configtrue/비인가activity401과 원복을 확인해 exit0. 별도 검증기 `data.google_enabled` 교정은 INC-OPS-058.
+- 복원 drill: 실제 임시 로컬0028에서65개 행 수·56개trigger·FK0·vocab FTS3676/3676·sentences FTS1324/1324·새5개0행, exit0. `coversLocalSchema=false`이며70-table 백업으로 표시하지 않음.
+- 독립 교차검토: 별도 Data Preservation Agent가 manifest 구조·SQL65개 SHA-256·restore 행 수를 직접 대조해 exit0. 최초 wrapper 실패와 후속 원복 성공을 분리했고 파일 바이트 hash와 JSON 직렬화 hash의 차이도 확인함.
+- 증적: `.artifacts/operations/production-backup-2026-09-07-{baseline,execution,postcheck,restore,ops-remote}.json`, export.log. 최초 실행 helper hash `6d5bdc9465ea6e2bf00c2e243013bf1e264fab2e1a47d915d5426c1772d06212`. 최초 실패와 수정 후 검사를 별도 보존.
+- 종료: remote ops48 pass/2 warn/3 fail(미push SHA·기존 TOPIK status/CSP). 신규 앱·Pages·migration·seed·콘텐츠 공개·최종push 없음. Worker6bbe4bbd/Pages9cc58a1f/DB0027 유지. 최신 가청·live release-pinned manifest·최종 gate가 남으며, 쓰기 재개 후 이 백업을 다음 배포 직전 최신본으로 자동 간주하지 않음.
+
+## Preview 포인터 — 안정성 수정본
 
 | 항목 | 실제 상태 |
 | --- | --- |

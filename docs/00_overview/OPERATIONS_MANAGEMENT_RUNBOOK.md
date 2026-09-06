@@ -4,7 +4,7 @@
 
 **Frequency:** 작업 시작·종료, 버그 수정, 리팩터링, Preview/Production 전후, 주 1회
 
-**Last Updated:** 2026-09-06 KST
+**Last Updated:** 2026-09-07 KST
 
 **Last Run:** 이 관리체계 도입 검증은 아래 History에 기록
 
@@ -140,6 +140,8 @@ clean source commit/tag
 ```
 
 하나라도 실패하면 다음 단계로 진행하지 않습니다. Pages-only 변경은 D1 drift를 숨기기 위해 재시드하지 않습니다. 데이터 손상이 없으면 D1 전체 restore를 실행하지 않습니다. 운영 export는 테이블별 추출이므로 명시 승인한 점검 시간 동안 쓰기가 정지됐는지 확인합니다. HTTP read-only만으로 queue/workflow 정지를 가정하지 말고 활성 작업을 별도 확인합니다. 이번0028-only upgrade는 원격 pending이0028 하나인지 먼저 검사합니다. 새65-table backup의 local0028 drill은 coversLocalSchema=false이며 새70-table backup으로 표시하지 않습니다.
+
+백업 점검만 승인됐을 때 새 앱 후보를 배포하지 않습니다. 기존 active/latest 버전을 확인하고 점검 설정 외 코드 etag/runtime/binding을 보존합니다. 원래 Queue paused 상태를 저장하고 실제 pause·backlog·Workflow·release job을 확인합니다. SIGINT/SIGTERM 및 export 실패에도 child 종료 후 원복 증적을 남기며, Worker 원복을 확인하지 못하면 Queue를 임의 재개하지 않습니다. non-versioned 설정 동기화도 피하거나 정확히 대조합니다. 원복 직후 단일 HTTP 실패는 숨기지 말고 별도 시각의 재확인으로 구분합니다. auth config의 Google 플래그는 `data.google_enabled`입니다(`INC-OPS-058`). 로컬 restore drill 동안 운영 점검을 불필요하게 유지하지 않으며, 쓰기를 재개한 백업은 다음 릴리스 시점의 신선도를 다시 판단합니다.
 
 ## 음성 불변 조건
 

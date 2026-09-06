@@ -1,6 +1,6 @@
 # 오류·회귀 차단 원장
 
-최종 점검: 2026-09-06 KST
+최종 점검: 2026-09-07 KST
 현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 최신 Preview는 Pages `555fc0c4`/Worker `87f8fbf5`이며 앱 source는 `793b671`이다. Preview OAuth 연결 및 실제 양 트랙 로그인은 아래 후속 결과를 따른다. 사용자의 기존 가청 확인은 Pages `a95437fc`/source `94dfb05`에만 연결하며 최신555의 정상 종료·Network와 사람 청취를 혼동하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
@@ -8,6 +8,12 @@
 현재 Production에서 열린 결함은 manifest drift `INC-DATA-024`, TOPIK v2 상태 오판 `INC-TOPIK-031`, quiz 활동 유실 가능성 `INC-ACT-032`, R2 검사/CSP 공백 `INC-AUD-033`입니다. 031–033은 로컬 코드와 회귀 테스트를 수정했지만 아직 Worker Production에 배포하지 않았으므로 완료로 표시하지 않습니다. `INC-LEGACY-034`의 파일 정리는 이번 후보에 포함했고 legacy DB 열·테이블 제거는 별도 additive migration 전까지 보류합니다. `INC-OPS-035`는 이번 검증 중 발견해 표면별 D1 쿼리와 회귀 테스트로 즉시 닫았습니다. 실제 사용자 장치의 물리 가청 확인은 자동 lifecycle 검사와 별도인 사후 관찰 항목입니다.
 
 ## 오류 원장
+
+### 2026-09-07 백업 점검 — INC-OPS-058
+
+사용자가 운영 백업 중 일시적인 학습 저장 중지를 명시 승인했다. 신규 앱 릴리스와 최신555fc0c4 가청 확인의 승인/증거는 별개다. 백업 전용 ignored helper의 원복 후 검사에서 `/auth/config`의 `{data:{google_enabled}}`를 루트 필드로 읽는 검증기 오류를 독립 검토·운영 source3485c6e와 대조하고 최소 fail-first assertion으로 재현했다. 앱/OAuth 수정 사항은 아니다. 올바른 `data.google_enabled` 검사·fixture assertion·별도 원격 postcheck를 통과했다.
+
+실행 중이던 최초 wrapper의 실제 exit1은 auth 검사에 도달하기 전의 `Maintenance health mismatch`였다. 재배포 전파 지연으로 단정하지 않으며 최초 응답 본문이 없어 원인은 미확정이다. 백업 자체는65개·exit0이고 기존 Worker·Queue 원복 후15:27 UTC 독립 재조회에서 off/health200/configtrue/비인가 activity401·설정 hash동일을 확인했다. 최초 execution artifact를 보존하며 후속 성공으로 덮어쓰지 않는다. 실제 새 백업의 local0028 restore도65개·FK0·FTS일치·새5개0행으로 통과했다. 가청 미확인과 Production 기존 결함은 그대로 열려 있다.
 
 ### 2026-09-06 학습 경험 개선 후보 (Production 미반영)
 
