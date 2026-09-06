@@ -17,6 +17,8 @@ import app, {
 } from '../app.js';
 import { receiver as observabilityReceiver } from '../observability-receiver.js';
 import { isSideEffectingRequest } from '../middleware/maintenance.js';
+import { buildStudySteps, canonicalContent, contentStillPublished, contentsStillPublished } from '../lib/study-content.js';
+import * as quizQuestions from '../lib/quiz-questions.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -2547,6 +2549,111 @@ describe('learning experience contract', () => {
     const response=await fetch('/api/v1/study/sessions'+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
     return {response,body:await response.json<{data:import('@nihongo-n3/shared').StudySession}>()};
   }
+  it('keeps guided start and resume inside a deterministic D1 round-trip budget', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const headers = await learner('jlpt-ja', 'N5');
+    await fetch('/api/v1/learning/profile', { method: 'PUT', headers, body: JSON.stringify({ target_level: 'N5', instruction_language: 'ko', daily_minutes: 20, timezone: 'Asia/Seoul' }) });
+    for (let n = 0; n < 4; n++) {
+      await db.batch([
+        db.prepare("INSERT INTO grammar(source_id,level,pattern,meaning_ko,examples) VALUES(990001,'N5',?,?,?)").bind('budget-pattern-' + n, '문법 뜻 ' + n, JSON.stringify([{ ja: 'budget-pattern-' + n + ' example', ko: '예문' }])),
+        db.prepare("INSERT INTO kanji(char,meaning_ko,on_yomi,jlpt_level) VALUES(?,?,?,'N5')").bind('budget-kanji-' + n, '한자 뜻 ' + n, 'reading-' + n),
+        db.prepare("INSERT INTO sentences(source_id,level,register,seq_no,ja,ko) VALUES(990001,'N5','polite',?,?,?)").bind(1000 + n, 'budget-sentence-' + n, '문장 뜻 ' + n),
+      ]);
+    }
+    let roundTrips = 0;
+    const underlying = new WeakMap<object, D1PreparedStatement>();
+    const wrap = (statement: D1PreparedStatement): D1PreparedStatement => {
+      const proxy = new Proxy(statement, {
+        get(target, key) {
+          if (key === 'bind') return (...bindings: unknown[]) => wrap(target.bind(...bindings));
+          const member = Reflect.get(target, key);
+          if (['first', 'all', 'run', 'raw'].includes(String(key))) return (...args: unknown[]) => {
+            roundTrips++;
+            return Reflect.apply(member, target, args);
+          };
+          return typeof member === 'function' ? member.bind(target) : member;
+        },
+      });
+      underlying.set(proxy, statement);
+      return proxy;
+    };
+    const measuredDb = new Proxy(db, {
+      get(target, key) {
+        if (key === 'prepare') return (sql: string) => wrap(target.prepare(sql));
+        if (key === 'batch') return (statements: D1PreparedStatement[]) => {
+          roundTrips++;
+          return target.batch(statements.map((statement) => underlying.get(statement) ?? statement));
+        };
+        const member = Reflect.get(target, key);
+        return typeof member === 'function' ? member.bind(target) : member;
+      },
+    });
+    const testEnv = { ...env, DB: measuredDb } as typeof env;
+    const created = await fetchWithEnv('/api/v1/study/sessions', testEnv, { method: 'POST', headers, body: JSON.stringify({ request_id: crypto.randomUUID() }) });
+    expect(created.status).toBe(200);
+    const session = (await created.json<{ data: import('@nihongo-n3/shared').StudySession }>()).data;
+    expect(session.steps).toHaveLength(10);
+    const creationTrips = roundTrips;
+    expect(creationTrips, `creation D1 round trips: ${creationTrips}`).toBeLessThanOrEqual(18);
+    roundTrips = 0;
+    const resumed = await fetchWithEnv('/api/v1/study/sessions/' + session.id, testEnv, { headers });
+    expect(resumed.status).toBe(200);
+    expect((await resumed.json<{ data: import('@nihongo-n3/shared').StudySession }>()).data).toEqual(session);
+    expect(roundTrips, `resume D1 round trips: ${roundTrips}`).toBeLessThanOrEqual(5);
+    for (const step of session.steps) {
+      const canonical = await canonicalContent(db, step.ref.type, step.ref.id);
+      expect(canonical?.ref).toEqual(step.ref);
+    }
+    const refs = [session.steps[0]!.ref, { ...session.steps[0]!.ref, id: '0' + session.steps[0]!.ref.id },
+      { ...session.steps[0]!.ref, id: '999999999' },
+      { track: 'topik-ko', type: 'topik-owner-item', id: 'study-item-1', version: 'ignored-for-owner-publication' },
+      { track: 'jlpt-ja', type: 'jlpt-practice', id: 'withdrawn-test', version: 'unpublished' }] as import('@nihongo-n3/shared').StudyRef[];
+    expect(await contentsStillPublished(db, refs)).toEqual(await Promise.all(refs.map((ref) => contentStillPublished(db, ref))));
+  });
+  it('batched practice publication remains version-specific and duplicate-ref stable', async () => {
+    const batch = vi.fn(async () => [{ results: [{ id: 'published-bank', bank_version: 'v1' }] }]);
+    const statement = { bind: () => statement };
+    const db = { prepare: () => statement, batch } as unknown as D1Database;
+    const ref = { track: 'jlpt-ja', type: 'jlpt-practice', id: 'published-bank', version: 'v1' } as const;
+    expect(await contentsStillPublished(db, [ref, { ...ref, version: 'v2' }, ref])).toEqual([true, false, true]);
+    expect(batch).toHaveBeenCalledTimes(1);
+  });
+  it.each(['jlpt-practice', 'topik-practice'] as const)('keeps colon-delimited identity boundaries distinct for %s publication', async (type) => {
+    const statement = { bind: () => statement };
+    const db = { prepare: () => statement, batch: async () => [{ results: [{ id: 'a:b', bank_version: 'c' }] }] } as unknown as D1Database;
+    const track = type === 'jlpt-practice' ? 'jlpt-ja' : 'topik-ko';
+    expect(await contentsStillPublished(db, [
+      { track, type, id: 'a:b', version: 'c' },
+      { track, type, id: 'a', version: 'b:c' },
+    ])).toEqual([true, false]);
+  });
+  it('keeps static string IDs separate from canonical numeric IDs in mixed practice', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const row = await db.prepare("SELECT id FROM vocab WHERE source_id=990001 AND level='N3' ORDER BY id LIMIT 1").first<{id:number}>();
+    const canonical = (await canonicalContent(db, 'vocab', String(row!.id)))!;
+    const mock = vi.spyOn(quizQuestions, 'generateQuizQuestions').mockImplementation(async (_db, _user, body) =>
+      body.mode === 'vocab_mc' || body.mode === 'kanji_reading'
+        ? [{ id: 'mixed-' + body.mode, type: body.mode, prompt: 'test prompt', choices: ['a','b','c','d'], answer: 'a', item_id: body.mode === 'vocab_mc' ? row!.id : String(row!.id) }]
+        : []);
+    const fixtureDb = new Proxy(db, { get(target, key) {
+      if (key === 'prepare') return (sql: string) => {
+        if (sql.startsWith('SELECT * FROM jlpt_practice_questions WHERE id IN')) {
+          const statement = { bind: () => statement, all: async () => ({ results: [{ id: String(row!.id), bank_version: 'static-version', explanation_ko: 'static explanation' }] }) };
+          return statement;
+        }
+        return target.prepare(sql);
+      };
+      const member = Reflect.get(target, key);
+      return typeof member === 'function' ? member.bind(target) : member;
+    }});
+    try {
+      const result = await buildStudySteps(fixtureDb, 'owner', { learning_track:'jlpt-ja', target_level:'N3', instruction_language:'ko', daily_minutes:20, timezone:'Asia/Seoul', configured:true });
+      const practice = result.steps.filter((step) => step.phase === 'practice');
+      expect(practice).toHaveLength(2);
+      expect(practice.find((step) => step.ref.type === 'vocab')).toMatchObject({ ref: canonical.ref, solution: { explanation: canonical.solution.explanation } });
+      expect(practice.find((step) => step.ref.type === 'jlpt-practice')).toMatchObject({ ref: { id: String(row!.id), version:'static-version' }, solution: { explanation:'static explanation' } });
+    } finally { mock.mockRestore(); }
+  });
   it.each(['N5','N4','N3','N2','N1','1','2','3','4','5','6'])('starts, saves, resumes and records at %s without cross-level fallback',async(level)=>{
     const track=level.startsWith('N')?'jlpt-ja':'topik-ko',headers=await learner(track,level);
     const request_id=crypto.randomUUID();

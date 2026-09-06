@@ -25,9 +25,9 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
-## 2026-09-06 학습 경험 후보 — 로컬 구현, 미배포
+## 2026-09-06 학습 경험 후보 — Preview 검증 중, Production 미반영
 
-상세 설계·API·DB·검증 범위는 [매일 이어지는 학습 경험](LEARNING_EXPERIENCE_PLAN.md)에 통합합니다. 출발 HEAD는 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`이며 이 후보는 아직 commit/push 또는 Preview/Production에 반영하지 않았습니다.
+상세 설계·API·DB·검증 범위는 [매일 이어지는 학습 경험](LEARNING_EXPERIENCE_PLAN.md)에 통합합니다. 출발 HEAD는 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`, 후보 `94dfb052c5ff73caaa70692f1d023bdaae439c8f`는 feature branch에 commit/push하고 전용 Preview에 반영했습니다. Production은 위 기준선을 유지합니다.
 
 - 오늘/학습/문제/복습/기록과 한 번 눌러 시작·세션 재개를 구현했습니다. 공개 화면·가입/로그인·TOPIK 조작 안내는 ko/ja/en으로 분리하고 명시적인 기존 언어 선택은 보존합니다.
 - 새 migration `0028_learning_experience.sql`은 프로필, 세션, 단계 결과, 메모, 검수된 문제↔개념 링크 다섯 테이블만 추가합니다. 기존 공개 콘텐츠, FSRS, progress, daily_logs는 재시드·초기화하지 않습니다.
@@ -36,8 +36,11 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 - 브라우저 음성 코어와 같은 언어 fallback은 보존합니다. 듣기 대본은 응답 전 화면에 표시하지 않지만 브라우저 합성을 위해 API에 text가 필요합니다. R2와 legacy audio 재생 요청은 사용하지 않습니다.
 - `VITE_LEARNING_EXPERIENCE=false`로 이전 홈/탐색으로 빌드할 수 있습니다. additive DB는 유지합니다. 전체 Worker/Pages 회귀는 이전 버전으로 되돌리며 이 플래그만으로 모든 수정이 취소된다고 간주하지 않습니다.
 - 독립 교차검토로 동시 종료·기기 간 pending/트랙 충돌과 backup 누락을 수정했습니다. 최종 로컬 통합 gate는 Ops 26, DB 126, Web 113, API 157 및 fresh `0000–0028` 통과입니다. 기존 65개 backup의 실제 local0028 restore도 FK 0으로 통과했습니다. 새 학습 테이블까지 포함한 backup은 70개 profile로 별도 검사합니다.
-- `/audio-qa` 정상 종료 관측까지 포함한 마지막 전체 브라우저 실행은 `207 passed / 32 skipped / 0 failed`, exit 0입니다. 실제 Chrome의 원격 Preview 접근은 가능하지만 새 후보 lifecycle·사람 가청·Preview 배포는 아직 미완료입니다.
-- 06:09 UTC 원격 전체 read-only는 `48 passed / 2 warnings / 3 failed`였습니다. 06:44 UTC 같은 R2 verifier를 설정·인증 변경 없이 재검사해 9개 표면 참조 0을 확인했습니다. 앞선 7403의 원인은 미확정이며 전체 상태 수치를 재집계한 것은 아닙니다. TOPIK status/CSP는 여전히 미배포 수정입니다.
+- `/audio-qa` 정상 종료 관측까지 포함한 로컬 전체 브라우저는 `207 passed / 32 skipped / 0 failed`, exit 0입니다. 실제 Chrome 새 Preview에서 양 언어의 정상 종료 표시를 확인했고 사용자가 **“두 언어 모두 들렸습니다”**라고 가청을 확인했습니다. 이는 해당 Pages 후보의 증거이며 Production 완료 판정은 아닙니다.
+- Preview D1 `0028`, Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`. Worker smoke 21개 통과, 관리자 인증 smoke 1개는 별도 미실행입니다. 기존 콘텐츠 집계·공개 상태·quality link는 보존했고 FK 0입니다.
+- 원격 학습 E2E에서는 세션 시작 지연을 발견했습니다(`INC-PERF-049`: create 7,312ms, current GET 2,118ms). 전체 실행을 중단하고 API 조회를 최적화하는 중이며 Preview 전체 gate 또는 Production 완료로 표시하지 않습니다.
+- 성능 후속 후보는 API-only read batch와 불필요한 hydrate 제거를 적용했습니다. 독립 검토에서 발견한 ID namespace 두 경계를 fail-first 3개로 수정했으며 전체 Ops26/DB126/Web113/API162·fresh D1 및 로컬 E2E207 pass/32 skip/0 fail을 다시 통과했습니다. 실제 원격 성능 재검증 전에는 해결 완료로 표시하지 않습니다.
+- 마지막 Production 전체 read-only 재검사는 `49 passed / 2 warnings / 2 failed`, exit1입니다. 실패는 여전히 Production 미반영 TOPIK status/CSP입니다. 06:09 UTC 최초 검사의 R2 7403은 후속 검사에서 재발하지 않았고 9개 표면 참조는 0입니다. 단발 실패의 원인은 미확정으로 보존합니다.
 
 ## Production 콘텐츠 (기존 기준선)
 

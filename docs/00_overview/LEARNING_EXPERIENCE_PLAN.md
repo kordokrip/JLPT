@@ -1,6 +1,6 @@
 # 매일 이어지는 개인 학습 경험
 
-기준일: 2026-09-06 KST. 상태: 로컬 구현 후보. backup·음성 진단 보강 후 최종 통합 gate 및 전체 E2E 통과. 실제 음성·Preview/Production gate 미완료.
+기준일: 2026-09-06 KST. 상태: 전용 Preview 검증 중. UX `94dfb05`는 최종 로컬 통합 gate 및 전체 E2E 통과 후 commit/push·Preview 배포했다. 실제 양언어 재생 종료·사용자 가청을 확인했다. 원격 시작 지연은 수정·재검증 중이며 Production 미반영이다.
 
 ## 승인된 제품 계약
 
@@ -110,14 +110,14 @@
 
 ## 2026-09-06 검증 기록
 
-- 출발 HEAD `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`; branch `feature/topik-product-expansion`. 변경은 로컬 후보이며 commit/push/deploy 미실행.
+- 출발 HEAD `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`; branch `feature/topik-product-expansion`. 아래 초기/교차검토 결과는 시계열 증거이며 최신 Preview 결과는 마지막 절을 기준으로 한다.
 - DB upgrade: Node SQLite로 0000–0027 기존 테이블 전후 비교, FK, daily_logs/SRS 보존·새 CHECK·중복 claim rollback 통과.
 - fresh D1: `0000–0028`, FK/FTS/manifest/출처·콘텐츠 품질·release contract/control-plane 통과. 최종 통합 gate artifact `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-RUIj0U/artifacts`. 로컬 manifest `content-v3-d091a7c5a9a6f17d7078`는 운영 manifest 대체물이 아니다.
 - 새 흐름 초기 영향 E2E는 `56 passed / 2 skipped`였다. 이후 전체 실행에서 과거 홈·더보기·해설 즉시 완료 locator와 영어 fixture 설정 저장 대기를 갱신했다. 이 초기 결과를 최종 변경의 전체 통과로 쓰지 않는다.
 - 문서 링크·lifecycle 및 `git diff --check`는 최종 문서 동기화 후 다시 실행해 기록한다.
 - 원격 read-only: `48 passed / 2 warnings / 3 failed`. dirty tree/manifest warnings; TOPIK status/CSP 미배포 실패, R2 전수 D1 조회는 Cloudflare `7403`으로 미완료. Production 내용 수정은 하지 않았다.
 - 06:44 UTC 독립 재검사에서 같은 `verify:remote:audio:r2` 명령은 설정·인증 변경 없이 exit 0, 9개 표면 모두 0이었다. 앞선 전체 실패 기록은 유지하며 전체 상태 수치를 추정해 바꾸지 않는다. `INC-OPS-041`은 원인 미확정 단발 실패·재발 관찰 상태다. 후속 증거: `.artifacts/operations/remote-r2-recovery-2026-09-06.json`.
-- 실제 Chrome 로컬 URL 접근은 저장된 브라우저 설정으로 차단되어 `INC-QA-040`에 기록했다. 원격 전용 Preview의 `/audio-qa` 화면은 실제 Chrome에서 열 수 있음을 확인했다. 이는 아직 이전 Preview 화면이며 새 후보 lifecycle·물리 가청을 검증한 결과가 아니다. 로컬 접근 제한을 우회하지 않는다.
+- 최초 실제 Chrome 로컬 URL 접근은 저장된 브라우저 설정으로 차단되어 `INC-QA-040`에 기록했다. 제한은 우회하지 않았으며 이후 새 원격 Preview에서 별도 실제 재생·가청 증거를 확보했다(아래 최신 절).
 - 최종 명령 결과와 browser pass/skip/fail은 아래 후보 결과에 기록한다.
 
 ### 교차검토 전 후보 결과 (아래 수정의 최종 통과 증거가 아님)
@@ -162,5 +162,25 @@
 - `INC-QA-048`: `/audio-qa`는 기존 onend 성공 Promise 이후만 언어별 정상 종료 수를 올린다. 실패/중단/언어 변경의 늦은 응답을 별도 처리하며 클릭 당시 음성 수를 읽기 전용으로 표시한다. 선택 voice 브랜드나 물리 가청을 추정하지 않는다. 음성 코어·저장·R2 계약은 바꾸지 않았다. mock Promise 단위 7개는 수정 전 실패, 수정 후 통과했다.
 - 위 코드 고정 후 마지막 전체 E2E는 `.artifacts/operations/learning-experience-2026-09-06-release-e2e.log`, **207 passed / 32 skipped / 0 failed**, exit 0이다. 진단 화면 완료 표시를 포함해 전체 239건을 다시 실행했다. 제외 32건은 통과에 더하지 않는다.
 - 최종 문서 검사는 64개 Markdown/81개 상대 링크, lifecycle 9개 active/4개 retired/36개 DB source 참조를 통과했다. `git diff --check` exit 0. 로컬 운영 상태는 39 pass/2 known warnings/0 fail(미커밋 후보, manifest drift)이다.
+
+### 원격 Preview 배포와 실제 확인
+
+- Git source `94dfb052c5ff73caaa70692f1d023bdaae439c8f` commit/push 완료. GitHub Actions는 비활성이고 Pages Git Provider도 연결되지 않아 push로 Production이 바뀌지 않는다.
+- 전용 Preview D1 `nihongo-n3-topik-preview`에 migration0028만 적용했다. 29개 migration 및 schema0028/70-table profile, FK 0을 확인했다. 콘텐츠·공개 상태·release 상태·quality link 집계는 적용 전후 동일하다. 신규 콘텐츠 seed/publication은 하지 않았다.
+- Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`; 두 source는 `94dfb05`다. Preview Pages API proxy는 전용 Preview Worker로 향한다. Worker smoke **21 pass / 0 fail / 관리자 positive 검사 1개 미실행**이다.
+- 실제 Chrome에서 새 `https://a95437fc.nihongo-n3.pages.dev/audio-qa`를 직접 조작해 일본어/한국어 정상 종료 각각 1회를 확인했다. 클릭 시 음성 목록은 각각 10개였으며 이는 실제 선택 voice 브랜드의 증거가 아니다. 사용자가 **“두 언어 모두 들렸습니다”**라고 확인했다. 음성 코어와 Pages source를 고정해 이 증거와 연결한다.
+- 실제 Chrome warn/error 로그는 0건이었다. 전체 network capture는 확보하지 않았으므로 실제 Chrome의 R2/legacy 요청 수는 미관측이다. 로컬/원격 자동 E2E의 mock 음성 요청 0 계약은 별도로 기록하며 사람 청취나 실제 Chrome network 결과로 바꾸지 않는다.
+- Preview 76건 E2E는 새 세션 navigation의 5초 기준을 반복 초과해 **exit130으로 중단**했다. 합성 QA 계정의 실제 N5/20분 create는 200/7,312ms, current GET은 200/2,118ms였다. `INC-PERF-049`로 API-only 수정·재측정을 진행하며 이 실행은 통과가 아니다. timeout을 확대하지 않는다.
+- 위 실행의 artifact prefix는 `.artifacts/operations/learning-experience-2026-09-06-preview-`이며 `migration.log`, `worker-deploy.log`, `pages-deploy.log`, `worker-smoke.json`, `content-baseline.json`, `db-after.json`, `e2e.log`에 증거를 보존했다. 합성 사용자 식별자도 Git 문서에는 기록하지 않는다.
+- 최종 Production read-only 재확인은 **49 pass / 2 warnings / 2 fail**, exit1이다(`learning-experience-2026-09-06-production-readonly.log`). 실패는 미배포 TOPIK status/CSP이며 R2 7403 조회 실패는 재발하지 않았다. Production Worker/Pages/D1 기준선은 유지한다. 새 Production 승인·backup/restore·predeploy gate는 미완료다.
+
+### 원격 시작 지연 후속 후보
+
+- `INC-PERF-049`의 API-only 변경은 canonical full-row hash를 유지한 read batch, 선택하지 않을 문제의 hydrate 제거, 독립 mode 조회, 세션 공개 상태 batch 검사다. 생성 ≤18회/재개 ≤5회 D1 왕복 예산을 회귀 테스트로 고정한다.
+- 별도 reviewer가 두 namespace 경계를 발견했다. `id='a:b', version='c'`와 `id='a', version='b:c'`의 문자열 키 충돌 및 static 문자열 ID/canonical 숫자 ID 혼합이다. `perf-regressions-before.log`에서 정확한 3개 fail을 재현했고 tuple key/type guard 뒤 routes114개를 통과했다. 회귀 mock과 실제 DB/실사용 검증은 구분한다.
+- `learning-experience-2026-09-06-perf-full-gate.log`: Ops **26**, DB **126**, Web **113**, API **162**, OpenAPI81/12, typecheck/build/fresh0028·FK/FTS/품질·control-plane **exit0**. fresh artifact는 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-t3fIa6/artifacts`다. 첫 추가 fixture는 configured 필드 누락으로 typecheck 실패했고 수정 후 이 통합 gate를 다시 통과했다.
+- Pages 코드는 바꾸지 않았으며 실제 가청이 확인된 `a95437fc`/`94dfb05`를 유지한다. Worker 수정 후보의 로컬 브라우저·원격 실측은 별도 실행 결과가 있어야 완료로 기록한다.
+- 동일한 합성 QA 측정 스크립트를 기존 Preview에서 08:10 UTC에 재실행한 단일 표본은 N5 create/current **2,514/1,075ms**, TOPIK1 **1,573/1,592ms**였다(`preview-performance-before.json`). 최초 N5 7,312/2,118ms와 차이가 있으므로 단일 최악 값만으로 개선율이나 p95를 계산하지 않는다. 첫 측정 스크립트는 GET 경로를 잘못 `/study/sessions/current`로 지정해 404였으며 실제 계약 `/study/sessions`로 바로잡은 위 실행만 성능 비교에 사용한다.
+- API 성능·namespace 수정 후 전체 로컬 브라우저 재검증은 **207 passed / 32 skipped / 0 failed**, exit0/3.6분이다(`learning-experience-2026-09-06-perf-local-e2e.log`). 테스트의 navigation 시간 기준과 Pages 코드는 바꾸지 않았다. 소스 검토·회귀·전체 gate를 통과한 Worker만 Preview에 갱신하며 Production에는 적용하지 않는다.
 
 참고 패턴: [뇌새김](https://www.brain-study.co.kr/wm/bbs/board.php?bo_table=notice&wr_id=2053)의 연상·암기장, [WaniKani](https://www.wanikani.com/)의 개념 연결·SRS, [Duolingo](https://blog.duolingo.com/duolingo-101-how-to-learn-a-language-on-duolingo/)의 짧은 학습 경로, [TEUIDA](https://www.teuida.net/en/learn/korean)의 상황별 학습. 광고상의 효과를 본 제품의 검증된 학습 효과로 인용하지 않는다.

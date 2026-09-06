@@ -1,6 +1,6 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-최종 점검: 2026-09-06 KST. 이 문서는 Production 기준선, 과거 Preview 콘텐츠 후보, 새 로컬 학습 UX의 코드·schema·route·test를 구분한 구조 지도입니다. 새 로컬 검증을 원격 배포 완료로 해석하지 않습니다.
+최종 점검: 2026-09-06 KST. 이 문서는 Production 기준선, Preview 콘텐츠 후보, 새 학습 UX의 코드·schema·route·test를 구분한 구조 지도입니다. UX `94dfb05`는 전용 Preview에 반영했고 원격 시작 지연을 추가 검증 중입니다. 로컬 통과나 Preview 배포를 Production 완료로 해석하지 않습니다.
 
 ## Production 기준선
 

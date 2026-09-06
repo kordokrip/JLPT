@@ -30,13 +30,13 @@
 
 ## 코드·데이터 지도
 
-### 새 로컬 학습 UX 후보
+### 새 학습 UX Preview 후보
 
-먼저 [LEARNING_EXPERIENCE_PLAN](LEARNING_EXPERIENCE_PLAN.md)의 실제 검증/미실행 표를 읽는다. 현재 HEAD 위 미커밋 후보이며 Production 배포로 오인하지 않는다.
+먼저 [LEARNING_EXPERIENCE_PLAN](LEARNING_EXPERIENCE_PLAN.md)의 실제 검증/미실행 표를 읽는다. UX source `94dfb05`는 feature branch에 commit/push하고 전용 Preview에 반영했다. Production 배포로 오인하지 않는다. 원격 세션 시작 지연 `INC-PERF-049`를 추가 수정·재검증 중이다.
 
 별도 Agent 교차검토에서 `INC-LEARN-043`, `INC-DATA-044/046`(다른 기기의 선행 제출·종료·트랙 변경)과 `INC-OPS-045`(진단 식별자 가림), `INC-DATA-047`(0028 backup profile)을 추가해 회귀를 수정했다. 후속 전체 브라우저는 `207 passed / 32 skipped / 0 failed`다. expected_track 불일치 409를 메모 revision 충돌이나 제출 성공으로 바꾸지 않는다. `/audio-qa` 정상 종료 관측 보강(`INC-QA-048`) 이후의 최종 gate는 계획/릴리스 원장의 최신 결과를 확인한다.
 
-Preview 준비의 read-only 조회에서 D1은 0027, FK 0이었으며 Pages Preview API_ORIGIN은 전용 `nihongo-n3-api-topik-preview`였다. 현재 활성 Preview Worker는 기존 문서의 4c6846d8보다 뒤인 `0d17ba30-b7ea-4879-9e99-e9c3a7ebb8ee`(deployment `940565dc-9e54-4d31-807a-a602758b8a9a`)로 확인했다. 이 식별자는 복귀 후보이지 새 UX 배포 결과가 아니다.
+Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·quality link가 before/after 일치하고 FK 0이다. Pages `a95437fc-8411-4151-9519-ab0d8fb92905`와 Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`가 source `94dfb05`다. 실제 Chrome의 양언어 정상 종료와 사용자의 청취 확인을 확보했지만 전체 network capture는 없다. Preview E2E는 시작 지연으로 중단했고 전체 통과가 아니다. 직전 Worker `0d17ba30-b7ea-4879-9e99-e9c3a7ebb8ee`/Pages `885aae1f-d308-4453-b3c6-881999410ec0`는 복귀 기준이다. Production에는 어떤 변경도 하지 않았다.
 
 - shared 계약: `packages/shared/src/learning-experience.ts`.
 - additive DB: `packages/db/drizzle-v2/0028_learning_experience.sql`, Drizzle의 다섯 learning/study 테이블.

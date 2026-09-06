@@ -22,6 +22,7 @@ import {
   buildStudySteps,
   canonicalContent,
   contentStillPublished,
+  contentsStillPublished,
   jsonValue,
   type DB,
   type DraftStep,
@@ -56,7 +57,10 @@ for (const prefix of ["/learning/*", "/study/*"]) {
     c.header("Cache-Control", "private, no-store");
     const expectedTrack = c.req.query("expected_track");
     if (expectedTrack && expectedTrack !== c.get("learningTrack"))
-      return conflict(c, "Learning track changed on another device; reload before continuing");
+      return conflict(
+        c,
+        "Learning track changed on another device; reload before continuing",
+      );
     return next();
   });
 }
@@ -128,11 +132,20 @@ async function sessionDto(db: DB, row: SessionRow): Promise<StudySession> {
     .bind(row.id)
     .all<StepRow>();
   const steps: StudyStep[] = [];
-  for (const item of stored.results ?? []) {
-    const draft = JSON.parse(item.public_json) as DraftStep;
+  const items = stored.results ?? [];
+  const drafts = items.map((item) => JSON.parse(item.public_json) as DraftStep);
+  const published =
+    row.status === "abandoned"
+      ? []
+      : await contentsStillPublished(
+          db,
+          drafts.map((draft) => draft.ref),
+        );
+  for (const [index, item] of items.entries()) {
+    const draft = drafts[index]!;
     // Never re-expose withdrawn content from an old snapshot.
     if (row.status === "abandoned") continue;
-    if (!(await contentStillPublished(db, draft.ref)))
+    if (!published[index])
       throw new HTTPException(410, {
         message: "Study content is no longer available",
       });
@@ -338,8 +351,7 @@ routes.patch("/study/sessions/:id", async (c) => {
     )
     .bind(parsed.data.status, row.id)
     .run();
-  if (!updated.meta.changes)
-    return conflict(c, "Closed session is immutable");
+  if (!updated.meta.changes) return conflict(c, "Closed session is immutable");
   return ok(
     c,
     await sessionDto(
@@ -766,7 +778,8 @@ routes.get("/learning/content/:type/:id", async (c) => {
 export const learningExperienceOA = new OpenAPIHono<AppEnv>();
 const expectedTrackQuery = z.object({
   expected_track: z.enum(["jlpt-ja", "topik-ko"]).optional().openapi({
-    description: "Reject stale device scope with 409 before reading or writing a different track. Omit for legacy clients.",
+    description:
+      "Reject stale device scope with 409 before reading or writing a different track. Omit for legacy clients.",
   }),
 });
 const definitions = [
@@ -791,9 +804,14 @@ mountLegacyRouteWithOpenApiDocs(
     path,
     tags: ["Learning experience"],
     summary: `${method.toUpperCase()} ${path}`,
-    request: { query: path === "/learning/records"
-      ? expectedTrackQuery.extend({ window: z.enum(["7d", "30d"]).optional() })
-      : expectedTrackQuery },
+    request: {
+      query:
+        path === "/learning/records"
+          ? expectedTrackQuery.extend({
+              window: z.enum(["7d", "30d"]).optional(),
+            })
+          : expectedTrackQuery,
+    },
     ...(method === "put" && path === "/learning/profile"
       ? {
           request: {

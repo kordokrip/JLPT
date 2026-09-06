@@ -17,13 +17,13 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
-## 2026-09-06 로컬 학습 UX 후보 — 미배포
+## 2026-09-06 학습 UX 후보 — Preview 검증 중
 
 오늘 / 학습 / 문제 / 복습 / 기록, 계정·트랙별 목표, 기본 20분 세션, 중단·재개, 자동 기록과 개인 메모를 구현했습니다. 한국어 JLPT와 일본어 TOPIK에 같은 흐름을 적용하고, 해설 열람·명시적 완료·첫 정답·재시도·FSRS 평가를 분리합니다.
 
 - 새 additive migration은 `0028_learning_experience.sql`입니다. Production은 여전히 `0000–0027`이며 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
 - 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
-- 로컬 unit/API/DB·fresh/upgrade·build와 전체 브라우저 자동 검사를 실행했습니다. 실제 Chrome 음성·사람 가청·Preview·Production은 완료하지 않았습니다. 정확한 수치와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
+- 로컬 unit/API/DB·fresh/upgrade·build와 전체 브라우저 자동 검사를 통과한 `94dfb05`를 commit/push하고 전용 Preview에 반영했습니다. 새 Preview의 실제 Chrome 양언어 재생 종료와 사용자 청취 확인을 확보했습니다. 원격 세션 시작 지연(`INC-PERF-049`)은 별도 수정·재검증 중이며 Production은 변경하지 않았습니다. 정확한 수치와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
 - 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
 
 ## 구조

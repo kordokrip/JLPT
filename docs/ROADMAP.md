@@ -2,7 +2,7 @@
 
 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-최종 점검: 2026-09-06 KST. 현재 Production 기준선, 새 로컬 UX 후보, 기존 콘텐츠 Preview와 이후 관찰 순서를 구분합니다.
+최종 점검: 2026-09-06 KST. 현재 Production 기준선, 전용 Preview에서 검증 중인 새 UX, 기존 콘텐츠 Preview와 이후 관찰 순서를 구분합니다.
 
 ## 우선 작업 — 매일 이어지는 개인 학습
 

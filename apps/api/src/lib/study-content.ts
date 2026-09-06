@@ -24,6 +24,18 @@ export type DraftStep = {
   card_id?: number;
 };
 type Row = Record<string, unknown>;
+type ContentIdentity = Pick<StudyRef, "type" | "id">;
+const canonicalTables: Partial<Record<StudyRef["type"], string>> = {
+  vocab: "vocab",
+  grammar: "grammar",
+  kanji: "kanji",
+  sentence: "sentences",
+  sysprog: "sysprog_terms",
+  homophone: "homophone_pairs",
+};
+const identityKey = (ref: ContentIdentity) => `${ref.type}:${ref.id}`;
+const publicationKey = (type: StudyRef["type"], id: string, version: string) =>
+  JSON.stringify([type, id, type === "topik-owner-item" ? "" : version]);
 const str = (value: unknown) => (typeof value === "string" ? value : "");
 export function jsonValue<T>(value: unknown, fallback: T): T {
   try {
@@ -48,21 +60,22 @@ export async function canonicalContent(
   type: StudyRef["type"],
   id: string,
 ): Promise<DraftStep | null> {
-  const tables: Record<string, string> = {
-    vocab: "vocab",
-    grammar: "grammar",
-    kanji: "kanji",
-    sentence: "sentences",
-    sysprog: "sysprog_terms",
-    homophone: "homophone_pairs",
-  };
-  const table = tables[type];
+  const table = canonicalTables[type];
   if (!table || !/^\d+$/.test(id)) return null;
   const row = await db
     .prepare(`SELECT * FROM ${table} WHERE id=?`)
     .bind(Number(id))
     .first<Row>();
   if (!row) return null;
+  return canonicalRowContent(db, type, id, row);
+}
+
+async function canonicalRowContent(
+  db: DB,
+  type: StudyRef["type"],
+  id: string,
+  row: Row,
+): Promise<DraftStep | null> {
   let prompt = str(row.ja),
     reading = str(row.kana),
     meaning = str(row.ko),
@@ -114,6 +127,48 @@ export async function canonicalContent(
     },
   };
 }
+
+/** One D1 batch for all represented canonical types; retain full-row hashes. */
+async function canonicalContents(
+  db: DB,
+  refs: readonly ContentIdentity[],
+): Promise<Map<string, DraftStep>> {
+  const groups = new Map<StudyRef["type"], Set<string>>();
+  for (const ref of refs) {
+    if (!canonicalTables[ref.type] || !/^\d+$/.test(ref.id)) continue;
+    if (!groups.has(ref.type)) groups.set(ref.type, new Set());
+    groups.get(ref.type)!.add(ref.id);
+  }
+  const entries = [...groups];
+  if (!entries.length) return new Map();
+  const results = await db.batch<Row>(
+    entries.map(([type, ids]) =>
+      db
+        .prepare(
+          `SELECT * FROM ${canonicalTables[type]} WHERE id IN (${[...ids].map(() => "?").join(",")})`,
+        )
+        .bind(...[...ids].map(Number)),
+    ),
+  );
+  const loaded = new Map<string, DraftStep>();
+  await Promise.all(
+    entries.flatMap(([type, ids], index) =>
+      (results[index]?.results ?? []).map(async (row) => {
+        const item = await canonicalRowContent(db, type, String(row.id), row);
+        if (item)
+          for (const id of ids) {
+            if (Number(id) === Number(row.id))
+              loaded.set(identityKey({ type, id }), {
+                ...item,
+                ref: { ...item.ref, id },
+              });
+          }
+      }),
+    ),
+  );
+  return loaded;
+}
+
 export async function ownerContent(
   db: DB,
   id: string,
@@ -129,6 +184,14 @@ export async function ownerContent(
     .bind(id)
     .first<Row>();
   if (!row) return null;
+  return ownerRowContent(row, id, language);
+}
+
+async function ownerRowContent(
+  row: Row,
+  id: string,
+  language: string,
+): Promise<DraftStep> {
   const payload = jsonValue<{
     choices?: string[];
     answer_index?: number;
@@ -173,6 +236,79 @@ export async function ownerContent(
       sample: payload.sample_answer_ko ?? null,
     },
   };
+}
+
+async function ownerContents(
+  db: DB,
+  ids: readonly string[],
+  language: string,
+): Promise<Map<string, DraftStep>> {
+  if (!ids.length) return new Map();
+  const result = await db
+    .prepare(
+      `SELECT i.*,b.binding_state FROM topik_owner_authored_curriculum_items i
+    LEFT JOIN content_speech_bindings b ON b.item_type='topik-owner-item' AND b.item_id=i.id AND b.language='ko'
+    AND b.speech_role=CASE WHEN i.item_type='listening' THEN 'listening' ELSE 'pronunciation' END AND b.provider='google-browser'
+    WHERE i.id IN (${ids.map(() => "?").join(",")}) AND ${publishedOwnerItem("i")}`,
+    )
+    .bind(...ids)
+    .all<Row>();
+  const items = await Promise.all(
+    (result.results ?? []).map((row) =>
+      ownerRowContent(row, String(row.id), language),
+    ),
+  );
+  return new Map(items.map((item) => [item.ref.id, item]));
+}
+
+/** Preserve every publication predicate, with bounded batches instead of one RTT per step. */
+export async function contentsStillPublished(
+  db: DB,
+  refs: readonly StudyRef[],
+): Promise<boolean[]> {
+  const canonical = refs.filter((ref) => canonicalTables[ref.type]);
+  const groups = new Map<StudyRef["type"], Set<string>>();
+  for (const ref of refs.filter((ref) =>
+    ["jlpt-practice", "topik-practice", "topik-owner-item"].includes(ref.type),
+  )) {
+    if (!groups.has(ref.type)) groups.set(ref.type, new Set());
+    groups.get(ref.type)!.add(ref.id);
+  }
+  const entries = [...groups];
+  const statements = entries.map(([type, ids]) => {
+    const placeholders = [...ids].map(() => "?").join(",");
+    if (type === "topik-owner-item")
+      return db
+        .prepare(
+          `SELECT i.id FROM topik_owner_authored_curriculum_items i WHERE i.id IN (${placeholders}) AND ${publishedOwnerItem("i")}`,
+        )
+        .bind(...ids);
+    const table =
+      type === "jlpt-practice"
+        ? "jlpt_practice_questions"
+        : "topik_practice_questions";
+    return db
+      .prepare(
+        `SELECT id,bank_version FROM ${table} WHERE id IN (${placeholders}) AND is_published=1`,
+      )
+      .bind(...ids);
+  });
+  const [canonicalRows, published] = await Promise.all([
+    canonicalContents(db, canonical),
+    statements.length ? db.batch<Row>(statements) : Promise.resolve([]),
+  ]);
+  const available = new Set<string>();
+  entries.forEach(([type], index) => {
+    for (const row of published[index]?.results ?? [])
+      available.add(
+        publicationKey(type, String(row.id), String(row.bank_version)),
+      );
+  });
+  return refs.map((ref) =>
+    canonicalTables[ref.type]
+      ? canonicalRows.has(identityKey(ref))
+      : available.has(publicationKey(ref.type, ref.id, ref.version)),
+  );
 }
 export async function contentStillPublished(
   db: DB,
@@ -233,14 +369,29 @@ export async function buildStudySteps(
         )
         .bind(userId, level, level, level, level, level, count)
         .all<Row>();
-  for (const row of dueRows.results ?? []) {
+  const due = (dueRows.results ?? []).slice(0, topik ? 20 : count);
+  const dueContent = topik
+    ? await ownerContents(
+        db,
+        due.map((row) => String(row.item_id)),
+        lang,
+      )
+    : await canonicalContents(
+        db,
+        due.map((row) => ({
+          type: str(row.item_type) as StudyRef["type"],
+          id: String(row.item_id),
+        })),
+      );
+  for (const row of due) {
     if (steps.length >= count) break;
     const item = topik
-      ? await ownerContent(db, String(row.item_id), lang)
-      : await canonicalContent(
-          db,
-          str(row.item_type) as StudyRef["type"],
-          String(row.item_id),
+      ? dueContent.get(String(row.item_id))
+      : dueContent.get(
+          identityKey({
+            type: str(row.item_type) as StudyRef["type"],
+            id: String(row.item_id),
+          }),
         );
     if (item && item.level === level && steps.length < count)
       steps.push({ ...item, phase: "review", card_id: Number(row.id) });
@@ -257,32 +408,43 @@ export async function buildStudySteps(
       )
       .bind(Number(level), userId, newLimit)
       .all<{ id: string }>();
-    for (const row of rows.results ?? []) {
-      const item = await ownerContent(db, row.id, lang);
+    const selected = rows.results ?? [];
+    const items = await ownerContents(
+      db,
+      selected.map((row) => row.id),
+      lang,
+    );
+    for (const row of selected) {
+      const item = items.get(row.id);
       if (item) steps.push(item);
     }
   } else {
-    const pools: DraftStep[][] = [];
-    for (const [type, table, column] of [
+    const types = [
       ["vocab", "vocab", "level"],
       ["grammar", "grammar", "level"],
       ["kanji", "kanji", "jlpt_level"],
       ["sentence", "sentences", "level"],
-    ] as const) {
-      const rows = await db
-        .prepare(
-          `SELECT id FROM ${table} WHERE ${column}=? AND NOT EXISTS
+    ] as const;
+    const rowsByType = await db.batch<Row>(
+      types.map(([type, table, column]) =>
+        db
+          .prepare(
+            `SELECT * FROM ${table} WHERE ${column}=? AND NOT EXISTS
         (SELECT 1 FROM srs_cards c WHERE c.user_id=? AND c.learning_track='jlpt-ja' AND c.item_type=? AND c.item_id=${table}.id) ORDER BY id LIMIT ?`,
-        )
-        .bind(level, userId, type, Math.ceil(newLimit / 4))
-        .all<{ id: number }>();
-      const items: DraftStep[] = [];
-      for (const row of rows.results ?? []) {
-        const item = await canonicalContent(db, type, String(row.id));
-        if (item) items.push(item);
-      }
-      pools.push(items);
-    }
+          )
+          .bind(level, userId, type, Math.ceil(newLimit / 4)),
+      ),
+    );
+    const pools = await Promise.all(
+      types.map(async ([type], index) => {
+        const items = await Promise.all(
+          (rowsByType[index]?.results ?? []).map((row) =>
+            canonicalRowContent(db, type, String(row.id), row),
+          ),
+        );
+        return items.filter((item): item is DraftStep => item !== null);
+      }),
+    );
     let added = 0;
     for (let round = 0; round < newLimit; round++)
       for (const pool of pools)
@@ -355,81 +517,107 @@ export async function buildStudySteps(
     }
     notices.push("topik-exam-band");
   } else {
-    const pools: DraftStep[][] = [];
-    for (const mode of [
+    const modes = [
       "vocab_mc",
       "kanji_reading",
       "listening",
       "grammar_fill",
-    ] as const) {
-      try {
-        const questions = await generateQuizQuestions(db, userId, {
-          level: level as "N1",
-          mode,
-          count: 3,
-          strategy: "weakest",
-        });
-        const pool: DraftStep[] = [];
-        for (const q of questions) {
-          const type =
-            typeof q.item_id === "string"
-              ? "jlpt-practice"
-              : (
-                  {
-                    vocab_mc: "vocab",
-                    kanji_reading: "kanji",
-                    listening: "sentence",
-                    grammar_fill: "grammar",
-                  } as const
-                )[mode];
-          const source =
-            type === "jlpt-practice"
-              ? await db
-                  .prepare(
-                    "SELECT * FROM jlpt_practice_questions WHERE id=? AND is_published=1",
-                  )
-                  .bind(q.item_id)
-                  .first<Row>()
-              : null;
-          const concept =
-            type !== "jlpt-practice"
-              ? await canonicalContent(db, type, String(q.item_id))
-              : null;
-          pool.push({
-            ref: {
-              track: "jlpt-ja",
-              type,
-              id: String(q.item_id),
-              version: source
-                ? str(source.bank_version)
-                : (concept?.ref.version ?? "canonical"),
-            },
-            phase: "practice",
-            section: mode,
-            level,
-            prompt: q.prompt,
-            reading: null,
-            choices: q.choices,
-            mode: "choice",
-            audio: q.script_ja ? { language: "ja", text: q.script_ja } : null,
-            solution: {
-              answer: q.answer,
-              explanation: source
-                ? localized(source, "explanation", lang)
-                : (concept?.solution.explanation ?? q.answer),
-              sample: null,
-            },
+    ] as const;
+    const generated = await Promise.all(
+      modes.map(async (mode) => {
+        try {
+          const questions = await generateQuizQuestions(db, userId, {
+            level: level as "N1",
+            mode,
+            count: 3,
+            strategy: "weakest",
           });
+          return { mode, questions };
+        } catch (error) {
+          if (!(error instanceof QuizPoolError)) throw error;
+          return { mode, questions: [], unavailable: true };
         }
-        pools.push(pool);
-      } catch (error) {
-        if (!(error instanceof QuizPoolError)) throw error;
-        notices.push(`unavailable:${mode}`);
-      }
-    }
+      }),
+    );
+    // Keep mode/round order, but hydrate only the five (or three) chosen
+    // questions, not all twelve candidates discarded by the old loop.
+    const pools = generated.map(({ mode, questions, unavailable }) => {
+      if (unavailable) notices.push(`unavailable:${mode}`);
+      return questions.map((q) => {
+        const type: StudyRef["type"] =
+          typeof q.item_id === "string"
+            ? "jlpt-practice"
+            : (
+                {
+                  vocab_mc: "vocab",
+                  kanji_reading: "kanji",
+                  listening: "sentence",
+                  grammar_fill: "grammar",
+                } as const
+              )[mode];
+        return { mode, q, type };
+      });
+    });
+    const selected: Array<(typeof pools)[number][number]> = [];
     for (let round = 0; round < 3; round++)
       for (const pool of pools)
-        if (pool[round] && practice.length < count) practice.push(pool[round]!);
+        if (pool[round] && selected.length < count) selected.push(pool[round]!);
+    const staticIds = [
+      ...new Set(
+        selected
+          .filter((item) => item.type === "jlpt-practice")
+          .map((item) => String(item.q.item_id)),
+      ),
+    ];
+    const [concepts, staticRows] = await Promise.all([
+      canonicalContents(
+        db,
+        selected.map(({ type, q }) => ({ type, id: String(q.item_id) })),
+      ),
+      staticIds.length
+        ? db
+            .prepare(
+              `SELECT * FROM jlpt_practice_questions WHERE id IN (${staticIds.map(() => "?").join(",")}) AND is_published=1`,
+            )
+            .bind(...staticIds)
+            .all<Row>()
+        : Promise.resolve({ results: [] as Row[] }),
+    ]);
+    const sources = new Map(
+      (staticRows.results ?? []).map((row) => [String(row.id), row]),
+    );
+    for (const { mode, q, type } of selected) {
+      const source =
+        type === "jlpt-practice" ? sources.get(String(q.item_id)) : undefined;
+      const concept = concepts.get(
+        identityKey({ type, id: String(q.item_id) }),
+      );
+      practice.push({
+        ref: {
+          track: "jlpt-ja",
+          type,
+          id: String(q.item_id),
+          version: source
+            ? str(source.bank_version)
+            : (concept?.ref.version ?? "canonical"),
+        },
+        phase: "practice",
+        section: mode,
+        level,
+        prompt: q.prompt,
+        reading: null,
+        choices: q.choices,
+        mode: "choice",
+        audio: q.script_ja ? { language: "ja", text: q.script_ja } : null,
+        solution: {
+          answer: q.answer,
+          explanation: source
+            ? localized(source, "explanation", lang)
+            : (concept?.solution.explanation ?? q.answer),
+          sample: null,
+        },
+      });
+    }
   }
   // Approved links influence order only; drafts never create a pedagogical claim.
   const learned = new Set(

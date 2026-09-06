@@ -79,7 +79,9 @@ git log -1 --oneline
 
 `d1:backup`은 실제 원격 schema를 export 전과 manifest 확정 전에 비교한다. `d1:restore-drill`의 `passed=true`만 읽지 말고 `schemaProfile`, `localSchemaProfile`, `coversLocalSchema`, `omittedTableCounts`도 확인한다. 구 65개 backup을 0028에 복원하면 새 다섯 테이블은 0행이어야 하고 `coversLocalSchema=false`다. `_cf_METADATA`는 확인된 Miniflare 생성 metadata만 제외하며 임의의 `_cf_*` 앱 테이블은 제외하지 않는다. 기존 blue/green transfer·사용자 정리 도구의 기본 65-table 계약은 이번에 변경하지 않았으므로 0028 학습 기록을 다루는 작업에는 사용하지 않는다. 해당 도구는 별도 upgrade 검증 후 사용한다.
 
-이번 변경의 브라우저 실제 확인은 로컬 주소에 대한 저장된 접근 설정에 의해 차단되었다. 자동 테스트가 통과해도 실제 Chrome 또는 사용자 가청 완료로 표시하지 않는다. 해당 제한을 다른 브라우저 표면이나 우회 명령으로 회피하지 않는다.
+실제 Chrome의 로컬 주소 접근 제한은 우회하지 않는다. 이번 후보는 전용 원격 Preview에서 양언어 정상 종료와 사용자 청취 확인을 별도로 확보했다. 음성 증거에는 Pages 배포 ID/source, lifecycle, 사람의 확인, network 관측 여부를 분리한다. 실제 Chrome 전체 network capture가 없으면 자동 mock E2E의 요청 0건으로 대신 채우지 않는다. 사용자 가청 확인을 Production 승인으로 해석하지 않는다.
+
+원격 Preview에서만 나타나는 성능 회귀도 gate 실패다. `INC-PERF-049`처럼 성공 응답이 늦어 학습 시작 검사가 실패하면 실제 API 소요 시간과 직렬 DB 호출을 대조하고, 요청 수 회귀 테스트·최적화·동일 Preview 재측정을 수행한다. timeout 확대만으로 실패를 지우지 않는다. API만 바꾼 재검증에서는 Worker의 새 source와 유지한 Pages source를 각각 기록한다.
 
 ```bash
 pnpm ops:verify

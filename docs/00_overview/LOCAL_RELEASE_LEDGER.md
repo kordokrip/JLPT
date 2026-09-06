@@ -8,19 +8,25 @@
 
 | 항목 | 상태 |
 | --- | --- |
-| candidate | learning-experience-2026-09-06; draft/local |
-| source | `feature/topik-product-expansion`, 출발 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc` 위 미커밋 변경 |
-| schema | 새 `0028`; 로컬 fresh/upgrade만 적용, 원격 migration 미실행 |
+| candidate | learning-experience-2026-09-06; Preview 검증 중, INC-PERF-049 미해결 |
+| source | `feature/topik-product-expansion`, `94dfb052c5ff73caaa70692f1d023bdaae439c8f` commit/push |
+| schema | 전용 Preview에 `0028` 하나 적용; Production은 `0027` 유지 |
 | content | 공개 bank 재시드/변경 없음, Preview 160개 신규 공개 없음 |
 | 검증 | backup·음성 진단 포함 최종 gate Ops 26 / DB 126 / Web 113 / API 157, exit 0. 마지막 전체 Playwright 207 pass/32 skip/0 fail, exit 0. 문서 64/81 및 diff check 통과. [실행 기록](LEARNING_EXPERIENCE_PLAN.md#2026-09-06-검증-기록) |
-| 실제 음성 | Chrome 로컬 접근 제한, 원격 Preview 접근 가능. 새 후보 lifecycle/가청은 미확인 |
+| 실제 음성 | 새 Preview 양 언어 정상 종료 표시, 사용자의 “두 언어 모두 들렸습니다” 확인. 실제 Chrome 네트워크 상세 관측은 별도이며 자동 mock E2E로 대체 표기하지 않음 |
 | remote read-only | 06:09 UTC 전체 48 pass / 2 warnings / 3 fail; 06:44 UTC 같은 R2 verifier 단독 재검사는 9개 표면 모두 0, exit 0. 전체 재집계는 아님 |
-| Preview/Production | 미배포; 신규 deployment ID 없음 |
+| Preview/Production | Preview Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`; Production 미반영 |
 | backup/restore | 과거 65-table backup → local0028 실제 restore exit 0, FK 0, trigger 56; coversLocalSchema=false. 새 Production backup 아님 |
-| Git | commit/push/tag 미실행 |
+| Git | 후보 commit/push 완료, tag 없음; Pages Git integration 없음, GitHub Actions 비활성 유지 |
 | rollback | additive 데이터를 보존하고 이전 Worker/Pages 복귀; 화면 옵션 `VITE_LEARNING_EXPERIENCE=false` |
 
 이 후보를 출시 완료로 표시하지 않는다. 기존 Production ID와 rollback 이력은 아래에 보존한다.
+
+Preview Worker smoke 21/0, 관리자 positive 검사 1개 미실행. Preview 콘텐츠 집계의 before/after 일치·FK 0·schema profile0028 확인. 원격 E2E76건은 세션 시작이 5초 기준을 반복 초과해 exit130으로 중단했다. 합성 Preview 계정에서 실제 create200/7,312ms, current200/2,118ms를 확인해 `INC-PERF-049`로 수정 중이다. 직전 Preview Worker `0d17ba30-b7ea-4879-9e99-e9c3a7ebb8ee`, 같은 branch Pages `885aae1f-d308-4453-b3c6-881999410ec0`를 복귀 기준으로 보존한다.
+
+최종 Production read-only는 49 pass/2 warnings/2 fail, exit1이었다. 미배포 TOPIK status/CSP만 실패하며 앞선 R2 7403은 재발하지 않았다. 실제 Chrome 전체 network capture는 미확보다. 사용자 청취 확인은 이 Pages의 가청 증거이며 Production 배포 승인이 아니다.
+
+성능 후속 API 후보는 생성≤18/재개≤5 D1 왕복 예산, ID/version tuple과 static/canonical 타입 분리를 적용했다. 독립 검토 지적 3 fail을 수정한 뒤 Ops26/DB126/Web113/API162와 fresh D1, 전체 로컬 E2E207 pass/32 skip/0 fail(exit0)을 통과했다. 이 후속 후보는 Worker-only Preview 대상으로 형상 고정하며 Pages94dfb05는 유지한다. 원격 배포 ID/사후 결과는 실제 실행 후 추가한다.
 
 ## GitHub 사용 범위 (유지)
 
