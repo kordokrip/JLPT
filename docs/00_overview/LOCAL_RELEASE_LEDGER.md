@@ -25,6 +25,10 @@
 
 postdeploy gate checker는 exit0/통과입니다. 최종 push 전 remote ops는50 pass/2 warn/1 fail이며 유일한 실패는 아직 동기화하지 않은 Git SHA입니다. TOPIK status/CSP/DB/Worker/Pages는 모두 통과했습니다. 문서64개/84링크·lifecycle·diff check와13개 변경 파일 독립 검토도 통과했습니다. ops의 count/latest 검사는 중간 migration 이름 전체를 검사하지 않으며 pending/unknown0은 별도 pinned ledger 조회 증거입니다.
 
+### Git 동기화 및 종료
+
+검증된 앱 이력과 문서/ops 후속 **`042fbb2b286be907f424a3a18e9d9e7813dc72c4`**를 `origin/feature/topik-product-expansion`에 일반 push해 exit0을 확인했습니다(기존5311ab7 → 042fbb2). 이후 전체 remote ops는 **52 pass / 1 known warning / 0 fail**, exit0이며 로컬은40/1/0·clean입니다. 경고는 기존 `INC-DATA-024`뿐이고 같은 배포의 source-pinned392 검사는 통과했습니다. 증적은 `learning-production-2026-09-07-ops-remote-after-push.json`입니다. 이 종료 기록은 별도 문서 commit으로 같은 branch에 보존하며 앱/Worker/Pages를 다시 배포하지 않습니다. 최종 원격 tip 일치는 ignored `learning-production-2026-09-07-final-git.json`에 기록합니다.
+
 이하 배포 전 이력의 미완료·가청 대기·원격 SHA는 당시 기록입니다. 같은 검증 runtime을 문서 commit마다 재배포하거나 전체 gate를 반복하지 않습니다.
 
 ## 이전 작업 — 운영 백업·점검 종료, 신규 릴리스 배포 전

@@ -10,7 +10,7 @@
 
 ## 현재 릴리스 — 2026-09-07
 
-Production Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, migration0000–0028을 반영했다. 배포 commit은 `a7d5d87946334fe8c7970b8f124853aaba443955`이며 검증 runtime793b671과 apps/packages/lock tree가 동일하고 정적 파일70개는 Preview와 hash가 일치한다. 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 하지 않았다. 최종 push는 아직 실행하지 않았다.
+Production Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, migration0000–0028을 반영했다. 배포 commit은 `a7d5d87946334fe8c7970b8f124853aaba443955`이며 검증 runtime793b671과 apps/packages/lock tree가 동일하고 정적 파일70개는 Preview와 hash가 일치한다. 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 하지 않았다. 문서/ops 후속042fbb2 push 뒤 remote52/1/0·로컬40/1/0을 확인했다. 종료 기록의 문서 commit은 앱 배포 SHA와 구분한다.
 
 로컬458개·fresh0028·전체 브라우저217/30/0, 최종 Preview181/6/0, 최신555 실제 양언어 가청/onend/Network와 predeploy 통과를 각각 기록했다. Production 사후에는 Worker 공개7·auth proxy3·익명 음성 양 엔진2(mock), pinned392·FK/FTS·R2참조0·기존 학습21테이블 hash 보존을 확인했다. Production 실제 Chrome 양언어 onend1/1은 별도 관측이며 새 사람 가청 확인을 의미하지 않는다.
 

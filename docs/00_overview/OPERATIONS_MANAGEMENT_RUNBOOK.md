@@ -6,7 +6,7 @@
 
 **Last Updated:** 2026-09-07 KST
 
-**Last Run:** 2026-09-07 학습 UX Production 배포·사후 검증; 최종 Git push 전
+**Last Run:** 2026-09-07 학습 UX Production 배포·Git042fbb2 push 후 remote52/1/0 통과; 종료 문서 별도 보존
 
 ## 목적
 
@@ -194,5 +194,5 @@ clean source commit/tag
 
 | 날짜 | 실행자 | 결과 |
 | --- | --- | --- |
-| 2026-09-07 | Project Operations Steward | 승인·최신555 가청·predeploy 통과 후0028/Worker/Pages 반영. 사후 pinned392·R2참조0·기존 학습21테이블 hash 보존, Worker 공개7/auth proxy3, 익명 음성2(mock) 통과. Production 실제 Chrome onend양언어1/1은 새 사람 가청과 구분. 최종push 전 |
+| 2026-09-07 | Project Operations Steward | 승인·최신555 가청·predeploy 통과 후0028/Worker/Pages 반영. 사후 pinned392·R2참조0·기존 학습21테이블 hash 보존, Worker 공개7/auth proxy3, 익명 음성2(mock) 통과. Production 실제 Chrome onend양언어1/1은 새 사람 가청과 구분. Git042fbb2 push 후 remote52/1/0; 종료 기록 별도 문서 commit |
 | 2026-08-24 | Project Operations Steward | 전담 Sub Agent/상태 점검 스크립트 도입. local `37/2/0`, remote read-only `47/2/0`, 전체 gate exit `0`. 문서별 production ID, auth JSON 계약, 로컬 복구 증적, 음성 provenance와 R2 0건을 구조적으로 검사. 독립 재감사 결과 commit 차단 결함 `0` |

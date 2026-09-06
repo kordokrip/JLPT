@@ -28,6 +28,7 @@
 | 콘텐츠 / 결함 | content source `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4` 유지. 031–033 수정은 운영 반영됐으며 상태 판정은 오류 원장의 사후 증거를 따른다. `INC-DATA-024`는 source-pinned verifier로 관리 |
 | rollback | Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`; 데이터 손상 없으면0028·학습 기록 보존 |
 | CI/CD | GitHub Actions 비활성; 승인된 로컬 gate와 MD 원장이 release evidence |
+| Git 종료 | 앱 이력+문서/ops042fbb2 push 완료, 이후 remote52/1/0·로컬40/1/0. 종료 문서 후속 commit과 배포 a7d5d87을 구분; tip 증거는 final-git artifact |
 
 ## 코드·데이터 지도
 

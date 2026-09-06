@@ -39,6 +39,8 @@ Production은 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 검증 runtime793
 
 증적은 `.artifacts/operations/learning-production-2026-09-07-*`, `production-postdeploy-pinned-2026-09-07.json`, `production-postmigration-learning-preservation-2026-09-07.json`입니다. Git 최종 동기화는 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)에서 배포 SHA와 문서/운영 도구 후속 commit을 분리합니다. 아래의 미배포·가청 대기·오래된 배포 ID는 당시 이력이며 현재 작업 지시가 아닙니다.
 
+Git042fbb2 push 후 remote ops **52 pass/1 known warning/0 fail**, 로컬40/1/0·clean을 확인했습니다. 종료 문서는 별도 후속 commit으로 보존하며 배포 앱은 a7d5d87 그대로입니다. 남은 경고는 `INC-DATA-024`의 HEAD 문서 hash drift이며 source3485 고정 검증을 계속 사용합니다.
+
 ## 이전 후속 — 승인된 운영 백업·점검 종료 (2026-09-07 배포 전)
 
 사용자의 명시적 점검 승인으로 00:21–00:27 KST에 기존 코드의 임시 읽기 전용 Worker232ec50d와 두 Queue 일시정지를 적용했습니다. 코드 etag/runtime/점검 이외 binding은 기존6bbe4bbd와 일치했고 활성 Workflow·release job·Queue backlog는0이었습니다. 새 앱/Pages/콘텐츠/migration은 반영하지 않았습니다.
