@@ -135,6 +135,10 @@ Google 버튼 검사는 실제 `/auth/config`의 boolean과 href/aria-disabled/�
 
 Google SSO Preview 상태는 별도 **미검증 gate**다. Pages와 직접 Worker의 `/auth/config`는200·`google_enabled:false`, `/auth/google/start`는503이다. `wrangler.toml`이 콜백/secret 별도 승인 전 비활성 상태를 명시한다. 이를 발음 오류나 로그인 성공으로 해석하지 않는다. 실제 Google provider→callback→session→기존 사용자 확인은 Preview용 설정/테스트 계정이 준비되기 전 완료로 표시하지 않는다.
 
+source793b671의 새 Preview555fc0c4/b02f3674 후속: 일반 설정4건은 실제 PUT/GET/reload를 양 엔진에서 통과했다. 첫14건11 pass/3 fail의 추가 실패1건은 지연 테스트 interception0으로, 해당 describe만 SW 제어 후 정확한 설정/테마14개를 모두 통과했다. 실제 payload·횟수·시간 한도를 완화하지 않았고 일반 설정/PWA는 SW 허용을 유지한다(`INC-QA-052`와 같은 테스트 제어 경계). SSO503 두 실패는 별도 유지한다. 독립 HTTP의 종료 세션 request_id 보존도 새 Worker에서 통과했다. Production은 미반영이다.
+
+최신555fc0c4 실제 음성 관측은 일본어 재생 중 이후 native `cgWindowNotFound` 및 tab `Debugger unattached`로 중단됐다. 연결 문제를 제품 무음으로 진단하지 않으며, 새 배포의 정상 종료·한국어·network·사람 확인은 미완료로 남긴다. 이전 두 Preview의 음성 증거는 별도 source에만 유효하다.
+
 ### 2026-09-06 후속 — INC-SRS-053
 
 로컬 수정 검증: source440개 gate·fresh0028 및 최종 전체 브라우저211 pass/30 시각-policy skip/0 fail, exit0을 통과했다. 서버due clock-skew와 숨긴 면/키보드 회귀를 포함한다. 아래 중간 실패는 보존하고 새 Preview 확인 전 Production closed로 표시하지 않는다.

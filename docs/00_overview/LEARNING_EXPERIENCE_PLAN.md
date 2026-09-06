@@ -245,3 +245,14 @@
 - 현재 최신 소스는 HEAD5311ab7 위 작업 트리다. 신규 기능·콘텐츠 공개·운영 DB 변경·추가 배포·최종 Git push·파일 삭제는 하지 않았다. Preview OAuth 전용 설정과 실제 로그인, 최종 후보 Preview 재검증, 새 Production backup/restore·승인 gate가 필요하다. 수정이 생기면 해당 후보의 gate를 새로 실행한다.
 
 독립 검토의 한계도 남긴다. 설정 reload 검사는 서버와 로컬값이 이미 같은 상태의 보존을 검증한다. 상충하는 로컬값 또는 새 기기 복원까지 직접 증명한 것으로 쓰지 않는다. GET 실패 뒤에는 reload/재조회로 복구하며 새 재시도 UX를 이번 안정성 범위에 추가하지 않았다.
+
+### 안정성 수정본 Preview 반영 — source793b671
+
+- 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`을 전용 Preview Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`, Pages `555fc0c4-24cc-49de-b846-38aee2f59b31`에 배포했다(각 exit0, 동일 source). Production·콘텐츠 seed/publication·Git push는 실행하지 않았다. 직전 Worker6f0c0e41/Pagesd51a81ed가 rollback 대상이다.
+- 실제 `/health` source793b671·environment preview를 먼저 확인하고 독립 합성 계정1개/세션2개/총9요청으로 원격 재전송을 검사했다. A중단→B시작→A원래 request_id 재전송은 A/abandoned를 반환하고 current는 B/active를 유지했다. 완료·동시경합2종은 로컬 테스트 증거와 구분한다. artifact `preview-session-replay-793b671.json`에는 토큰/쿠키/이메일/실제 ID 원문이 없다.
+- Worker smoke21 pass/0 fail/관리자 positive1 미실행, Preview D1 FK0·latest migration0028이다. 새 migration/seed는 없었다.
+- 첫 원격 auth/settings14건은 **11 pass / 3 fail**,exit1이다. 두 실패는 SSO503, 하나는 지연 제어 테스트의 WebKit interception0이다. 원래 JLPT/TOPIK 설정4건은 모두 통과했다. `theme-settings.spec.ts`는 잘못 지정한 파일명이므로 이 실행에 테마8개는 없었다. 정확한 파일명으로 후속 검사했다.
+- 지연 제어 테스트만 describe 범위에서 SW를 차단했다. 실제 `route.fetch` payload, interception1, 지연 중 disabled/PUT0, 해제 후 PUT200/1회·독립GET·reload와 시간 한도는 유지했다. 일반 설정 및 테마 테스트의 SW와 앱 runtime은 바꾸지 않았다. `settings-transport-preview-2026-09-06.log`는 **14 pass / 0 skip / 0 fail**,1.5분·exit0이며 SSO 검사는 이14건에 포함하지 않는다.
+- 최신555fc0c4 실제 Chrome에서 일본어 재생 중 표시를 관측했지만 이후 native `cgWindowNotFound`/tab `Debugger unattached`로 검증이 중단됐다. 정상 종료·한국어·network·사람 가청을 통과 처리하지 않았다. `stability-preview-audio-interrupted.json`에 구분했고 새 URL 청취 질문을 보냈다. 과거 d51a81ed HAR/onend와 a95437fc 사람 확인은 보존하되 이 후보로 옮기지 않는다.
+- 최신 Production read-only 상태는 **48 pass / 2 warn / 3 fail**,exit1이다. 미push(local793b671/remote5311ab7), 기존 Production TOPIK status 및 CSP다. 조회 결과를 신규 배포 실패로 오인하거나 검증 완료 조건을 건너뛰어 push하지 않는다.
+- 지연 테스트 scope 수정 뒤 `learning-experience-2026-09-06-transport-final-local-e2e.log`로 전체 로컬 브라우저를 다시 실행해 **217 pass / 30 시각 정책 skip / 0 fail**,3.9분·exit0을 확인했다. 앱 source793b671은 유지하며 단위/API/fresh gate458개의 runtime을 바꾸지 않았다. 문서 검사는64개/82상대 링크, lifecycle9개 활성·4개 retired 부재·36개 DB source 참조와 diff check를 통과했다. 후속 test/docs는 로컬 안전 커밋으로 보존하되 최종 push는 전체 외부 gate 이후에 수행한다.

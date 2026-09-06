@@ -32,6 +32,16 @@
 
 ### 새 학습 UX Preview 후보
 
+**현재 포인터(아래 이전 이력보다 우선):** 앱 source는 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`, Preview Pages `555fc0c4-24cc-49de-b846-38aee2f59b31`, Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`다. 둘 다 deploy exit0이고 D1 추가 migration/seed는 없다. Preview FK0·migration0028, Worker smoke21 pass/0 fail/관리자1 미실행, 실제 HTTP A중단→B생성→A재전송의 ID 보존을 독립 확인했다. 원격 Git은 아직5311ab7이다. 최종 push는 전체 gate 뒤에 한다.
+
+새 Preview의 auth/settings14건은11/0/3(exit1): SSO503 두 건과 지연 테스트 WebKit interception0 한 건이다. 후자는 해당 describe에만 `serviceWorkers:block`을 적용해 실제 응답·interception1·PUT/GET/reload 검사를 유지했다. 이후 원격 `settings-preferences.spec.ts`와 `settings-theme.spec.ts` **14 pass / 0 skip / 0 fail**이다. 일반 설정·테마는 SW를 허용하며 앱 runtime은 변경하지 않았다. SSO 실패를 제거/skip하거나 전체 원격 통과로 합산하지 않는다.
+
+555fc0c4의 실제 Chrome은 일본어 재생 중 표시 이후 native `cgWindowNotFound`와 탭 `Debugger unattached`로 관측 중단됐다. 정상 종료/한국어/가청/network는 미완료다. 최신 URL 청취 질문은 별도로 요청했다. 자동화 연결 실패를 제품 무음 원인으로 단정하지 않는다. 과거 d51a81ed의 onend/HAR와 a95437fc의 사람 확인은 새 배포에 재사용하지 않는다.
+
+남은 순서는 Preview OAuth 전용 설정/실제 로그인 및 최신 음성 관측 확보→최종 전체 원격 회귀→승인된 maintenance의 새 Production backup/restore→릴리스 gate→Production→smoke→최종 push다. 전체 검증 전 파일 삭제·콘텐츠 증량은 하지 않는다. 현재 운영 read-only48/2/3은 미push SHA와 기존 TOPIK/CSP 두 실패다. 최신 실행 파일과 rollback 전체ID는 릴리스 원장에 있다.
+
+#### 이전 검증 이력 (현재 포인터 아님)
+
 **다음 작업 시작점:** HEAD5311ab7 위 미커밋 안정성 수정본에 INC-AUTH-054(트랙 저장 실패), LEARN-055(종료 세션 request_id 재전송), SET-057(프로필 조회 중 설정 저장·늦은 계정/트랙 응답)을 수정했다. 최신 전체 로컬 gate **458개**, 전체 브라우저 **217 pass / 30 시각 정책 skip / 0 fail**, 각각 exit0이다. `settings-final-full-gate.log`와 `settings-final-local-e2e.log`를 기준으로 삼는다. API의 실제 local OAuth bridge 테스트는 provider 응답 mock이며 실제 SSO로 간주하지 않는다. 원격 배포본에는 이 수정이 없다.
 
 현재 Preview 원격78건은73/4/1(exit1, SW단발 오류)이다. Google 설정 표시2개는 교정 후 통과, 실제 start2개는503 실패다. Preview callback/secret의 별도 설정 전에는 실제 SSO 검사를 통과시킬 수 없다. 로컬 Google 설정은 Production callback이므로 임의 복사하지 않는다. 새 Production backup은 승인된 maintenance window를 확인한 후에만 실행한다. 목표의 전체 검증 완료 전 삭제·최종 push·Production은 진행하지 않는다.

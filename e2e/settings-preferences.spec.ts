@@ -78,54 +78,60 @@ for (const track of ['jlpt-ja', 'topik-ko'] as const) {
   });
 }
 
-test('instruction language waits for the real configured profile before enabling server writes', async ({ page }) => {
-  await ensureAuthenticated(page);
-  const initialSave = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === '/api/v1/learning/profile' && response.request().method() === 'PUT');
-  await page.getByRole('button', { name: '저장', exact: true }).click();
-  expect((await initialSave).status()).toBe(200);
+test.describe('controlled profile response delivery', () => {
+  // Only this transport-controlled regression blocks SW interception (INC-QA-052).
+  // Ordinary preferences and theme tests keep the deployed service worker enabled.
+  test.use({ serviceWorkers: 'block' });
 
-  let releaseProfile!: () => void;
-  const holdProfile = new Promise<void>((resolve) => { releaseProfile = resolve; });
-  let intercepted = 0;
-  let profileWrites = 0;
-  // Delay transport only: the payload comes from this synthetic account's real
-  // Worker/D1 profile, not a fabricated response. Assert interception occurred.
-  await page.route('**/api/v1/learning/profile?*', async (route) => {
-    if (route.request().method() !== 'GET') return route.continue();
-    const response = await route.fetch();
-    expect(response.status()).toBe(200);
-    expect((await response.json()).data.configured).toBe(true);
-    intercepted++;
-    await holdProfile;
-    await route.fulfill({ response });
-  });
-  page.on('request', (request) => {
-    if (new URL(request.url()).pathname === '/api/v1/learning/profile' && request.method() === 'PUT') profileWrites++;
-  });
-  try {
-    await page.goto('/settings');
-    await expect.poll(() => intercepted).toBe(1);
-    const english = settingRow(page, '학습 해설 언어').getByRole('button', { name: 'English', exact: true });
-    await expect(english).toBeDisabled();
-    await expect(page.getByRole('status')).toHaveText(/불러오는 중/);
-    expect((await storedPreferences(page)).instructionLanguages['jlpt-ja']).toBe('ko');
-    expect(profileWrites).toBe(0);
-
-    releaseProfile();
-    await expect(english).toBeEnabled();
-    const savedResponse = page.waitForResponse((response) =>
+  test('instruction language waits for the real configured profile before enabling server writes', async ({ page }) => {
+    await ensureAuthenticated(page);
+    const initialSave = page.waitForResponse((response) =>
       new URL(response.url()).pathname === '/api/v1/learning/profile' && response.request().method() === 'PUT');
-    await english.click();
-    expect((await savedResponse).status()).toBe(200);
-    expect(profileWrites).toBe(1);
-    const stored = await page.request.get('/api/v1/learning/profile?expected_track=jlpt-ja');
-    expect(stored.status()).toBe(200);
-    expect((await stored.json()).data).toMatchObject({ configured: true, instruction_language: 'en', learning_track: 'jlpt-ja' });
-    await page.reload();
-    await expect(settingRow(page, '학습 해설 언어').getByRole('button', { name: 'English', exact: true })).toHaveClass(/\bbg-card\b/);
-  } finally {
-    releaseProfile();
-    await page.unrouteAll({ behavior: 'wait' });
-  }
+    await page.getByRole('button', { name: '저장', exact: true }).click();
+    expect((await initialSave).status()).toBe(200);
+
+    let releaseProfile!: () => void;
+    const holdProfile = new Promise<void>((resolve) => { releaseProfile = resolve; });
+    let intercepted = 0;
+    let profileWrites = 0;
+    // Delay transport only: the payload comes from this synthetic account's real
+    // Worker/D1 profile, not a fabricated response. Assert interception occurred.
+    await page.route('**/api/v1/learning/profile?*', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      expect((await response.json()).data.configured).toBe(true);
+      intercepted++;
+      await holdProfile;
+      await route.fulfill({ response });
+    });
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/api/v1/learning/profile' && request.method() === 'PUT') profileWrites++;
+    });
+    try {
+      await page.goto('/settings');
+      await expect.poll(() => intercepted).toBe(1);
+      const english = settingRow(page, '학습 해설 언어').getByRole('button', { name: 'English', exact: true });
+      await expect(english).toBeDisabled();
+      await expect(page.getByRole('status')).toHaveText(/불러오는 중/);
+      expect((await storedPreferences(page)).instructionLanguages['jlpt-ja']).toBe('ko');
+      expect(profileWrites).toBe(0);
+
+      releaseProfile();
+      await expect(english).toBeEnabled();
+      const savedResponse = page.waitForResponse((response) =>
+        new URL(response.url()).pathname === '/api/v1/learning/profile' && response.request().method() === 'PUT');
+      await english.click();
+      expect((await savedResponse).status()).toBe(200);
+      expect(profileWrites).toBe(1);
+      const stored = await page.request.get('/api/v1/learning/profile?expected_track=jlpt-ja');
+      expect(stored.status()).toBe(200);
+      expect((await stored.json()).data).toMatchObject({ configured: true, instruction_language: 'en', learning_track: 'jlpt-ja' });
+      await page.reload();
+      await expect(settingRow(page, '학습 해설 언어').getByRole('button', { name: 'English', exact: true })).toHaveClass(/\bbg-card\b/);
+    } finally {
+      releaseProfile();
+      await page.unrouteAll({ behavior: 'wait' });
+    }
+  });
 });

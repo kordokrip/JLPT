@@ -4,6 +4,26 @@
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
+## 최신 포인터 — 안정성 수정본의 전용 Preview
+
+| 항목 | 실제 상태 |
+| --- | --- |
+| 앱 source | 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`; 최종 push 전이라 Git 원격은5311ab7 |
+| Preview Worker | `b02f3674-6a59-47c8-818a-2397bcd295fd`, source793b671, deploy exit0 |
+| Preview Pages | `555fc0c4-24cc-49de-b846-38aee2f59b31`, source793b671, Functions 포함, deploy exit0 |
+| Preview D1 | `nihongo-n3-topik-preview`, migration0028·FK0, 추가 migration/seed 없음 |
+| 로컬 검증 | gate458개·fresh0028 exit0, 전체 E2E217 pass/30 시각 정책 skip/0 fail |
+| 새 Preview 검증 | Worker21/0/관리자1 미실행, 독립 실제 HTTP 세션 재전송 통과, 설정·테마14/0/0 |
+| 미해결 gate | 실제 SSO start503; 최신555fc0c4 음성 관측 중 UI 연결 중단; 최종 전체 원격·새 Production backup/restore |
+| rollback | Worker `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39, Pages `d51a81ed-2561-4900-899f-022b99d67679`/source5311ab7; DB 복원은 기본 조치 아님 |
+| Production/정리 | Production 기준선 유지, 콘텐츠 publication·파일 삭제·최종 Git push 없음 |
+
+최초 새 Preview auth/settings는11 pass/3 fail이었다. 실제 SSO503 두 건과 지연 테스트 interception0 한 건을 분리했다. 지연 테스트에만 SW 제어를 적용한 뒤 정확한 `settings-preferences.spec.ts`/`settings-theme.spec.ts` 원격14개를 통과했다. 첫 명령의 `theme-settings.spec.ts` 파일명 오기로 테마8개가 포함되지 않았음을 기록하며 당시14개에 포함됐다고 쓰지 않는다. 앱 runtime은793b671에서 변경하지 않았다.
+
+증적은 `stability-preview-worker-deploy.log`, `stability-preview-pages-deploy.log`, `stability-pages-after.json`, `stability-preview-db-check.json`, `preview-session-replay-793b671.json`, `settings-transport-preview-2026-09-06.log`다(`.artifacts/operations/`의 날짜 prefix 파일). 555fc0c4 음성 관측 중단은 `stability-preview-audio-interrupted.json`에 기록한다. 과거555 이전 HAR·가청은 이 release에 재사용하지 않는다. 최신 remote status48/2/3(exit1)은 미push SHA차이와 기존 Production TOPIK/CSP 실패를 포함한다.
+
+지연 테스트 제어 범위만 교정한 뒤 전체 로컬 E2E도 `transport-final-local-e2e.log`에서 **217 pass / 30 시각 정책 skip / 0 fail**,3.9분·exit0으로 다시 통과했다. 앱 runtime은793b671이며 후속 test/docs 안전 커밋은 배포 source와 구분한다. docs64개/82상대 링크 및 lifecycle/diff check도 통과했다. 사용자 데이터·backup·HAR 원문은 ignored artifact로 보존하고 source에 포함하지 않는다.
+
 ## 2026-09-06 최초 개인 학습 UX 후보 (이하 순차 이력)
 
 | 항목 | 상태 |

@@ -51,7 +51,7 @@ commit/push한 source `5311ab72c2aafa001fb436e50cd1335d775c81b4`를 Pages **`d51
 
 09:37–09:39 UTC 실제 Chrome Native DevTools 관측에서 양언어 각1회 정상 종료, R2/legacy audio 요청0을 확인했습니다. Network 전체18개 중 sanitized HAR의 HTTPS16개는 모두 해당 Preview origin/200이고 나머지2개는 확장 프로그램 리소스입니다. Console에는 SW/module preload 경고6개·오류0개가 있어 이전 관측의 warn/error0과 분리합니다. d51a81ed의 사람 가청 확인은 대기 중입니다. 사용자의 “두 언어 모두 들렸습니다”는 질문에 명시된 a95437fc/source94dfb05에만 연결합니다.
 
-### 최신 안정성 수정본 — 로컬 검증 완료, 미배포
+### 최신 안정성 수정본 — 전용 Preview 반영, Production 미반영
 
 - `INC-AUTH-054`: 로그인/가입 뒤 트랙 변경 실패 시 실제 서버 트랙을 유지합니다.
 - `INC-LEARN-055`: 완료·중단된 세션의 원래 생성 request_id 재전송이 다른 최신 세션을 반환하지 않게 수정했습니다.
@@ -59,7 +59,11 @@ commit/push한 source `5311ab72c2aafa001fb436e50cd1335d775c81b4`를 Pages **`d51
 - 독립 Agent 검토·fail-first·단위·실제 DB/API/UI 연동으로 교차검증했습니다. 최신 `settings-final-full-gate.log`는 **Ops26 / DB126 / Web139 / API167 = 458개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane exit0입니다. 전체 `settings-final-local-e2e.log`는 **217 pass / 30 시각 기준 정책 skip / 0 fail**, exit0입니다.
 - 기존 데이터 보존은 양 트랙 사용자 설정·진행률·FSRS·일지·퀴즈·활동이 비어 있지 않은 upgrade fixture로 검사했습니다. OAuth bridge는 실제 local Workers/D1을 쓰지만 Google token/userinfo만 mock이므로 실제 SSO 로그인 증거가 아닙니다.
 - 같은 Preview Google 검사 **2 pass / 2 fail**: 비활성 버튼 표시는 정상, 실제 OAuth start는 양 엔진503입니다. Preview 전용 callback/secret은 미설정이며 로컬 값은 Production callback입니다. 임의 복사하거나 실제 SSO를 통과 처리하지 않았습니다.
-- 이후 수정본은 HEAD5311ab7 위 작업 트리이며 새 Preview/Production 반영·최종 push·삭제는 하지 않았습니다. 새 Preview 검증, 실제 SSO·음성 가청, 새 Production backup/restore와 릴리스 gate가 남았습니다.
+- 수정본을 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`으로 고정하고 전용 Preview Worker **`b02f3674-6a59-47c8-818a-2397bcd295fd`**, Pages **`555fc0c4-24cc-49de-b846-38aee2f59b31`**에 반영했습니다. 두 source 모두793b671이고 deploy exit0입니다. 추가 migration/seed·Production 변경·최종 push·삭제는 없습니다. Git 원격은5311ab7을 유지합니다.
+- 새 Preview Worker smoke **21 pass / 0 fail / 관리자 positive1 미실행**, D1 migration0028·FK0입니다. 독립 실제 HTTP 검사에서 A세션 중단→B새세션→A요청 재전송은 원래 A를 반환하고 current는 B를 유지했습니다. 일반 JLPT/TOPIK 설정의 PUT/GET/reload도 양 엔진 모두 통과했습니다.
+- auth/settings 첫14건은 **11 pass / 3 fail**입니다. 2개는 SSO503, 1개는 지연 테스트의 WebKit interception0입니다. 지연 테스트에만 SW 제어를 적용한 뒤 실제 설정·테마 양 엔진 **14 pass / 0 skip / 0 fail**, exit0입니다. 앱/SW source와 배포는 바꾸지 않았고 실제 SSO 실패도 그대로입니다.
+- 새555fc0c4의 실제 Chrome은 일본어 ‘재생 중’까지만 확인한 뒤 `cgWindowNotFound`/`Debugger unattached`로 후속 관측이 중단됐습니다. 정상 종료·한국어·network·가청을 통과 처리하지 않았습니다. 새 URL 청취 질문은 별도로 보냈으며, d51a81ed의 HAR/onend 또는 a95437fc의 가청을 옮겨 쓰지 않습니다.
+- 전체 원격 후보 검증, Preview 전용 OAuth 설정/실제 SSO, 최종 source의 실제 음성 증거, 새 Production backup/restore와 릴리스 gate가 남았습니다. 마지막 전체 remote status는 **48 pass / 2 warn / 3 fail**, exit1: 의도적으로 아직 push하지 않은 Git SHA 차이와 기존 Production TOPIK status/CSP입니다.
 
 ## Production 콘텐츠 (기존 기준선)
 
