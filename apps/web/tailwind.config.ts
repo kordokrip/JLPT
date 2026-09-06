@@ -6,9 +6,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary:    { DEFAULT: '#B91C1C', hover: '#991B1B', fg: '#FFFFFF' },
-        accent:     { DEFAULT: '#C8332B', foreground: '#FFFFFF' },
-        'accent-soft': '#FBEAE8',
+        primary:    { DEFAULT: 'var(--color-primary)', hover: 'var(--color-primary-hover)', fg: 'var(--color-primary-fg)' },
+        accent:     { DEFAULT: 'var(--accent)', foreground: 'var(--accent-foreground)' },
+        'accent-soft': 'var(--accent-soft)',
+        brand: {
+          ink: 'var(--brand-ink)', indigo: 'var(--brand-indigo)', vermilion: 'var(--brand-vermilion)',
+          jade: 'var(--brand-jade)', blossom: 'var(--brand-blossom)', porcelain: 'var(--brand-porcelain)',
+        },
         foreground:  'var(--foreground)',
         background:  'var(--background)',
         surface:     'var(--surface)',

@@ -12,6 +12,8 @@ export interface D1TargetOptions {
   remote: boolean;
   database: string;
   config: string;
+  /** Wrangler environment used to resolve a named D1 binding (for example, preview). */
+  env?: string;
   persistTo?: string;
 }
 
@@ -30,10 +32,12 @@ export function parseD1Target(args = process.argv.slice(2)): D1TargetOptions {
   }
 
   const persistTo = optionValue(args, "--persist-to");
+  const env = optionValue(args, "--env");
   return {
     remote,
     database: optionValue(args, "--database") ?? "DB",
     config: path.resolve(optionValue(args, "--config") ?? DEFAULT_CONFIG),
+    ...(env ? { env } : {}),
     ...(persistTo ? { persistTo: path.resolve(persistTo) } : {}),
   };
 }
@@ -58,6 +62,9 @@ function targetArgs(options: D1TargetOptions): string[] {
     options.config,
     "--yes",
   ];
+  if (options.env) {
+    args.push("--env", options.env);
+  }
   if (!options.remote && options.persistTo) {
     args.push("--persist-to", options.persistTo);
   }

@@ -12,17 +12,14 @@ import { ensureAuthenticated } from './auth-helper';
  */
 async function ensureReviewCard(page: import('@playwright/test').Page) {
   const cardFront = page.locator('[data-testid="card-front"], .card-front, [data-testid="question"]').first();
-  if (await cardFront.isVisible().catch(() => false)) return true;
-
   const starterButton = page.getByRole('button', { name: /카드 10장 시작|Start 10 cards|10枚を開始/i });
-  if (await starterButton.isVisible().catch(() => false)) {
-    if (!(await starterButton.isEnabled().catch(() => false))) return false;
-    await starterButton.click();
-    await expect(cardFront).toBeVisible({ timeout: 15_000 });
-    return true;
-  }
-
-  return false;
+  // A fresh remote page can still be loading. Do not turn that race into a
+  // skipped pronunciation test; this suite requires the seeded N3 starter.
+  await expect(cardFront.or(starterButton)).toBeVisible({ timeout: 15_000 });
+  if (await cardFront.isVisible().catch(() => false)) return;
+  await expect(starterButton).toBeEnabled({ timeout: 15_000 });
+  await starterButton.click();
+  await expect(cardFront).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe('SRS 복습 플로우', () => {
@@ -44,14 +41,136 @@ test.describe('SRS 복습 플로우', () => {
       .toBeVisible({ timeout: 10_000 });
   });
 
+  test('server-due cards remain usable when the device clock is behind', async ({ page }) => {
+    const deviceTime = Date.now() - 60_000;
+    await page.clock.setFixedTime(new Date(deviceTime));
+    await page.goto('/review');
+    const start = page.getByRole('button', { name: /카드 10장 시작|Start 10 cards|10枚を開始/i });
+    await expect(start).toBeEnabled();
+    const initialized = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/v1/srs/init');
+    await start.click();
+    expect((await initialized).status()).toBe(201);
+    const dueResponse = await page.request.get('/api/v1/srs/due');
+    expect(dueResponse.status()).toBe(200);
+    const due = (await dueResponse.json()).data;
+    expect(due).toHaveLength(10);
+    expect(due.every((card: {due_at: string}) => new Date(card.due_at).getTime() > deviceTime)).toBeTruthy();
+    const front = page.getByTestId('card-front');
+    await expect(front).toBeVisible({ timeout: 5_000 });
+    const firstFace = await front.textContent();
+    await page.keyboard.press('Space');
+    const reviewed = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/v1/srs/review');
+    await page.locator('[data-rating="good"]').click();
+    expect((await reviewed).status()).toBe(200);
+    await expect(front).toBeVisible();
+    await expect(front).not.toHaveText(firstFace!);
+    await page.reload();
+    await expect(front).toBeVisible();
+    await expect(front).not.toHaveText(firstFace!);
+  });
+
+  test('복습 발음은 일본어 browser voice만 사용한다', async ({ page }) => {
+    const serverAudioRequests: string[] = [];
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith('/api/v1/audio/')) {
+        serverAudioRequests.push(request.url());
+      }
+    });
+    await page.addInitScript(() => {
+      const spoken: Array<{ lang: string; voice: string | null }> = [];
+      Object.defineProperty(window, '__reviewPronunciationForTest', {
+        value: spoken,
+        configurable: true,
+      });
+
+      class FakeSpeechSynthesisUtterance {
+        lang = '';
+        rate = 1;
+        pitch = 1;
+        volume = 1;
+        voice: SpeechSynthesisVoice | null = null;
+        onstart: (() => void) | null = null;
+        onend: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+
+        constructor(_text: string) {}
+      }
+
+      const googleJapanese = {
+        default: false,
+        lang: 'ja-JP',
+        localService: false,
+        name: 'Google 日本語',
+        voiceURI: 'google-ja-jp',
+      } as SpeechSynthesisVoice;
+      const german = {
+        default: true,
+        lang: 'de-DE',
+        localService: true,
+        name: 'Deutsch',
+        voiceURI: 'de-de',
+      } as SpeechSynthesisVoice;
+      Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+        configurable: true,
+        value: FakeSpeechSynthesisUtterance,
+      });
+      Object.defineProperty(window, 'speechSynthesis', {
+        configurable: true,
+        value: {
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          cancel: () => undefined,
+          getVoices: () => [german, googleJapanese],
+          speak: (utterance: FakeSpeechSynthesisUtterance) => {
+            spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
+            utterance.onstart?.();
+            utterance.onend?.();
+          },
+        },
+      });
+    });
+
+    await page.goto('/review');
+    await ensureReviewCard(page);
+
+    // Pronunciation is on the answer side, not on the unrevealed front.
+    const pronunciation = page.getByRole('button', { name: /발음 재생|Play pronunciation|発音を再生/ });
+    await expect(pronunciation).toHaveCount(0);
+    await page.getByTestId('card-front').click();
+    await expect(page.locator('[data-rating="good"]')).toBeVisible();
+    // autoPronounce is enabled by default. Keep its calls in the language
+    // audit while checking that each deliberate activation adds exactly one.
+    const automaticPlays = await page.evaluate(() => (
+      window as unknown as { __reviewPronunciationForTest: unknown[] }
+    ).__reviewPronunciationForTest.length);
+    await page.getByRole('button', { name: /발음 재생|Play pronunciation|発音を再生/ }).first().click();
+    await expect.poll(async () => page.evaluate(() => (
+      window as unknown as { __reviewPronunciationForTest: unknown[] }
+    ).__reviewPronunciationForTest.length)).toBe(automaticPlays + 1);
+    await pronunciation.first().focus();
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => page.evaluate(() => (
+      window as unknown as { __reviewPronunciationForTest: unknown[] }
+    ).__reviewPronunciationForTest.length)).toBe(automaticPlays + 2);
+    await page.keyboard.press('Space');
+    await expect.poll(async () => page.evaluate(() => (
+      window as unknown as { __reviewPronunciationForTest: unknown[] }
+    ).__reviewPronunciationForTest.length)).toBe(automaticPlays + 3);
+    const spoken = await page.evaluate(() => (
+      window as unknown as {
+        __reviewPronunciationForTest: Array<{ lang: string; voice: string | null }>;
+      }
+    ).__reviewPronunciationForTest);
+
+    expect(spoken).toEqual(Array.from({ length: automaticPlays + 3 }, () => ({ lang: 'ja-JP', voice: 'google-ja-jp' })));
+    expect(serverAudioRequests, 'legacy R2 audio must not be requested').toEqual([]);
+  });
+
   test('카드가 있으면 Space 키로 답안을 표시한다', async ({ page }) => {
     await page.goto('/review');
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    if (!(await ensureReviewCard(page))) {
-      test.skip();
-      return;
-    }
+    await ensureReviewCard(page);
 
     // 질문(앞면) 표시 대기
     const question = page.locator(
@@ -72,10 +191,7 @@ test.describe('SRS 복습 플로우', () => {
     await page.goto('/review');
     await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-    if (!(await ensureReviewCard(page))) {
-      test.skip();
-      return;
-    }
+    await ensureReviewCard(page);
 
     // 앞면 대기
     await page.waitForSelector(

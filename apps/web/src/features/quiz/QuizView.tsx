@@ -124,6 +124,34 @@ function QuizSession({ mode }: { mode: QuizMode }) {
           </div>
         </div>
 
+        <div className="mb-8">
+          <p className="mb-2 font-pretendard text-[12px] uppercase tracking-[0.08em] text-[var(--muted-foreground)]">
+            {t('quiz.strategy')}
+          </p>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('quiz.strategy')}>
+            {(['random', 'weakest'] as const).map((strategy) => (
+              <button
+                key={strategy}
+                type="button"
+                role="radio"
+                aria-checked={quiz.strategy === strategy}
+                onClick={() => quiz.selectStrategy(strategy)}
+                className={[
+                  'min-h-11 rounded-[var(--radius-md)] border px-3 text-sm font-medium transition-colors',
+                  quiz.strategy === strategy
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                    : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]',
+                ].join(' ')}
+              >
+                {t(`quiz.strategies.${strategy}`)}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs leading-5 text-[var(--muted-foreground)]">
+            {t(`quiz.strategyDescriptions.${quiz.strategy}`)}
+          </p>
+        </div>
+
         <button
           type="button"
           disabled={quiz.isGenerating}
@@ -170,8 +198,8 @@ function QuizSession({ mode }: { mode: QuizMode }) {
         questionId={question.id}
         prompt={question.prompt}
         choices={question.choices}
-        audioKey={question.audio_key}
         audioText={question.script_ja}
+        activityContext={{ contentId: question.id, level: quiz.level, mode }}
         selected={quiz.answers[question.id]}
         onSelect={quiz.selectAnswer}
         disabled={quiz.isSubmitting}

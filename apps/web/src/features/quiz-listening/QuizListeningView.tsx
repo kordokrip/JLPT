@@ -98,11 +98,12 @@ export function QuizListeningView({
         />
       </div>
 
-      {current.audio_key || current.script_ja ? (
+      {current.script_ja ? (
         <ListeningAudioPlayer
           key={current.id}
-          audioKey={current.audio_key}
           fallbackText={current.script_ja}
+          questionId={current.id}
+          level={level}
           onPlaysExhausted={onPlaysExhausted}
         />
       ) : (
@@ -117,11 +118,9 @@ export function QuizListeningView({
         </p>
       )}
 
-      {!current.audio_key && (
-        <p className="font-sans-jp text-[20px] text-center text-foreground">
-          {current.prompt}
-        </p>
-      )}
+      <p className="font-sans-jp text-[20px] text-center text-foreground">
+        {current.prompt}
+      </p>
 
       <ul role="radiogroup" className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {current.choices.map((choice, ci) => {

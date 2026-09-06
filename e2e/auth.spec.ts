@@ -4,7 +4,7 @@ test.describe('로그인 온보딩', () => {
   test('비로그인 사용자는 온보딩을 보고 회원가입 후 앱에 진입한다', async ({ page }) => {
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /계정으로 이어지는/ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /일본어와 한국어 학습/ })).toBeVisible();
 
     await page.getByRole('link', { name: '회원가입' }).first().click();
     await page.getByLabel('이름').fill('인증 테스트');
@@ -12,18 +12,27 @@ test.describe('로그인 온보딩', () => {
     await page.getByLabel('비밀번호').fill('Passw0rd1234');
     await page.getByRole('button', { name: '계정 만들기' }).click();
 
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
   });
 
-  test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page }) => {
+  test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page, request }) => {
+    const response = await request.get('/api/v1/auth/config');
+    expect(response.status()).toBe(200);
+    const { data: config } = await response.json();
+    expect(typeof config.google_enabled).toBe('boolean');
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    const googleLogin = page.getByRole('link', { name: 'Google로 로그인' });
+    // An intentionally disabled anchor has no href and therefore no link role.
+    // This checks config rendering only; the next test still requires real
+    // OAuth start availability and must fail when Preview SSO is disabled.
+    const googleLogin = page.locator('a').filter({ hasText: /^Google로 로그인$/ });
     await expect(googleLogin).toBeVisible();
-    const href = await googleLogin.getAttribute('href');
-    if (href) {
-      expect(href).toContain('/api/v1/auth/google/start');
+    if (config.google_enabled) {
+      await expect(googleLogin).toHaveAttribute('href', /\/api\/v1\/auth\/google\/start/);
+      await expect(googleLogin).toHaveAttribute('aria-disabled', 'false');
     } else {
-      await expect(page.getByText('Google SSO는 운영 환경변수 설정 후 활성화됩니다.')).toBeVisible();
+      await expect(googleLogin).not.toHaveAttribute('href');
+      await expect(googleLogin).toHaveAttribute('aria-disabled', 'true');
+      await expect(page.getByText('현재 Google 로그인을 사용할 수 없습니다.', { exact: true })).toBeVisible();
     }
   });
 
@@ -43,16 +52,16 @@ test.describe('로그인 온보딩', () => {
     await page.getByLabel('이메일').fill(email);
     await page.getByLabel('비밀번호').fill(password);
     await page.getByRole('button', { name: '계정 만들기' }).click();
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
 
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.locator('#main-content').getByRole('button', { name: '로그아웃' }).click();
-    await expect(page.getByRole('heading', { name: /계정으로 이어지는/ })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { level: 1, name: /일본어와 한국어 학습/ })).toBeVisible({ timeout: 15_000 });
 
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('이메일').fill(email);
     await page.getByLabel('비밀번호').fill(password);
     await page.getByRole('button', { name: '로그인' }).click();
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -1,24 +1,17 @@
 /**
  * apps/web/src/lib/audio.ts
  *
- * 단일 AudioContext 기반 큐 재생기.
- * - 현재 카드 + 다음 3장 자동 prefetch
+ * Browser speech playback helper.
+ * - 같은 언어의 Google voice를 우선하고 설치된 같은 언어 voice로 복구
  * - 재생 속도 0.75x / 1x / 1.25x
- * - R2 Range 요청 활용 (브라우저 자동 처리)
+ * - R2 요청·저장·fallback은 사용하지 않음
  */
 
-import { apiUrl } from './api-base';
 import { getAudioPlaybackPolicy, type AudioSurface } from '@nihongo-n3/shared';
-
-export function buildAudioUrl(path: string): string {
-  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-  return apiUrl(`/audio/${encodedPath}`);
-}
+import { isGoogleVoiceForLanguage, isVoiceForLanguage, waitForBrowserVoice } from './google-browser-speech';
 
 export type PlaybackRate = 0.75 | 1.0 | 1.25;
 export type VoiceGender = 'female' | 'male';
-export type AudioSourcePreference = 'browser' | 'server';
-export type TtsProviderId = 'browser' | 'cloudflare' | 'google' | 'voicevox' | 'style-bert-vits2';
 export const KANA_PRONUNCIATION_PLAYBACK_RATE = 0.45;
 
 export interface JapaneseVoiceOption {
@@ -43,32 +36,17 @@ interface SpeechOptions {
 
 interface PronunciationOptions {
   text?: string | undefined;
-  audioPath?: string | undefined;
   surface?: AudioSurface;
-  prefer?: AudioSourcePreference;
-  forceBrowser?: boolean;
   slow?: boolean;
   repeat?: number;
   preferGoogleVoice?: boolean;
 }
 
-interface AudioEntry {
-  path: string;
-  buffer?: AudioBuffer;
-  loading: boolean;
-  error: boolean;
-}
-
 class AudioPlayer {
-  private ctx: AudioContext | null = null;
-  private cache = new Map<string, AudioEntry>();
-  private currentSource: AudioBufferSourceNode | null = null;
   private _rate: PlaybackRate = 1.0;
   private _voiceGender: VoiceGender = 'female';
   private _voiceURI: string | null = null;
-  private _sourcePreference: AudioSourcePreference = 'browser';
   private _onEnd: (() => void) | null = null;
-  private voicesReady: Promise<void> | null = null;
 
   get rate(): PlaybackRate { return this._rate; }
   set rate(v: PlaybackRate) { this._rate = v; }
@@ -76,77 +54,25 @@ class AudioPlayer {
   set voiceGender(v: VoiceGender) { this._voiceGender = v; }
   get voiceURI(): string | null { return this._voiceURI; }
   set voiceURI(v: string | null) { this._voiceURI = v; }
-  get sourcePreference(): AudioSourcePreference { return this._sourcePreference; }
-  set sourcePreference(v: AudioSourcePreference) { this._sourcePreference = v; }
   set onEnd(cb: () => void) { this._onEnd = cb; }
 
   configure(options: {
     rate?: PlaybackRate;
     voiceGender?: VoiceGender;
     voiceURI?: string | null;
-    sourcePreference?: AudioSourcePreference;
   }): void {
     if (options.rate !== undefined) this._rate = options.rate;
     if (options.voiceGender !== undefined) this._voiceGender = options.voiceGender;
     if (options.voiceURI !== undefined) this._voiceURI = options.voiceURI;
-    if (options.sourcePreference !== undefined) this._sourcePreference = options.sourcePreference;
   }
 
-  private getCtx(): AudioContext {
-    if (!this.ctx || this.ctx.state === 'closed') {
-      this.ctx = new AudioContext();
-    }
-    return this.ctx;
-  }
-
-  /** 오디오 파일을 AudioBuffer로 프리페치 */
-  async prefetch(paths: string[]): Promise<void> {
-    for (const path of paths) {
-      if (this.cache.has(path)) continue;
-      const entry: AudioEntry = { path, loading: true, error: false };
-      this.cache.set(path, entry);
-      this._load(path, entry).catch(() => void 0);
-    }
-  }
-
-  private async _load(path: string, entry: AudioEntry): Promise<void> {
-    const url = buildAudioUrl(path);
-    try {
-      const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arrayBuffer = await res.arrayBuffer();
-      const ctx = this.getCtx();
-      entry.buffer = await ctx.decodeAudioData(arrayBuffer);
-      entry.loading = false;
-    } catch (e) {
-      entry.loading = false;
-      entry.error = true;
-      this.cache.delete(path);
-    }
-  }
-
-  async warmVoices(): Promise<void> {
-    if (!('speechSynthesis' in window)) return;
-    if (window.speechSynthesis.getVoices().length > 0) return;
-    if (this.voicesReady) return this.voicesReady;
-
-    this.voicesReady = new Promise((resolve) => {
-      const timer = window.setTimeout(resolve, 600);
-      window.speechSynthesis.addEventListener(
-        'voiceschanged',
-        () => {
-          window.clearTimeout(timer);
-          resolve();
-        },
-        { once: true },
-      );
-    });
-    return this.voicesReady;
+  async warmVoices(language = 'ja'): Promise<void> {
+    await waitForBrowserVoice(language);
   }
 
   async getJapaneseVoices(): Promise<JapaneseVoiceOption[]> {
     if (!('speechSynthesis' in window)) return [];
-    await this.warmVoices();
+    await this.warmVoices('ja');
     return window.speechSynthesis
       .getVoices()
       .filter((voice) => voice.lang.toLowerCase().startsWith('ja'))
@@ -167,8 +93,8 @@ class AudioPlayer {
     preferGoogleVoice?: boolean;
   } = {}): Promise<JapaneseVoiceOption | null> {
     if (!('speechSynthesis' in window)) return null;
-    await this.warmVoices();
-    const voice = this.pickJapaneseVoice(
+    await this.warmVoices('ja');
+    const voice = this.pickVoice(
       options.voiceGender ?? this._voiceGender,
       options.lang ?? 'ja-JP',
       options.voiceURI ?? this._voiceURI,
@@ -177,7 +103,7 @@ class AudioPlayer {
     return voice ? toJapaneseVoiceOption(voice) : null;
   }
 
-  private pickJapaneseVoice(
+  private pickVoice(
     gender: VoiceGender,
     lang = 'ja-JP',
     voiceURI: string | null = this._voiceURI,
@@ -186,140 +112,108 @@ class AudioPlayer {
     if (!('speechSynthesis' in window)) return undefined;
     const voices = window.speechSynthesis.getVoices();
     const langPrefix = lang.split('-')[0]?.toLowerCase() ?? 'ja';
-    return selectJapaneseVoice(
-      voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix)),
-      { gender, voiceURI, preferGoogleVoice },
-    );
+    const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(langPrefix));
+    if (langPrefix === 'ja') return selectJapaneseVoice(matching, { gender, voiceURI, preferGoogleVoice });
+    return matching.find((voice) => voice.voiceURI === voiceURI)
+      ?? matching.find((voice) => voice.default)
+      ?? matching[0];
   }
 
-  async speakText(text: string, options: SpeechOptions = {}): Promise<void> {
-    if (!text.trim() || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return;
-    await this.warmVoices();
+  async speakText(text: string, options: SpeechOptions = {}): Promise<boolean> {
+    if (!text.trim() || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) return false;
+    const language = options.lang ?? 'ja-JP';
+    // Do not await voice discovery here. WebKit and some installed-PWA
+    // contexts require speechSynthesis.speak() to run in the original click
+    // task. Waiting for Chromium's asynchronous voice list can consume that
+    // user activation and turn the first click into silence.
+    void this.warmVoices(language);
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = options.lang ?? 'ja-JP';
+    utterance.lang = language;
     utterance.rate = Math.min(1.2, Math.max(0.45, options.rate ?? this._rate * 0.95));
     const selectedGender = options.voiceGender ?? this._voiceGender;
     utterance.pitch = options.pitch ?? (selectedGender === 'male' ? 0.94 : 1.02);
     utterance.volume = 1;
-    const voice = this.pickJapaneseVoice(
+    const voice = this.pickVoice(
       options.voiceGender ?? this._voiceGender,
       utterance.lang,
       options.voiceURI ?? this._voiceURI,
       options.preferGoogleVoice ?? true,
     );
+    // Keep the old working behavior: prefer Google, then use an installed
+    // voice for the same language. Never read Japanese with another language.
+    if (voice && !isVoiceForLanguage(voice, language)) {
+      options.onError?.();
+      this._onEnd?.();
+      return false;
+    }
+    // Some browsers synthesize the requested utterance language even while
+    // getVoices() is empty. In that case, leave voice unset and let the browser
+    // resolve ja-JP/ko-KR instead of turning a playable utterance into silence.
     if (voice) utterance.voice = voice;
-    await new Promise<void>((resolve) => {
-      utterance.onstart = options.onStart ?? null;
-      utterance.onend = () => {
-        options.onEnd?.();
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      let started = false;
+      const finish = (result: boolean) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(startupTimeoutId);
+        window.clearTimeout(timeoutId);
+        if (result) options.onEnd?.();
+        else options.onError?.();
         this._onEnd?.();
-        resolve();
+        resolve(result);
       };
-      utterance.onerror = () => {
-        options.onError?.();
-        this._onEnd?.();
-        resolve();
+      utterance.onstart = () => {
+        started = true;
+        window.clearTimeout(startupTimeoutId);
+        options.onStart?.();
       };
-      window.speechSynthesis.speak(utterance);
+      utterance.onend = () => finish(true);
+      utterance.onerror = () => finish(false);
+      const timeoutMs = Math.min(120_000, Math.max(15_000, text.length * 500));
+      const startupTimeoutId = window.setTimeout(() => {
+        if (started) return;
+        window.speechSynthesis.cancel();
+        finish(false);
+      }, 8_000);
+      const timeoutId = window.setTimeout(() => {
+        window.speechSynthesis.cancel();
+        finish(false);
+      }, timeoutMs);
+      try {
+        window.speechSynthesis.resume?.();
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        finish(false);
+      }
     });
   }
 
   async playPronunciation({
     text,
-    audioPath,
     surface,
-    prefer,
-    forceBrowser = false,
     slow = false,
     repeat = 1,
     preferGoogleVoice = true,
-  }: PronunciationOptions): Promise<void> {
+  }: PronunciationOptions): Promise<boolean> {
     const normalized = text?.trim();
     const policy = getAudioPlaybackPolicy(surface);
-    const source = prefer ?? policy.primary;
-    const preferBrowser = forceBrowser || source === 'browser' || (!audioPath && policy.primary === 'browser');
     const useSlow = slow || policy.slow;
-    const useGoogleVoice = preferGoogleVoice && policy.preferGoogleVoice;
-
-    if (preferBrowser && normalized) {
-      const spokenText = repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
-      await this.speakText(spokenText, {
-        ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
-        preferGoogleVoice: useGoogleVoice,
-      });
-      return;
-    }
-    if (audioPath) {
-      await this.play(audioPath, normalized, useSlow ? { rate: KANA_PRONUNCIATION_PLAYBACK_RATE } : undefined);
-      return;
-    }
-    if (normalized) await this.speakText(normalized, { preferGoogleVoice: useGoogleVoice });
-  }
-
-  /** 즉시 재생. 미리 버퍼링 안 된 경우 로드 후 재생 */
-  async play(path: string, fallbackText?: string, options: { rate?: number } = {}): Promise<void> {
-    this.stop();
-
-    let entry = this.cache.get(path);
-    if (!entry) {
-      entry = { path, loading: true, error: false };
-      this.cache.set(path, entry);
-      await this._load(path, entry);
-    } else if (entry.loading) {
-      // 로딩 중이면 완료 대기
-      await new Promise<void>((resolve) => {
-        const check = setInterval(() => {
-          if (!entry!.loading) { clearInterval(check); resolve(); }
-        }, 50);
-      });
-    }
-
-    if (!entry.buffer) {
-      if (fallbackText) await this.speakText(fallbackText);
-      return;
-    }
-
-    const ctx = this.getCtx();
-    if (ctx.state === 'suspended') await ctx.resume();
-
-    const source = ctx.createBufferSource();
-    source.buffer = entry.buffer;
-    source.playbackRate.value = options.rate ?? this._rate;
-    source.connect(ctx.destination);
-    source.onended = () => {
-      this.currentSource = null;
-      this._onEnd?.();
-    };
-    source.start();
-    this.currentSource = source;
+    const spokenText = normalized && repeat > 1 ? Array.from({ length: repeat }, () => normalized).join('、') : normalized;
+    return spokenText ? this.speakText(spokenText, {
+      ...(useSlow ? { rate: surface === 'kana' ? KANA_PRONUNCIATION_PLAYBACK_RATE : 0.5 } : {}),
+      preferGoogleVoice: preferGoogleVoice && policy.preferGoogleVoice,
+    }) : false;
   }
 
   stop(): void {
-    try { this.currentSource?.stop(); } catch { /* already stopped */ }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    this.currentSource = null;
-  }
-
-  /** 캐시 상태 조회 */
-  isCached(path: string): boolean {
-    const e = this.cache.get(path);
-    return !!e?.buffer;
-  }
-
-  /** 오래된 캐시 정리 (최대 100개) */
-  pruneCache(max = 100): void {
-    if (this.cache.size <= max) return;
-    const keys = [...this.cache.keys()];
-    for (const k of keys.slice(0, this.cache.size - max)) {
-      this.cache.delete(k);
-    }
   }
 }
 
 export function isGoogleJapaneseVoice(voice: Pick<SpeechSynthesisVoice, 'name' | 'voiceURI' | 'lang'>): boolean {
-  const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
-  return voice.lang.toLowerCase().startsWith('ja') && haystack.includes('google');
+  return isGoogleVoiceForLanguage(voice, 'ja-JP');
 }
 
 export function voiceSortScore(voice: JapaneseVoiceOption): number {
@@ -339,13 +233,13 @@ export function selectJapaneseVoice<T extends JapaneseVoiceOption>(
 ): T | undefined {
   if (voices.length === 0) return undefined;
 
+  const googleVoice = options.preferGoogleVoice ? voices.find(isGoogleJapaneseVoice) : undefined;
+  if (googleVoice) return googleVoice;
+
   if (options.voiceURI) {
     const selected = voices.find((voice) => voice.voiceURI === options.voiceURI);
     if (selected) return selected;
   }
-
-  const googleVoice = options.preferGoogleVoice ? voices.find(isGoogleJapaneseVoice) : undefined;
-  if (googleVoice) return googleVoice;
 
   const femaleHints = ['female', 'woman', 'kyoko', 'kyouko', 'nanami', 'haruka', 'sayaka', 'mei', 'mio', 'yui', 'sakura', 'hikari'];
   const maleHints = ['male', 'man', 'otoya', 'ichiro', 'takumi', 'kyohei', 'daichi', 'keita', 'show', 'hattori'];

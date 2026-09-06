@@ -49,7 +49,7 @@ function VocabDetail({ id }: { id: number }) {
         <p className="text-xl text-[var(--text-secondary)]">{item.meaning}</p>
       </header>
 
-      <PronunciationButton text={item.reading || item.word} audioPath={item.audio_path} surface="vocab" />
+      <PronunciationButton text={item.reading || item.word} surface="vocab" />
 
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
@@ -116,7 +116,6 @@ function KanjiDetail({ id }: { id: number }) {
       </header>
       <PronunciationButton
         text={item.reading_on || item.reading_kun || item.character}
-        audioPath={item.audio_path}
         surface="kanji"
       />
       <dl className="space-y-2 text-sm">

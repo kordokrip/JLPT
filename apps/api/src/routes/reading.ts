@@ -79,12 +79,14 @@ reading.get('/reading/:id', async (c) => {
     id: number; level: string; genre: string;
     title_ja: string; body_ja: string; body_ko: string;
     word_count: number; vocab_ids: string | null;
-    grammar_ids: string | null; audio_r2_key: string | null;
+    grammar_ids: string | null;
     source_attribution: string | null; created_at: number;
   };
 
   const passage = await db
-    .prepare(`SELECT * FROM reading_passages WHERE id = ?`)
+    .prepare(`SELECT id, level, genre, title_ja, body_ja, body_ko, word_count,
+                     vocab_ids, grammar_ids, source_attribution, created_at
+              FROM reading_passages WHERE id = ?`)
     .bind(id)
     .first<PassageFull>();
 

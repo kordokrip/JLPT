@@ -17,10 +17,6 @@ export const kanjiRules = [
   '바깥틀을 먼저, 안쪽을 쓰고, 닫는 획은 마지막',
 ];
 
-export function kanaAudioPath(mode: 'hiragana' | 'katakana', reading: string): string {
-  return `audio/kana/v2/${mode}/${reading}.m4a`;
-}
-
 export const HIRAGANA: KanaCard[] = [
   ['あ','a',3],['い','i',2],['う','u',2],['え','e',2],['お','o',3],
   ['か','ka',3],['き','ki',4],['く','ku',1],['け','ke',3],['こ','ko',2],
@@ -40,7 +36,6 @@ export const HIRAGANA: KanaCard[] = [
   meaning: '히라가나',
   strokeCount: Number(strokeCount),
   hint: '둥근 흐름을 유지하며 크게 쓰고, 마지막 획에서 소리와 모양을 함께 말하세요.',
-  audioPath: kanaAudioPath('hiragana', String(reading)),
 }));
 
 export const KATAKANA: KanaCard[] = [
@@ -62,7 +57,6 @@ export const KATAKANA: KanaCard[] = [
   meaning: '가타카나',
   strokeCount: Number(strokeCount),
   hint: '직선과 각을 분명히 쓰고, シ/ツ·ソ/ン처럼 방향이 헷갈리는 글자는 첫 획 방향을 말하세요.',
-  audioPath: kanaAudioPath('katakana', String(reading)),
 }));
 
 export const HIRAGANA_EXAMPLES: Record<string, KanaPronunciationExample> = {

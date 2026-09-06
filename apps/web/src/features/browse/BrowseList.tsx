@@ -169,7 +169,6 @@ function VocabListItem({ item, onOpen }: { item: VocabItem; onOpen: () => void }
             <PronunciationButton
               compact
               text={item.reading || item.word}
-              audioPath={item.audio_path}
               surface="vocab"
               label={`${item.word} ${t('browse.playPronunciation')}`}
               className="border-0 bg-transparent p-0"
@@ -211,7 +210,6 @@ function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }
         <PronunciationButton
           compact
           text={item.reading_on || item.reading_kun || item.character}
-          audioPath={item.audio_path}
           surface="kanji"
           label={`${item.character} ${t('browse.playPronunciation')}`}
           className="text-[var(--muted-foreground)]"
@@ -222,23 +220,33 @@ function KanjiListItem({ item, onOpen }: { item: KanjiItem; onOpen: () => void }
 }
 
 function GrammarListItem({ item, onOpen }: { item: GrammarItem; onOpen: () => void }) {
+  const { t } = useTranslation();
   return (
-    <button
-      type="button"
-      aria-label={item.pattern}
-      onClick={onOpen}
-      className="min-h-11 w-full text-left"
-    >
-      <div className="mb-1.5 flex items-center gap-2">
-        <span className="font-sans-jp text-base font-semibold text-foreground">{item.pattern}</span>
-        <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
-          {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
-        </Badge>
-      </div>
-      <p className="text-sm leading-6 text-[var(--muted-foreground)]">
-        {item.meaning}
-      </p>
-    </button>
+    <div className="flex items-start gap-3">
+      <button
+        type="button"
+        aria-label={item.pattern}
+        onClick={onOpen}
+        className="min-h-11 min-w-0 flex-1 text-left"
+      >
+        <div className="mb-1.5 flex items-center gap-2">
+          <span className="font-sans-jp text-base font-semibold text-foreground">{item.pattern}</span>
+          <Badge variant={levelVariant(item.level ?? DEFAULT_JLPT_LEVEL)}>
+            {(item.level ?? DEFAULT_JLPT_LEVEL).toUpperCase()}
+          </Badge>
+        </div>
+        <p className="text-sm leading-6 text-[var(--muted-foreground)]">
+          {item.meaning}
+        </p>
+      </button>
+      <PronunciationButton
+        compact
+        text={item.example_jp || item.pattern}
+        surface="example"
+        label={`${item.pattern} ${t('browse.playPronunciation')}`}
+        className="shrink-0 border-0 bg-transparent p-0"
+      />
+    </div>
   );
 }
 

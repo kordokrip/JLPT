@@ -1,0 +1,39 @@
+{
+  "artifact_sha256": "54f98c5ec66d205b6f13e97edacd0480d4a07471a74fed6097832f40aa227d77",
+  "facts": [
+    {
+      "id": "google-browser-speech-only",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Audio policy, paragraph 3",
+      "value": "Listening playback is browser Google speech only and has no stored pronunciation audio or fallback asset."
+    },
+    {
+      "id": "jlpt-n3-practice-sections",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Authorship boundary, paragraph 2",
+      "value": "The self-authored JLPT N3 practice bank groups the new learning items into kanji-reading and listening sections."
+    },
+    {
+      "id": "topik-owner-grade1-grade2-sections",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Authorship boundary, paragraph 2",
+      "value": "The self-authored TOPIK owner batch covers grades 1 and 2 across vocab, grammar, reading, listening, and writing."
+    }
+  ],
+  "intake_schema_version": "1",
+  "source": {
+    "allowed_use": "language-facts-and-metadata-only",
+    "attribution": "© Nihongo N3 contributors; self-authored JLPT N3 and TOPIK owner learning content.",
+    "id": "jlpt-n3-topik-owner-expansion-self-authored-2026-08-19",
+    "license": {
+      "id": "LicenseRef-nihongo-n3-self-authored",
+      "url": "https://github.com/kordokrip/JLPT/blob/main/docs/ATTRIBUTIONS.md#학습-콘텐츠와-provenance"
+    },
+    "retrieved_at": "2026-08-19T00:00:00Z",
+    "sha256": "16d6ace591dccf6815ccfb5197a5415ff4d57c41b7eacc942af57894a8508608",
+    "url": "https://github.com/kordokrip/JLPT/blob/main/packages/db/src/content/jlpt-n3-topik-owner-expansion-source.md"
+  }
+}

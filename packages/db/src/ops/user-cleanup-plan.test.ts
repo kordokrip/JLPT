@@ -9,9 +9,16 @@ import {
 } from "./user-cleanup-plan.js";
 import {
   collectRelatedCounts,
+  requireExplicitDatabase,
   safeWranglerFailure,
   type QuerySource,
 } from "./d1-user-cleanup.js";
+
+test("requires an explicit validated D1 target for destructive cleanup tooling", () => {
+  assert.equal(requireExplicitDatabase("nihongo-n3-prod-v2"), "nihongo-n3-prod-v2");
+  assert.throws(() => requireExplicitDatabase(undefined), /explicit D1 name/);
+  assert.throws(() => requireExplicitDatabase("../prod"), /invalid D1 database name/);
+});
 
 function user(id: string, email: string): CleanupUserRow {
   return {
@@ -169,8 +176,8 @@ test("queries related user data one table at a time for remote D1", () => {
 
   const counts = collectRelatedCounts(source, ["real-1", "real-2"], ["test-1"]);
 
-  assert.equal(counts.length, 10);
-  assert.equal(queries.length, 10);
+  assert.equal(counts.length, 13);
+  assert.equal(queries.length, 13);
   assert.equal(queries.every((query) => !query.includes("UNION ALL")), true);
   assert.equal(queries.every((query) => query.includes("AS keep_rows")), true);
   assert.equal(queries.every((query) => query.includes("AS delete_rows")), true);

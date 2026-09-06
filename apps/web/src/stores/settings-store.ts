@@ -3,15 +3,23 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
+import type { PlaybackRate } from '../lib/audio';
 import type { SupportedLang } from '../i18n';
-import type { LearningTrackId } from '@nihongo-n3/shared';
+import {
+  LEARNING_TRACK_DEFINITIONS,
+  type InstructionLanguage,
+  type LearningTrackId,
+} from '@nihongo-n3/shared';
 
 interface SettingsState {
   learningTrack: LearningTrackId;
   setLearningTrack: (track: LearningTrackId) => void;
+  instructionLanguages: Record<LearningTrackId, InstructionLanguage>;
+  setInstructionLanguage: (track: LearningTrackId, language: InstructionLanguage) => void;
   // 언어
   language:    SupportedLang;
+  languageExplicit: boolean;
+  suggestLanguage: (language: SupportedLang) => void;
   setLanguage: (l: SupportedLang) => void;
 
   // 외관
@@ -25,12 +33,6 @@ interface SettingsState {
   // 오디오
   playbackRate:    PlaybackRate;
   setPlaybackRate: (r: PlaybackRate) => void;
-  voiceGender:     VoiceGender;
-  setVoiceGender:  (v: VoiceGender) => void;
-  selectedVoiceURI:    string | null;
-  setSelectedVoiceURI: (v: string | null) => void;
-  ttsProvider:     TtsProviderId;
-  setTtsProvider:  (v: TtsProviderId) => void;
   autoPronounce:   boolean;
   setAutoPronounce:(v: boolean) => void;
 
@@ -48,8 +50,17 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       learningTrack: 'jlpt-ja',
       setLearningTrack: (learningTrack) => set({ learningTrack }),
+      instructionLanguages: {
+        'jlpt-ja': LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
+        'topik-ko': 'ja',
+      },
+      setInstructionLanguage: (track, language) => set((state) => ({
+        instructionLanguages: { ...state.instructionLanguages, [track]: language },
+      })),
       language:    'ko',
-      setLanguage: (l) => set({ language: l }),
+      languageExplicit: false,
+      suggestLanguage: (language) => set(state => state.languageExplicit ? {} : { language }),
+      setLanguage: (l) => set({ language: l, languageExplicit: true }),
 
       theme:        'system',
       setTheme:     (t) => set({ theme: t }),
@@ -59,12 +70,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       playbackRate:    1.0,
       setPlaybackRate: (r) => set({ playbackRate: r }),
-      voiceGender:     'female',
-      setVoiceGender:  (v) => set({ voiceGender: v }),
-      selectedVoiceURI:    null,
-      setSelectedVoiceURI: (v) => set({ selectedVoiceURI: v }),
-      ttsProvider:     'browser',
-      setTtsProvider:  (v) => set({ ttsProvider: v }),
       autoPronounce:   true,
       setAutoPronounce:(v) => set({ autoPronounce: v }),
 
@@ -76,14 +81,20 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 3,
+      version: 7,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>
           : {};
         return {
           ...state,
-          ttsProvider: 'browser' as TtsProviderId,
+          languageExplicit: state.languageExplicit ?? state.language !== undefined,
+          instructionLanguages: {
+            'jlpt-ja': state.instructionLanguages?.['jlpt-ja']
+              ?? LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
+            'topik-ko': state.instructionLanguages?.['topik-ko']
+              ?? 'ja',
+          },
         };
       },
     },

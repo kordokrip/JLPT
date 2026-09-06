@@ -18,7 +18,7 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https:",
-  "media-src 'self' https://*.r2.cloudflarestorage.com",
+  "media-src 'none'",
   "connect-src 'self' https://nihongo-n3-api.kordokrip.workers.dev https://nihongo-n3.pages.dev",
   "worker-src 'self'",
   "manifest-src 'self'",

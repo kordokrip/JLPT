@@ -111,4 +111,53 @@ describe("useAuthStore", () => {
       user: null,
     });
   });
+
+  it.each(["login", "register"] as const)(
+    "%s keeps the authenticated server track when the preferred track write fails",
+    async (operation) => {
+      useSettingsStore.setState({ learningTrack: "topik-ko" });
+      mocks.authApi[operation].mockResolvedValueOnce({ ok: true, data: { user } });
+      mocks.authApi.setTrack.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        message: "Track update is temporarily unavailable",
+      });
+
+      const completed = operation === "login"
+        ? await useAuthStore.getState().login(user.email, "Passw0rd1234")
+        : await useAuthStore.getState().register(user.email, "Passw0rd1234", user.display_name);
+
+      expect(completed).toBe(true);
+      expect(mocks.authApi.setTrack).toHaveBeenCalledWith("topik-ko");
+      expect(useAuthStore.getState()).toMatchObject({
+        status: "authenticated",
+        user,
+        error: "Track update is temporarily unavailable",
+      });
+      expect(useSettingsStore.getState().learningTrack).toBe("jlpt-ja");
+      expect(mocks.setActiveLearningTrack).toHaveBeenLastCalledWith("jlpt-ja");
+    },
+  );
+
+  it.each(["login", "register"] as const)(
+    "%s adopts the preferred track only after the server confirms it",
+    async (operation) => {
+      useSettingsStore.setState({ learningTrack: "topik-ko" });
+      mocks.authApi[operation].mockResolvedValueOnce({ ok: true, data: { user } });
+      mocks.authApi.setTrack.mockResolvedValueOnce({ ok: true, data: { track: "topik-ko" } });
+
+      const completed = operation === "login"
+        ? await useAuthStore.getState().login(user.email, "Passw0rd1234")
+        : await useAuthStore.getState().register(user.email, "Passw0rd1234", user.display_name);
+
+      expect(completed).toBe(true);
+      expect(useAuthStore.getState()).toMatchObject({
+        status: "authenticated",
+        user: { ...user, learning_track: "topik-ko" },
+        error: null,
+      });
+      expect(useSettingsStore.getState().learningTrack).toBe("topik-ko");
+      expect(mocks.setActiveLearningTrack).toHaveBeenLastCalledWith("topik-ko");
+    },
+  );
 });

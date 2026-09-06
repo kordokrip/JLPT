@@ -3,13 +3,19 @@
  * Figma Make 디자인 적용
  */
 import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLearningProfile } from '../hooks/useLearningProfile';
+import { useDataScope } from '../hooks/useDataScope';
+import { learningApi, learningExperienceEnabled } from '../lib/learning-experience';
+import { StudyRequestError } from '../features/study/StudyRequestError';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
 import { useAuthStore } from '../stores/auth-store';
 import { audioPlayer } from '../lib/audio';
-import type { JapaneseVoiceOption, PlaybackRate, TtsProviderId, VoiceGender } from '../lib/audio';
+import type { PlaybackRate } from '../lib/audio';
 import type { ReactNode } from 'react';
+import type { LearningProfile, LearningTrackId } from '@nihongo-n3/shared';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
   getNotificationPermission,
@@ -37,35 +43,46 @@ export default function Settings() {
     theme, setTheme,
     furiganaMode, setFurigana,
     playbackRate, setPlaybackRate,
-    voiceGender, setVoiceGender,
-    selectedVoiceURI, setSelectedVoiceURI,
-    ttsProvider, setTtsProvider,
     autoPronounce, setAutoPronounce,
     dailyNewLimit, setDailyNewLimit,
     lastSyncedAt,
     language, setLanguage,
     learningTrack,
+    instructionLanguages, setInstructionLanguage,
   } = useSettingsStore();
   const switchTrack = useAuthStore((s) => s.switchTrack);
+  const profile=useLearningProfile(),scope=useDataScope(),queryClient=useQueryClient();
+  const profileUnknown = learningExperienceEnabled && (!profile.isSuccess || !profile.data);
+  const saveInstruction = useMutation({
+    mutationFn: async (change: {
+      value: 'ko' | 'ja' | 'en'; profile: LearningProfile | undefined;
+      scope: string; track: LearningTrackId; userId: string | null;
+    }) => {
+      if ((useAuthStore.getState().user?.id ?? null) !== change.userId
+        || useSettingsStore.getState().learningTrack !== change.track) {
+        throw new Error('Account or learning track changed before saving preferences');
+      }
+      if (!learningExperienceEnabled) return null;
+      if (!change.profile) throw new Error('Learning profile is not ready');
+      if (!change.profile.configured) return null;
+      return learningApi.saveProfile({ ...change.profile, instruction_language: change.value });
+    },
+    onSuccess: (saved, change) => {
+      if (saved) queryClient.setQueryData(['learning-profile', change.scope], saved);
+      if ((useAuthStore.getState().user?.id ?? null) === change.userId
+        && useSettingsStore.getState().learningTrack === change.track) {
+        setInstructionLanguage(change.track, change.value);
+      }
+    },
+  });
 
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
   const [pushLoading, setPushLoading]         = useState(false);
-  const [voices, setVoices]                   = useState<JapaneseVoiceOption[]>([]);
 
   useEffect(() => {
     setNotifPermission(getNotificationPermission());
     getCurrentSubscription().then((sub) => setIsSubscribed(!!sub)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    audioPlayer.getJapaneseVoices().then((items) => {
-      if (mounted) setVoices(items);
-    });
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const handlePushToggle = async () => {
@@ -91,25 +108,6 @@ export default function Settings() {
     audioPlayer.rate = r;
   };
 
-  const handleVoiceGender = (v: VoiceGender) => {
-    setVoiceGender(v);
-    audioPlayer.voiceGender = v;
-    void audioPlayer.speakText(t('settings.voicePreviewText'));
-  };
-
-  const handleVoiceURI = (uri: string) => {
-    const next = uri || null;
-    setSelectedVoiceURI(next);
-    audioPlayer.voiceURI = next;
-    void audioPlayer.speakText(t('settings.voicePreviewText'), { voiceURI: next });
-  };
-
-  const handleTtsProvider = (provider: TtsProviderId) => {
-    setTtsProvider('browser');
-    audioPlayer.sourcePreference = 'server';
-    if (provider === 'browser') void audioPlayer.speakText(t('settings.voicePreviewText'));
-  };
-
   const handleThemeChange = (nextTheme: Theme) => {
     setTheme(nextTheme);
     applyThemeClass(nextTheme);
@@ -122,10 +120,10 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
+    <div className="mx-auto max-w-[880px] px-5 py-8 pb-24 sm:px-8 sm:py-12 lg:px-20">
       {/* 헤더 */}
       <div className="mb-10">
-        <h1 className="font-pretendard text-[40px] font-medium text-foreground leading-none mb-3">{t('settings.title')}</h1>
+        <h1 className="mb-3 font-pretendard text-3xl font-medium leading-none text-foreground sm:text-4xl">{t('settings.title')}</h1>
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)]">{t('settings.subtitle')}</p>
       </div>
 
@@ -137,6 +135,31 @@ export default function Settings() {
             value={language}
             onChange={handleLangChange}
           />
+        </SettingRow>
+        <SettingRow label={t('settings.instructionLanguage')} sublabel={t('settings.instructionLanguageDesc')}>
+          <SegmentControl
+            options={learningTrack === 'topik-ko'
+              ? [
+                  { value: 'en', label: 'English' },
+                  { value: 'ko', label: '한국어' },
+                  { value: 'ja', label: '日本語' },
+                ]
+              : [
+                  { value: 'ko', label: '한국어' },
+                  { value: 'en', label: 'English' },
+                  { value: 'ja', label: '日本語' },
+                ]}
+            value={instructionLanguages[learningTrack]}
+            disabled={profileUnknown || saveInstruction.isPending}
+            onChange={(value) => {
+              if (!profileUnknown && !saveInstruction.isPending) {
+                saveInstruction.mutate({ value, profile: profile.data, scope, track: learningTrack, userId: authUser?.id ?? null });
+              }
+            }}
+          />
+          {learningExperienceEnabled && profile.isPending && <p role="status">{t('study.loading')}</p>}
+          {saveInstruction.isPending&&<p role="status">{t('study.saving')}</p>}
+          {(saveInstruction.isError || profile.isError)&&<StudyRequestError error={saveInstruction.error ?? profile.error} />}
         </SettingRow>
       </SettingSection>
 
@@ -193,41 +216,8 @@ export default function Settings() {
             onChange={(v) => handleRate(v as PlaybackRate)}
           />
         </SettingRow>
-        <SettingRow label={t('settings.voiceGender')} sublabel={t('settings.voiceGenderDesc')}>
-          <SegmentControl
-            testId="voice-gender"
-            options={[
-              { value: 'female', label: t('settings.voiceFemale') },
-              { value: 'male',   label: t('settings.voiceMale')   },
-            ]}
-            value={voiceGender}
-            onChange={(v) => handleVoiceGender(v as VoiceGender)}
-          />
-        </SettingRow>
-        <SettingRow label={t('settings.browserVoice')} sublabel={t('settings.browserVoiceDesc')}>
-          <select
-            value={selectedVoiceURI ?? ''}
-            onChange={(event) => handleVoiceURI(event.target.value)}
-            className="min-h-11 w-[min(100vw-3rem,18rem)] rounded border border-[var(--border)] bg-[var(--card)] px-3 text-sm text-foreground"
-            aria-label={t('settings.browserVoice')}
-          >
-            <option value="">{t('settings.autoVoice')}</option>
-            {voices.map((voice) => (
-              <option key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name} ({voice.lang}{voice.localService ? ` · ${t('settings.localVoice')}` : ''})
-              </option>
-            ))}
-          </select>
-        </SettingRow>
-        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.ttsProviderDesc')}>
-          <SegmentControl
-            testId="tts-provider"
-            options={[
-              { value: 'browser', label: t('settings.ttsBrowser') },
-            ]}
-            value={ttsProvider === 'browser' ? ttsProvider : 'browser'}
-            onChange={(v) => handleTtsProvider(v as TtsProviderId)}
-          />
+        <SettingRow label={t('settings.ttsProvider')} sublabel={t('settings.browserVoiceDesc')}>
+          <span className="rounded border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--muted-foreground)]">{t('settings.googleVoicePreferred')}</span>
         </SettingRow>
         <SettingRow label={t('settings.audioQa')} sublabel={t('settings.audioQaDesc')}>
           <Link
@@ -272,12 +262,12 @@ export default function Settings() {
         )}
       </SettingSection>
 
-      <SettingSection title="계정" subtitle="">
-        <SettingRow label="학습 언어" sublabel="계정과 오프라인 학습 데이터가 트랙별로 분리됩니다.">
+      <SettingSection title={t('settings.account')} subtitle="">
+        <SettingRow label={t('settings.studyTrack')} sublabel={t('settings.studyTrackDesc')}>
           <SegmentControl
             options={[
-              { value: 'jlpt-ja', label: '일본어 · JLPT' },
-              { value: 'topik-ko', label: '한국어 · TOPIK' },
+              { value: 'jlpt-ja', label: t('settings.jlptTrack') },
+              { value: 'topik-ko', label: t('settings.topikTrack') },
             ]}
             value={learningTrack}
             onChange={(track) => {
@@ -287,14 +277,14 @@ export default function Settings() {
             }}
           />
         </SettingRow>
-        <SettingRow label={authUser?.email ?? '로그인 계정'} sublabel={authUser?.role === 'admin' ? '관리자 계정' : '일반 사용자'}>
+        <SettingRow label={authUser?.email ?? t('settings.loginAccount')} sublabel={authUser?.role === 'admin' ? t('settings.adminAccount') : t('settings.userAccount')}>
           <div className="flex flex-wrap gap-2">
             {authUser?.role === 'admin' && (
               <Link
                 to="/admin/users"
                 className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--border)] px-4 text-sm font-medium"
               >
-                회원 관리
+                {t('settings.manageUsers')}
               </Link>
             )}
             <button
@@ -304,7 +294,7 @@ export default function Settings() {
               }}
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--accent)] px-4 text-sm font-medium text-white"
             >
-              로그아웃
+              {t('settings.logout')}
             </button>
           </div>
         </SettingRow>
@@ -368,12 +358,13 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 function SegmentControl<T extends string | number>({
-  options, value, onChange, testId,
+  options, value, onChange, testId, disabled = false,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
   testId?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-wrap gap-1 rounded-lg bg-[var(--border)]/30 p-1" data-testid={testId ? `${testId}-control` : undefined}>
@@ -381,9 +372,10 @@ function SegmentControl<T extends string | number>({
         <button
           key={String(opt.value)}
           type="button"
+          disabled={disabled}
           data-testid={testId ? `${testId}-option-${String(opt.value)}` : undefined}
           onClick={() => onChange(opt.value)}
-          className={`min-h-10 rounded px-3 text-xs font-medium transition-colors sm:min-h-11 ${
+          className={`min-h-10 rounded px-3 text-xs font-medium transition-colors sm:min-h-11 disabled:cursor-wait disabled:opacity-50 ${
             value === opt.value
               ? 'bg-card text-[var(--accent)] shadow-sm'
               : 'text-[var(--muted-foreground)] hover:text-foreground'

@@ -3,6 +3,9 @@
  */
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../lib/api';
+import { useDataScope } from '../hooks/useDataScope';
 
 interface DetailItem {
   question_id: string;
@@ -42,12 +45,20 @@ export default function QuizResult() {
   const location  = useLocation();
   const state     = location.state as QuizResultState | null;
   const { t } = useTranslation();
+  const scope = useDataScope();
+  const saved = useQuery({queryKey:['quiz-result',scope,attemptId],queryFn:async()=>{
+    const result = await api.get<QuizResultState['result']>('/quiz/attempts/'+attemptId);
+    if(!result.ok) throw new Error(result.message);
+    return result.data;
+  }, enabled:!!attemptId, retry:1});
+  // Navigation state is not proof of ownership and can survive account changes.
+  const result = saved.data;
 
-  if (!state?.result) {
+  if (!result) {
     return (
       <div className="max-w-[480px] mx-auto px-8 py-12 text-center">
         <p className="text-[var(--muted-foreground)] mb-6">
-          {t('quiz.noResultData', { attemptId })}
+          {saved.isPending ? t('study.loading') : t('quiz.noResultData', { attemptId })}
         </p>
         <button
           type="button"
@@ -60,10 +71,10 @@ export default function QuizResult() {
     );
   }
 
-  const { score, correct, total, detail } = state.result;
-  const elapsed = state.elapsed ?? 0;
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const ss = String(elapsed % 60).padStart(2, '0');
+  const { score, correct, total, detail } = result;
+  const elapsed = state?.result?.quiz_id === result.quiz_id ? state.elapsed : undefined;
+  const mm = String(Math.floor((elapsed ?? 0) / 60)).padStart(2, '0');
+  const ss = String((elapsed ?? 0) % 60).padStart(2, '0');
 
   return (
     <div className="max-w-[640px] mx-auto px-8 py-12">
@@ -76,7 +87,7 @@ export default function QuizResult() {
       <div className="card-hairline rounded-xl p-6 mb-8 text-center">
         <ScoreBadge score={score} />
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)] mt-2">
-          {t('quiz.correctSummary', { correct, total, elapsed: `${mm}:${ss}` })}
+          {t('quiz.correctSummary', { correct, total, elapsed: elapsed === undefined ? '—' : `${mm}:${ss}` })}
         </p>
       </div>
 

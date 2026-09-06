@@ -11,6 +11,23 @@ import {
   type ContentRelease,
   type JlptLevel,
 } from './jlpt-levels';
+import {
+  LEARNING_TRACK_IDS,
+  CONTENT_PUBLISH_STATES,
+  TOPIK_CONTENT_ITEM_KINDS,
+  TOPIK_CONTENT_RELEASES,
+  TOPIK_EXAM_BANDS,
+  TOPIK_EXAM_LEVELS,
+  TOPIK_INSTRUCTION_LANGUAGES,
+  TOPIK_SECTIONS,
+  type LearningTrackId,
+  type ContentPublishState,
+  type TopikContentItemKind,
+  type TopikContentRelease,
+  type TopikExamBand,
+  type TopikExamLevel,
+  type TopikSection,
+} from './learning-tracks';
 
 // ─────────────────────────────────────────────
 // 공통
@@ -23,11 +40,13 @@ export const contentReleaseSchema = z.enum(
 );
 export type { ContentRelease } from './jlpt-levels';
 
-export const learningTrackIdSchema = z.enum(['jlpt-ja', 'topik-ko']);
-export type LearningTrackId = z.infer<typeof learningTrackIdSchema>;
+export const learningTrackIdSchema = z.enum(
+  [...LEARNING_TRACK_IDS] as [LearningTrackId, ...LearningTrackId[]],
+);
+export type { LearningTrackId } from './learning-tracks';
 
-export interface TrackStatusDto {
-  track: LearningTrackId;
+export interface JlptTrackStatusDto {
+  track: 'jlpt-ja';
   available: boolean;
   content_release: ContentRelease;
   available_levels: JlptLevel[];
@@ -35,11 +54,307 @@ export interface TrackStatusDto {
 }
 
 /** TOPIK content uses its own exam-level taxonomy; it is not a JLPT level alias. */
-export const topikExamLevelSchema = z.enum(['TOPIK-I', 'TOPIK-II']);
-export type TopikExamLevel = z.infer<typeof topikExamLevelSchema>;
+export const topikExamLevelSchema = z.enum(
+  [...TOPIK_EXAM_LEVELS] as [TopikExamLevel, ...TopikExamLevel[]],
+);
+export type { TopikExamLevel } from './learning-tracks';
 
-export const topikSectionSchema = z.enum(['vocabulary', 'grammar', 'reading', 'listening', 'writing']);
-export type TopikSection = z.infer<typeof topikSectionSchema>;
+export const topikContentReleaseSchema = z.enum(
+  [...TOPIK_CONTENT_RELEASES] as [TopikContentRelease, ...TopikContentRelease[]],
+);
+export type { TopikContentRelease } from './learning-tracks';
+
+export const topikSectionSchema = z.enum(
+  [...TOPIK_SECTIONS] as [TopikSection, ...TopikSection[]],
+);
+export type { TopikSection } from './learning-tracks';
+
+export const contentPublishStateSchema = z.enum(
+  [...CONTENT_PUBLISH_STATES] as [ContentPublishState, ...ContentPublishState[]],
+);
+export type { ContentPublishState } from './learning-tracks';
+
+export const topikExamBandSchema = z.enum(
+  [...TOPIK_EXAM_BANDS] as [TopikExamBand, ...TopikExamBand[]],
+);
+export type { TopikExamBand } from './learning-tracks';
+
+export const topikContentItemKindSchema = z.enum(
+  [...TOPIK_CONTENT_ITEM_KINDS] as [TopikContentItemKind, ...TopikContentItemKind[]],
+);
+export type { TopikContentItemKind } from './learning-tracks';
+
+export interface TopikTrackStatusDto {
+  track: 'topik-ko';
+  available: boolean;
+  content_release: TopikContentRelease;
+  available_levels: TopikExamLevel[];
+  available_sections: TopikSection[];
+  write_enabled: boolean;
+}
+
+export type TrackStatusDto = JlptTrackStatusDto | TopikTrackStatusDto;
+
+/** Public NIIED reference data only. It deliberately contains no official questions or answers. */
+export const topikOfficialBlueprintSchema = z.object({
+  exam_level: topikExamLevelSchema,
+  delivery_mode: z.string().min(1),
+  section: topikSectionSchema,
+  question_count: z.number().int().positive(),
+  section_score: z.number().int().positive(),
+  total_score: z.number().int().positive(),
+  grade_min: z.number().int().positive(),
+  grade_max: z.number().int().positive(),
+});
+export type TopikOfficialBlueprintDto = z.infer<typeof topikOfficialBlueprintSchema>;
+
+export const topikOfficialReferenceSchema = z.object({
+  source: z.object({
+    code: z.string().min(1),
+    title: z.string().min(1),
+    source_url: z.string().url(),
+    source_version: z.string().min(1),
+    statistics_rows: z.number().int().nonnegative(),
+  }),
+  blueprints: z.array(topikOfficialBlueprintSchema).min(5),
+  applicant_totals: z.array(z.object({
+    exam_level: topikExamLevelSchema,
+    applicants: z.number().int().nonnegative(),
+  })).length(2),
+});
+export type TopikOfficialReferenceDto = z.infer<typeof topikOfficialReferenceSchema>;
+
+export const topikPlacementAudioSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('google'), text_ko: z.string().min(1) }),
+  z.object({ kind: z.literal('unavailable'), reason: z.enum(['preparing', 'not-provided']) }),
+]);
+export type TopikPlacementAudioDto = z.infer<typeof topikPlacementAudioSchema>;
+
+export const topikPlacementQuestionSchema = z.object({
+  id: z.string().min(1),
+  section: topikSectionSchema,
+  skill: z.string().min(1),
+  difficulty: z.number().int().min(1).max(5),
+  prompt_ko: z.string().min(1),
+  prompt_ja: z.string().min(1),
+  prompt_en: z.string().min(1),
+  choices: z.array(z.string().min(1)).length(4),
+  audio: topikPlacementAudioSchema.nullable(),
+});
+export type TopikPlacementQuestionDto = z.infer<typeof topikPlacementQuestionSchema>;
+
+export const topikPlacementStartBodySchema = z.object({
+  instruction_language: z.enum([...TOPIK_INSTRUCTION_LANGUAGES]).default('en'),
+});
+export type TopikPlacementStartBody = z.infer<typeof topikPlacementStartBodySchema>;
+
+export const topikPlacementAttemptSchema = z.object({
+  id: z.string().min(1),
+  bank_version: z.string().min(1),
+  status: z.enum(['in_progress', 'completed']),
+  instruction_language: z.enum([...TOPIK_INSTRUCTION_LANGUAGES]),
+  questions: z.array(topikPlacementQuestionSchema),
+  started_at: z.number().int(),
+});
+export type TopikPlacementAttemptDto = z.infer<typeof topikPlacementAttemptSchema>;
+
+export const topikPlacementSubmitBodySchema = z.object({
+  answers: z.array(z.object({
+    question_id: z.string().min(1),
+    selected_index: z.number().int().min(0).max(3),
+  })).min(1).max(100),
+});
+export type TopikPlacementSubmitBody = z.infer<typeof topikPlacementSubmitBodySchema>;
+
+export const topikPlacementResultSchema = z.object({
+  attempt_id: z.string().min(1),
+  score_total: z.number().int().min(0).max(100),
+  score_listening: z.number().int().min(0).max(100),
+  score_reading: z.number().int().min(0).max(100),
+  result_band: z.enum(['starter', 'foundation', 'ready']),
+  answers: z.array(z.object({
+    question_id: z.string().min(1),
+    selected_index: z.number().int().min(0).max(3),
+    answer_index: z.number().int().min(0).max(3),
+    is_correct: z.boolean(),
+    explanation_en: z.string().min(1),
+    explanation_ko: z.string().min(1),
+    explanation_ja: z.string().min(1),
+  })),
+});
+export type TopikPlacementResultDto = z.infer<typeof topikPlacementResultSchema>;
+
+export const topikPracticeQuestionSchema = z.object({
+  id: z.string().min(1),
+  exam_level: topikExamLevelSchema,
+  section: topikSectionSchema,
+  question_type: z.enum(['choice', 'writing']),
+  skill: z.string().min(1),
+  difficulty: z.number().int().min(1).max(5),
+  prompt_ko: z.string().min(1),
+  prompt_ja: z.string().min(1),
+  prompt_en: z.string().min(1),
+  choices: z.array(z.string().min(1)).max(4),
+  audio: topikPlacementAudioSchema.nullable(),
+});
+export type TopikPracticeQuestionDto = z.infer<typeof topikPracticeQuestionSchema>;
+
+export const topikPracticeListSchema = z.object({
+  bank_version: z.string().min(1),
+  exam_level: topikExamLevelSchema,
+  section: topikSectionSchema,
+  questions: z.array(topikPracticeQuestionSchema),
+});
+export type TopikPracticeListDto = z.infer<typeof topikPracticeListSchema>;
+
+export const topikPracticeSolutionSchema = z.object({
+  question_id: z.string().min(1),
+  question_type: z.enum(['choice', 'writing']),
+  answer_index: z.number().int().min(0).max(3).nullable(),
+  explanation_ko: z.string().min(1),
+  explanation_ja: z.string().min(1),
+  explanation_en: z.string().min(1),
+  sample_answer_ko: z.string().min(1).nullable(),
+  sample_answer_ja: z.string().min(1).nullable(),
+  sample_answer_en: z.string().min(1).nullable(),
+});
+export type TopikPracticeSolutionDto = z.infer<typeof topikPracticeSolutionSchema>;
+
+/**
+ * Personal, owner-authored TOPIK learning units. This contract deliberately
+ * has no public content-release or reviewer lifecycle.
+ */
+export const topikOwnerCurriculumGradeSchema = z.coerce.number().int().min(1).max(6);
+export const topikOwnerCurriculumSectionSchema = z.enum([
+  'vocab', 'grammar', 'reading', 'listening', 'writing',
+]);
+export const topikOwnerCurriculumItemTypeSchema = z.enum([
+  'vocab', 'grammar', 'reading', 'listening', 'writing',
+]);
+
+export const topikOwnerCurriculumItemSchema = z.object({
+  id: z.string().min(1),
+  stable_ref: z.string().min(1),
+  target_grade: topikOwnerCurriculumGradeSchema,
+  item_type: topikOwnerCurriculumItemTypeSchema,
+  prompt_ko: z.string().min(1),
+  prompt_ja: z.string().min(1),
+  prompt_en: z.string().min(1),
+  choices: z.array(z.string().min(1)).max(4),
+  audio: topikPlacementAudioSchema.nullable(),
+  progress_status: z.enum(['not_started', 'in_progress', 'completed']),
+});
+export type TopikOwnerCurriculumItemDto = z.infer<typeof topikOwnerCurriculumItemSchema>;
+
+export const topikOwnerCurriculumUnitSchema = z.object({
+  id: z.string().min(1),
+  stable_ref: z.string().min(1),
+  target_grade: topikOwnerCurriculumGradeSchema,
+  section: topikOwnerCurriculumSectionSchema,
+  title_ko: z.string().min(1),
+  title_ja: z.string().min(1),
+  title_en: z.string().min(1),
+  items: z.array(topikOwnerCurriculumItemSchema),
+});
+export type TopikOwnerCurriculumUnitDto = z.infer<typeof topikOwnerCurriculumUnitSchema>;
+
+export const topikOwnerCurriculumListSchema = z.object({
+  target_grade: topikOwnerCurriculumGradeSchema,
+  units: z.array(topikOwnerCurriculumUnitSchema),
+});
+export type TopikOwnerCurriculumListDto = z.infer<typeof topikOwnerCurriculumListSchema>;
+
+export const topikOwnerCurriculumSolutionSchema = z.object({
+  item_id: z.string().min(1),
+  answer_payload: z.record(z.string(), z.unknown()),
+  explanation_ko: z.string().min(1),
+  explanation_ja: z.string().min(1),
+  explanation_en: z.string().min(1),
+});
+export type TopikOwnerCurriculumSolutionDto = z.infer<typeof topikOwnerCurriculumSolutionSchema>;
+
+export const topikOwnerCurriculumProgressStatusSchema = z.enum(['not_started', 'in_progress', 'completed']);
+export type TopikOwnerCurriculumProgressStatus = z.infer<typeof topikOwnerCurriculumProgressStatusSchema>;
+
+export const topikOwnerCurriculumGradeProgressSchema = z.object({
+  target_grade: topikOwnerCurriculumGradeSchema,
+  total_items: z.number().int().nonnegative(),
+  completed_items: z.number().int().nonnegative(),
+  due_cards: z.number().int().nonnegative(),
+  review_cards: z.number().int().nonnegative(),
+});
+
+export const topikOwnerCurriculumProgressSchema = z.object({
+  grades: z.array(topikOwnerCurriculumGradeProgressSchema).length(6),
+  completed_item_ids: z.array(z.string().min(1)),
+});
+export type TopikOwnerCurriculumProgressDto = z.infer<typeof topikOwnerCurriculumProgressSchema>;
+
+export const topikOwnerCurriculumCompletionSchema = z.object({
+  item_id: z.string().min(1),
+  status: z.literal('completed'),
+  card_id: z.number().int().positive(),
+});
+export type TopikOwnerCurriculumCompletionDto = z.infer<typeof topikOwnerCurriculumCompletionSchema>;
+
+export const topikOwnerCurriculumDueCardSchema = z.object({
+  card_id: z.number().int().positive(),
+  state: z.enum(['new', 'learning', 'review', 'relearning']),
+  due_at: z.number().int(),
+  item: topikOwnerCurriculumItemSchema,
+});
+export type TopikOwnerCurriculumDueCardDto = z.infer<typeof topikOwnerCurriculumDueCardSchema>;
+
+export const topikOwnerCurriculumDueListSchema = z.object({
+  cards: z.array(topikOwnerCurriculumDueCardSchema),
+});
+export type TopikOwnerCurriculumDueListDto = z.infer<typeof topikOwnerCurriculumDueListSchema>;
+
+export const topikOwnerCurriculumReviewBodySchema = z.object({
+  card_id: z.number().int().positive(),
+  rating: z.enum(['again', 'hard', 'good', 'easy']),
+  response_ms: z.number().int().nonnegative().max(3_600_000).optional(),
+});
+export type TopikOwnerCurriculumReviewBody = z.infer<typeof topikOwnerCurriculumReviewBodySchema>;
+
+export const topikOwnerCurriculumReviewResultSchema = z.object({
+  state: z.enum(['new', 'learning', 'review', 'relearning']),
+  stability: z.number(),
+  difficulty: z.number(),
+  lapses: z.number().int().nonnegative(),
+  reps: z.number().int().nonnegative(),
+  due_at: z.number().int(),
+});
+export type TopikOwnerCurriculumReviewResultDto = z.infer<typeof topikOwnerCurriculumReviewResultSchema>;
+
+/**
+ * Public contract for the release-controlled TOPIK curriculum. Answers,
+ * explanations, review metadata, and source evidence intentionally stay out
+ * of this response.
+ */
+export const topikReleasedContentItemSchema = z.object({
+  id: z.string().min(1),
+  stable_ref: z.string().min(1),
+  content_release: z.string().min(1),
+  exam_level: topikExamLevelSchema,
+  exam_band: topikExamBandSchema,
+  section: topikSectionSchema,
+  item_kind: topikContentItemKindSchema,
+  skill: z.string().min(1),
+  difficulty: z.number().int().min(1).max(5),
+  prompt_ko: z.string().min(1),
+  prompt_ja: z.string().min(1),
+  prompt_en: z.string().min(1),
+});
+export type TopikReleasedContentItemDto = z.infer<typeof topikReleasedContentItemSchema>;
+
+export const topikReleasedContentListSchema = z.object({
+  content_release: z.string().min(1),
+  exam_level: topikExamLevelSchema,
+  section: topikSectionSchema,
+  items: z.array(topikReleasedContentItemSchema),
+});
+export type TopikReleasedContentListDto = z.infer<typeof topikReleasedContentListSchema>;
 
 export const registerSchema = z.enum(['conversation', 'newspaper', 'business']);
 
@@ -166,6 +481,7 @@ export const quizGenerateBodySchema = z.object({
   mode:  quizModeSchema,
   level: jlptLevelSchema,
   count: z.coerce.number().int().min(1).max(20).default(5),
+  strategy: z.enum(['random', 'weakest']).default('random'),
 });
 export type QuizGenerateBody = z.infer<typeof quizGenerateBodySchema>;
 

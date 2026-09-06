@@ -6,6 +6,13 @@ import { createdResponseSchema, dataResponseSchema, listResponseSchema, mountLeg
 const quizOA = new OpenAPIHono<AppEnv>();
 mountLegacyRouteWithOpenApiDocs(quizOA, quiz, [
   {
+    method: 'get', path: '/quiz/attempts/{id}', tags: ['Quiz'], summary: '본인의 제출 완료 결과 재조회',
+    responses: {
+      200: { content: { 'application/json': { schema: dataResponseSchema } }, description: 'Saved grading result' },
+      404: { content: { 'application/json': { schema: problemSchema } }, description: 'Missing, unsubmitted or another account' },
+    },
+  },
+  {
     method: 'post',
     path: '/quiz/generate',
     tags: ['Quiz'],

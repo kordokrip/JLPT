@@ -12,7 +12,6 @@ export type KanaCard = {
   meaning: string;
   strokeCount: number;
   hint: string;
-  audioPath?: string;
 };
 
 export type StudyCard = KanaCard | {
@@ -23,7 +22,6 @@ export type StudyCard = KanaCard | {
   meaning: string;
   strokeCount: number;
   hint: string;
-  audioPath?: string;
   level: JlptLevel;
 };
 

@@ -35,7 +35,7 @@ interface CurriculumApiWeek {
 }
 
 function weekState(week: number, currentWeek: number): 'done' | 'current' | 'upcoming' {
-  if (week < currentWeek) return 'done';
+  // Calendar time is not evidence of a completed learning unit.
   if (week === currentWeek) return 'current';
   return 'upcoming';
 }
@@ -64,7 +64,6 @@ export default function Curriculum() {
   const { t } = useTranslation();
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
   const track = useSettingsStore((state) => state.learningTrack);
-  const planRecommendation = recommendStudyPlan({});
   // null 이면 useEffect 로 currentWeek 로 초기화
 
   const { data: weeks, isLoading } = useQuery<Week[]>({
@@ -89,10 +88,9 @@ export default function Curriculum() {
       </div>
 
       <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--surface-alt)] px-4 py-3 text-sm">
-        <strong className="text-foreground">기본 12개월 과정</strong>
+        <strong className="text-foreground">{t('study.curriculum')}</strong>
         <p className="mt-1 text-[var(--muted-foreground)]">
-          16주 집중과정은 가나 90%, N5 진단 80%, 주 420분, 시험까지 20주 이내 조건을 모두 충족할 때만 추천합니다.
-          현재 판정: {planRecommendation.eligibleForIntensive ? '집중과정 가능' : '52주 기본과정'}
+          {t('study.free')}
         </p>
       </div>
 

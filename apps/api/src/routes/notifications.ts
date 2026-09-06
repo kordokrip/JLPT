@@ -99,7 +99,7 @@ notifications.post('/notifications/test', async (c) => {
       sendPushNotification(
         sub,
         {
-          title: 'JLPT N3 테스트 알림',
+          title: 'JLPT · TOPIK 테스트 알림',
           body:  '알림이 정상 작동합니다!',
           icon:  '/pwa-192x192.png',
           badge: '/pwa-192x192.png',

@@ -3,6 +3,9 @@ import { ensureAuthenticated } from "./auth-helper";
 
 const ROUTES = [
   "/",
+  "/learn",
+  "/questions",
+  "/records",
   "/browse/vocab",
   "/quiz",
   "/characters",
@@ -54,33 +57,34 @@ test.describe("반응형 UI 안전성", () => {
     test(`${device.name}: 주요 화면이 viewport를 넘지 않는다`, async ({
       page,
     }) => {
+      // This one test opens and validates nine independent routes. WebKit can
+      // legitimately exceed Playwright's 30 s per-test default even when each
+      // navigation succeeds, so budget the aggregate operation explicitly.
+      test.setTimeout(120_000);
+      await page.setViewportSize({
+        width: device.width,
+        height: device.height,
+      });
       await ensureAuthenticated(page);
 
       for (const route of ROUTES) {
         await test.step(`${device.name} ${route}`, async () => {
-          const routePage = await page.context().newPage();
-          await routePage.setViewportSize({
-            width: device.width,
-            height: device.height,
-          });
-
-          try {
-            await waitForStableLayout(routePage, route);
-            await expect
-              .poll(() => routePage.evaluate(expectNoHorizontalOverflow), {
-                message: `${device.name} ${route} horizontal overflow`,
-                timeout: 10_000,
-              })
-              .toBe(true);
-          } finally {
-            await routePage.close();
-          }
+          // Reuse one page for the route matrix. Repeatedly creating and
+          // destroying WebKit pages caused allocator crashes and navigation
+          // stalls after several routes without adding isolation value.
+          await waitForStableLayout(page, route);
+          await expect
+            .poll(() => page.evaluate(expectNoHorizontalOverflow), {
+              message: `${device.name} ${route} horizontal overflow`,
+              timeout: 10_000,
+            })
+            .toBe(true);
         });
       }
     });
   }
 
-  test("모바일 하단 메뉴는 스크롤 없이 핵심 탭과 더보기를 제공한다", async ({
+  test("모바일 하단 메뉴는 스크롤 없이 다섯 학습 탭을 제공한다", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -90,9 +94,7 @@ test.describe("반응형 UI 안전성", () => {
     const nav = page.getByRole("navigation", { name: /메인|Main|メイン/ });
     await expect(nav).toBeVisible();
     await expect(nav.locator("ul")).toHaveCSS("display", "grid");
-    await expect(
-      page.getByRole("button", { name: /더보기|More|その他/ }),
-    ).toBeVisible();
+    await expect(nav.getByRole('link')).toHaveCount(5);
 
     const boxes = await nav.locator("li").evaluateAll((items) =>
       items.map((item) => {
@@ -105,14 +107,10 @@ test.describe("반응형 UI 안전성", () => {
       expect(boxes[i].left).toBeGreaterThanOrEqual(boxes[i - 1].right - 1);
     }
 
-    await page.getByRole("button", { name: /더보기|More|その他/ }).click();
-    const dialog = page.getByRole("dialog", {
-      name: /추가 메뉴|More menu|追加メニュー/,
-    });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator('a[href="/curriculum"]')).toBeVisible();
-    await expect(dialog.locator('a[href="/characters"]')).toBeVisible();
-    await expect(dialog.locator('a[href="/self-check"]')).toBeVisible();
+    await nav.locator('a[href="/learn"]').click();
+    await expect(page.locator('main a[href="/curriculum"]')).toBeVisible();
+    await expect(page.locator('main a[href="/characters"]')).toBeVisible();
+    await expect(page.locator('main a[href="/self-check"]')).toBeVisible();
   });
 
   test("iOS safe-area와 네이티브 터치 기본값이 적용된다", async ({ page }) => {
@@ -122,15 +120,13 @@ test.describe("반응형 UI 안전성", () => {
     await expect(
       page.getByRole("navigation", { name: /메인|Main|メイン/ }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /더보기|More|その他/ }),
-    ).toBeVisible();
+    await expect(page.getByRole('navigation',{name:/메인|Main|メイン/}).getByRole('link')).toHaveCount(5);
 
     const metrics = await page.evaluate(() => {
       const root = document.getElementById("root")!;
       const bodyStyle = getComputedStyle(document.body);
       const rootStyle = getComputedStyle(root);
-      const button = document.querySelector("nav button")!;
+      const button = document.querySelector("nav a")!;
       const buttonStyle = getComputedStyle(button);
       return {
         rootPaddingLeft: rootStyle.paddingLeft,
@@ -180,7 +176,7 @@ test.describe("반응형 UI 안전성", () => {
       .evaluateAll((links) =>
         links.map((link) => link.textContent?.trim() ?? ""),
       );
-    expect(labels).toContain("찾아보기");
+    expect(labels).toContain("학습");
     expect(labels.some((label) => label.length >= 2)).toBe(true);
   });
 
@@ -211,8 +207,8 @@ test.describe("반응형 UI 안전성", () => {
       .evaluateAll((links) =>
         links.map((link) => link.textContent?.trim() ?? ""),
       );
-    expect(labels).toContain("홈");
-    expect(labels).toContain("찾아보기");
+    expect(labels).toContain("오늘");
+    expect(labels).toContain("학습");
     expect(labels.every((label) => label.length >= 1)).toBe(true);
   });
 });

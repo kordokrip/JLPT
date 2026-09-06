@@ -2,7 +2,7 @@
   "name": "@nihongo-n3/e2e",
   "version": "0.0.1",
   "private": true,
-  "description": "Nihongo N3 PWA — Playwright E2E 테스트",
+  "description": "JLPT N5-N1 + TOPIK PWA — Playwright E2E tests",
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test menu-smoke.spec.ts --project=chromium",

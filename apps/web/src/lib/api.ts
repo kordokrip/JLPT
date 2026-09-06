@@ -16,7 +16,24 @@ import {
   type ContentVersionDto,
   type JlptLevel,
   type LearningTrackId,
+  type LearningActivityEvent,
+  type LearningActivitySummary,
   type TrackStatusDto,
+  type TopikOfficialReferenceDto,
+  type TopikInstructionLanguage,
+  type TopikPlacementAttemptDto,
+  type TopikPlacementResultDto,
+  type TopikPlacementSubmitBody,
+  type TopikPracticeListDto,
+  type TopikPracticeSolutionDto,
+  type TopikReleasedContentListDto,
+  type TopikOwnerCurriculumListDto,
+  type TopikOwnerCurriculumCompletionDto,
+  type TopikOwnerCurriculumDueListDto,
+  type TopikOwnerCurriculumProgressDto,
+  type TopikOwnerCurriculumReviewBody,
+  type TopikOwnerCurriculumReviewResultDto,
+  type TopikOwnerCurriculumSolutionDto,
 } from '@nihongo-n3/shared';
 import createClient from 'openapi-fetch';
 import type { components, paths } from '../types/api.js';
@@ -234,7 +251,111 @@ export const contentApi = {
 };
 
 export const tracksApi = {
-  status: (track: LearningTrackId) => api.get<TrackStatusDto>(`/tracks/${track}/status`),
+  status: async (track: LearningTrackId) => typedResult<TrackStatusDto>(
+    await typedApi.GET('/api/v1/tracks/{track}/status', {
+      params: { path: { track } },
+    }),
+  ),
+};
+
+export interface TopikPlacementLatestDto {
+  attempt_id: string;
+  score_total: number;
+  score_listening: number;
+  score_reading: number;
+  result_band: 'starter' | 'foundation' | 'ready';
+  completed_at: number;
+}
+
+export interface TopikPlacementReviewItemDto {
+  question_id: string;
+  section: 'listening' | 'reading';
+  prompt_ko: string;
+  prompt_ja: string;
+  prompt_en: string;
+  choices: string[];
+  selected_index: number;
+  answer_index: number;
+  explanation_en: string;
+  explanation_ko: string;
+  explanation_ja: string;
+}
+
+export const topikPlacementApi = {
+  start: (instructionLanguage: TopikInstructionLanguage) =>
+    api.post<TopikPlacementAttemptDto>('/tracks/topik-ko/placement/attempts', { instruction_language: instructionLanguage }),
+  submit: async (attemptId: string, answers: TopikPlacementSubmitBody['answers']) => typedResult<TopikPlacementResultDto>(
+    await typedApi.POST('/api/v1/tracks/topik-ko/placement/attempts/{attemptId}/submit', {
+      params: { path: { attemptId } },
+      body: { answers },
+    }),
+  ),
+  latest: async () => typedResult<TopikPlacementLatestDto | null>(
+    await typedApi.GET('/api/v1/tracks/topik-ko/placement/latest'),
+  ),
+  review: async () => typedResult<TopikPlacementReviewItemDto[]>(
+    await typedApi.GET('/api/v1/tracks/topik-ko/placement/review'),
+  ),
+};
+
+export const topikOfficialReferenceApi = {
+  get: () => api.get<TopikOfficialReferenceDto>('/tracks/topik-ko/official-reference'),
+};
+
+export const topikPracticeApi = {
+  list: (examLevel: 'TOPIK-I' | 'TOPIK-II', section: 'listening' | 'writing' | 'reading') =>
+    api.get<TopikPracticeListDto>('/tracks/topik-ko/practice', { exam_level: examLevel, section }),
+  solution: (questionId: string) =>
+    api.get<TopikPracticeSolutionDto>(`/tracks/topik-ko/practice/questions/${encodeURIComponent(questionId)}/solution`),
+};
+
+/** Additive TOPIK 1–6 curriculum; intentionally independent from every practice bank version. */
+export const topikOwnerCurriculumApi = {
+  list: (targetGrade: number) =>
+    api.get<TopikOwnerCurriculumListDto>('/tracks/topik-ko/curriculum', { target_grade: targetGrade }),
+  solution: (itemId: string) =>
+    api.get<TopikOwnerCurriculumSolutionDto>(`/tracks/topik-ko/curriculum/items/${encodeURIComponent(itemId)}/solution`),
+  progress: () =>
+    api.get<TopikOwnerCurriculumProgressDto>('/tracks/topik-ko/curriculum/progress'),
+  complete: (itemId: string) =>
+    api.post<TopikOwnerCurriculumCompletionDto>(`/tracks/topik-ko/curriculum/items/${encodeURIComponent(itemId)}/complete`),
+  due: (limit = 20) =>
+    api.get<TopikOwnerCurriculumDueListDto>('/tracks/topik-ko/curriculum/review/due', { limit }),
+  review: (body: TopikOwnerCurriculumReviewBody) =>
+    api.post<TopikOwnerCurriculumReviewResultDto>('/tracks/topik-ko/curriculum/review', body),
+};
+
+export interface OwnerPrivateTopikSolutionDto {
+  item_id: string;
+  answer_payload: unknown;
+  explanation_ko: string;
+  explanation_ja: string;
+  explanation_en: string;
+}
+
+/** Owner-private endpoints are always requested with browser and PWA caching disabled. */
+export const ownerPrivateTopikApi = {
+  claim: (releaseId: string, manifestSha256: string) =>
+    api.post<{ release_id: string; state: 'owner_published' }>('/admin/topik-owner-private/claims', {
+      release_id: releaseId,
+      manifest_sha256: manifestSha256,
+    }),
+  withdraw: (releaseId: string, manifestSha256: string) =>
+    api.post<{ state: 'withdrawn' }>(`/admin/topik-owner-private/releases/${encodeURIComponent(releaseId)}/withdraw`, {
+      manifest_sha256: manifestSha256,
+    }),
+  list: (examLevel: 'TOPIK-I' | 'TOPIK-II', section: 'listening' | 'writing' | 'reading') =>
+    api.get<TopikReleasedContentListDto>(
+      '/tracks/topik-ko/owner-private/content',
+      { exam_level: examLevel, section },
+      { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } },
+    ),
+  solution: (itemId: string) =>
+    api.get<OwnerPrivateTopikSolutionDto>(
+      `/tracks/topik-ko/owner-private/content/${encodeURIComponent(itemId)}/solution`,
+      undefined,
+      { cache: 'no-store', headers: { 'Cache-Control': 'no-store' } },
+    ),
 };
 
 // SRS
@@ -270,6 +391,15 @@ export const syncApi = {
       last_synced_at,
       operations,
     }),
+};
+
+export type LearningActivityGroup = LearningActivitySummary['groups'][number];
+
+export const activityApi = {
+  record: (events: LearningActivityEvent[]) =>
+    api.post<{ accepted: number; duplicates: number }>('/activity/events', { events }),
+  summary: (window: '7d' | '30d') =>
+    api.get<LearningActivitySummary>('/activity/summary', { window }),
 };
 
 // 일일 로그

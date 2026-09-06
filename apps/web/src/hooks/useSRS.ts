@@ -6,7 +6,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, localUserIdFor, type SrsCard, type ItemType, type Rating } from '../lib/db';
 import { srsApi } from '../lib/api';
-import { schedule, isDue } from '../lib/fsrs-client';
+import { schedule } from '../lib/fsrs-client';
+import { canApplyServerDueSnapshot, selectDueCardSnapshots, srsCardIdentity } from '../lib/srs-due-snapshot';
 import { enqueue } from '../lib/sync';
 import { isOnline } from '../lib/browser';
 import { useAuthStore } from '../stores/auth-store';
@@ -18,37 +19,43 @@ export function useDueCards(itemType?: ItemType, limit = 20) {
   const track = useSettingsStore((s) => s.learningTrack);
   const localUserId = localUserIdFor(authUserId, track);
 
-  // IDB에서 즉시 반환 (reactive)
-  const localCards = useLiveQuery(
-    () => {
-      const now = new Date();
-      return db.srs_cards
-        .where('user_id')
-        .equals(localUserId)
-        .and((c) => isDue(c.due_at, now) && (!itemType || c.item_type === itemType))
-        .limit(limit)
-        .toArray();
-    },
-    [localUserId, itemType, limit],
-  );
-
   // 서버 due 목록 주기적 동기화 (10분 stale)
-  const { refetch, isLoading } = useQuery({
+  const { data: serverDueCards = [], refetch, isLoading } = useQuery({
     queryKey: ['srs', 'due', localUserId, itemType],
     queryFn: async () => {
+      const beforeCards = await db.srs_cards.where('user_id').equals(localUserId).toArray();
+      const before = new Map(beforeCards.map((card) => [srsCardIdentity(card), card]));
       const result = await srsApi.due({ ...(itemType !== undefined ? { item_type: itemType } : {}), limit: 100 });
       if (!result.ok) return [];
-      // 서버 카드를 IDB에 upsert
-      await db.srs_cards.bulkPut(
-        result.data.map((c) => ({ ...c, user_id: localUserId })),
-      );
-      return result.data;
+      const snapshots = result.data
+        .filter((card) => card.user_id === authUserId
+          && (!('learning_track' in card) || card.learning_track === track))
+        .map((card) => ({ ...card, user_id: localUserId }));
+      // Do not overwrite reviews made while the request was in flight, or
+      // newer local repetitions waiting for sync. Preserve actual FSRS dates.
+      await db.transaction('rw', db.srs_cards, async () => {
+        const currentCards = await db.srs_cards.where('user_id').equals(localUserId).toArray();
+        const current = new Map(currentCards.map((card) => [srsCardIdentity(card), card]));
+        const applicable = snapshots.filter((card) => canApplyServerDueSnapshot(
+          card, current.get(srsCardIdentity(card)), before.get(srsCardIdentity(card)),
+        ));
+        if (applicable.length) await db.srs_cards.bulkPut(applicable);
+      });
+      return snapshots;
     },
+    enabled: !!authUserId && track === 'jlpt-ja',
     staleTime: 1000 * 60 * 10,
     retry: 1,
   });
 
-  return { cards: localCards ?? [], refetch, isLoading: localCards === undefined || isLoading };
+  // Retain future-by-device cards so a server due snapshot can authorize them.
+  // The exact snapshot comparison stops cached server data reviving a review.
+  const localCards = useLiveQuery(
+    () => db.srs_cards.where('user_id').equals(localUserId).toArray(),
+    [localUserId],
+  );
+  const cards = selectDueCardSnapshots(localCards ?? [], serverDueCards, localUserId, itemType, limit);
+  return { cards, refetch, isLoading: localCards === undefined || isLoading };
 }
 
 /** SRS 통계 */

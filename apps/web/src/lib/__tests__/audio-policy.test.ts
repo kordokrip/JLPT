@@ -1,20 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { getAudioPlaybackPolicy, prefersBrowserAudio } from '@nihongo-n3/shared';
+import { getAudioPlaybackPolicy, usesGoogleAudio } from '@nihongo-n3/shared';
 
 describe('audio playback policy', () => {
-  it('uses approved R2 assets before browser Japanese fallback', () => {
-    expect(prefersBrowserAudio('kana')).toBe(false);
-    expect(prefersBrowserAudio('listening')).toBe(false);
+  it('prefers Google and uses browser speech without an R2 fallback', () => {
+    expect(usesGoogleAudio('kana')).toBe(true);
+    expect(usesGoogleAudio('listening')).toBe(true);
     expect(getAudioPlaybackPolicy('kana')).toMatchObject({
-      primary: 'r2',
-      fallback: 'browser',
+      primary: 'browser-speech',
+      fallback: null,
       slow: true,
       preferGoogleVoice: true,
     });
   });
 
-  it('uses R2 first for fixed vocab and kanji audio', () => {
-    expect(getAudioPlaybackPolicy('vocab').primary).toBe('r2');
-    expect(getAudioPlaybackPolicy('kanji').primary).toBe('r2');
+  it('uses browser speech for vocab and kanji audio', () => {
+    expect(getAudioPlaybackPolicy('vocab').primary).toBe('browser-speech');
+    expect(getAudioPlaybackPolicy('kanji').primary).toBe('browser-speech');
+  });
+
+  it('prefers Google for QA without an R2 fallback', () => {
+    expect(getAudioPlaybackPolicy('qa')).toMatchObject({
+      primary: 'browser-speech',
+      fallback: null,
+      preferGoogleVoice: true,
+    });
   });
 });

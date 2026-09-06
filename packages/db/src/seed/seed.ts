@@ -6,9 +6,11 @@ import {
   argValue,
   executeSqlFile,
   parseD1Target,
+  querySql,
   requireRemoteChange,
 } from './d1-cli.js';
 import { REPO_ROOT } from './constants.js';
+import { buildJlptReadingBalanceChanges, buildJlptReadingBalanceStatements, type JlptReadingBalanceRow } from './jlpt-reading-balance.js';
 import { chunk } from './utils.js';
 
 const CHUNK_SIZE = 800;
@@ -39,6 +41,34 @@ try {
     executeSqlFile(target, sqlFile);
     process.stdout.write(' OK\n');
   }
+
+  // Static reading answers are presented without runtime randomization.  Run
+  // the deterministic post-seed ordering once every source row exists so each
+  // JLPT level has evenly rotating answer positions without changing content.
+  const readingRows = querySql<{
+    id: number;
+    level: string;
+    choices_json: string;
+    answer_index: number;
+  }>(target, `
+    SELECT q.id, p.level, q.choices_json, q.answer_index
+    FROM reading_questions q
+    JOIN reading_passages p ON p.id = q.passage_id
+    ORDER BY p.level, q.id
+  `);
+  const balanceChanges = buildJlptReadingBalanceChanges(readingRows.map((row): JlptReadingBalanceRow => ({
+    id: row.id,
+    level: row.level,
+    choicesJson: row.choices_json,
+    answerIndex: row.answer_index,
+  })));
+  const balanceStatements = buildJlptReadingBalanceStatements(balanceChanges);
+  if (balanceStatements.length > 0) {
+    const balanceSqlFile = path.join(tmpDir, 'reading_answer_balance.sql');
+    fs.writeFileSync(balanceSqlFile, `${balanceStatements.join('\n\n')}\n`, 'utf8');
+    executeSqlFile(target, balanceSqlFile);
+  }
+  console.log(`  JLPT static reading answer balance: ${balanceChanges.length} reordered row(s)`);
 
   for (const entry of plan.manifest.entries) {
     console.log(

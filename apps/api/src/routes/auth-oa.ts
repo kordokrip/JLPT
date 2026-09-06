@@ -1,4 +1,5 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
+import { learningTrackIdSchema } from '@nihongo-n3/shared';
 
 import type { AppEnv } from '../types.js';
 import { auth } from './auth.js';
@@ -61,7 +62,7 @@ mountLegacyRouteWithOpenApiDocs(authOA, auth, [
     request: {
       body: {
         content: {
-          'application/json': { schema: z.object({ track: z.enum(['jlpt-ja', 'topik-ko']) }) },
+          'application/json': { schema: z.object({ track: learningTrackIdSchema }) },
         },
       },
     },
@@ -73,7 +74,7 @@ mountLegacyRouteWithOpenApiDocs(authOA, auth, [
   },
   {
     method: 'get', path: '/auth/google/start', tags: ['Auth'], summary: 'Google OAuth 시작',
-    request: { query: z.object({ track: z.enum(['jlpt-ja', 'topik-ko']).optional() }) },
+    request: { query: z.object({ track: learningTrackIdSchema.optional() }) },
     responses: {
       302: { description: 'Google 승인 화면으로 이동' },
       503: { content: { 'application/json': { schema: problemSchema } }, description: 'Google OAuth 미설정' },

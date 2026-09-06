@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ensureAuthenticated } from './auth-helper';
+import { mockTopikReadApis, registerTopikUser } from './topik-helper';
 
 const VIEWPORTS = [
   { name: 'mobile-390', width: 390, height: 844 },
@@ -12,6 +13,12 @@ const SCREENS = [
   { name: 'home', path: '/' },
   { name: 'review', path: '/review' },
   { name: 'browse-vocab', path: '/browse/vocab' },
+] as const;
+
+const TOPIK_SCREENS = [
+  { name: 'topik-dashboard', path: '/track/topik-ko' },
+  { name: 'topik-placement', path: '/track/topik-ko/placement' },
+  { name: 'topik-learn', path: '/track/topik-ko/learn' },
 ] as const;
 
 function prepareVisualState() {
@@ -101,6 +108,21 @@ test.describe('핵심 화면 시각 회귀', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'screenshot baseline은 Chromium에서 고정한다');
 
   for (const viewport of VIEWPORTS) {
+    test(`${viewport.name}: welcome`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await prepareVisualPage(page);
+      await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await disableAnimations(page);
+      await waitForVisualSettled(page);
+
+      await expect(page).toHaveScreenshot(`${viewport.name}-welcome.png`, {
+        fullPage: false,
+        maxDiffPixelRatio: 0.02,
+        timeout: 20_000,
+      });
+    });
+
     for (const screen of SCREENS) {
       test(`${viewport.name}: ${screen.name}`, async ({ page }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -119,17 +141,37 @@ test.describe('핵심 화면 시각 회귀', () => {
         });
       });
     }
+
+    for (const screen of TOPIK_SCREENS) {
+      test(`${viewport.name}: ${screen.name}`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await prepareVisualPage(page);
+        await mockTopikReadApis(page);
+        await registerTopikUser(page);
+        await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('main')).toBeVisible();
+        await disableAnimations(page);
+        await waitForVisualSettled(page);
+
+        await expect(page).toHaveScreenshot(`${viewport.name}-${screen.name}.png`, {
+          fullPage: false,
+          mask: [page.locator('[data-visual-dynamic]')],
+          maxDiffPixelRatio: 0.02,
+          timeout: 20_000,
+        });
+      });
+    }
   }
 
-  test('mobile-390: more sheet', async ({ page }) => {
+  test('mobile-390: account menu', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await prepareVisualPage(page);
     await ensureAuthenticated(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await disableAnimations(page);
     await waitForVisualSettled(page);
-    await page.getByRole('button', { name: /더보기|More|その他/ }).click();
-    await expect(page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ })).toBeVisible();
+    await page.locator('header details summary').click();
+    await expect(page.locator('header details[open]')).toBeVisible();
 
     await expect(page).toHaveScreenshot('mobile-390-more-sheet.png', {
       fullPage: false,

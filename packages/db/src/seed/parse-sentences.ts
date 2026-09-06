@@ -8,7 +8,7 @@
  *   | # | 일본어 | 한국어 |
  *   | 1 | 私は山田です。 | 저는 야마다입니다. |
  *
- *   레벨: 헤딩에서 N5/N4/N3 추출
+ *   레벨: 헤딩에서 N5~N1 추출
  *   레지스터: 헤딩에서 회화→conversation, 신문→newspaper, 비즈니스→business
  */
 import { parseMarkdownTables, normalizeCell, stripBr, esc, escJson } from './utils.js';
@@ -30,7 +30,7 @@ const REGISTER_MAP: Record<string, string> = {
 function detectLevelAndRegister(
   heading: string,
 ): { level: string | null; register: string | null } {
-  const levelMatch = heading.match(/N([3-5])/i);
+  const levelMatch = heading.match(/N([1-5])/i);
   const level = levelMatch ? `N${levelMatch[1]}` : null;
 
   let register: string | null = null;

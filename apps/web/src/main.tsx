@@ -4,11 +4,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { registerSW } from 'virtual:pwa-register';
 import { initSync } from './lib/sync';
+import { flushActivityEvents } from './lib/activity-events';
 import { initDeviceProfile } from './lib/device-profile';
 import { audioPlayer } from './lib/audio';
+import { reloadWhenControlledServiceWorkerChanges } from './lib/pwa-update';
 import { db, setActiveLearningTrack } from './lib/db';
 import { useUiStore } from './stores/ui-store';
 import { useSettingsStore } from './stores/settings-store';
+import { useAuthStore } from './stores/auth-store';
 
 import App from './App';
 import './index.css';
@@ -19,11 +22,26 @@ import './i18n'; // i18n 초기화 (앱 시작 전 로드)
 // ─────────────────────────────────────────────
 import i18n from './i18n';
 if (import.meta.env.VITE_PWA_DEV_SW !== 'false') {
+  if ('serviceWorker' in navigator) {
+    reloadWhenControlledServiceWorkerChanges(navigator.serviceWorker);
+  }
   const updateSW = registerSW({
+    immediate: true,
     onNeedRefresh() {
-      if (window.confirm(i18n.t('pwa.updateAvailable'))) {
-        updateSW(true);
-      }
+      // Critical runtime fixes must replace a stale installed-PWA bundle.
+      // updateSW(true) activates the waiting worker and reloads the client.
+      void updateSW(true);
+    },
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const checkForUpdate = () => {
+        if (navigator.onLine) void registration.update().catch(() => undefined);
+      };
+      checkForUpdate();
+      window.addEventListener('online', checkForUpdate);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
     },
     onOfflineReady() {
       console.info('[PWA]', i18n.t('pwa.offlineReady'));
@@ -54,7 +72,7 @@ if (!rootEl) throw new Error('#root element not found');
 // 다크모드 초기화 (렌더 전 적용)
 // ─────────────────────────────────────────────
 (function applyTheme() {
-  const { theme, playbackRate, selectedVoiceURI, voiceGender, learningTrack } = useSettingsStore.getState();
+  const { theme, playbackRate, learningTrack } = useSettingsStore.getState();
   setActiveLearningTrack(learningTrack);
   const isDark =
     theme === 'dark' ||
@@ -63,9 +81,6 @@ if (!rootEl) throw new Error('#root element not found');
   document.documentElement.lang = i18n.language || 'ko';
   audioPlayer.configure({
     rate: playbackRate,
-    voiceGender,
-    voiceURI: selectedVoiceURI,
-    sourcePreference: 'server',
   });
 })();
 
@@ -82,6 +97,16 @@ void db.open().catch((error) => {
   console.warn('[IDB]', 'failed to open local database', error);
 });
 initSync();
+useSettingsStore.subscribe((state, previous) => {
+  if (state.learningTrack !== previous.learningTrack) setActiveLearningTrack(state.learningTrack);
+});
+useAuthStore.subscribe((state, previous) => {
+  const activated = state.status === 'authenticated'
+    && (previous.status !== 'authenticated'
+      || state.user?.id !== previous.user?.id
+      || state.user?.learning_track !== previous.user?.learning_track);
+  if (activated) void flushActivityEvents();
+});
 initDeviceProfile();
 
 ReactDOM.createRoot(rootEl).render(

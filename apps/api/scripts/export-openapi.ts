@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   getAdminOpenApiDocument,
   getPublicOpenApiDocument,
-} from '../src/index.js';
+} from '../src/app.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const outputDir = path.join(root, '.artifacts/openapi');

@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/auth-store';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelect } from '../features/study/StudyComponents';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { status, user, error, register } = useAuthStore();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -26,14 +29,15 @@ export default function Register() {
   return (
     <main className="min-h-dvh bg-[var(--background)] px-5 py-8 text-foreground">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center">
-        <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT N3</Link>
-        <section className="surface-card p-6">
-          <h1 className="text-2xl font-semibold">회원가입</h1>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">비밀번호는 10자 이상이며 영문과 숫자를 포함해야 합니다.</p>
-          {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT · TOPIK Study</Link>
+        <LanguageSelect />
+        <section className="surface-card mt-4 p-6">
+          <h1 className="text-2xl font-semibold">{t('study.auth.register')}</h1>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">{t('study.auth.requirement')}</p>
+          {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{t('study.auth.failed')}</p>}
           <form onSubmit={submit} className="mt-5 space-y-4">
             <label className="block text-sm font-semibold">
-              이름
+              {t('study.auth.name')}
               <input
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
@@ -43,7 +47,7 @@ export default function Register() {
               />
             </label>
             <label className="block text-sm font-semibold">
-              이메일
+              {t('study.auth.email')}
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -54,7 +58,7 @@ export default function Register() {
               />
             </label>
             <label className="block text-sm font-semibold">
-              비밀번호
+              {t('study.auth.password')}
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -70,12 +74,12 @@ export default function Register() {
               disabled={submitting}
               className="min-h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white disabled:opacity-60"
             >
-              {submitting ? '가입 중...' : '계정 만들기'}
+              {t(submitting ? 'study.loading' : 'study.auth.create')}
             </button>
           </form>
         </section>
         <p className="mt-5 text-center text-sm text-[var(--muted-foreground)]">
-          이미 계정이 있나요? <Link to="/login" className="font-semibold text-[var(--accent)]">로그인</Link>
+          {t('study.auth.existing')} <Link to="/login" className="font-semibold text-[var(--accent)]">{t('study.auth.login')}</Link>
         </p>
       </div>
     </main>

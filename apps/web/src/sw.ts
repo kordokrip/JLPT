@@ -16,13 +16,11 @@ import {
 import { clientsClaim } from 'workbox-core';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 import {
-  CacheFirst,
+  NetworkOnly,
   StaleWhileRevalidate,
-  NetworkFirst,
 } from 'workbox-strategies';
 import { ExpirationPlugin }        from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { RangeRequestsPlugin }     from 'workbox-range-requests';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -43,17 +41,12 @@ registerRoute(
 
 // ── Runtime Caching ──────────────────────────────────────────────────
 
-// 오디오 파일: CacheFirst, 30일, 500개
+// Owner-private release responses are authentication-bound. Never place them
+// in the Service Worker cache, even if a future broad API caching rule appears.
 registerRoute(
-  ({ url }) => url.pathname.includes('/api/v1/audio/'),
-  new CacheFirst({
-    cacheName: 'nihongo-audio',
-    plugins: [
-      new ExpirationPlugin({ maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 }),
-      new CacheableResponsePlugin({ statuses: [0, 200, 206] }),
-      new RangeRequestsPlugin(),
-    ],
-  }),
+  ({ url }) => url.pathname.includes('/api/v1/tracks/topik-ko/owner-private/')
+    || url.pathname.includes('/api/v1/admin/topik-owner-private/'),
+  new NetworkOnly(),
 );
 
 // 콘텐츠 API (어휘·문법·한자·예문·커리큘럼): StaleWhileRevalidate
@@ -78,15 +71,15 @@ self.addEventListener('push', (event: PushEvent) => {
   try {
     data = event.data ? (event.data.json() as typeof data) : {};
   } catch {
-    data = { title: 'JLPT N3', body: event.data?.text() ?? '새 알림이 있습니다.' };
+    data = { title: 'JLPT · TOPIK Study', body: event.data?.text() ?? '새 학습 알림이 있습니다.' };
   }
 
-  const title   = data.title ?? 'JLPT N3 일본어 학습';
+  const title   = data.title ?? 'JLPT · TOPIK Study';
   const options: NotificationOptions = {
     body:   data.body   ?? '학습 알림이 도착했습니다.',
     icon:   data.icon   ?? '/pwa-192x192.png',
     badge:  data.badge  ?? '/pwa-192x192.png',
-    tag:    data.tag    ?? 'nihongo-notification',
+    tag:    data.tag    ?? 'language-study-notification',
     data:   { url: data.url ?? '/' },
     requireInteraction: false,
   };

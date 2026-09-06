@@ -1,222 +1,26 @@
 /**
- * apps/api/src/routes/audio.ts
+ * Pronunciation storage is deliberately disabled.
  *
- * R2 오디오 프록시.
- *
- * GET  /audio/:key  — Range 요청 지원 (206 Partial Content)
- * HEAD /audio/:key  — 메타데이터만 반환
- *
- * 캐시 전략: Cache-Control: public, max-age=2592000, immutable (30일)
+ * Google speech is selected by the client when a Google voice is available.
+ * The server must never read or serve a pronunciation object from R2.
  */
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import type { AppEnv } from '../types.js';
-import { notFound, badRequest } from '../lib/response.js';
-import {
-  buildAudioQaKey,
-  isValidAudioQaIndex,
-  parseAudioQaKey,
-  parseAudioQaProvider,
-  type AudioQaProvider,
-} from '../lib/audio-qa.js';
+
 const audio = new Hono<AppEnv>();
 
-const CACHE_CONTROL = 'public, max-age=2592000, immutable';
-
-function audioMetadataHeaders(object: Pick<R2Object, 'customMetadata'>): Record<string, string> {
-  const metadata = object.customMetadata ?? {};
-  const headers: Record<string, string> = {};
-  if (metadata.provider) headers['X-Audio-Provider'] = safeHeaderValue(metadata.provider);
-  if (metadata.model) headers['X-Audio-Model'] = safeHeaderValue(metadata.model);
-  if (metadata.audioVersion) headers['X-Audio-Version'] = safeHeaderValue(metadata.audioVersion);
-  return headers;
-}
-
-function safeHeaderValue(value: string): string {
-  return value.replace(/[\r\n]/g, ' ').slice(0, 256);
-}
-
-/** Range 헤더 파싱: "bytes=start-end?" → {start, end?} */
-function parseRange(header: string, totalSize: number): { start: number; end: number } | null {
-  const m = header.match(/^bytes=(\d*)-(\d*)$/);
-  if (!m) return null;
-
-  const rawStart = m[1] as string;
-  const rawEnd   = m[2] as string;
-
-  const start = rawStart.length > 0 ? parseInt(rawStart, 10) : totalSize - parseInt(rawEnd, 10);
-  const end   = rawEnd.length > 0   ? parseInt(rawEnd, 10)   : totalSize - 1;
-
-  if (start > end || start < 0 || end >= totalSize) return null;
-  return { start, end };
-}
-
-async function serveQaAudio(
-  c: Context<AppEnv>,
-  provider: AudioQaProvider,
-  index: number,
-): Promise<Response> {
-  const key = buildAudioQaKey(provider, index);
-  const r2obj = await c.env.ASSETS.get(key);
-  if (!r2obj) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
-
-  return new Response(r2obj.body as ReadableStream, {
-    status: 200,
-    headers: {
-      'Content-Type': r2obj.httpMetadata?.contentType ?? 'audio/wav',
-      'Content-Length': String(r2obj.size),
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': CACHE_CONTROL,
-      'ETag': r2obj.httpEtag,
-      'Last-Modified': r2obj.uploaded.toUTCString(),
-      ...audioMetadataHeaders(r2obj),
-    },
+function r2AudioDisabled(): Response {
+  return Response.json({
+    type: 'https://nihongo-n3.example.com/errors/r2-audio-disabled',
+    title: 'Gone',
+    status: 410,
+    detail: 'R2 발음 저장소는 사용하지 않습니다. Google 우선 동일 언어 브라우저 음성을 사용합니다.',
+  }, {
+    status: 410,
+    headers: { 'Cache-Control': 'no-store' },
   });
 }
 
-async function serveQaAudioHead(
-  c: Context<AppEnv>,
-  provider: AudioQaProvider,
-  index: number,
-): Promise<Response> {
-  const key = buildAudioQaKey(provider, index);
-  const object = await c.env.ASSETS.head(key);
-  if (!object) return notFound(c, `QA 오디오 파일을 찾을 수 없습니다: ${key}`);
-
-  return new Response(null, {
-    status: 200,
-    headers: {
-      'Content-Type': object.httpMetadata?.contentType ?? 'audio/wav',
-      'Content-Length': String(object.size),
-      'Cache-Control': CACHE_CONTROL,
-      'ETag': object.httpEtag,
-      ...audioMetadataHeaders(object),
-    },
-  });
-}
-
-audio.on('HEAD', '/audio/qa/:provider/:file', async (c) => {
-  const provider = parseAudioQaProvider(c.req.param('provider'));
-  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
-  const index = fileMatch ? Number(fileMatch[1]) : NaN;
-  if (!provider || !isValidAudioQaIndex(index)) {
-    return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
-  }
-
-  return serveQaAudioHead(c, provider, index);
-});
-
-// ── GET /audio/qa/:provider/:file ───────
-audio.get('/audio/qa/:provider/:file', async (c) => {
-  const provider = parseAudioQaProvider(c.req.param('provider'));
-  const fileMatch = c.req.param('file').match(/^(\d+)\.wav$/);
-  const index = fileMatch ? Number(fileMatch[1]) : NaN;
-  if (!provider || !isValidAudioQaIndex(index)) {
-    return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
-  }
-
-  return serveQaAudio(c, provider, index);
-});
-
-// ── GET /audio/:key ───────────────────────────
-audio.get('/audio/:key{.+}', async (c) => {
-  const key = c.req.param('key');
-  if (!key) return badRequest(c, '오디오 키가 없습니다');
-  const qaKey = parseAudioQaKey(key);
-  if (qaKey) return serveQaAudio(c, qaKey.provider, qaKey.index);
-  if (key.startsWith('audio/qa/')) return badRequest(c, 'QA 오디오 provider 또는 index가 올바르지 않습니다');
-
-  const rangeHeader = c.req.header('range');
-  // Range 요청이면 R2 range 옵션 사용
-  let r2obj: R2ObjectBody | null;
-  if (rangeHeader) {
-    // 먼저 HEAD로 크기 조회
-    const head = await c.env.ASSETS.head(key);
-    if (!head) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
-
-    const totalSize = head.size;
-    const range = parseRange(rangeHeader, totalSize);
-    if (!range) {
-      return c.text('Range Not Satisfiable', 416, {
-        'Content-Range': `bytes */${totalSize}`,
-      });
-    }
-
-    r2obj = await c.env.ASSETS.get(key, {
-      range: { offset: range.start, length: range.end - range.start + 1 },
-    });
-    if (!r2obj) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
-
-    const length = range.end - range.start + 1;
-    const etag = r2obj.httpEtag ?? head.httpEtag;
-    const lastModified = (r2obj.uploaded ?? head.uploaded).toUTCString();
-
-    return new Response(r2obj.body as ReadableStream, {
-      status: 206,
-      headers: {
-        'Content-Type': r2obj.httpMetadata?.contentType ?? 'audio/mpeg',
-        'Content-Range': `bytes ${range.start}-${range.end}/${totalSize}`,
-        'Content-Length': String(length),
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': CACHE_CONTROL,
-        'ETag': etag,
-        'Last-Modified': lastModified,
-      },
-    });
-  }
-
-  // ── 일반 요청 (전체 파일) ─────────────────
-  r2obj = await c.env.ASSETS.get(key);
-  if (!r2obj) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
-
-  const etag = r2obj.httpEtag;
-  const lastModified = r2obj.uploaded.toUTCString();
-
-  // ETag / If-None-Match 조건부 요청
-  const ifNoneMatch = c.req.header('if-none-match');
-  if (ifNoneMatch && ifNoneMatch === etag) {
-    return new Response(null, {
-      status: 304,
-      headers: {
-        'ETag': etag,
-        'Cache-Control': CACHE_CONTROL,
-      },
-    });
-  }
-
-  return new Response(r2obj.body as ReadableStream, {
-    status: 200,
-    headers: {
-      'Content-Type': r2obj.httpMetadata?.contentType ?? 'audio/mpeg',
-      'Content-Length': String(r2obj.size),
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': CACHE_CONTROL,
-      'ETag': etag,
-      'Last-Modified': lastModified,
-    },
-  });
-});
-
-// ── HEAD /audio/:key ──────────────────────────
-audio.on('HEAD', '/audio/:key{.+}', async (c) => {
-  const key = c.req.param('key');
-  if (!key) return badRequest(c, '오디오 키가 없습니다');
-
-  const head = await c.env.ASSETS.head(key);
-  if (!head) return notFound(c, `오디오 파일을 찾을 수 없습니다: ${key}`);
-
-  return new Response(null, {
-    status: 200,
-    headers: {
-      'Content-Type': head.httpMetadata?.contentType ?? 'audio/mpeg',
-      'Content-Length': String(head.size),
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': CACHE_CONTROL,
-      'ETag': head.httpEtag,
-      'Last-Modified': head.uploaded.toUTCString(),
-      ...audioMetadataHeaders(head),
-    },
-  });
-});
+audio.all('/audio/*', () => r2AudioDisabled());
 
 export { audio };

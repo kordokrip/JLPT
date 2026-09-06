@@ -1,57 +1,51 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { audioPlayer } from '../../lib/audio';
 import type { MouseEvent } from 'react';
-import type { AudioSourcePreference } from '../../lib/audio';
 import type { AudioSurface } from '@nihongo-n3/shared';
 
 interface PronunciationButtonProps {
   text?: string | undefined;
-  audioPath?: string | undefined;
   label?: string;
   className?: string;
   compact?: boolean;
   surface?: AudioSurface;
-  prefer?: AudioSourcePreference;
-  forceBrowser?: boolean;
   slow?: boolean;
   repeat?: number;
 }
 
 export function PronunciationButton({
   text,
-  audioPath,
   label,
   className = '',
   compact = false,
   surface,
-  prefer,
-  forceBrowser = false,
   slow = false,
   repeat = 1,
 }: PronunciationButtonProps) {
   const { t } = useTranslation();
+  const [playbackFailed, setPlaybackFailed] = useState(false);
   const playableText = text?.trim();
-  if (!playableText && !audioPath) return null;
+  if (!playableText) return null;
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    setPlaybackFailed(false);
     void audioPlayer.playPronunciation({
       text: playableText,
-      audioPath,
       ...(surface ? { surface } : {}),
-      ...(prefer ? { prefer } : {}),
-      forceBrowser,
       slow,
       repeat,
       preferGoogleVoice: true,
-    });
+    }).then((played) => setPlaybackFailed(!played)).catch(() => setPlaybackFailed(true));
   };
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      aria-label={label ?? t('browse.playPronunciation')}
+      aria-label={playbackFailed ? t('quiz.browserSpeechFallback') : (label ?? t('browse.playPronunciation'))}
+      title={playbackFailed ? t('quiz.browserSpeechFallback') : undefined}
       className={[
         compact
           ? 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full'
@@ -62,7 +56,8 @@ export function PronunciationButton({
       ].join(' ')}
     >
       <SpeakerIcon className={compact ? 'h-4 w-4' : 'h-4 w-4'} />
-      {!compact && <span>{label ?? t('browse.playPronunciation')}</span>}
+      {!compact && <span>{playbackFailed ? t('quiz.browserSpeechFallback') : (label ?? t('browse.playPronunciation'))}</span>}
+      {compact && playbackFailed && <span className="sr-only" role="alert">{t('quiz.browserSpeechFallback')}</span>}
     </button>
   );
 }

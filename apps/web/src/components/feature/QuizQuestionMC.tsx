@@ -4,44 +4,75 @@
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { audioPlayer } from '../../lib/audio';
+import { recordLearningActivity } from '../../lib/activity-events';
+import type { JlptLevel, QuizMode } from '../../features/quiz/types';
 
 interface Props {
   questionId:  string;
   prompt:      string;
   choices:     string[];
-  audioKey?:   string | undefined;
   audioText?:  string | undefined;
   selected?:   string | undefined;
   onSelect:    (choice: string) => void;
   disabled?:   boolean | undefined;
+  activityContext?: { contentId: string; level: JlptLevel; mode: QuizMode } | undefined;
 }
 
 export default function QuizQuestionMC({
   questionId,
   prompt,
   choices,
-  audioKey,
   audioText,
   selected,
   onSelect,
   disabled = false,
+  activityContext,
 }: Props) {
   const { t } = useTranslation();
-  const [usingSpeechFallback, setUsingSpeechFallback] = useState(false);
+  const [usingBrowserVoice, setUsingBrowserVoice] = useState(false);
+  const [audioFailed, setAudioFailed] = useState(false);
   const promptAudioText = audioText ?? (hasJapanese(prompt) ? prompt : undefined);
-  const canPlayAudio = !!audioKey || !!promptAudioText;
+  const canPlayAudio = Boolean(promptAudioText);
 
   const handleAudio = () => {
-    setUsingSpeechFallback(false);
+    setUsingBrowserVoice(false);
+    setAudioFailed(false);
     audioPlayer
       .playPronunciation({
         text: promptAudioText,
-        audioPath: audioKey,
         surface: 'listening',
         preferGoogleVoice: true,
       })
-      .then(() => setUsingSpeechFallback(!audioKey))
-      .catch(() => setUsingSpeechFallback(!!promptAudioText));
+      .then((played) => {
+        setUsingBrowserVoice(played);
+        setAudioFailed(!played);
+        if (activityContext) {
+          void recordLearningActivity({
+            event_type: 'speech_attempted',
+            learning_track: 'jlpt-ja',
+            content_type: 'jlpt_practice_question',
+            content_id: activityContext.contentId,
+            level_tag: activityContext.level,
+            mode: activityContext.mode,
+            speech_outcome: played ? 'played' : 'unavailable',
+          }).catch(() => undefined);
+        }
+      })
+      .catch(() => {
+        setUsingBrowserVoice(false);
+        setAudioFailed(true);
+        if (activityContext) {
+          void recordLearningActivity({
+            event_type: 'speech_attempted',
+            learning_track: 'jlpt-ja',
+            content_type: 'jlpt_practice_question',
+            content_id: activityContext.contentId,
+            level_tag: activityContext.level,
+            mode: activityContext.mode,
+            speech_outcome: 'error',
+          }).catch(() => undefined);
+        }
+      });
   };
 
   return (
@@ -62,8 +93,13 @@ export default function QuizQuestionMC({
             </svg>
           </button>
         )}
-        {usingSpeechFallback && promptAudioText && (
+        {usingBrowserVoice && promptAudioText && (
           <p className="mb-3 text-[12px] text-[var(--muted-foreground)]" role="status">
+            {t('quiz.browserSpeechPreferred')}
+          </p>
+        )}
+        {audioFailed && (
+          <p className="mb-3 text-[12px] text-[var(--destructive)]" role="alert">
             {t('quiz.browserSpeechFallback')}
           </p>
         )}

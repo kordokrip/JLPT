@@ -4,6 +4,12 @@ import { RootLayout } from './components/layout/RootLayout';
 import { useAuthStore } from './stores/auth-store';
 import type { ReactNode } from 'react';
 import { useSettingsStore } from './stores/settings-store';
+import { learningExperienceEnabled } from './lib/learning-experience';
+const Today = lazy(() => import('./pages/Today'));
+const LearnHub = lazy(() => import('./pages/LearnHub'));
+const QuestionsHub = lazy(() => import('./pages/QuestionsHub'));
+const LearningRecords = lazy(() => import('./pages/LearningRecords'));
+const StudySession = lazy(() => import('./pages/StudySession'));
 
 // ─────────────────────────────────────────────
 // Lazy 페이지 로드
@@ -28,7 +34,12 @@ const Welcome        = lazy(() => import('./pages/Welcome'));
 const Login          = lazy(() => import('./pages/Login'));
 const Register       = lazy(() => import('./pages/Register'));
 const AdminUsers     = lazy(() => import('./pages/AdminUsers'));
-const TopikFoundation = lazy(() => import('./pages/TopikFoundation'));
+const TopikDashboard  = lazy(() => import('./pages/TopikDashboard'));
+const TopikPlacement  = lazy(() => import('./pages/TopikPlacement'));
+const TopikLearn      = lazy(() => import('./pages/TopikLearn'));
+const TopikCharacterTrainer = lazy(() => import('./pages/TopikCharacterTrainer'));
+const TopikReview     = lazy(() => import('./pages/TopikReview'));
+const TopikProgress   = lazy(() => import('./pages/TopikProgress'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -60,6 +71,11 @@ function RequireJlptTrack() {
     : <Navigate to="/track/topik-ko" replace />;
 }
 
+function RequireTopikTrack() {
+  const learningTrack = useSettingsStore((state) => state.learningTrack);
+  return learningTrack === 'topik-ko' ? <Outlet /> : <Navigate to="/" replace />;
+}
+
 // ─────────────────────────────────────────────
 // 루트 라우터
 // ─────────────────────────────────────────────
@@ -70,12 +86,29 @@ export default function App() {
         <Route path="welcome" element={<Welcome />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        {/* Public, read-only browser speech diagnostic. It has no account data
+            or server audio path, so critical playback can be verified without
+            creating a test account. */}
+        <Route path="audio-qa" element={<AudioQa />} />
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
+          {learningExperienceEnabled && <>
+            <Route path="learn" element={<LearnHub />} />
+            <Route path="questions" element={<QuestionsHub />} />
+            <Route path="records" element={<LearningRecords />} />
+            <Route path="study/:id" element={<StudySession />} />
+          </>}
           <Route path="settings"         element={<Settings />} />
           <Route path="admin/users"  element={<AdminUsers />} />
-          <Route path="track/topik-ko" element={<TopikFoundation />} />
+          <Route element={<RequireTopikTrack />}>
+            <Route path="track/topik-ko" element={learningExperienceEnabled ? <Today /> : <TopikDashboard />} />
+            <Route path="track/topik-ko/placement" element={<TopikPlacement />} />
+            <Route path="track/topik-ko/learn" element={<TopikLearn />} />
+            <Route path="track/topik-ko/characters" element={<TopikCharacterTrainer />} />
+            <Route path="track/topik-ko/review" element={<TopikReview />} />
+            <Route path="track/topik-ko/progress" element={<TopikProgress />} />
+          </Route>
           <Route element={<RequireJlptTrack />}>
-            <Route index          element={<Home />} />
+            <Route index          element={learningExperienceEnabled ? <Today /> : <Home />} />
             <Route path="review"  element={<Review />} />
             <Route path="browse/:type"     element={<Browse />} />
             <Route path="browse/:type/:id" element={<BrowseDetail />} />
@@ -93,7 +126,6 @@ export default function App() {
             <Route path="reading/:id"  element={<ReadingDetail />} />
             <Route path="stats"        element={<Stats />} />
             <Route path="add-word"     element={<AddWord />} />
-            <Route path="audio-qa"     element={<AudioQa />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFound />} />

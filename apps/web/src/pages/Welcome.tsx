@@ -1,113 +1,119 @@
+import { BookOpenText, ChartNoAxesColumnIncreasing, Headphones, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../stores/settings-store';
+import { LanguageSelect } from '../features/study/StudyComponents';
 
-const POINTS = [
-  ['01', '문자부터 N3까지', '히라가나, 가타카나, 한자, 어휘, 문법을 한 흐름으로 학습합니다.'],
-  ['02', '매일 이어지는 복습', '퀴즈와 SRS 기록을 계정에 저장해 다음 학습으로 자연스럽게 연결합니다.'],
-  ['03', '운영 가능한 학습 시스템', '관리자 화면에서 회원, 세션, 접속 기록을 확인할 수 있습니다.'],
+const FEATURES = [
+  { key: 'path', icon: BookOpenText },
+  { key: 'audio', icon: Headphones },
+  { key: 'review', icon: Languages },
+  { key: 'progress', icon: ChartNoAxesColumnIncreasing },
 ] as const;
 
 export default function Welcome() {
+  const { t, i18n } = useTranslation();
   const learningTrack = useSettingsStore((state) => state.learningTrack);
   const setLearningTrack = useSettingsStore((state) => state.setLearningTrack);
-  return (
-    <main className="min-h-dvh overflow-hidden bg-[#060807] text-[#fffaf0]">
-      <div className="relative min-h-dvh">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_22%,rgba(196,32,24,0.28),transparent_34%),linear-gradient(120deg,#060807_0%,#07140f_54%,#150302_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,8,7,0.98)_0%,rgba(6,8,7,0.94)_42%,rgba(6,8,7,0.64)_72%,rgba(6,8,7,0.34)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E9D7B3]/60 to-transparent" />
+  const chooseTrack = (track: 'jlpt-ja' | 'topik-ko') => {
+    setLearningTrack(track);
+    useSettingsStore.getState().suggestLanguage(track === 'jlpt-ja' ? 'ko' : 'ja');
+    const language = useSettingsStore.getState().language;
+    void i18n.changeLanguage(language);
+    document.documentElement.lang = language;
+  };
 
-        <div className="relative z-10 mx-auto grid min-h-dvh max-w-7xl items-center gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[0.96fr_1.04fr] lg:px-10">
-          <section className="max-w-xl py-12 lg:py-16">
+  return (
+    <main className="min-h-dvh overflow-x-hidden bg-[var(--background)] text-foreground">
+      <section className="relative flex min-h-[86dvh] items-center overflow-hidden border-b border-black/10 dark:border-white/10">
+        <img
+          src="/brand-hero-eastasia-v2.png"
+          alt={t('welcome.heroAlt')}
+          className="absolute inset-0 h-full w-full object-cover object-[62%_50%] opacity-45 dark:opacity-25 lg:object-right"
+          draggable={false}
+        />
+        <div className="absolute inset-y-0 left-0 w-full bg-[rgba(247,243,234,0.9)] dark:bg-[rgba(17,17,16,0.9)] lg:w-[60%]" aria-hidden="true" />
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
+          <div className="max-w-[680px]">
+            <div className="mb-5"><LanguageSelect /></div>
             <div className="flex items-center gap-3">
               <img
                 src="/brand-mark.png"
-                alt="Nihongo N3 브랜드 로고"
-                className="h-14 w-14 rounded-2xl border border-white/15 object-cover shadow-[0_18px_40px_rgba(0,0,0,0.38)]"
+                alt=""
+                className="h-14 w-14 rounded-[var(--radius-md)] border border-black/10 object-cover shadow-[var(--shadow-soft)] sm:h-16 sm:w-16"
               />
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.32em] text-[#F05A4C]">JLPT N3 Learning OS</p>
-                <p className="mt-1 font-serif-jp text-lg tracking-[0.08em] text-[#F6E8D0]">日本語 学習</p>
+                <p className="text-sm font-black text-[var(--brand-vermilion)]">JLPT · TOPIK Study</p>
+                <p className="mt-1 text-xs font-bold uppercase text-[var(--brand-indigo)] dark:text-[#9BC3AE]">East Asian Language Studio</p>
               </div>
             </div>
 
-            <h1 className="mt-9 text-[44px] font-black leading-[0.98] tracking-tight sm:text-[64px] lg:text-[76px]">
-              계정으로 이어지는<br />일본어 학습 루틴.
+            <h1 className="mt-8 max-w-[620px] break-keep text-4xl font-black leading-[1.08] sm:text-5xl lg:text-6xl">
+              {t('welcome.title')}
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-[#D8CDBB] sm:text-lg">
-              문자, 어휘, 문법, 퀴즈, 복습 기록을 하나의 계정으로 관리합니다.
-              학습자는 매일의 흐름을 이어가고, 관리자는 회원과 접속 상태를 확인합니다.
+            <p className="mt-5 max-w-[600px] break-keep text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
+              {t('welcome.description')}
             </p>
 
-            <div className="mt-7 grid grid-cols-2 gap-3" aria-label="학습 언어 선택">
-              <button
-                type="button"
-                onClick={() => setLearningTrack('jlpt-ja')}
-                className={`min-h-20 border p-4 text-left transition-colors ${learningTrack === 'jlpt-ja' ? 'border-[#F05A4C] bg-[#D82920]/20' : 'border-[#E9D7B3]/20 bg-black/20'}`}
-              >
-                <span className="block text-sm font-black">일본어 · JLPT</span>
-                <span className="mt-1 block text-xs text-[#C9BFAA]">N5부터 N3 학습</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setLearningTrack('topik-ko')}
-                className={`min-h-20 border p-4 text-left transition-colors ${learningTrack === 'topik-ko' ? 'border-[#F05A4C] bg-[#D82920]/20' : 'border-[#E9D7B3]/20 bg-black/20'}`}
-              >
-                <span className="block text-sm font-black">한국어 · TOPIK</span>
-                <span className="mt-1 block text-xs text-[#C9BFAA]">기반 기능 준비 중</span>
-              </button>
-            </div>
+            <fieldset className="mt-8 max-w-[600px]">
+              <legend className="mb-3 text-sm font-bold">{t('welcome.chooseTrack')}</legend>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <TrackChoice
+                  checked={learningTrack === 'jlpt-ja'}
+                  title={t('welcome.jlptTitle')}
+                  description={t('study.jlptWelcome')}
+                  onClick={() => chooseTrack('jlpt-ja')}
+                />
+                <TrackChoice
+                  checked={learningTrack === 'topik-ko'}
+                  title={t('welcome.topikTitle')}
+                  description={t('study.topikWelcome')}
+                  onClick={() => chooseTrack('topik-ko')}
+                />
+              </div>
+            </fieldset>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="/login"
-                className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[#D82920] px-8 text-base font-black text-white shadow-[0_16px_34px_rgba(216,41,32,0.34)] transition-transform hover:-translate-y-0.5"
-              >
-                로그인
-              </a>
-              <a
-                href="/register"
-                className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-[#E9D7B3]/35 bg-[#FFF7E8]/10 px-8 text-base font-black text-[#FFF7E8] backdrop-blur transition-colors hover:bg-[#FFF7E8]/16"
-              >
-                회원가입
-              </a>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Link to="/login" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-7 text-base font-bold text-white shadow-[var(--shadow-soft)] hover:bg-[var(--color-primary-hover)]">
+                {t('welcome.login')}
+              </Link>
+              <Link to="/register" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] border border-[var(--brand-indigo)]/35 bg-[var(--surface-glass)] px-7 text-base font-bold text-[var(--brand-indigo)] backdrop-blur dark:border-white/25 dark:bg-black/20 dark:text-[#FFF8EC]">
+                {t('welcome.register')}
+              </Link>
             </div>
-
-            <div className="mt-9 overflow-hidden border border-[#E9D7B3]/18 bg-black/26 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.32)] lg:hidden">
-              <img
-                src="/brand-hero.png"
-                alt="붉은 일본 우산과 학 일러스트"
-                className="mx-auto h-[360px] w-full object-contain object-center"
-                draggable={false}
-              />
-            </div>
-
-            <div className="mt-10 grid gap-3">
-              {POINTS.map(([number, title, desc]) => (
-                <article key={title} className="border border-[#E9D7B3]/18 bg-black/24 p-5 backdrop-blur-md">
-                  <div className="grid grid-cols-[3.25rem_1fr] gap-4">
-                    <span className="font-serif-jp text-2xl text-[#F05A4C]">{number}</span>
-                    <div>
-                      <h2 className="text-lg font-black text-[#FFF7E8]">{title}</h2>
-                      <p className="mt-1 text-sm leading-6 text-[#C9BFAA]">{desc}</p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="relative hidden min-h-[720px] lg:block">
-            <div className="absolute right-0 top-1/2 h-[82vh] max-h-[850px] w-[50vw] max-w-[740px] -translate-y-1/2 overflow-hidden">
-              <img
-                src="/brand-hero.png"
-                alt="붉은 일본 우산과 학 일러스트"
-                className="h-full w-full object-contain object-right-center drop-shadow-[0_34px_80px_rgba(0,0,0,0.46)]"
-                draggable={false}
-              />
-            </div>
-          </section>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section aria-label={t('welcome.featuresLabel')} className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-x border-black/10 bg-black/10 dark:border-white/10 dark:bg-white/10 lg:grid-cols-4">
+        {FEATURES.map(({ key, icon: Icon }) => (
+          <article key={key} className="min-h-40 bg-[var(--surface)] p-5 sm:p-6">
+            <Icon aria-hidden="true" className="text-[var(--accent)]" size={24} strokeWidth={1.8} />
+            <h2 className="mt-4 text-base font-black">{t(`welcome.features.${key}.title`)}</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{t(`welcome.features.${key}.description`)}</p>
+          </article>
+        ))}
+      </section>
     </main>
+  );
+}
+
+function TrackChoice({ checked, title, description, onClick }: { checked: boolean; title: string; description: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={checked}
+      onClick={onClick}
+      className={`min-h-[92px] rounded-[var(--radius-md)] border p-4 text-left transition-colors ${
+        checked
+          ? 'border-[var(--accent)] bg-[var(--accent-soft)] shadow-[inset_4px_0_0_var(--accent)]'
+          : 'border-[var(--border)] bg-[var(--surface-glass)] hover:border-[var(--brand-jade)]'
+      }`}
+    >
+      <span className="block text-sm font-black">{title}</span>
+      <span className="mt-1 block text-xs leading-5 text-[var(--text-secondary)]">{description}</span>
+    </button>
   );
 }

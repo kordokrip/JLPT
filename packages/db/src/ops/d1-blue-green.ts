@@ -9,6 +9,7 @@ import {
   tablesForPhase,
   type D1TableSpec,
 } from './d1-tables.js';
+import { normalizedD1Export } from './d1-export-normalizer.js';
 
 type Phase = 'content' | 'mutable' | 'all';
 type Options = {
@@ -37,9 +38,7 @@ type FtsParityResult = {
   ftsTable: 'vocab_fts' | 'sentences_fts';
   expectedCount: number;
   actualCount: number;
-  baselineCount: number;
   parityMatches: boolean;
-  baselineMatches: boolean;
   verified: boolean;
 };
 
@@ -62,11 +61,6 @@ type VerificationReport = {
     verified: boolean;
   };
 };
-
-const FTS_BASELINES = {
-  vocab: 3_300,
-  sentences: 1_112,
-} as const;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -98,37 +92,37 @@ function parseOptions(): Options {
   };
 }
 
-function wrangler(args: string[], capture = false): string {
-  const output = execFileSync('pnpm', ['exec', 'wrangler', ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
-  });
-  return output ?? '';
+function wrangler(args: string[], label: string): string {
+  try {
+    return execFileSync('pnpm', ['exec', 'wrangler', ...args], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }) ?? '';
+  } catch {
+    // D1 export output includes temporary signed R2 URLs. Do not expose them
+    // in release logs; the table name is sufficient for operator triage.
+    throw new Error(`Blue/Green transfer failed while ${label}`);
+  }
 }
 
 function exportTable(database: string, table: string, output: string, config: string): void {
   fs.rmSync(output, { force: true });
   wrangler([
     'd1', 'export', database, '--remote', `--table=${table}`,
-    '--no-schema', `--output=${output}`, `--config=${config}`,
-  ]);
+    '--no-schema', '--skip-confirmation', `--output=${output}`, `--config=${config}`,
+  ], `exporting ${database}.${table}`);
 }
 
-function normalizedChecksum(file: string): string {
-  const normalized = fs.readFileSync(file, 'utf8')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('INSERT INTO'))
-    .sort()
-    .join('\n');
+function normalizedChecksum(file: string, ignoredColumns: readonly string[] = []): string {
+  const normalized = normalizedD1Export(file, ignoredColumns);
   return createHash('sha256').update(normalized).digest('hex');
 }
 
 function queryJson(database: string, sql: string, config: string): unknown {
   const raw = wrangler([
     'd1', 'execute', database, '--remote', '--json', `--command=${sql}`, `--config=${config}`,
-  ], true);
+  ], `querying ${database}`);
   return JSON.parse(raw) as unknown;
 }
 
@@ -154,14 +148,14 @@ function deleteTargetRows(options: Options, tables: D1TableSpec[]): void {
   wrangler([
     'd1', 'execute', options.target, '--remote', `--command=PRAGMA defer_foreign_keys = true; ${statements};`,
     `--config=${options.config}`, '--yes',
-  ]);
+  ], `clearing ${options.target}`);
 }
 
 function importTable(options: Options, file: string): void {
   wrangler([
     'd1', 'execute', options.target, '--remote', `--file=${file}`,
     `--config=${options.config}`, '--yes',
-  ]);
+  ], `importing ${path.basename(file)}`);
 }
 
 function pruneSessions(options: Options): void {
@@ -169,7 +163,7 @@ function pruneSessions(options: Options): void {
     'd1', 'execute', options.target, '--remote',
     '--command=DELETE FROM auth_sessions WHERE revoked_at IS NOT NULL OR expires_at <= unixepoch()',
     `--config=${options.config}`, '--yes',
-  ]);
+  ], `pruning sessions in ${options.target}`);
 }
 
 function rebuildFts(options: Options): void {
@@ -177,7 +171,7 @@ function rebuildFts(options: Options): void {
     'd1', 'execute', options.target, '--remote',
     "--command=INSERT INTO vocab_fts(vocab_fts) VALUES('rebuild'); INSERT INTO sentences_fts(sentences_fts) VALUES('rebuild');",
     `--config=${options.config}`, '--yes',
-  ]);
+  ], `rebuilding FTS in ${options.target}`);
 }
 
 function collectFtsParity(options: Options): FtsParityResult[] {
@@ -189,18 +183,14 @@ function collectFtsParity(options: Options): FtsParityResult[] {
   ] as const).map(([sourceTable, ftsTable]) => {
     const expectedCount = countTable(options.target, sourceTable, options.config);
     const actualCount = countTable(options.target, ftsTable, options.config);
-    const baselineCount = FTS_BASELINES[sourceTable];
     const parityMatches = expectedCount === actualCount;
-    const baselineMatches = expectedCount === baselineCount;
     return {
       sourceTable,
       ftsTable,
       expectedCount,
       actualCount,
-      baselineCount,
       parityMatches,
-      baselineMatches,
-      verified: parityMatches && baselineMatches,
+      verified: parityMatches,
     };
   });
 }
@@ -220,8 +210,8 @@ function collectVerification(
 
     const sourceCount = count(options.source, table, options.config);
     const targetCount = count(options.target, table, options.config);
-    const sourceChecksum = table.checksum ? normalizedChecksum(sourceFile) : null;
-    const targetChecksum = table.checksum ? normalizedChecksum(targetFile) : null;
+    const sourceChecksum = table.checksum ? normalizedChecksum(sourceFile, table.checksumIgnoreColumns) : null;
+    const targetChecksum = table.checksum ? normalizedChecksum(targetFile, table.checksumIgnoreColumns) : null;
     const checksumMatches = table.checksum ? sourceChecksum === targetChecksum : null;
     return {
       table: table.name,

@@ -1,42 +1,65 @@
-# Source Map — 일본어 Zero → JLPT N3 학습 소스 지도
+# 학습 원본·데이터 흐름 지도
 
-## 본 노트북의 목적
-30~40대 한국어 화자(시스템 아키텍트, 분석적 사고형 성인 학습자)가
-12개월 안에 일본어 Zero → JLPT N3에 도달하기 위한 완결형 학습 소스 묶음.
+최종 점검: 2026-08-30 KST. 원본, builder, Production/Preview release를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다.
 
-## 소스 구성과 사용 우선순위
+## Production source map
 
-| 번호 | 파일 | 용도 | 우선 참조 시점 |
-|---|---|---|---|
-| 01 | 학습 전략 문서 | 모든 학습 활동의 근거·원칙 | 항상 |
-| 02 | 발음·카나 | 0~1단계 (3일+2주) | 학습 첫 17일 |
-| 03 | N5 한자 103자 | 2단계 | 1~2개월 |
-| 04 | N5 어휘 800 | 2단계 | 1~2개월 |
-| 05 | N5 문법 80 | 2단계 | 1~2개월 |
-| 06 | N4 한자 181자 | 3단계 | 3~5개월 |
-| 07 | N4 어휘 1500 | 3단계 | 3~5개월 |
-| 08 | N4 문법 150 | 3단계 | 3~5개월 |
-| 09 | N3 한자 370자 | 4단계 | 6~10개월 |
-| 10 | N3 어휘 3700 | 4단계 | 6~10개월 |
-| 11 | N3 문법 200 | 4단계 | 6~10개월 |
-| 12 | 예문집 | 모든 단계 통합 | 항상 |
+| 범위              | 원본                         | builder                                             | Production 상태              |
+| ----------------- | ---------------------------- | --------------------------------------------------- | ---------------------------- |
+| JLPT N5           | `docs/01_n5`               | `content-manifest.ts`                             | 어휘·문법·한자 공개        |
+| JLPT N4           | `docs/02_n4`               | `content-manifest.ts`                             | 어휘·문법·한자 공개        |
+| JLPT N3 canonical | `docs/03_n3`               | `content-manifest.ts`                             | 어휘·문법·한자 공개        |
+| 공용 자료         | `docs/04_supplement`       | `content-manifest.ts`                             | 예문·직무·계획 공개        |
+| JLPT N2           | `docs/05_n2`               | `n2-batch1.ts`–`n2-batch5.ts`                  | Batch 1–5 공개              |
+| JLPT N1           | `docs/06_n1`               | `n1-batch1.ts`–`n1-batch4.ts`                  | Batch 1–4 공개              |
+| TOPIK owner       | `docs/07_topik/02`–`05` | `topik-owner-curriculum-batch1.ts`–`batch4.ts` | 1–6급, 5영역 공개           |
+| TOPIK placement   | `docs/07_topik`            | placement v2 builder                                | v2 공개                      |
+| TOPIK practice    | `docs/07_topik`            | practice v2 builder                                 | v2 300 공개; v1 보존·비공개 |
 
-## 사용 규칙
-1. 모든 응답은 위 소스 안에서만 작성하고 [소스 N] 형식으로 인용한다.
-2. 소스에 없는 정보는 "소스 없음"으로 명시한다.
-3. 학습 활동 설계 시 반드시 소스 01의 학습 원칙(SRS, 인출, 인터리빙, Desirable Difficulty,
-   Dual Coding, Mnemonic, Sleep Consolidation)을 근거로 인용한다.
+TOPIK practice v2는 “공개 후보”가 아니라 2026-08-17 production 공개 상태입니다.
 
-## 학습자 프로필
-- 한국어 모어 화자
-- 30~40대 성인
-- 직업: 시스템 아키텍트 / C++·Python·C# 능숙
-- 강점: 분석적 사고, 구조화, 메타인지
-- 약점(예상): 일본어 피치 액센트, 장단음, 음/훈독 변별
-- 가용 시간: 하루 60분, 주 5~6일
+## 2026-08-19 Production release source map
 
-## 도달 목표
-- 0~17일: 카나 100% 마스터 + 박·피치 감각
-- 2개월: JLPT N5 합격선 (한자 103, 어휘 800, 문법 80)
-- 5개월: JLPT N4 합격선 (한자 284 누적, 어휘 1500, 문법 150)
-- 12개월: JLPT N3 합격선 (한자 654 누적, 어휘 3700, 문법 200)
+| release                                  | 자체 저작 원본                                                      | builder/review                                                                            | Production 상태      |
+| ---------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------- |
+| `jlpt-n3-practice-v1-2026-08-19` (120) | `packages/db/src/content/jlpt-n3-topik-owner-expansion-source.md` | `jlpt-n3-practice-bank-v1.ts`, `content-expansion-adversarial-review-1.ts`, `-2.ts` | 120 links, published |
+| `topik-owner-batch5-2026-08-19` (20)   | 같은 source                                                         | `topik-owner-curriculum-batch5.ts`, 같은 두 review artifact                             | 20 links, published  |
+| `topik-practice-v2-2026-08-17` (300)   | 기존 v2 evidence/audit                                              | `backfill-topik-practice-v2-release.ts`                                                 | 300 links, published |
+
+세 release는 `0026` release-quality link와 G0–G4 evidence를 거쳐 production에 반영됐습니다. source release SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다. 이후 release도 같은 승인 경로를 사용합니다.
+
+## 2026-08-23 Preview source map
+
+| release                            | 자체 저작 원본                                             | builder/review                                    | 상태                                |
+| ---------------------------------- | ---------------------------------------------------------- | ------------------------------------------------- | ----------------------------------- |
+| `jlpt-n2-practice-v1-2026-08-23` | `packages/db/src/seed/jlpt-n2-n1-practice-content-v1.ts` | `jlpt-n2-n1-practice-banks-v1.ts`, Reviewer A/B | Preview 60 links; Production 미반영 |
+| `jlpt-n1-practice-v1-2026-08-23` | 같은 source                                                | 같은 builder/reviewer                             | Preview 60 links; Production 미반영 |
+| `topik-owner-batch6-2026-08-23`  | `packages/db/src/seed/topik-owner-curriculum-batch6.ts`  | Batch 6 builder, Reviewer A/B                     | Preview 40 links; Production 미반영 |
+
+공통 intake는 `packages/db/src/content/next-content-expansion-intake.json`, 자체 저작 선언은 `next-content-expansion-source.md`, 품질/독립 리뷰 artifact는 `.artifacts/content-quality/next-content-expansion-*`입니다. Preview 검증은 [릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+
+## 런타임 데이터 map
+
+```text
+퀴즈/owner/Google speech
+  → web Dexie activity queue
+  → POST /api/v1/activity/events
+  → learning_activity_events (production 0024)
+  → GET /api/v1/activity/summary
+  → due review → incomplete owner → weakest area
+```
+
+퀴즈 `weakest`는 최근 30일 오답을 보되 요청 JLPT 급수를 벗어나지 않습니다. TOPIK owner complete와 FSRS review event는 해당 서버 transaction과 함께 기록됩니다.
+
+## Speech map
+
+```text
+audio_script_ja / audio_text_ko
+  → content_speech_bindings(provider=google-browser)
+  → browser Google voice
+  → played | unavailable | error activity event
+```
+
+R2는 이 경로에 존재하지 않습니다. 음성 binary, R2 key, R2 fallback을 생성·저장·조회하지 않습니다. legacy `/api/v1/audio/*`는 `410 Gone`, `content_audio_bindings`는 production `0027` 이후 신규 insert가 금지됩니다.
+
+원본 본문을 바꾸면 source SHA와 manifest/version이 바뀝니다. 제목의 목표 수량 대신 seed plan과 fresh verifier를 최종 기준으로 사용합니다.
