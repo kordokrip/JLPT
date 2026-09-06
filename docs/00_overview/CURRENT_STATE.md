@@ -43,9 +43,23 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 - 후속 원격 검사에서 자유 SRS가 서버due를 기기시각으로 다시 필터링하는 clock-skew 결함(`INC-SRS-051`)을 발견해 Web 수정 중입니다. 원격 나머지72건은32 pass/3 skip/3 fail/34 not-run이었으며 전체통과가 아닙니다. 함께 실패한 mock records는 interception0을 재현하고 해당fixture만SW차단하여2건을 통과했습니다. 상세 재현·계측·최신 후보는 계획/오류원장에 기록합니다.
 - 마지막 Production 전체 read-only 재검사는 `49 passed / 2 warnings / 2 failed`, exit1입니다. 실패는 여전히 Production 미반영 TOPIK status/CSP입니다. 06:09 UTC 최초 검사의 R2 7403은 후속 검사에서 재발하지 않았고 9개 표면 참조는 0입니다. 단발 실패의 원인은 미확정으로 보존합니다.
 
-### 최신 후속 후보: 복습 카드·검증 경계
+### 배포된 Preview: 복습 카드·검증 경계
 
-기기 시각 차이로 서버 due 카드가 숨는 결함(`INC-SRS-051`), 카드 양면 접근성/키보드 충돌(`INC-SRS-053`)을 수정했습니다. 같은 언어 음성 엔진·API·DB schema·FSRS 날짜·공개 콘텐츠는 변경하지 않습니다. mock 기록 화면의 SW interception과 긴 세션의 개별 요청5초 계측도 독립 검토했습니다. 최신 전체 로컬 gate는 **Ops26 / DB126 / Web126 / API162 = 440개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane 모두 exit0입니다(`srs-accessibility-full-gate.log`). 전체 브라우저는 **211 pass / 30 시각-baseline 정책 skip / 0 fail**, exit0입니다(`srs-accessibility-final-e2e.log`). 새 Pages Preview 반영은 다음 단계이며 이전 실패209/30/2를 최신 통과로 인용하지 않습니다.
+기기 시각 차이로 서버 due 카드가 숨는 결함(`INC-SRS-051`), 카드 양면 접근성/키보드 충돌(`INC-SRS-053`)을 수정했습니다. 같은 언어 음성 엔진·API·DB schema·FSRS 날짜·공개 콘텐츠는 변경하지 않습니다. mock 기록 화면의 SW interception과 긴 세션의 개별 요청5초 계측도 독립 검토했습니다. 최신 전체 로컬 gate는 **Ops26 / DB126 / Web126 / API162 = 440개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane 모두 exit0입니다(`srs-accessibility-full-gate.log`). 전체 브라우저는 **211 pass / 30 시각-baseline 정책 skip / 0 fail**, exit0입니다(`srs-accessibility-final-e2e.log`).
+
+commit/push한 source `5311ab72c2aafa001fb436e50cd1335d775c81b4`를 Pages **`d51a81ed-2561-4900-899f-022b99d67679`**에 배포했습니다. Worker0b20e39/6f0c0e41과 D1은 유지하며 추가 migration/seed는 없습니다. 원격78건은 **73 pass / 4 fixture skip / 1 fail**, exit1입니다. WebKit의 SW access-control 오류(`INC-PWA-056`)는 후속3회 진단에서 재발하지 않았지만 원인 미확정이며 전체 통과로 바꾸지 않습니다. 직전 Pages rollback은 a95437fc입니다.
+
+09:37–09:39 UTC 실제 Chrome Native DevTools 관측에서 양언어 각1회 정상 종료, R2/legacy audio 요청0을 확인했습니다. Network 전체18개 중 sanitized HAR의 HTTPS16개는 모두 해당 Preview origin/200이고 나머지2개는 확장 프로그램 리소스입니다. Console에는 SW/module preload 경고6개·오류0개가 있어 이전 관측의 warn/error0과 분리합니다. d51a81ed의 사람 가청 확인은 대기 중입니다. 사용자의 “두 언어 모두 들렸습니다”는 질문에 명시된 a95437fc/source94dfb05에만 연결합니다.
+
+### 최신 안정성 수정본 — 로컬 검증 완료, 미배포
+
+- `INC-AUTH-054`: 로그인/가입 뒤 트랙 변경 실패 시 실제 서버 트랙을 유지합니다.
+- `INC-LEARN-055`: 완료·중단된 세션의 원래 생성 request_id 재전송이 다른 최신 세션을 반환하지 않게 수정했습니다.
+- `INC-SET-057`: 프로필 GET 로딩/실패를 미설정으로 오인하지 않고, 늦은 저장 응답을 원래 계정·트랙에만 연결합니다.
+- 독립 Agent 검토·fail-first·단위·실제 DB/API/UI 연동으로 교차검증했습니다. 최신 `settings-final-full-gate.log`는 **Ops26 / DB126 / Web139 / API167 = 458개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane exit0입니다. 전체 `settings-final-local-e2e.log`는 **217 pass / 30 시각 기준 정책 skip / 0 fail**, exit0입니다.
+- 기존 데이터 보존은 양 트랙 사용자 설정·진행률·FSRS·일지·퀴즈·활동이 비어 있지 않은 upgrade fixture로 검사했습니다. OAuth bridge는 실제 local Workers/D1을 쓰지만 Google token/userinfo만 mock이므로 실제 SSO 로그인 증거가 아닙니다.
+- 같은 Preview Google 검사 **2 pass / 2 fail**: 비활성 버튼 표시는 정상, 실제 OAuth start는 양 엔진503입니다. Preview 전용 callback/secret은 미설정이며 로컬 값은 Production callback입니다. 임의 복사하거나 실제 SSO를 통과 처리하지 않았습니다.
+- 이후 수정본은 HEAD5311ab7 위 작업 트리이며 새 Preview/Production 반영·최종 push·삭제는 하지 않았습니다. 새 Preview 검증, 실제 SSO·음성 가청, 새 Production backup/restore와 릴리스 gate가 남았습니다.
 
 ## Production 콘텐츠 (기존 기준선)
 

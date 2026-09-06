@@ -229,12 +229,15 @@ routes.post("/study/sessions", async (c) => {
   const db = c.env.DB,
     user = c.get("userId"),
     track = c.get("learningTrack");
-  const existing = await db
+  // A replay keeps its original session even after completion/abandonment and
+  // a newer open session. Use the same priority when recovering a create race.
+  const requestedOrOpenSession = () => db
     .prepare(
-      "SELECT * FROM study_sessions WHERE user_id=? AND learning_track=? AND (request_id=? OR status IN ('active','paused')) ORDER BY created_at DESC LIMIT 1",
+      "SELECT * FROM study_sessions WHERE user_id=? AND learning_track=? AND (request_id=? OR status IN ('active','paused')) ORDER BY (request_id=?) DESC,created_at DESC LIMIT 1",
     )
-    .bind(user, track, parsed.data.request_id)
+    .bind(user, track, parsed.data.request_id, parsed.data.request_id)
     .first<SessionRow>();
+  const existing = await requestedOrOpenSession();
   if (existing) return ok(c, await sessionDto(db, existing));
   const profile = await profileFor(db, user, track);
   if (!profile.configured)
@@ -289,12 +292,7 @@ routes.post("/study/sessions", async (c) => {
   try {
     await db.batch(statements);
   } catch (error) {
-    const raced = await db
-      .prepare(
-        "SELECT * FROM study_sessions WHERE user_id=? AND learning_track=? AND status IN ('active','paused')",
-      )
-      .bind(user, track)
-      .first<SessionRow>();
+    const raced = await requestedOrOpenSession();
     if (raced) return ok(c, await sessionDto(db, raced));
     throw error;
   }

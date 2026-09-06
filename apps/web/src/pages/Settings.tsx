@@ -15,6 +15,7 @@ import { useAuthStore } from '../stores/auth-store';
 import { audioPlayer } from '../lib/audio';
 import type { PlaybackRate } from '../lib/audio';
 import type { ReactNode } from 'react';
+import type { LearningProfile, LearningTrackId } from '@nihongo-n3/shared';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
   getNotificationPermission,
@@ -51,10 +52,29 @@ export default function Settings() {
   } = useSettingsStore();
   const switchTrack = useAuthStore((s) => s.switchTrack);
   const profile=useLearningProfile(),scope=useDataScope(),queryClient=useQueryClient();
-  const saveInstruction=useMutation({mutationFn:async(value:'ko'|'ja'|'en')=>{
-    if(!learningExperienceEnabled||!profile.data?.configured)return null;
-    return learningApi.saveProfile({...profile.data,instruction_language:value});
-  },onSuccess:(saved,value)=>{setInstructionLanguage(learningTrack,value);if(saved)queryClient.setQueryData(['learning-profile',scope],saved);}});
+  const profileUnknown = learningExperienceEnabled && (!profile.isSuccess || !profile.data);
+  const saveInstruction = useMutation({
+    mutationFn: async (change: {
+      value: 'ko' | 'ja' | 'en'; profile: LearningProfile | undefined;
+      scope: string; track: LearningTrackId; userId: string | null;
+    }) => {
+      if ((useAuthStore.getState().user?.id ?? null) !== change.userId
+        || useSettingsStore.getState().learningTrack !== change.track) {
+        throw new Error('Account or learning track changed before saving preferences');
+      }
+      if (!learningExperienceEnabled) return null;
+      if (!change.profile) throw new Error('Learning profile is not ready');
+      if (!change.profile.configured) return null;
+      return learningApi.saveProfile({ ...change.profile, instruction_language: change.value });
+    },
+    onSuccess: (saved, change) => {
+      if (saved) queryClient.setQueryData(['learning-profile', change.scope], saved);
+      if ((useAuthStore.getState().user?.id ?? null) === change.userId
+        && useSettingsStore.getState().learningTrack === change.track) {
+        setInstructionLanguage(change.track, change.value);
+      }
+    },
+  });
 
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
@@ -130,8 +150,14 @@ export default function Settings() {
                   { value: 'ja', label: '日本語' },
                 ]}
             value={instructionLanguages[learningTrack]}
-            onChange={(value) => {if(!saveInstruction.isPending)saveInstruction.mutate(value);}}
+            disabled={profileUnknown || saveInstruction.isPending}
+            onChange={(value) => {
+              if (!profileUnknown && !saveInstruction.isPending) {
+                saveInstruction.mutate({ value, profile: profile.data, scope, track: learningTrack, userId: authUser?.id ?? null });
+              }
+            }}
           />
+          {learningExperienceEnabled && profile.isPending && <p role="status">{t('study.loading')}</p>}
           {saveInstruction.isPending&&<p role="status">{t('study.saving')}</p>}
           {(saveInstruction.isError || profile.isError)&&<StudyRequestError error={saveInstruction.error ?? profile.error} />}
         </SettingRow>
@@ -332,12 +358,13 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 function SegmentControl<T extends string | number>({
-  options, value, onChange, testId,
+  options, value, onChange, testId, disabled = false,
 }: {
   options: { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
   testId?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-wrap gap-1 rounded-lg bg-[var(--border)]/30 p-1" data-testid={testId ? `${testId}-control` : undefined}>
@@ -345,9 +372,10 @@ function SegmentControl<T extends string | number>({
         <button
           key={String(opt.value)}
           type="button"
+          disabled={disabled}
           data-testid={testId ? `${testId}-option-${String(opt.value)}` : undefined}
           onClick={() => onChange(opt.value)}
-          className={`min-h-10 rounded px-3 text-xs font-medium transition-colors sm:min-h-11 ${
+          className={`min-h-10 rounded px-3 text-xs font-medium transition-colors sm:min-h-11 disabled:cursor-wait disabled:opacity-50 ${
             value === opt.value
               ? 'bg-card text-[var(--accent)] shadow-sm'
               : 'text-[var(--muted-foreground)] hover:text-foreground'

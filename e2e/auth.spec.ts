@@ -15,15 +15,24 @@ test.describe('로그인 온보딩', () => {
     await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
   });
 
-  test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page }) => {
+  test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page, request }) => {
+    const response = await request.get('/api/v1/auth/config');
+    expect(response.status()).toBe(200);
+    const { data: config } = await response.json();
+    expect(typeof config.google_enabled).toBe('boolean');
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    const googleLogin = page.getByRole('link', { name: 'Google로 로그인' });
+    // An intentionally disabled anchor has no href and therefore no link role.
+    // This checks config rendering only; the next test still requires real
+    // OAuth start availability and must fail when Preview SSO is disabled.
+    const googleLogin = page.locator('a').filter({ hasText: /^Google로 로그인$/ });
     await expect(googleLogin).toBeVisible();
-    const href = await googleLogin.getAttribute('href');
-    if (href) {
-      expect(href).toContain('/api/v1/auth/google/start');
+    if (config.google_enabled) {
+      await expect(googleLogin).toHaveAttribute('href', /\/api\/v1\/auth\/google\/start/);
+      await expect(googleLogin).toHaveAttribute('aria-disabled', 'false');
     } else {
-      await expect(page.getByText('Google SSO는 운영 환경변수 설정 후 활성화됩니다.')).toBeVisible();
+      await expect(googleLogin).not.toHaveAttribute('href');
+      await expect(googleLogin).toHaveAttribute('aria-disabled', 'true');
+      await expect(page.getByText('현재 Google 로그인을 사용할 수 없습니다.', { exact: true })).toBeVisible();
     }
   });
 

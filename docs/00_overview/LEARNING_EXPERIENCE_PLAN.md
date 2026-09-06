@@ -207,3 +207,41 @@
 - 같은 source 최종 전체 E2E는 **211 passed / 30 skipped / 0 failed**,3.6분·exit0이다(`srs-accessibility-final-e2e.log`). skip은 Chromium 전용 시각baseline의 WebKit30건이며 SRS 음성은 더 이상 skip하지 않는다. 시계 차이·클릭/Enter/Space·전 급수 저장/재개·모바일/PWA를 포함하고 음성은 mock 회귀로 한정한다. 독립 Agent는 SRS stale/계정 경계와 마지막 쓰기응답 누락 방지·mock SW 격리의 코드 검토에서 차단 결함을 찾지 못했다.
 
 참고 패턴: [뇌새김](https://www.brain-study.co.kr/wm/bbs/board.php?bo_table=notice&wr_id=2053)의 연상·암기장, [WaniKani](https://www.wanikani.com/)의 개념 연결·SRS, [Duolingo](https://blog.duolingo.com/duolingo-101-how-to-learn-a-language-on-duolingo/)의 짧은 학습 경로, [TEUIDA](https://www.teuida.net/en/learn/korean)의 상황별 학습. 광고상의 효과를 본 제품의 검증된 학습 효과로 인용하지 않는다.
+
+## 기존 기능 안정성 목표 — 완료 판정은 미확정
+
+현재 사용자 목표는 신규 기능 없이 기존 리팩터링/D1의 영향도를 두 차례 이상 교차검증하고, 발견 결함 수정·재검증→사용 여부 확인 후 정리→문서→배포→Git push 순서를 마치는 것이다. 앞선 Preview 배포/push는 이 최종 Production 완료 판정이 아니다. 기존 콘텐츠 추가 공개나 OAuth 권한 확대를 자동 승인하지 않는다.
+
+| 요구 | 1차 증거 | 독립/연동 증거 | 현재 판정 |
+| --- | --- | --- | --- |
+| 로그인·설정 | auth 트랙 실패와 Settings 지연/실패/계정 경계 fail-first 후 최소 수정 | 독립 Settings/store22개, 실제 양 엔진 설정14개 통과; 최신 전체 gate458개·E2E217개에 포함 | 로컬 통과, 수정본의 Preview 후속 필요 |
+| Google SSO | 로컬 provider mock callback/SSO start 테스트 | Preview config false/start503 직접 조회 | 실제 provider 로그인 미검증; 통과 아님 |
+| 기존 사용자 데이터 | upgrade 전후 users/daily_logs/SRS 및 legacy tables 비교 | 독립 DB16·전체DB126·API114 통과; 기존 TOPIK/quiz 등 비어있지 않은 fixture 보강 완료 | 운영 실제 snapshot 현재성·기존 기록 연동 추가 확인 |
+| 학습 메모리·기록 | 세션/annotation/FSRS 단위 및 종료 request_id 재전송3개 | 최신 local full217/30/0; 배포된 Preview78건은73/4/1 | 새 수정본의 원격 검증 필요; 부분 결과 합산 금지 |
+| 정리·문서 | docs64/링크81·lifecycle 통과 | 미사용 후보의 runtime/history 참조 독립 감사 | 모든 검증 완료 전 삭제하지 않음 |
+| 최종 배포 | 사용자 목표의 검증 완료 후 배포 조건 | 실제 SSO, 최종 source의 실제 음성/가청, 새 backup·restore 등 gate 필요 | Production 미변경, 완료 아님 |
+
+`d1:backup`은 원격 export 중 query 중단 가능성 때문에 승인된 maintenance window를 요구한다. 이번 점검에서 임의로 `--allow-downtime`을 사용하지 않는다. 이전 snapshot으로 한 local restore와 새 Production backup을 구분한다. 실제 사용자 원문·인증정보·backup은 커밋하지 않는다.
+
+- d51a81ed 원격78건 최종: **73 pass / 4 fixture skip / 1 fail**,14.9분·exit1. WebKit 한자퀴즈의 SW access-control pageerror를 `INC-PWA-056`으로추적한다. session write SLO4건은 pending0/failures0, 최댓값Chromium ko2693/ja2688ms·WebKit ko2916/ja2736ms로모두5초이하였다. 이4건이전체gate실패를대신하지않는다.
+- 안정성 후속의 1차 집중 검사: login/register setTrack 실패2건→최소 수정과 정상 변경2건, settings v6→v7 실제 rehydrate2건을 포함한 독립 Web22개 통과. 실제 local 인증·설정 UI/서버 바인딩은20건 통과했다. 기존 user/TOPIK/FSRS/quiz/activity fixture의 migration 비교를 보강해 DB126개 통과했다. 세션 request_id 재전송3개 fail-first는 최소 정렬 수정 후 API165개 통과했다. 이후 전체 결과는 아래에 구분한다.
+
+### 안정성 후속 전체 검사와 새로 드러난 설정 오류
+
+- `stability-full-gate.log`: **Ops26/DB126/Web132/API167 = 451개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane, exit0. `stability-local-final-e2e.log`: **215 pass / 30 시각-policy skip / 0 fail**,3.8분·exit0. INC-AUTH-054/LEARN-055 및 강화된 migration/settings/bridge 검사를 포함한다. 새로 드러난 INC-SET-057 수정 전 기준선이다.
+- 신규 OAuth bridge2개는 실제localWorkers/D1 canonical인증schema에서 cross-origin callback→Pages `/api/v1/auth/complete`→세션cookie→`/auth/me`/D1 track 및 순차재사용거부를검사한다. Google token/userinfo 응답은mock이며 실제Googleprovider·브라우저cookie정책통과로표기하지않는다.
+- 기존Preview의 auth/settings20건은 **14 pass / 6 fail**,exit1. Google비활성4건과 profile조회중PUT누락2건을구분했다. 후자는 `INC-SET-057`으로실제코드경로와교차확인해수정중이다. 로컬에서는빨라서통과했던UI→서버연동의경계이며 testtimeout상향으로해결하지않는다.
+- SW진단은같은Preview의WebKit한자퀴즈3회/exit0,각trace의`/sw.js`200·failure없음이다. 최초오류는원인미확정으로남기며네트워크오류를무시하는코드/테스트변경은하지않았다.
+- 로컬`apps/api/.env`와`.dev.vars`에는동일Google설정이있으나callback은ProductionWorker다. 값은출력/커밋하지않았고Preview에복사하지않았다. 전용Preview설정준비여부를사용자에게문의했다.
+
+### 최신 안정성 재검증 — Production 완료 아님
+
+- INC-SET-057의 확장 fail-first **3 fail / 3 pass** 후, 프로필 조회 중/실패 차단 및 요청 당시 계정·트랙 cache 바인딩을 수정했다. 기존 기능 플래그 false·미설정 계정의 로컬 동작은 보존했다. 독립 검토와 Settings7/store15 단위 **22 pass**, 실제 서버 payload 지연을 포함한 양 엔진 설정 **14 pass**다. 임의 응답을 주입하거나 시간 한도/PUT 검사를 낮추지 않았다.
+- 최종 전체 `learning-experience-2026-09-06-settings-final-full-gate.log`: **Ops26 / DB126 / Web139 / API167 = 458개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane, **exit0**. fresh workspace는 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-dvxMDm/artifacts`다.
+- `learning-experience-2026-09-06-settings-final-local-e2e.log`: **217 pass / 30 시각 기준 정책 skip / 0 fail**,3.8분·**exit0**. 모바일·PWA·전 급수·저장/재개와 기존 기능을 포함하지만 실제 Google provider 또는 물리 음성으로 확대 해석하지 않는다. 이후 runtime/test source를 바꾸지 않았다.
+- 기존 Preview의 Google UI 검사는 `/auth/config`와 비활성 anchor의 href/aria-disabled를 대조하도록 교정했다. 실제 start302 검사는 그대로 유지했다. 같은 d51a81ed에서 **2 pass / 2 fail**,exit1이며 두 실패 모두 start503이다. 실제 SSO는 미완료다.
+- 09:37–09:39 UTC, 실제 Chrome 앱의 DevTools Network 기록을 켠 뒤 d51a81ed `/audio-qa` 새로고침→일본어 onend→한국어 onend를 관측했다. UI18개 요청 중 sanitized HAR16개 HTTPS 요청은 모두 동일 Preview origin/200이고 다른2개는 확장 리소스다. R2 발음/legacy audio 요청0을 확인했다. `srs-chrome-network.har` SHA-256은 `7d3975389f1873f0e5442d426ee733f610a069d56393b14b2b41aa460ee30cb0`이다. native Console 경고6개는 SW resource mismatch/unused preload 각3개며 오류0개다. 최초 WebKit access-control 실패의 원인으로 단정하지 않는다.
+- 최신 실제 음성 artifact `srs-preview-actual-audio-network.json`의 predeploy는 **2개 누락/exit1**이다(사람 가청·확인자). 사용자의 답변은 질문 URL인 a95437fc/source94dfb05에만 연결한다. 앞선 network null/4개 누락 artifact와 중간 실패 로그도 보존한다.
+- 현재 최신 소스는 HEAD5311ab7 위 작업 트리다. 신규 기능·콘텐츠 공개·운영 DB 변경·추가 배포·최종 Git push·파일 삭제는 하지 않았다. Preview OAuth 전용 설정과 실제 로그인, 최종 후보 Preview 재검증, 새 Production backup/restore·승인 gate가 필요하다. 수정이 생기면 해당 후보의 gate를 새로 실행한다.
+
+독립 검토의 한계도 남긴다. 설정 reload 검사는 서버와 로컬값이 이미 같은 상태의 보존을 검증한다. 상충하는 로컬값 또는 새 기기 복원까지 직접 증명한 것으로 쓰지 않는다. GET 실패 뒤에는 reload/재조회로 복구하며 새 재시도 UX를 이번 안정성 범위에 추가하지 않았다.

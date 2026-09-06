@@ -32,6 +32,14 @@
 
 ### 새 학습 UX Preview 후보
 
+**다음 작업 시작점:** HEAD5311ab7 위 미커밋 안정성 수정본에 INC-AUTH-054(트랙 저장 실패), LEARN-055(종료 세션 request_id 재전송), SET-057(프로필 조회 중 설정 저장·늦은 계정/트랙 응답)을 수정했다. 최신 전체 로컬 gate **458개**, 전체 브라우저 **217 pass / 30 시각 정책 skip / 0 fail**, 각각 exit0이다. `settings-final-full-gate.log`와 `settings-final-local-e2e.log`를 기준으로 삼는다. API의 실제 local OAuth bridge 테스트는 provider 응답 mock이며 실제 SSO로 간주하지 않는다. 원격 배포본에는 이 수정이 없다.
+
+현재 Preview 원격78건은73/4/1(exit1, SW단발 오류)이다. Google 설정 표시2개는 교정 후 통과, 실제 start2개는503 실패다. Preview callback/secret의 별도 설정 전에는 실제 SSO 검사를 통과시킬 수 없다. 로컬 Google 설정은 Production callback이므로 임의 복사하지 않는다. 새 Production backup은 승인된 maintenance window를 확인한 후에만 실행한다. 목표의 전체 검증 완료 전 삭제·최종 push·Production은 진행하지 않는다.
+
+실제 Chrome Network는 **native App 대상**으로 작업 탭을 선택하고 DevTools를 열어 관측할 수 있었다. d51a81ed의 양언어 onend1/1, R2/legacy 요청0과 sanitized HAR16개를 확보했다(09:39 UTC). Console에는 SW/module preload 경고6개가 있어 과거 dev.logs0과 구분한다. 사람 가청은 아직 a95437fc에만 확인됐고 d51a81ed 질문은 미응답이다. 새 artifact `srs-preview-actual-audio-network.json`은 strict gate2개 누락/exit1이다. 다른 source에 재사용하지 않는다.
+
+**최신 후속:** Pages `d51a81ed-2561-4900-899f-022b99d67679`/source`5311ab7`, Worker `6f0c0e41`/source`0b20e39`. 아래94dfb05 서술은 최초 UX 기록이다. 복습clock-skew·양면 접근성/키보드 후속은로컬440개 gate·전체브라우저211 pass/30 skip/0 fail 통과, commit/push·Pages-only Preview배포 완료다. 최종원격과실제음성증거는최신릴리스원장을확인하며과거a95437fc가청을d51a81ed에재사용하지않는다.
+
 먼저 [LEARNING_EXPERIENCE_PLAN](LEARNING_EXPERIENCE_PLAN.md)의 실제 검증/미실행 표를 읽는다. UX source `94dfb05`는 feature branch에 commit/push하고 전용 Preview에 반영했다. Production 배포로 오인하지 않는다. 원격 세션 시작 지연 `INC-PERF-049`를 추가 수정·재검증 중이다.
 
 별도 Agent 교차검토에서 `INC-LEARN-043`, `INC-DATA-044/046`(다른 기기의 선행 제출·종료·트랙 변경)과 `INC-OPS-045`(진단 식별자 가림), `INC-DATA-047`(0028 backup profile)을 추가해 회귀를 수정했다. 후속 전체 브라우저는 `207 passed / 32 skipped / 0 failed`다. expected_track 불일치 409를 메모 revision 충돌이나 제출 성공으로 바꾸지 않는다. `/audio-qa` 정상 종료 관측 보강(`INC-QA-048`) 이후의 최종 gate는 계획/릴리스 원장의 최신 결과를 확인한다.

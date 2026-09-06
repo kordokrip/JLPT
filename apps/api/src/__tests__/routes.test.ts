@@ -2549,6 +2549,88 @@ describe('learning experience contract', () => {
     const response=await fetch('/api/v1/study/sessions'+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
     return {response,body:await response.json<{data:import('@nihongo-n3/shared').StudySession}>()};
   }
+  it.each(['completed', 'abandoned'] as const)('replays the original %s session request even when a newer session is open', async (terminal) => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const request_id = crypto.randomUUID();
+    const original = (await callSession(headers, '', { request_id })).body.data;
+    // Model a later create without a wall-clock sleep or changing server time.
+    await db.prepare('UPDATE study_sessions SET created_at=created_at-60 WHERE id=?').bind(original.id).run();
+    if (terminal === 'completed') {
+      const step = original.steps[0]!;
+      await db.prepare('DELETE FROM study_steps WHERE session_id=? AND id<>?').bind(original.id, step.id).run();
+      expect((await callSession(headers, '/' + original.id + '/steps/' + step.id + '/reveal')).response.status).toBe(200);
+      const submitted = await callSession(headers, '/' + original.id + '/steps/' + step.id + '/submit', {
+        request_id: crypto.randomUUID(), rating: 'good', active_ms: 900,
+      });
+      expect(submitted.response.status).toBe(200);
+      expect(submitted.body.data.status).toBe('completed');
+    } else {
+      expect((await callSession(headers, '/' + original.id, { status: 'abandoned' }, 'PATCH')).response.status).toBe(200);
+    }
+    const accepted = (await callSession(headers, '/' + original.id, undefined, 'GET')).body.data;
+    const current = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    expect(current.id).not.toBe(original.id);
+    expect(current.status).toBe('active');
+    const before = await db.prepare('SELECT id,request_id,status,updated_at FROM study_sessions WHERE id IN (?,?) ORDER BY id')
+      .bind(original.id, current.id).all();
+
+    const replay = await callSession(headers, '', { request_id });
+    expect(replay.response.status).toBe(200);
+    expect(replay.body.data).toEqual(accepted);
+    expect((await callSession(headers, '', undefined, 'GET')).body.data.id).toBe(current.id);
+    expect((await db.prepare('SELECT id,request_id,status,updated_at FROM study_sessions WHERE id IN (?,?) ORDER BY id')
+      .bind(original.id, current.id).all()).results).toEqual(before.results);
+
+    const otherHeaders = await learner('jlpt-ja', 'N5');
+    const other = await callSession(otherHeaders, '', { request_id });
+    expect(other.response.status).toBe(200);
+    expect(other.body.data.id).not.toBe(original.id);
+    expect((await callSession(otherHeaders, '/' + original.id, undefined, 'GET')).response.status).toBe(404);
+    expect((await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) })).status).toBe(200);
+    expect((await callSession(headers, '/' + original.id, undefined, 'GET')).response.status).toBe(404);
+    expect((await callSession(headers, '', { request_id })).response.status).toBe(409);
+  });
+  it('replays the original session after a competing create closes and opens another session', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const request_id = crypto.randomUUID();
+    let preparingCreate = false, injected = false;
+    let originalId = '', currentId = '';
+    const wrappedDb = new Proxy(db, {
+      get(target, key) {
+        if (key === 'prepare') return (sql: string) => {
+          if (/^INSERT INTO study_sessions\(/.test(sql)) preparingCreate = true;
+          return target.prepare(sql);
+        };
+        if (key === 'batch') return async (statements: D1PreparedStatement[]) => {
+          if (preparingCreate && !injected) {
+            injected = true;
+            const original = await callSession(headers, '', { request_id });
+            expect(original.response.status).toBe(200);
+            originalId = original.body.data.id;
+            expect((await callSession(headers, '/' + originalId, { status: 'abandoned' }, 'PATCH')).response.status).toBe(200);
+            const current = await callSession(headers, '', { request_id: crypto.randomUUID() });
+            expect(current.response.status).toBe(200);
+            currentId = current.body.data.id;
+            expect(currentId).not.toBe(originalId);
+          }
+          return target.batch(statements);
+        };
+        const member = Reflect.get(target, key);
+        return typeof member === 'function' ? member.bind(target) : member;
+      },
+    });
+    const response = await fetchWithEnv('/api/v1/study/sessions', { ...env, DB: wrappedDb }, {
+      method: 'POST', headers, body: JSON.stringify({ request_id }),
+    });
+    expect(injected).toBe(true);
+    expect(response.status).toBe(200);
+    expect((await response.json<{ data: { id: string; status: string } }>()).data).toMatchObject({ id: originalId, status: 'abandoned' });
+    expect((await callSession(headers, '', undefined, 'GET')).body.data.id).toBe(currentId);
+    const user = await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(originalId).first<{ user_id: string }>();
+    expect((await db.prepare('SELECT count(*) AS n FROM study_sessions WHERE user_id=?').bind(user!.user_id).first<{ n: number }>())?.n).toBe(2);
+  });
   it('keeps guided start and resume inside a deterministic D1 round-trip budget', async () => {
     const db = (env as typeof env & { DB: D1Database }).DB;
     const headers = await learner('jlpt-ja', 'N5');

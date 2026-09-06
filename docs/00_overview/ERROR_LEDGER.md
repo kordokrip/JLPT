@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장
 
 최종 점검: 2026-09-06 KST
-현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 새 Preview의 실제 Chrome 양언어 정상 종료와 사용자 가청 확인을 별도로 확보했다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
+현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 실제 Chrome 양언어 정상 종료와 사용자 가청 확인은 Pages `a95437fc`/source `94dfb05`의 증거다. 이후 `d51a81ed` 및 미배포 안정성 수정본의 가청 통과로 재사용하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -108,6 +108,32 @@
 | 운영관리 상태 검사 | local `37 passed / 2 known warnings / 0 failed`; remote read-only `47 passed / 2 known warnings / 0 failed`; Ops unit `23/23` | 통과 |
 
 ## 강제 릴리스 gate
+
+### 2026-09-06 안정성 목표 후속 — INC-AUTH-054
+
+현재 auth store가 로그인/가입 뒤 `setTrack` 결과의 실패를 무시하고 원하는 트랙을 로컬 사용자에 적용할 수 있는 경로를 독립 검토에서 발견했다. `auth-track-fail-first-2026-09-06.log`에서 login/register2건 실패를 재현했다(실제 운영 발생 증거는 아님). 서버 로그인 성공은 유지하되 트랙 변경 실패 시 서버가 반환한 트랙과 로컬/Dexie namespace를 일치시키고 오류를 보존하도록 최소 수정했다. 실패2건과 정상 변경2건을 포함한 독립20개 단위·typecheck는 통과했고 전체/원격 새 후보 검증은 아직 필요하다. OAuth 재설계나 운영 자격 증명 변경은 이 수정 범위가 아니다.
+
+### INC-LEARN-055 — 종료된 세션의 생성 요청 ID 재전송
+
+종료된 세션의 원래 request_id를 다시 보낼 때 새 open session이 존재하면 최신 세션을 반환하는 쿼리 결함을 독립 검토와 fail-first3건으로 재현했다(완료·중단 후 재전송, 동시 생성 경합 복구). 운영 발생으로 단정하지 않는다. 정확한 request_id를 우선 정렬하고 최초/경합 조회를 공유하는 최소 수정 후3건 및 전체 API165개를 통과했다. 공개 API/schema·계정/트랙 조건·조회 횟수는 유지한다. Preview Worker에는 아직 미반영이다.
+
+### INC-PWA-056 — Preview WebKit의 SW access-control 오류
+
+source5311ab7 Pages d51a81ed/Worker0b20e39 원격78건은 **73 pass / 4 fixture skip / 1 fail**,14.9분·exit1로 끝났다(`srs-preview-final-e2e.log`). WebKit 한자 퀴즈는 문제/선택지가 표시됐지만 `sw.js due to access control checks` pageerror로 실패했다. SW파일의 후속 read-only HTTP는200/application-javascript였고 같은원인으로 단정할 network trace는 최초실행에 없었다. 테스트에서 오류를 제외하지 않고 trace를 포함해3회 반복 진단한다. 나머지통과와합쳐전체통과라고기록하지않는다.
+
+후속 반복3건은 모두통과/exit0였고 각trace의SW요청은200/application-javascript·failure없음이었다(`webkit-sw-diagnostic.log`, `webkit-sw-network-summary.jsonl`). 원인미확정이며 최초실패를삭제하거나글로벌SW오류를무시하지않는다.
+
+별도 Chrome 관측(09:39 UTC): d51a81ed audio QA의 SW/modulepreload 경고6개가 보였다. 독립 HAR 검토에서 vendor-query/db/state의 중복 응답은 모두200·SW cache·전송0·error 없음이고 각 본문은 현재 배포 파일 SHA-256과 일치했다. HTML/main import/precache 연결과 관련 source 설정도 일치한다. 기능 실패는 확인되지 않았지만 깨끗한 프로필 재현이나 무해함을 확정한 것은 아니다. WebKit 오류와 같은 원인으로 합치지 않고 SW 비활성화·오류 무시·preload 제거를 실행하지 않는다.
+
+### INC-SET-057 — 프로필 조회 중 해설 언어가 로컬에만 저장됨
+
+Preview 인증/설정 20건은 **14 pass / 6 fail**, exit1이었다(`auth-settings-preview.log`). Google 관련 4건 중 2건은 비활성 anchor에 link role을 요구한 테스트 오류이고, 나머지 2건은 실제 OAuth start 503이다. 설정 2건은 profile 저장200 뒤 새 Settings 화면에서 해설 언어를 바꿨지만 PUT이 없었다. `Settings.tsx`가 조회 중 undefined와 확인된 `configured:false`를 같은 null 성공으로 취급하는 코드와 교차확인했다.
+
+확장 fail-first는 **3 fail / 3 pass**였다. 프로필 조회 중 로컬 변경 1건과 저장 응답 전에 계정/트랙이 바뀌는 2건을 재현했다. 최소 수정은 조회 중/오류 시 선택 차단, 조회 완료 후에만 저장, 요청 당시 계정·트랙·cache scope 보존이다. 기능 플래그 false와 확인된 미설정 계정의 기존 로컬 설정은 유지한다. 독립 검토와 Settings7·store15 단위 **22 pass**, 실제 서버 응답을 지연시킨 회귀 포함 양 엔진 설정 **14 pass / 0 skip / 0 fail**, typecheck·diff check exit0이다. 새 Preview에 아직 반영하지 않았다. 시간 한도나 PUT 검사를 완화하지 않았다.
+
+Google 버튼 검사는 실제 `/auth/config`의 boolean과 href/aria-disabled/안내문을 대조하도록 바로잡았다. 별도 OAuth start의 strict302 조건은 유지한다. 같은 Preview 재검사 **2 pass / 2 fail**, exit1(`sso-config-crosscheck.log`): 비활성 상태 표시는 통과하지만 실제 start는 양 엔진 모두503이므로 SSO 통과가 아니다.
+
+Google SSO Preview 상태는 별도 **미검증 gate**다. Pages와 직접 Worker의 `/auth/config`는200·`google_enabled:false`, `/auth/google/start`는503이다. `wrangler.toml`이 콜백/secret 별도 승인 전 비활성 상태를 명시한다. 이를 발음 오류나 로그인 성공으로 해석하지 않는다. 실제 Google provider→callback→session→기존 사용자 확인은 Preview용 설정/테스트 계정이 준비되기 전 완료로 표시하지 않는다.
 
 ### 2026-09-06 후속 — INC-SRS-053
 

@@ -23,7 +23,7 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 - 새 additive migration은 `0028_learning_experience.sql`입니다. Production은 여전히 `0000–0027`이며 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
 - 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
-- 로컬 unit/API/DB·fresh/upgrade·build와 전체 브라우저 자동 검사를 통과한 `94dfb05`를 commit/push하고 전용 Preview에 반영했습니다. 새 Preview의 실제 Chrome 양언어 재생 종료와 사용자 청취 확인을 확보했습니다. 원격 세션 시작 지연(`INC-PERF-049`)은 별도 수정·재검증 중이며 Production은 변경하지 않았습니다. 정확한 수치와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
+- 전용 Preview의 배포 기준선은 Pages `d51a81ed`(source `5311ab7`), Worker `6f0c0e41`(source `0b20e39`)입니다. 이후 로그인 트랙·세션 재전송·설정 바인딩 수정본은 로컬458개 gate와 전체 브라우저217 pass/30 시각 정책 skip/0 fail을 통과했습니다. 수정본의 원격 검증은 별도이며 Production은 변경하지 않았습니다. 배포된 Preview의 실제 Google SSO start는503입니다. 이전 Pages `a95437fc`의 사용자 청취 확인을 다른 배포에 재사용하지 않습니다. 정확한 현재 배포와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
 - 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
 
 ## 구조

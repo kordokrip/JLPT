@@ -4,7 +4,7 @@
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
-## 2026-09-06 개인 학습 UX 로컬 후보
+## 2026-09-06 최초 개인 학습 UX 후보 (이하 순차 이력)
 
 | 항목 | 상태 |
 | --- | --- |
@@ -33,6 +33,21 @@ Preview Worker smoke 21/0, 관리자 positive 검사 1개 미실행. Preview 콘
 ## 복습 후속 후보
 
 후속 Web 후보는 `INC-SRS-051/053` 수정과 E2E 증거 경계를 포함한다. source 전체 gate는440개(Ops26/DB126/Web126/API162), fresh0028까지 exit0이다. 최종 로컬 E2E는211 pass/30 시각-policy skip/0 fail, exit0이다. API는 현재 Preview Worker0b20e39를 유지하고 추가 migration/seed 없이 Pages만 교체한다. 실제 Pages ID와 원격 E2E 결과 확보 전까지 릴리스 상태는 검증 중이다.
+
+- source `5311ab72c2aafa001fb436e50cd1335d775c81b4`: clean checkout commit/push 완료.
+- Pages `d51a81ed-2561-4900-899f-022b99d67679`, immutable `https://d51a81ed.nihongo-n3.pages.dev`, source5311ab7, deploy exit0. Functions 포함, feature branch Preview다.
+- Worker `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39 유지; DB migration/seed write 없음. Production Pages9cc58a1f도 그대로다.
+- rollback: 직전 Pages `a95437fc-8411-4151-9519-ab0d8fb92905`/source94dfb05. SRS-only Pages 교체이므로 Worker/D1 복원은 기본 조치가 아니다.
+- 실제 Chrome: 양언어각1회 onend표시·warn/error0, 청취질문 대기·network 미확보. strict predeploy는4개누락(human, confirmed_by, R2/legacy counts)으로exit1, 통과가 아니다. 증적 `srs-preview-actual-audio.json`, 이전사용자확인은별도artifact보존.
+- 원격 최종78건은 immutable d51a81ed에서 **73 pass / 4 fixture skip / 1 fail**, exit1로 종료했다(`srs-preview-final-e2e.log`). SW access-control 단발 오류의 후속3회 진단은 모두 통과했지만 최초 전체 실패는 보존한다.
+
+### 안정성 수정본의 최신 검증 (미배포)
+
+HEAD5311ab7 위의 작업 트리에서 INC-AUTH-054·LEARN-055·SET-057을 수정하고 기존 데이터 upgrade, 설정 persist와 OAuth bridge 검사를 보강했다. `settings-final-full-gate.log` **458개(Ops26/DB126/Web139/API167)**·fresh0000–0028까지 exit0, `settings-final-local-e2e.log` **217 pass / 30 시각 정책 skip / 0 fail**,3.8분·exit0이다. 이 결과는 d51a81ed에 아직 없는 수정본의 로컬 증거다. 추가 commit/push·Preview/Production 배포·삭제는 하지 않았다.
+
+같은 d51a81ed의 Google 설정 표시 검사는2개 통과했지만 실제 OAuth start는503으로2개 실패했다(`sso-config-crosscheck.log`, exit1). Preview OAuth callback/secret을 준비하지 않고 운영 값을 복사하지 않는다. 실제 Google 로그인과 새 Production backup/restore는 미완료다.
+
+09:39 UTC 후속 Native Chrome 관측은 양언어 onend1/1·R2/legacy 요청0이다. sanitized HAR `srs-chrome-network.har`는16개 HTTPS 요청(모두 같은 Preview origin/200)을 포함한다. Network UI18개 중2개는 확장 리소스다. Console의 SW/module preload 경고6개는 별도 관찰이며 WebKit 실패 원인으로 단정하지 않는다. `srs-preview-actual-audio-network.json`의 strict gate는 사람 가청/확인자2개 누락으로 **exit1**이다. 앞선4개 누락 artifact를 수정해 지우지 않고 보존한다. a95437fc의 사용자 확인을 d51a81ed에 옮기지 않는다.
 
 ## GitHub 사용 범위 (유지)
 

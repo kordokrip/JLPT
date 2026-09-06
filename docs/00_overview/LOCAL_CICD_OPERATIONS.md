@@ -39,6 +39,8 @@
 - 시계 차이: 기기 시각을 서버보다1분 느리게 고정한 실제 IndexedDB E2E에서 starter10장·평가·reload를 검사한다. 서버due 스냅샷/로컬 변경 보존 hook단위7개와 별개다. SRS 음성 검사는 로딩 상태 때문에 skip하지 않고 카드 준비를 기다린다. mock 기록 화면의 SW차단은 해당파일에만 한정하며 interception counter를 반드시검사한다.
 - 복습 카드 양면: 앞면에서 숨긴 답/발음 버튼이 접근성 tree나 Tab에 노출되면 실패한다. 실제 뒤집기 후 발음 클릭과 포커스된 버튼의 Enter/Space를 검사하며 전역 단축키가 이를 가로채면 차단한다. CSS 회전만으로 조작 차단을 가정하지 않는다(`INC-SRS-053`).
 - backup/restore는 실제 schema로 0027/65와 0028/70 profile을 구분한다. `coversLocalSchema=false`인 구 65개 snapshot을 새 학습 데이터까지 포함한 backup으로 표기하지 않는다. 실제 Miniflare `_cf_METADATA`를 포함한 목록 판정과 과거 65개 backup의 local0028 restore는 통과했다. 기존 transfer·사용자 정리 도구의 65-table 기본 계약은 0028에서 아직 사용할 수 없다.
+- 기존 기능 안정성: authStore 실패/성공·설정 v6 rehydrate, 비어 있지 않은 양 트랙 기록의 upgrade, 실제 UI 설정→profile PUT/GET→reload를 함께 검사한다. 프로필 GET 지연·실패, PUT 실패와 늦은 응답의 계정/트랙 변경도 포함한다. 조회 지연 E2E는 실제 Worker/D1 응답의 전달만 늦추며 payload를 만들지 않는다.
+- Google 버튼의 설정 표시는 `/auth/config`와 href/aria-disabled를 대조한다. 비활성 anchor에 link role이 없는 것은 정상이나, 실제 OAuth start 503은 별도 실패다. OAuth bridge의 Google 응답 mock과 실제 provider 로그인은 별도 gate다. Preview 설정 준비 없이 운영 OAuth secret을 복사하지 않는다. 최신 결과는 학습 경험 계획의 안정성 표를 따른다.
 
 - DB·콘텐츠: `question:quality`, `content:contract:verify`, `content:control-plane:verify`, idempotent fresh/upgrade와 source checksum을 확인한다.
 - API·데이터 바인딩: OpenAPI 생성 전후 diff, track guard, 정답 사전 노출 금지, progress→FSRS→activity transaction을 확인한다.
