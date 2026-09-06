@@ -99,6 +99,21 @@ export function parseR2AbsenceReport(stdout) {
   return parsed;
 }
 
+export function validateMigrationLedgerResponse(row, migration) {
+  const range = typeof migration === 'string' ? /^0000[–-](\d{4})$/u.exec(migration) : null;
+  if (!range) return ['CURRENT_STATE D1 migration must be an explicit 0000–NNNN range'];
+
+  const errors = [];
+  const expectedLatest = range[1];
+  const expectedCount = Number(expectedLatest) + 1;
+  const latest = typeof row?.latest_name === 'string'
+    ? /^(\d{4})_[a-z0-9_-]+\.sql$/iu.exec(row.latest_name)
+    : null;
+  if (latest?.[1] !== expectedLatest) errors.push(`latest_name must match ${expectedLatest}_*.sql`);
+  if (row?.migration_count !== expectedCount) errors.push(`migration_count must be ${expectedCount}`);
+  return errors;
+}
+
 export function validateAuthProxyResponse(status, contentType, payload) {
   const errors = [];
   if (status !== 200) errors.push(`HTTP ${status}, expected 200`);
@@ -254,7 +269,8 @@ async function remoteChecks(context) {
       'D1 migration ledger',
     );
     const row = migrationResult[0]?.results?.[0];
-    addCheck(checks, 'remote:d1-migrations', String(row?.latest_name ?? '').startsWith('0027_') ? 'pass' : 'fail', JSON.stringify(row ?? {}));
+    const errors = validateMigrationLedgerResponse(row, context.current.migration);
+    addCheck(checks, 'remote:d1-migrations', errors.length === 0 ? 'pass' : 'fail', [JSON.stringify(row ?? {}), ...errors].join('; '));
   } catch (error) {
     addCheck(checks, 'remote:d1-migrations', 'fail', error instanceof Error ? error.message : String(error));
   }

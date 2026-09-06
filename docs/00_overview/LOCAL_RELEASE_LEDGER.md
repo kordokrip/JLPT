@@ -4,7 +4,30 @@
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
-## 최신 작업 — 운영 백업·점검 종료, 신규 릴리스 미배포
+## 최신 릴리스 — 2026-09-07 개인 학습 UX Production
+
+| 항목 | 실행 결과 |
+| --- | --- |
+| 승인 | 사용자 조건부 Production·최종 push 승인, 임시 백업 점검 승인, 최신555 양언어 실제 청취 확인 |
+| 배포 source | `a7d5d87946334fe8c7970b8f124853aaba443955`; 검증 runtime `793b671a5c7503017041bbaee4e8de7edb492e20`과 apps/packages/lock tree 동일 |
+| Worker | `c2901280-4c10-4671-bc61-dc262c88c692`, deploy exit0, 관측 RELEASE_SHA=a7d5d87 |
+| Pages | `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, main Production, deploy exit0, canonical `https://nihongo-n3.pages.dev` |
+| DB | additive0028 하나 적용,29개 ledger/pending0. 콘텐츠 seed/publication 없음; content source3485/manifestd102 유지 |
+| 보존 | 백업65개·복원65개/FK0, 배포 직전/0028 직후 기존21개 테이블 행 수·전체 열 hash 동일, 새5개0행 |
+| 선행 gate | 동일 runtime 로컬458개·E2E217/30/0, Preview181/6/0(시각60개 별도 제외), 실제 SSO·음성 strict/predeploy pass |
+| 사후 검사 | content verifier392/392, FK0·FTS 일치, R2참조0, Worker7/auth proxy3, 실제 운영에서 정적70개 파일 hash 일치 |
+| 음성 | 사용자555 가청확인; Production 실제 Chrome 양언어 onend각1. 익명 Chromium/WebKit2개 speech mock pass·R2/legacy0. Production 사람 청취/native HAR 재수집은 아님 |
+| 정책 교정 | 실제 TOPIK status=topik-i-ii/쓰기true, CSP media-src 'none', 기존 운영 OAuth callback/secret binding 유지 |
+| rollback | Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`; 데이터 손상 없으면0028/학습 기록 보존 |
+| 형상 후속 | 배포 후 문서와 로컬 ops0027 고정 검사만 수정. 앱 재배포 대상이 아닌 별도 후속 commit으로 최종 push 결과를 기록 |
+
+증적: `.artifacts/operations/learning-production-2026-09-07-*`, `production-postdeploy-pinned-2026-09-07.json`, `production-postmigration-learning-preservation-2026-09-07.json`. 원문 backup/HAR/계정 자료는 ignored 영역에 보존하며 Git 제외입니다. `INC-OPS-059`는 ops의 이전 migration0027 하드코딩을 fail-first3개로 고정 후 기준선 범위/ledger count 검증으로 교정했습니다(전용11개 통과). 운영 앱 결함이나 DB rollback 사유가 아닙니다.
+
+postdeploy gate checker는 exit0/통과입니다. 최종 push 전 remote ops는50 pass/2 warn/1 fail이며 유일한 실패는 아직 동기화하지 않은 Git SHA입니다. TOPIK status/CSP/DB/Worker/Pages는 모두 통과했습니다. 문서64개/84링크·lifecycle·diff check와13개 변경 파일 독립 검토도 통과했습니다. ops의 count/latest 검사는 중간 migration 이름 전체를 검사하지 않으며 pending/unknown0은 별도 pinned ledger 조회 증거입니다.
+
+이하 배포 전 이력의 미완료·가청 대기·원격 SHA는 당시 기록입니다. 같은 검증 runtime을 문서 commit마다 재배포하거나 전체 gate를 반복하지 않습니다.
+
+## 이전 작업 — 운영 백업·점검 종료, 신규 릴리스 배포 전
 
 - 승인: 사용자가 운영 백업 동안 잠시 학습 저장을 중지하도록 명시 허용. 최신555fc0c4의 가청 확인은 여전히 미응답.
 - 실행: 2026-09-07 00:21–00:27 KST(UTC09-06 15:21–15:27). 기존Worker6bbe4bbd의 코드 etag/runtime/나머지binding 동일을 확인한 점검 전용 버전 `232ec50d-1d78-4cf8-9c40-39f0a7d72dc1`, 임시 deployment `03e2a6a4-9116-4e1e-8904-9334d2c372b2`. 두 Queue를 일시정지하고 backlog/활성Workflow/releasejob0, HTTP 변경·OAuth 시작503을 확인 후 export.

@@ -7,6 +7,7 @@ import {
   parseR2AbsenceReport,
   safeDiagnostic,
   validateAuthProxyResponse,
+  validateMigrationLedgerResponse,
   validateTopikTrackStatusResponse,
   validateWorkflowPolicy,
 } from '../project-ops-status.mjs';
@@ -57,6 +58,38 @@ test('parseCurrentState extracts the immutable production identifiers', () => {
     pagesSourceSha: '2bd657e96d8a43c6d28efe414acd468c1abd0861',
     productionDeployment: '9cc58a1f-4772-4129-b90d-c819ca20d700',
   });
+});
+
+test('migration ledger accepts the parsed Production baseline after the 0028 upgrade', () => {
+  const current = parseCurrentState('| D1 migration | `0000–0028` |');
+  assert.deepEqual(validateMigrationLedgerResponse({
+    migration_count: 29,
+    latest_name: '0028_learning_experience.sql',
+  }, current.migration), []);
+  assert.deepEqual(validateMigrationLedgerResponse({
+    migration_count: 28,
+    latest_name: '0027_google_speech_contract.sql',
+  }, '0000–0027'), []);
+});
+
+test('migration ledger rejects older, newer, malformed, or incomplete remote ledgers', () => {
+  for (const row of [
+    { migration_count: 28, latest_name: '0027_google_speech_contract.sql' },
+    { migration_count: 30, latest_name: '0029_unapproved.sql' },
+    { migration_count: 28, latest_name: '0028_learning_experience.sql' },
+    { migration_count: '29', latest_name: '0028_learning_experience.sql' },
+    { migration_count: 29, latest_name: '0028_' },
+    null,
+  ]) {
+    assert.notDeepEqual(validateMigrationLedgerResponse(row, '0000–0028'), []);
+  }
+});
+
+test('migration ledger fails closed without an unambiguous documented range', () => {
+  const row = { migration_count: 28, latest_name: '0027_google_speech_contract.sql' };
+  for (const migration of [null, undefined, '', '0027', '0000–0027 pending 0028', '0028–0027']) {
+    assert.notDeepEqual(validateMigrationLedgerResponse(row, migration), []);
+  }
 });
 
 test('validateWorkflowPolicy accepts the disabled manual placeholder', () => {

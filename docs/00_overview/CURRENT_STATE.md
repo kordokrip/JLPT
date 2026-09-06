@@ -1,6 +1,6 @@
 # 현재 구현 상태
 
-문서 갱신: 2026-09-07 KST. 아래 Production 기준선과 새 로컬 후보를 구분합니다. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 운영 기준입니다.
+문서 갱신: 2026-09-07 KST. 새 학습 UX를 Production에 배포했습니다. 아래 현재 기준과 날짜별 과거 검증 이력을 구분합니다.
 
 > 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 
@@ -16,16 +16,30 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 
 | 구분 | Production 기준 |
 | --- | --- |
-| D1 migration | `0000–0027` |
-| Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| Pages | `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `2bd657e96d8a43c6d28efe414acd468c1abd0861` |
-| Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| D1 migration | `0000–0028` |
+| Worker | `c2901280-4c10-4671-bc61-dc262c88c692` |
+| Pages | `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
+| Worker release SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
+| content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
-## 최신 후속 — 승인된 운영 백업·점검 종료 (2026-09-07)
+## 최신 — 학습 UX Production 배포 (2026-09-07)
+
+Production은 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 검증 runtime793b671과 배포 commit a7d5d87의 apps/packages/lock tree가 동일하고, 운영에서 내려받은 정적 파일70개가 사용자가 청취한 Preview555와 SHA-256까지 일치합니다. 콘텐츠 seed/publication은 실행하지 않았습니다.
+
+- 승인된 백업65개·복원 drill·직전 Worker/Pages rollback 대상을 확보했습니다. 배포 직전과0028 적용 후 기존21개 학습/계정 테이블의 행 수·전체 열 hash가 백업과 일치했고 새5개 테이블은0행, FK0입니다. 현재0028의 향후 백업은70-table profile을 사용합니다.
+- 같은 runtime의 로컬458개 gate·E2E217 pass/30 시각 정책 skip/0 fail, 최신 Preview181 pass/6 로컬 fixture skip/0 fail을 확인했습니다. 원격 시각60개는 제외이며 이번에 전체 검사를 다시 실행했다고 표시하지 않습니다.
+- 최신555의 사용자 답변 **“한국어 일본어 모두다 들립니다.”**를 별도 artifact에 연결해 strict audio/predeploy gate를 통과했습니다. Production Chrome도 새로고침 후 일본어/한국어 onend각1회를 직접 확인했습니다. Production 사람 가청 및 native HAR를 별도로 새 수집한 것은 아닙니다. 익명 양 엔진 smoke2개는 speech mock으로 R2/legacy 요청0을 확인했습니다.
+- 사후 immutable content source3485/manifest `content-v3-d102868e3d43b9b3c1a4` verifier **392/392**, migration29개/pending0·FK0·FTS 일치·R2 발음9개 표면 참조0입니다. 공개 Worker7개·Pages auth proxy3개 및 정적70개 hash가 통과했습니다.
+- TOPIK status는 실제 `topik-i-ii`, TOPIK I/II, listening/writing/reading, write_enabled=true입니다. CSP는 `media-src 'none'`이며 R2를 허용하지 않습니다. 기존 운영 OAuth callback과 secret binding은 유지했습니다.
+- rollback: Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`. 데이터 손상이 없다면0028과 새 학습 기록을 보존하고 런타임만 복귀합니다.
+
+증적은 `.artifacts/operations/learning-production-2026-09-07-*`, `production-postdeploy-pinned-2026-09-07.json`, `production-postmigration-learning-preservation-2026-09-07.json`입니다. Git 최종 동기화는 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)에서 배포 SHA와 문서/운영 도구 후속 commit을 분리합니다. 아래의 미배포·가청 대기·오래된 배포 ID는 당시 이력이며 현재 작업 지시가 아닙니다.
+
+## 이전 후속 — 승인된 운영 백업·점검 종료 (2026-09-07 배포 전)
 
 사용자의 명시적 점검 승인으로 00:21–00:27 KST에 기존 코드의 임시 읽기 전용 Worker232ec50d와 두 Queue 일시정지를 적용했습니다. 코드 etag/runtime/점검 이외 binding은 기존6bbe4bbd와 일치했고 활성 Workflow·release job·Queue backlog는0이었습니다. 새 앱/Pages/콘텐츠/migration은 반영하지 않았습니다.
 
@@ -43,7 +57,7 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 
 사용자는 최종 테스트 통과 후 Production 배포·최종 push를 승인했습니다. 아직 Production 변경·최종 push는 실행하지 않았습니다. 새 backup/restore와 점검 시간 승인, 최종 gate가 필요합니다. 최신 Production 읽기 전용은48 pass/2 warn/3 fail이며 기존 Worker6bbe4bbd/Pages9cc58a1f, Google 설정true·R2참조0·legacy410을 재확인했습니다. 실패는 미push SHA차이와 기존 TOPIK status/CSP입니다. pending migration은0028 하나이고 release job의 대기/처리/승인/재시도는0이나 실제 Queue/Workflow 활성은 미확인입니다. live manifest 자체를 이 점검에서 검증했다고 표시하지 않습니다. 아래 b02f3674/SSO503/음성 network 미확인 기록은 수정 전 이력입니다.
 
-## 2026-09-06 학습 경험 후보 — Preview 검증 중, Production 미반영
+## 2026-09-06 학습 경험 후보 — 배포 전 검증 이력
 
 상세 설계·API·DB·검증 범위는 [매일 이어지는 학습 경험](LEARNING_EXPERIENCE_PLAN.md)에 통합합니다. 출발 HEAD는 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`, 후보 `94dfb052c5ff73caaa70692f1d023bdaae439c8f`는 feature branch에 commit/push하고 전용 Preview에 반영했습니다. Production은 위 기준선을 유지합니다.
 
@@ -120,7 +134,7 @@ release-link trigger는 `0026`에서만 생성되므로 `0025 → 0026` migratio
 
 TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest area`입니다. `weakest`는 최근 30일 activity를 사용합니다.
 
-## 2026-08-30 로컬 수정 후보 — Production 미배포
+## 2026-08-30 수정 후보 이력 — 2026-09-07 Production 반영
 
 - Production read-only 조회에서 TOPIK practice v2 300개는 공개지만 `/tracks/topik-ko/status`가 legacy v1을 조회해 `placement-v2`, TOPIK I만 반환하는 결함을 확인했습니다. 로컬 코드는 v2 다섯 영역 각 60개를 기준으로 `topik-i-ii`, TOPIK I·II와 쓰기를 공개하도록 수정했고 300행 회귀 테스트를 추가했습니다.
 - quiz submit의 activity batch 실패를 quiz 결과만 저장하는 성공으로 숨기던 fallback을 제거했습니다. 이제 attempt 결과와 문항별 activity가 함께 반영되지 않으면 500을 반환하며, 완료된 quiz를 다른 답으로 다시 제출하면 409를 반환합니다. guarded update, rollback과 재제출 불변성 테스트가 이를 고정합니다.
@@ -256,7 +270,7 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 
 ## 다음 단계
 
-음성 복구 Pages 배포는 완료했습니다. 다음 실행은 실제 사용자 장치의 가청 확인과 speech telemetry를 사후 관찰하고, 현재 HEAD 문서 hash와 운영 콘텐츠 manifest를 source SHA에 고정해 검증하도록 verifier 인터페이스를 보강하는 것입니다. 운영 작업은 먼저 `pnpm ops:status`, 구현 종료 후 `pnpm ops:verify`, 배포 전후 `pnpm ops:status:remote`로 증적을 남깁니다. N2/N1/TOPIK 증량 재개 순서와 D+1/D+7/D+30의 `50/10/5` 판정은 [2026-08-23 증량 릴리스 기록](NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+학습 UX 출시 후7일/30일의 실제 세션·응답·복습 기록을 관찰합니다. 동일 runtime의 통과한 전체 검사를 문서 변경만으로 반복하지 않습니다. `INC-DATA-024`는 콘텐츠 source3485와 manifest를 고정해 검증하며 신규 콘텐츠를 재시드하지 않습니다. N2/N1/TOPIK160개는 Preview에 유지하고 별도 콘텐츠 릴리스 gate를 적용합니다. `50/10/5`는 운영 참고 지표이며 부족하면 증량보다 진입 UX를 먼저 개선합니다.
 
 ## 2026-08-23 저장소 정리
 

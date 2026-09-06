@@ -1,6 +1,12 @@
 # 매일 이어지는 개인 학습 경험
 
-기준일: 2026-09-06 KST. 상태: 전용 Preview 검증 중. UX `94dfb05`는 최종 로컬 통합 gate 및 전체 E2E 통과 후 commit/push·Preview 배포했다. 실제 양언어 재생 종료·사용자 가청을 확인했다. 원격 시작 지연은 수정·재검증 중이며 Production 미반영이다.
+기준일: 2026-09-07 KST. 상태: 학습 UX Production 배포 완료. Worker c2901280·Pages ce4e5e57·schema0028이며 source a7d5d87은 검증 runtime793b671과 동일하다. 아래 날짜별 검증중/미배포 표시는 배포 전 이력이다. 현재 판정과 rollback은 [현재 상태](CURRENT_STATE.md)와 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다.
+
+## 출시 검증과 남은 범위
+
+로컬458개·E2E217 pass/30 skip/0 fail, Preview181 pass/6 fixture skip/0 fail(시각60개 제외), 실제 Preview 양트랙 SSO·사용자555 양언어 청취, 새 backup/restore·strict predeploy 후 배포했다. 사후 DB392/392·기존21개 테이블 hash 보존·FK0·FTS 일치·R2참조0·Worker7/auth3·정적70파일 hash를 확인했다. Production Chrome onend각1과 익명 speech-mock 양 엔진2개는 물리 청취와 구분한다.
+
+콘텐츠 재시드/신규160개 공개는 하지 않았다. 승인된 개념 연결·새 교육 번역·힌트 사용/진입 시간/재개 성공률 계측은 후속 개발 범위다. 출시 후7일/30일 실제 세션·응답·복습을 관찰하고 진입이 개선되지 않으면 콘텐츠 증량보다 동선을 먼저 개선한다. 전체 시각 suite나 Production 합성 학습 테스트를 새로 완료한 것으로 확대하지 않는다.
 
 ## 승인된 제품 계약
 

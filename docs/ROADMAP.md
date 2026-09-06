@@ -2,32 +2,32 @@
 
 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-최종 점검: 2026-09-06 KST. 현재 Production 기준선, 전용 Preview에서 검증 중인 새 UX, 기존 콘텐츠 Preview와 이후 관찰 순서를 구분합니다.
+최종 점검: 2026-09-07 KST. 새 학습 UX는 Production에 반영했습니다. 기존 콘텐츠 Preview160개는 공개하지 않고 이후 사용성 관찰과 분리합니다.
 
 ## 우선 작업 — 매일 이어지는 개인 학습
 
-[학습 경험 구현 계획](00_overview/LEARNING_EXPERIENCE_PLAN.md)을 현재 UX 실행 계약으로 사용합니다. `0028` 프로필·세션·단계 기록·메모·연결 메타데이터와 양언어 공통 탐색을 로컬에 구현했으며 신규 콘텐츠를 공개하지 않았습니다. 다음 순서는 현재 후보의 전체 회귀/시각/실제 음성 → 전용 Preview → 새 backup/restore와 승인 → Production입니다. 새 가청 증거 없이 과거 음성 복구 기록을 재사용하지 않습니다.
+[학습 경험 구현 계획](00_overview/LEARNING_EXPERIENCE_PLAN.md)의 `0028` 프로필·세션·단계 기록·메모·연결 메타데이터와 양언어 공통 탐색을 Production에 반영했습니다. 동일 runtime 로컬/Preview gate·최신555 사용자 청취·새 backup/restore·승인 후 배포했고 사후 DB392개와 공개/API/음성 화면을 검증했습니다. 전체 시각 suite는 별도 미실행 범위이며 완료로 확대하지 않습니다. 다음 작업은 실제 학습 기록 관찰과 사용성 개선입니다.
 
 출시 후 7일/30일에는 세션 완료·중단·재개, 최초 응답·재시도, due review를 관찰합니다. `50/10/5`는 운영 참고 지표이며 홈에서 개발 목표처럼 노출하지 않습니다. 시작까지 걸린 시간과 실제 재개 성공률은 현재 schema만으로 확정할 수 없어 계측 정의·검증 후 추가합니다.
 
 ## Production 완료 기준선
 
-- D1 `nihongo-n3-prod-v2` migration `0000–0027`
-- Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`
-- Pages `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback `485b9f00-a8b1-4bbb-9001-a238651fb212`)
-- web source SHA `2bd657e96d8a43c6d28efe414acd468c1abd0861`; Worker/content SHA `3485c6ef8addda3cd3e209730646c296175cf3c9`
+- D1 `nihongo-n3-prod-v2` migration `0000–0028`
+- Worker `c2901280-4c10-4671-bc61-dc262c88c692` (rollback6bbe4bbd)
+- Pages `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback9cc58a1f)
+- Worker/web source `a7d5d87946334fe8c7970b8f124853aaba443955`; content source `3485c6ef8addda3cd3e209730646c296175cf3c9` 유지
 - JLPT N2 Batch 1–5, N1 Batch 1–4, TOPIK owner Batch 1–5
 - TOPIK practice v2 300문항 공개, v1 28문항 보존·비공개
 - TOPIK v2 선택형 영역별 `15/15/15/15`, JLPT 정적 독해 정답 위치 편향 검사 통과
 - R2 발음 D1 참조 0건, Google 우선 동일 언어 브라우저 음성 사용
 - CI/CD 자동 게이트는 운영 정책상 비활성화했고, 증거는 로컬 MD 원장에서만 채택합니다.
 
-## P1 Worker 교정 후보 — 2026-08-30
+## P1 Worker 교정 — 2026-09-07 Production 반영
 
 - TOPIK track status를 비공개 v1이 아니라 공개 v2 300문항으로 판정
 - quiz result와 activity event의 원자성 보장, 부분 성공 fallback 제거
 - TOPIK·source asset·legacy binding을 포함한 R2 참조 전수 gate와 CSP `media-src 'none'`
-- 로컬 회귀 검증·Preview·명시적 Production 승인을 마치기 전에는 현재 Production이 교정됐다고 표시하지 않음
+- 로컬/Preview 회귀·승인 후 배포 완료; 실제 Production TOPIK status·CSP·R2참조0 확인. quiz 원자성 검사를 위해 운영 학습 데이터를 생성하지 않음
 
 2026-08-09와 2026-08-17 배포 ID·백업·rollback 기록은 [현재 상태](00_overview/CURRENT_STATE.md#production-릴리스-기록)에 보존합니다.
 

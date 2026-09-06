@@ -1,12 +1,20 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-09-06 KST
+최종 점검: 2026-09-07 KST
 
 이 저장소의 릴리스 gate는 GitHub Actions가 아니라 검증된 로컬 명령과 로컬 원장으로 운영한다. GitHub는 commit·branch·tag 보관과 push에만 사용하며 `.github/workflows/ci.yml`은 `workflow_dispatch`와 `if: false`를 유지하는 비활성 placeholder다.
 
 ## 진실의 우선순위
 
-현재 명령 결과와 원격 read-only 조회 → 코드·schema·migration·test → [현재 상태](CURRENT_STATE.md) → [오류 원장](ERROR_LEDGER.md) → [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md) → 과거 릴리스 기록 순으로 판단한다. 과거 문서나 artifact의 통과 기록은 현재 후보의 통과로 재사용하지 않는다.
+현재 명령 결과와 원격 read-only 조회 → 코드·schema·migration·test → [현재 상태](CURRENT_STATE.md) → [오류 원장](ERROR_LEDGER.md) → [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md) → 과거 릴리스 기록 순으로 판단한다. 다른 runtime·배포의 증거를 현재 환경의 통과로 바꾸지 않는다.
+
+## 현재 릴리스 — 2026-09-07
+
+Production Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, migration0000–0028을 반영했다. 배포 commit은 `a7d5d87946334fe8c7970b8f124853aaba443955`이며 검증 runtime793b671과 apps/packages/lock tree가 동일하고 정적 파일70개는 Preview와 hash가 일치한다. 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 하지 않았다. 최종 push는 아직 실행하지 않았다.
+
+로컬458개·fresh0028·전체 브라우저217/30/0, 최종 Preview181/6/0, 최신555 실제 양언어 가청/onend/Network와 predeploy 통과를 각각 기록했다. Production 사후에는 Worker 공개7·auth proxy3·익명 음성 양 엔진2(mock), pinned392·FK/FTS·R2참조0·기존 학습21테이블 hash 보존을 확인했다. Production 실제 Chrome 양언어 onend1/1은 별도 관측이며 새 사람 가청 확인을 의미하지 않는다.
+
+문서/테스트만 후속 변경되어 runtime tree·lock·배포 파일의 동일성이 입증되면 그 runtime의 통과 증거를 유지하고 변경된 문서/도구 gate만 실행한다. 이를 전체 테스트를 새로 실행했다는 보고로 바꾸지 않는다. 코드·의존성·build 설정·실행 환경이 달라지면 관련 gate를 다시 실행한다. 승인·가청·백업은 실제 대상과 시점에 묶으며 이번에 완료된 승인을 다시 미완료로 취급하지 않는다.
 
 ## 로컬 파이프라인
 
@@ -25,7 +33,7 @@
 
 ## 변경 유형별 추가 gate
 
-### 학습 경험 `0028` 후보
+### 학습 경험 `0028` 회귀 계약
 
 - `pnpm -F @nihongo-n3/db exec node --import=tsx --test src/ops/learning-experience-migration.test.ts`: 0000–0027 upgrade 전후 기존 테이블 행 비교, FK, 단계 중복 claim rollback.
 - `pnpm -F @nihongo-n3/api exec vitest run src/__tests__/routes.test.ts`: 전 급수 profile/session, 실패 원자성, 소유권/track, 정답 비노출, 결과 재조회, withdrawn 세션 종료, 메모 CAS.
@@ -67,7 +75,7 @@ pnpm -F @nihongo-n3/e2e exec playwright test \
 
 2026-09-06 사용자 승인으로 별도 Google client와 Preview secret 두 개를 연결했습니다. Worker87f8fbf5는 앱source793b671/Pages555fc0c4를 유지합니다. API bridge2+Web proxy/authStore12는 exit0이나 Google provider mock입니다. 실제 Chrome JLPT 로그인·홈 재조회와 TOPIK 재로그인, 별도 D1 identity/FSRS 설정 hash 전후 일치를 분리해 기록했습니다. 최종187개는 `preview-oauth-full-functional-2026-09-06-*`의 새 증적 경로에서181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0으로 종료했습니다. 시각60개는 별도 제외이며 이전178/6/3 결과를 덮어쓰지 않습니다.
 
-같은 Pages의 실제 Network/HAR에서 양언어 onend1/1·R2/legacy0을 확보했습니다. 사람 확인 대기인 `stability-preview-actual-audio-network.json`은 strict gate2개 누락·exit1입니다. 조건부 Production 승인만으로 사람 청취나 운영 maintenance 승인을 채우지 않습니다. 실행 결과가 변경되면 현재 상태·릴리스 원장을 함께 갱신합니다.
+같은 Pages의 실제 Network/HAR에서 양언어 onend1/1·R2/legacy0을 확보했습니다. 당시 사람 확인 대기였던 `stability-preview-actual-audio-network.json`의 strict gate2개 누락·exit1은 이력으로 보존합니다. 이후 최신555의 사용자 양언어 가청 답변을 별도 `learning-experience-2026-09-07-preview-audio-confirmed.json`에 연결해 strict gate를 통과했습니다. 운영 점검 승인·새65-table backup/restore·신선도 대조·최종 predeploy도 완료한 뒤 배포했습니다. 65-table 백업을0028 이후70-table 백업으로 표현하지 않습니다.
 
 ## 형상관리와 증적
 

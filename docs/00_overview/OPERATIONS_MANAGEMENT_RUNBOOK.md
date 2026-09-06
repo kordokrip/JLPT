@@ -6,13 +6,15 @@
 
 **Last Updated:** 2026-09-07 KST
 
-**Last Run:** 이 관리체계 도입 검증은 아래 History에 기록
+**Last Run:** 2026-09-07 학습 UX Production 배포·사후 검증; 최종 Git push 전
 
 ## 목적
 
 코드·문서·D1·Worker·Pages가 서로 다른 상태로 보고되는 일을 막고, 버그 수정과 리팩터링이 기존 학습·FSRS·음성 계약을 훼손하지 않게 관리합니다. GitHub Actions 대신 로컬 gate와 Cloudflare read-only 상태를 추적하며 Production 변경에는 기존 명시적 승인 절차를 유지합니다.
 
 현재 Production 값의 단일 기준은 [현재 상태](CURRENT_STATE.md)입니다. 이 문서는 절차를, [오류 원장](ERROR_LEDGER.md)은 버그 상태를, [로컬 CI/CD 기준](LOCAL_CICD_OPERATIONS.md)은 gate를, [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)은 실행 이력을 관리합니다.
+
+현재 운영은 Worker `c2901280-4c10-4671-bc61-dc262c88c692`·Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`·migration0000–0028입니다. 배포 commit a7d5d87은 검증 runtime793b671과 apps/packages/lock가 동일합니다. 운영 OAuth·기존 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 없습니다. rollback은 Worker6bbe4bbd·Pages9cc58a1f이며 데이터 손상 없이0028·학습 기록을 되돌리지 않습니다. 전체 ID와 증거는 릴리스 원장을 따릅니다.
 
 ## 책임 구조
 
@@ -79,7 +81,7 @@ git log -1 --oneline
 
 ## 로컬 CI 대체 gate
 
-학습 UX 후보의 추가 계약은 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)을 따른다. 공개 콘텐츠 재시드 없이 `0028`만 additive 적용하고, 해설 조회/완료/정답/FSRS rating을 각각 검사한다. 메모 충돌·응답 저장 실패·오프라인 pending을 성공으로 집계하지 않는다. 철회된 콘텐츠는 세션 snapshot에서 재노출하지 않고 명시적으로 `abandoned` 종료하여 기존 기록을 보존한다.
+학습 UX의 회귀 계약은 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)을 따른다. 공개 콘텐츠 재시드 없이 적용한 `0028`을 보존하고, 해설 조회/완료/정답/FSRS rating을 각각 검사한다. 메모 충돌·응답 저장 실패·오프라인 pending을 성공으로 집계하지 않는다. 철회된 콘텐츠는 세션 snapshot에서 재노출하지 않고 명시적으로 `abandoned` 종료하여 기존 기록을 보존한다.
 
 기기 간 충돌은 서버의 수락 기록을 우선하며 미수락 로컬 답/메모를 보존한다. `expected_track`이 인증 트랙과 다르면 409로 멈추고 명시적 reload를 안내한다. terminal 세션의 상태는 SQL 실행 시점에도 보호한다. 백업은 0027/65와 0028/70 profile을 구분하며 새 5개 테이블 누락을 허용하지 않는다(`INC-DATA-047`). Cloudflare 진단의 계정 식별자는 URL과 중첩 JSON/stderr 모두에서 가린다.
 
@@ -108,7 +110,7 @@ pnpm ops:status:remote
 - local HEAD와 origin branch
 - 현재 Production Pages deployment/source
 - Worker 100% traffic version
-- D1 migration `0027` 도달 여부
+- D1 migration `0028` 포함29개 적용 여부와 누락·unknown ledger
 - canonical Pages, `/audio-qa`, legacy audio `410`
 - auth proxy의 HTTP 200, JSON content-type, `google_enabled=true`, `auth_mode=app-session`
 - 원격 R2 발음 참조 `0`
@@ -139,7 +141,9 @@ clean source commit/tag
 → 문서 원장과 원격 Git 동기화
 ```
 
-하나라도 실패하면 다음 단계로 진행하지 않습니다. Pages-only 변경은 D1 drift를 숨기기 위해 재시드하지 않습니다. 데이터 손상이 없으면 D1 전체 restore를 실행하지 않습니다. 운영 export는 테이블별 추출이므로 명시 승인한 점검 시간 동안 쓰기가 정지됐는지 확인합니다. HTTP read-only만으로 queue/workflow 정지를 가정하지 말고 활성 작업을 별도 확인합니다. 이번0028-only upgrade는 원격 pending이0028 하나인지 먼저 검사합니다. 새65-table backup의 local0028 drill은 coversLocalSchema=false이며 새70-table backup으로 표시하지 않습니다.
+하나라도 실패하면 다음 단계로 진행하지 않습니다. Pages-only 변경은 D1 drift를 숨기기 위해 재시드하지 않습니다. 데이터 손상이 없으면 D1 전체 restore를 실행하지 않습니다. 운영 export는 테이블별 추출이므로 명시 승인한 점검 시간 동안 쓰기가 정지됐는지 확인합니다. HTTP read-only만으로 queue/workflow 정지를 가정하지 말고 활성 작업을 별도 확인합니다. 2026-09-07에는 pending이0028 하나임을 확인해 적용했습니다. 이후 배포는 현재 ledger와 승인된 migration 차이만 검사하며0028을 다시 적용하지 않습니다. 이번65-table backup의 local0028 drill은 coversLocalSchema=false이며 새70-table backup으로 표시하지 않습니다.
+
+문서/테스트 후속 commit은 검증 runtime의 apps/packages/lock tree와 배포 파일 hash 동일성을 먼저 기록합니다. 동일성이 확인된 앱 전체 gate를 단순 HEAD 변경 때문에 반복하지 않으며 변경된 운영도구/문서만 재검사합니다. 검증 source·배포 commit·콘텐츠 source는 서로 다른 값일 수 있고 각 증거의 SHA를 새 HEAD로 덮지 않습니다. runtime·설정 변경이 생기면 영향 gate를 다시 실행합니다.
 
 백업 점검만 승인됐을 때 새 앱 후보를 배포하지 않습니다. 기존 active/latest 버전을 확인하고 점검 설정 외 코드 etag/runtime/binding을 보존합니다. 원래 Queue paused 상태를 저장하고 실제 pause·backlog·Workflow·release job을 확인합니다. SIGINT/SIGTERM 및 export 실패에도 child 종료 후 원복 증적을 남기며, Worker 원복을 확인하지 못하면 Queue를 임의 재개하지 않습니다. non-versioned 설정 동기화도 피하거나 정확히 대조합니다. 원복 직후 단일 HTTP 실패는 숨기지 말고 별도 시각의 재확인으로 구분합니다. auth config의 Google 플래그는 `data.google_enabled`입니다(`INC-OPS-058`). 로컬 restore drill 동안 운영 점검을 불필요하게 유지하지 않으며, 쓰기를 재개한 백업은 다음 릴리스 시점의 신선도를 다시 판단합니다.
 
@@ -158,6 +162,7 @@ clean source commit/tag
 
 - `packages/db/drizzle-v2` migration 전체
 - `.artifacts/d1-backups/audio-first-click-pwa-2026-08-24`
+- `.artifacts/d1-backups/learning-ux-2026-09-07-pre0028`와 `.artifacts/operations/learning-production-2026-09-07-*` 릴리스·rollback 증거
 - `.artifacts/releases/audio-first-click-pwa-2026-08-24`
 - `.artifacts/release/2026-08-19`
 - `.artifacts/content-intake`, `.artifacts/content-quality`
@@ -189,4 +194,5 @@ clean source commit/tag
 
 | 날짜 | 실행자 | 결과 |
 | --- | --- | --- |
+| 2026-09-07 | Project Operations Steward | 승인·최신555 가청·predeploy 통과 후0028/Worker/Pages 반영. 사후 pinned392·R2참조0·기존 학습21테이블 hash 보존, Worker 공개7/auth proxy3, 익명 음성2(mock) 통과. Production 실제 Chrome onend양언어1/1은 새 사람 가청과 구분. 최종push 전 |
 | 2026-08-24 | Project Operations Steward | 전담 Sub Agent/상태 점검 스크립트 도입. local `37/2/0`, remote read-only `47/2/0`, 전체 gate exit `0`. 문서별 production ID, auth JSON 계약, 로컬 복구 증적, 음성 provenance와 R2 0건을 구조적으로 검사. 독립 재감사 결과 commit 차단 결함 `0` |

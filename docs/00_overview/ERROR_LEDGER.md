@@ -1,13 +1,21 @@
 # 오류·회귀 차단 원장
 
 최종 점검: 2026-09-07 KST
-현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 최신 Preview는 Pages `555fc0c4`/Worker `87f8fbf5`이며 앱 source는 `793b671`이다. Preview OAuth 연결 및 실제 양 트랙 로그인은 아래 후속 결과를 따른다. 사용자의 기존 가청 확인은 Pages `a95437fc`/source `94dfb05`에만 연결하며 최신555의 정상 종료·Network와 사람 청취를 혼동하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
+현재 상태: 새 학습 UX·`0028`을 Production Worker `c2901280`/Pages `ce4e5e57`(배포source a7d5d87)에 반영했다. 최신555 Preview에 대한 사용자 양언어 청취 확인을 새 증거로 기록했고 strict gate를 통과했다. Production 실제 Chrome의 onend각1은 확인했지만 Production 사람 가청/native HAR를 별도 수집했다고 표시하지 않는다. 현재 HEAD와 운영 콘텐츠 source3485/manifestd102의 drift는 별도 알려진 문제다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
-현재 Production에서 열린 결함은 manifest drift `INC-DATA-024`, TOPIK v2 상태 오판 `INC-TOPIK-031`, quiz 활동 유실 가능성 `INC-ACT-032`, R2 검사/CSP 공백 `INC-AUD-033`입니다. 031–033은 로컬 코드와 회귀 테스트를 수정했지만 아직 Worker Production에 배포하지 않았으므로 완료로 표시하지 않습니다. `INC-LEGACY-034`의 파일 정리는 이번 후보에 포함했고 legacy DB 열·테이블 제거는 별도 additive migration 전까지 보류합니다. `INC-OPS-035`는 이번 검증 중 발견해 표면별 D1 쿼리와 회귀 테스트로 즉시 닫았습니다. 실제 사용자 장치의 물리 가청 확인은 자동 lifecycle 검사와 별도인 사후 관찰 항목입니다.
+현재 알려진 미해결은 manifest drift `INC-DATA-024`이며 immutable source로 고정한 사후392개 검사는 통과했습니다. `INC-TOPIK-031`과 `INC-AUD-033`은 새 Worker 배포 후 실제 status/CSP/R2/legacy 검사를 통과했습니다. `INC-ACT-032`는 같은 runtime의 로컬/Preview 원자성 회귀를 통과해 배포했고, Production에 합성 학습 데이터를 쓰는 검사는 실행하지 않았습니다. `INC-LEGACY-034`의 legacy DB 제거와 승인된 콘텐츠↔개념 연결/새 교육 번역은 후속 범위입니다. 아래 날짜별 후보/실패 기록은 삭제하거나 현재 통과로 덮어쓰지 않습니다.
 
 ## 오류 원장
+
+### 2026-09-07 운영 점검 기준선 — INC-OPS-059
+
+0028 배포 후 로컬 ops 스크립트가 여전히 `latest_name.startsWith('0027_')`만 검사하는 것을 발견했다. 앱 오류가 아니라 운영 판정 결함이다. 동작을 그대로 추출해 fail-first **8 pass/3 fail, exit1**을 확보했고 CURRENT_STATE migration 범위의 마지막 번호·파일명 형식·정수 ledger count를 모두 검사하도록 수정했다. 수정 후 전용 **11 pass/0 fail, exit0**이다. 기준선 누락/불일치는 fail-closed로 유지하며 앱/DB 재배포는 필요 없다. 증적은 `ops-migration-baseline-{fail-first,scoped}-2026-09-07.log`다.
+
+### 2026-09-07 출시 판정과 증거 경계
+
+사후 content392/392·기존21테이블 hash 보존·FK0/FTS·R2참조0·Worker7/auth3·Production70파일 hash를 확인했다. 실제 status는 TOPIK I/II·듣기/쓰기/읽기·쓰기true, CSP는 R2 media 미허용이다. 같은 runtime의 Preview181/6/0과 사용자555 청취 증거로 승인된 후보를 배포했으며 신규 Production 학습 기록을 테스트용으로 생성하지 않았다. 반복 전체 테스트 대신 apps/packages/lock 및 배포70파일 동일성을 증명했다. 아래 후보036–057의 수정은 이번 앱에 포함되지만 단발 인프라 실패의 원인 미확정·시각 suite 제외·실측하지 않은 지표까지 해결됐다고 주장하지 않는다.
 
 ### 2026-09-07 백업 점검 — INC-OPS-058
 

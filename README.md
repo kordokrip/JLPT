@@ -2,28 +2,30 @@
 
 JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
 
-## Production 기준 — 2026-08-30 재확인
+## Production 기준 — 2026-09-07 배포
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| production D1 | `nihongo-n3-prod-v2`, migration `0000–0027` |
-| production Worker | `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872` |
-| production Pages | `https://9cc58a1f.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `2bd657e96d8a43c6d28efe414acd468c1abd0861` |
-| Worker/content release SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| production D1 | `nihongo-n3-prod-v2`, migration `0000–0028` |
+| production Worker | `c2901280-4c10-4671-bc61-dc262c88c692` |
+| production Pages | `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web/Worker source SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
+| content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` (재시드 없음) |
 | production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
 
 2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
 
 2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
-## 2026-09-06 학습 UX 후보 — Preview 검증 중
+Production Pages ID는 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 배포 SHA와 후속 문서/운영 도구 commit은 구분합니다.
+
+## 2026-09-07 학습 UX — Production 반영
 
 오늘 / 학습 / 문제 / 복습 / 기록, 계정·트랙별 목표, 기본 20분 세션, 중단·재개, 자동 기록과 개인 메모를 구현했습니다. 한국어 JLPT와 일본어 TOPIK에 같은 흐름을 적용하고, 해설 열람·명시적 완료·첫 정답·재시도·FSRS 평가를 분리합니다.
 
-- 새 additive migration은 `0028_learning_experience.sql`입니다. Production은 여전히 `0000–0027`이며 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
+- 새 additive migration `0028_learning_experience.sql`을 Production에 적용했습니다. 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
 - 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
-- 최신 전용 Preview는 Pages `555fc0c4`, Worker `87f8fbf5`이며 앱 source `793b671`을 유지합니다. 운영 OAuth를 바꾸지 않고 별도 Preview client를 연결해 실제 Chrome의 JLPT 로그인·TOPIK 재로그인과 계정 연결 보존을 확인했습니다. 로컬458개 gate·전체 브라우저217/30/0과 이전 원격178/6/3은 이력으로 보존하며, OAuth 연결 뒤 최종 원격187개는 **181 pass / 6 로컬 fixture skip / 0 fail**,23.3분·exit0으로 통과했습니다(시각60개는 별도 제외). 최신 음성 onend 양언어1/1·실제 Network R2/legacy0을 확보했고 사람 청취 답변·새 backup/restore·최종 gate는 대기합니다. Production·최종 Git push는 아직 실행하지 않았으며 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 결과를 분리합니다.
+- 동일 runtime의 로컬458개·E2E217 pass/30 skip/0 fail, Preview181 pass/6 fixture skip/0 fail(시각60개 제외), 실제 Preview 로그인·양언어 사용자 청취를 확인했습니다. 백업/복원·strict predeploy 후 배포했고 사후 DB392/392·기존21개 테이블 보존·공개 Worker7·인증 proxy3·정적70개 hash가 통과했습니다. Production Chrome의 양언어 정상 종료와 익명 speech-mock 양 엔진2개도 별도 확인했습니다. 운영 OAuth와 기존 콘텐츠를 유지하며 [구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 증거 범위를 분리합니다.
 - 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
 
 ## 구조
