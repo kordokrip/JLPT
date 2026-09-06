@@ -25,6 +25,16 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
+## 최신 후속 — Preview 전용 OAuth 연결 (2026-09-06)
+
+사용자는 운영 OAuth 보존과 Preview 전용 클라이언트 생성·비밀키 다운로드/등록을 명시 승인했습니다. Google Cloud의 새 `JLPT Preview`는 Preview Worker callback 하나만 등록하며 기존 `JLPT` 클라이언트를 수정하지 않았습니다. Preview Worker **`87f8fbf5-97e3-4a99-96cb-3cf607911d48`**을 활성화했습니다. 직전 `b02f3674`와 script etag·runtime·OAuth 두 secret 이외의 versioned binding이 일치하고 앱 source793b671, Pages555fc0c4, D1을 유지합니다. CLI가 Preview의 non-versioned logging 설정도 config에 동기화했으므로 그 사전 값까지 동일하다고 주장하지 않습니다.
+
+`/auth/config`는 google_enabled=true이며 Google 시작302가 확인됐습니다. 실제 Chrome에서 Google 계정 선택→Preview callback→branch alias 학습 홈 복귀와 홈 재조회 로그인 유지를 확인했습니다. TOPIK 선택→로그아웃→`track=topik-ko` Google 재로그인→TOPIK 홈도 통과했습니다. 독립 D1 비교는 연결 계정1명, id/role/google_sub/email 및 FSRS 설정 hash 동일, 의도한 track만 변경됨을 확인했습니다. 로컬 인증 회귀14개도 exit0이나 provider mock과 실제 SSO 증거는 구분합니다. 최종 원격187개는 **181 pass / 6 로컬 fixture skip / 0 fail**,23.3분·exit0입니다. 시각60개는 별도 제외하며 이전 전체 실패를 덮어쓰지 않습니다. Google 연결 Preview 계정의 학습 테이블17개는 비어 있어 실제 기존 비어 있지 않은 이력 보존 증거로 확대하지 않습니다.
+
+최신555fc0c4의 native Network 기록 중 새로고침→일본어/한국어 정상 종료 각1회도 확인했습니다. sanitized HAR14개 HTTPS 요청은 모두 동일 Preview origin/200, UI의 추가2개는 확장 리소스이며 R2/legacy audio 요청0입니다. Console은 preload 경고2·오류0입니다. 새 URL의 사람 청취 답변은 대기하며 과거 가청 답변을 재사용하지 않습니다. 증적은 `stability-preview-actual-audio-network.json`, `stability-chrome-network.har`입니다(운영 artifact의 learning-experience 날짜 prefix).
+
+사용자는 최종 테스트 통과 후 Production 배포·최종 push를 승인했습니다. 아직 Production 변경·최종 push는 실행하지 않았습니다. 새 backup/restore와 점검 시간 승인, 최종 gate가 필요합니다. 최신 Production 읽기 전용은48 pass/2 warn/3 fail이며 기존 Worker6bbe4bbd/Pages9cc58a1f, Google 설정true·R2참조0·legacy410을 재확인했습니다. 실패는 미push SHA차이와 기존 TOPIK status/CSP입니다. pending migration은0028 하나이고 release job의 대기/처리/승인/재시도는0이나 실제 Queue/Workflow 활성은 미확인입니다. live manifest 자체를 이 점검에서 검증했다고 표시하지 않습니다. 아래 b02f3674/SSO503/음성 network 미확인 기록은 수정 전 이력입니다.
+
 ## 2026-09-06 학습 경험 후보 — Preview 검증 중, Production 미반영
 
 상세 설계·API·DB·검증 범위는 [매일 이어지는 학습 경험](LEARNING_EXPERIENCE_PLAN.md)에 통합합니다. 출발 HEAD는 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`, 후보 `94dfb052c5ff73caaa70692f1d023bdaae439c8f`는 feature branch에 commit/push하고 전용 Preview에 반영했습니다. Production은 위 기준선을 유지합니다.
@@ -51,7 +61,7 @@ commit/push한 source `5311ab72c2aafa001fb436e50cd1335d775c81b4`를 Pages **`d51
 
 09:37–09:39 UTC 실제 Chrome Native DevTools 관측에서 양언어 각1회 정상 종료, R2/legacy audio 요청0을 확인했습니다. Network 전체18개 중 sanitized HAR의 HTTPS16개는 모두 해당 Preview origin/200이고 나머지2개는 확장 프로그램 리소스입니다. Console에는 SW/module preload 경고6개·오류0개가 있어 이전 관측의 warn/error0과 분리합니다. d51a81ed의 사람 가청 확인은 대기 중입니다. 사용자의 “두 언어 모두 들렸습니다”는 질문에 명시된 a95437fc/source94dfb05에만 연결합니다.
 
-### 최신 안정성 수정본 — 전용 Preview 반영, Production 미반영
+### 안정성 수정본 최초 Preview 반영 이력 — OAuth 연결 전
 
 - `INC-AUTH-054`: 로그인/가입 뒤 트랙 변경 실패 시 실제 서버 트랙을 유지합니다.
 - `INC-LEARN-055`: 완료·중단된 세션의 원래 생성 request_id 재전송이 다른 최신 세션을 반환하지 않게 수정했습니다.

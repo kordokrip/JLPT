@@ -40,7 +40,7 @@
 - 복습 카드 양면: 앞면에서 숨긴 답/발음 버튼이 접근성 tree나 Tab에 노출되면 실패한다. 실제 뒤집기 후 발음 클릭과 포커스된 버튼의 Enter/Space를 검사하며 전역 단축키가 이를 가로채면 차단한다. CSS 회전만으로 조작 차단을 가정하지 않는다(`INC-SRS-053`).
 - backup/restore는 실제 schema로 0027/65와 0028/70 profile을 구분한다. `coversLocalSchema=false`인 구 65개 snapshot을 새 학습 데이터까지 포함한 backup으로 표기하지 않는다. 실제 Miniflare `_cf_METADATA`를 포함한 목록 판정과 과거 65개 backup의 local0028 restore는 통과했다. 기존 transfer·사용자 정리 도구의 65-table 기본 계약은 0028에서 아직 사용할 수 없다.
 - 기존 기능 안정성: authStore 실패/성공·설정 v6 rehydrate, 비어 있지 않은 양 트랙 기록의 upgrade, 실제 UI 설정→profile PUT/GET→reload를 함께 검사한다. 프로필 GET 지연·실패, PUT 실패와 늦은 응답의 계정/트랙 변경도 포함한다. 조회 지연 E2E는 실제 Worker/D1 응답의 전달만 늦추며 payload를 만들지 않는다.
-- Google 버튼의 설정 표시는 `/auth/config`와 href/aria-disabled를 대조한다. 비활성 anchor에 link role이 없는 것은 정상이나, 실제 OAuth start 503은 별도 실패다. OAuth bridge의 Google 응답 mock과 실제 provider 로그인은 별도 gate다. Preview 설정 준비 없이 운영 OAuth secret을 복사하지 않는다. 최신 결과는 학습 경험 계획의 안정성 표를 따른다.
+- Google 버튼의 설정 표시는 `/auth/config`와 href/aria-disabled를 대조한다. 비활성 anchor에 link role이 없는 것은 정상이나, 실제 OAuth start 503은 별도 실패다. OAuth bridge의 Google 응답 mock과 실제 provider 로그인은 별도 gate다. Preview 설정 준비 없이 운영 OAuth secret을 복사하지 않는다. 최신 결과는 학습 경험 계획의 Preview OAuth 후속과 릴리스 원장을 따른다.
 
 전용 Preview의 넓은 기능 회귀는 아래처럼 Web과 직접 API 주소를 함께 지정한다. `E2E_API_URL`을 생략하면 메뉴 health 검사가 localhost를 조회한다. 2026-09-06 목록 기준 24개 파일·187개 기능 검사이며 로컬 fixture에만 의존하는 TOPIK 6개는 명시적 원격 skip이다. 시각 baseline suite60개는 이 명령에서 제외되므로 원격 시각 검사를 통과했다고 쓰지 않는다. 검색 입력란 부재의 조건부 skip은 별도로 원인을 검토한다. mock 음성/provider/화면 fixture는 실제 외부 서비스 성공 증거가 아니다.
 
@@ -62,6 +62,12 @@ pnpm -F @nihongo-n3/e2e exec playwright test \
 - API·데이터 바인딩: OpenAPI 생성 전후 diff, track guard, 정답 사전 노출 금지, progress→FSRS→activity transaction을 확인한다.
 - 음성: `pnpm release:verify:audio-contract`, Chromium/WebKit 재생 lifecycle, 실제 배포 Chrome의 한국어·일본어 `onend`, `/api/v1/audio/*` 요청 0건과 Production D1 R2 발음 참조 0건을 서로 분리해 기록한다.
 - Production: 현재 세션 승인, 전용 Preview, D1 backup/restore drill, rollback Worker/Pages, predeploy 증적이 모두 있어야 한다. 이 문서나 `ops:*` 명령은 Production write를 자동 승인하지 않는다.
+
+### Preview OAuth 최종 검증 단위
+
+2026-09-06 사용자 승인으로 별도 Google client와 Preview secret 두 개를 연결했습니다. Worker87f8fbf5는 앱source793b671/Pages555fc0c4를 유지합니다. API bridge2+Web proxy/authStore12는 exit0이나 Google provider mock입니다. 실제 Chrome JLPT 로그인·홈 재조회와 TOPIK 재로그인, 별도 D1 identity/FSRS 설정 hash 전후 일치를 분리해 기록했습니다. 최종187개는 `preview-oauth-full-functional-2026-09-06-*`의 새 증적 경로에서181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0으로 종료했습니다. 시각60개는 별도 제외이며 이전178/6/3 결과를 덮어쓰지 않습니다.
+
+같은 Pages의 실제 Network/HAR에서 양언어 onend1/1·R2/legacy0을 확보했습니다. 사람 확인 대기인 `stability-preview-actual-audio-network.json`은 strict gate2개 누락·exit1입니다. 조건부 Production 승인만으로 사람 청취나 운영 maintenance 승인을 채우지 않습니다. 실행 결과가 변경되면 현재 상태·릴리스 원장을 함께 갱신합니다.
 
 ## 형상관리와 증적
 

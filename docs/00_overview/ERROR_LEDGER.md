@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장
 
 최종 점검: 2026-09-06 KST
-현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 최신 Preview는 Pages `555fc0c4`/Worker `b02f3674`이며 앱 source는 `793b671`이다. 사용자의 가청 확인은 Pages `a95437fc`/source `94dfb05`에만 연결한다. 이후 Preview의 정상 종료 관측과 가청 통과를 혼동하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
+현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 최신 Preview는 Pages `555fc0c4`/Worker `87f8fbf5`이며 앱 source는 `793b671`이다. Preview OAuth 연결 및 실제 양 트랙 로그인은 아래 후속 결과를 따른다. 사용자의 기존 가청 확인은 Pages `a95437fc`/source `94dfb05`에만 연결하며 최신555의 정상 종료·Network와 사람 청취를 혼동하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -74,6 +74,14 @@
 | `INC-LEGACY-034` | OA 전환 전 중복 route, 비canonical migration, client `audio_path`/server-source no-op이 현재 구조처럼 남음 | 과거 호환 코드를 계약 종료 후 정리하지 않음 | 참조 0을 독립 감사로 확인한 route 5개와 migrate 4개 삭제, browser text-only DTO/UI로 축소 | DB legacy 열·테이블은 schema만 삭제하지 않고 별도 migration+upgrade/fresh 검증 전까지 보존 |
 | `INC-OPS-035` | 확대된 R2 원격 verifier가 실제 참조 0건인 Production에서 SQLite `too many terms in compound SELECT`로 실패 | 9개 표면을 한 `UNION ALL`로 묶어 legacy view 확장 시 D1 planner 제한을 넘음 | 각 표면을 독립 read-only count로 실행하고 결과 수·타입을 검증; DB `114/114`와 Production 9개 표면 합계 `0` 재확인 | 여러 legacy 표면을 하나의 compound SELECT로 합치지 않고 모든 결과 집합을 구조적으로 확인 |
 
+## 2026-09-06 Preview OAuth 및 실제 음성 후속
+
+Preview Google SSO503은 별도 승인한 `JLPT Preview` 클라이언트와 Preview Worker secret 두 개를 연결해 해소했습니다. 활성 버전은 `87f8fbf5-97e3-4a99-96cb-3cf607911d48`이며, 이전 b02f3674와 코드 etag·runtime·나머지 versioned binding이 일치합니다. 기존 운영 OAuth 수정·secret 복사·Production 배포는 하지 않았습니다. 실제 Chrome의 JLPT Google 로그인·홈 재조회와 TOPIK 선택 후 같은 계정 Google 재로그인·TOPIK 홈 복귀를 확인했습니다. 별도 D1 읽기 전후 연결 계정1명 및 id/role/google_sub/email·FSRS 설정 hash 동일, track만 topik-ko로 변경돼 통과했습니다. 학습17테이블은 모두 빈 상태이므로 기존 비어 있지 않은 기록 보존으로 확대하지 않습니다. provider mock 로컬14개와 실제 SSO 증거를 분리하며 최종 원격187개는181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0입니다. 시각60개 별도 제외와 이전178/6/3 실패 이력을 보존합니다.
+
+새555fc0c4 실제 Chrome 음성의 Network 관측 누락은 14:36 UTC 이후 후속에서 확보했습니다. reload→양언어 onend 각1회 동안 기록한 HAR14개 HTTPS(모두 동일 Preview/200), UI의 확장 요청2개를 확인했고 R2/legacy audio0입니다. Console의 vendor-state preload 경고2개·오류0개를 숨기지 않습니다. `stability-preview-actual-audio-network.json`의 strict gate는 새 URL 사람 청취/확인자 2개 누락으로 exit1이며, 기존 partial artifact와 이전 URL 가청을 덮어쓰지 않습니다.
+
+도구 측 다운로드 승인 차단, 기본 sandbox DNS 차단, 일부 tab stale/detached 및 브라우저 API JSON 직접 열기 차단은 실제 관측 이력입니다. 사용자의 구체적 다운로드 승인과 허용된 네트워크 실행 후 Preview 연결을 마쳤으며 다른 UI 제어 도구/비공개 API로 우회하지 않았습니다. Chrome Network의 창 단위 읽기도 별도 사용자 승인 후 수행했습니다. Google client secret은 문서·Git에 기록하지 않고 다운로드 파일 권한600으로 제한했습니다.
+
 ## 현재 복구 검증 스냅샷
 
 2026-08-24 KST에 현재 작업 트리에서 다시 실행한 결과다. 아래 실제 Chrome 행은 현재 Production의 페이지 lifecycle 증거이며 물리 스피커 가청 증거와 구분한다.
@@ -133,7 +141,7 @@ Preview 인증/설정 20건은 **14 pass / 6 fail**, exit1이었다(`auth-settin
 
 Google 버튼 검사는 실제 `/auth/config`의 boolean과 href/aria-disabled/안내문을 대조하도록 바로잡았다. 별도 OAuth start의 strict302 조건은 유지한다. 같은 Preview 재검사 **2 pass / 2 fail**, exit1(`sso-config-crosscheck.log`): 비활성 상태 표시는 통과하지만 실제 start는 양 엔진 모두503이므로 SSO 통과가 아니다.
 
-Google SSO Preview 상태는 별도 **미검증 gate**다. Pages와 직접 Worker의 `/auth/config`는200·`google_enabled:false`, `/auth/google/start`는503이다. `wrangler.toml`이 콜백/secret 별도 승인 전 비활성 상태를 명시한다. 이를 발음 오류나 로그인 성공으로 해석하지 않는다. 실제 Google provider→callback→session→기존 사용자 확인은 Preview용 설정/테스트 계정이 준비되기 전 완료로 표시하지 않는다.
+OAuth 연결 전 당시 Google SSO는 별도 **미검증 gate**였다. Pages와 직접 Worker의 `/auth/config`는200·`google_enabled:false`, `/auth/google/start`는503이었다. 콜백/secret 별도 승인 전 비활성 계약과 일치하며 이를 발음 오류나 로그인 성공으로 해석하지 않았다. 현재는 위 Preview OAuth 후속의 실제 provider 로그인·계정 연결 보존 결과를 따른다.
 
 source793b671의 새 Preview555fc0c4/b02f3674 후속: 일반 설정4건은 실제 PUT/GET/reload를 양 엔진에서 통과했다. 첫14건11 pass/3 fail의 추가 실패1건은 지연 테스트 interception0으로, 해당 describe만 SW 제어 후 정확한 설정/테마14개를 모두 통과했다. 실제 payload·횟수·시간 한도를 완화하지 않았고 일반 설정/PWA는 SW 허용을 유지한다(`INC-QA-052`와 같은 테스트 제어 경계). SSO503 두 실패는 별도 유지한다. 독립 HTTP의 종료 세션 request_id 보존도 새 Worker에서 통과했다. Production은 미반영이다.
 

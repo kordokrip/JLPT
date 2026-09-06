@@ -32,7 +32,11 @@
 
 ### 새 학습 UX Preview 후보
 
-**현재 포인터(아래 이전 이력보다 우선):** 앱 source는 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`, Preview Pages `555fc0c4-24cc-49de-b846-38aee2f59b31`, Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`다. 둘 다 deploy exit0이고 D1 추가 migration/seed는 없다. Preview FK0·migration0028, Worker smoke21 pass/0 fail/관리자1 미실행, 실제 HTTP A중단→B생성→A재전송의 ID 보존을 독립 확인했다. 원격 Git은 아직5311ab7이다. 최종 push는 전체 gate 뒤에 한다.
+**2026-09-06 OAuth 후속 포인터:** Preview Worker는87f8fbf5로 변경됐습니다(앱source793b671/Pages555fc0c4 불변). 별도 `JLPT Preview` client의 전용 callback과 secret 두 개만 연결했습니다. 실제 Chrome JLPT Google 로그인·홈 재조회, TOPIK 선택 후 재로그인 및 D1 계정 id/role/Google 연결·FSRS 설정 hash 동일을 확인했습니다. 실제 계정의 학습17테이블은 모두0행이라는 한계가 있습니다. provider mock 로컬14개는 별도 통과이며 원격187개 최종 재실행은181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0입니다. 시각60개는 별도 제외입니다.
+
+555fc0c4 실제 native HAR14개HTTPS200/동일origin+UI확장2개, 양언어onend1/1, R2/legacy0, Console경고2·오류0을 확보했습니다. 새 가청/확인자 대기로 strict gate2누락exit1입니다. 조건부 Production·최종push 승인은 받았으나 점검 시간·backup/restore·최종 gate 완료 전에는 실행하지 않습니다. 아래 b02f3674/SSO503/Network 미확인 설명은 이전 이력입니다. 최신 결과는 릴리스 원장의 OAuth 후속과 `preview-oauth-*`, `preview-google-preservation-*`, `stability-preview-actual-audio-network.json`을 확인합니다.
+
+**OAuth 연결 전 기준선(위 OAuth 후속 포인터가 우선):** 앱 source는 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`, Preview Pages `555fc0c4-24cc-49de-b846-38aee2f59b31`, 당시 Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`다. 둘 다 deploy exit0이고 D1 추가 migration/seed는 없다. Preview FK0·migration0028, Worker smoke21 pass/0 fail/관리자1 미실행, 실제 HTTP A중단→B생성→A재전송의 ID 보존을 독립 확인했다. 원격 Git은5311ab7이며 최종 push는 전체 gate 뒤에 한다. 다음 네 문단은 OAuth 연결 전의 실행 이력이다.
 
 새 Preview의 auth/settings14건은11/0/3(exit1): SSO503 두 건과 지연 테스트 WebKit interception0 한 건이다. 후자는 해당 describe에만 `serviceWorkers:block`을 적용해 실제 응답·interception1·PUT/GET/reload 검사를 유지했다. 이후 원격 `settings-preferences.spec.ts`와 `settings-theme.spec.ts` **14 pass / 0 skip / 0 fail**이다. 일반 설정·테마는 SW를 허용하며 앱 runtime은 변경하지 않았다. SSO 실패를 제거/skip하거나 전체 원격 통과로 합산하지 않는다.
 

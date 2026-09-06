@@ -9,13 +9,13 @@
 | 항목 | 실제 상태 |
 | --- | --- |
 | 앱 source | 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`; 최종 push 전이라 Git 원격은5311ab7 |
-| Preview Worker | `b02f3674-6a59-47c8-818a-2397bcd295fd`, source793b671, deploy exit0 |
+| Preview Worker | `87f8fbf5-97e3-4a99-96cb-3cf607911d48`, source793b671, Preview 전용 OAuth 두 secret 추가·활성화 exit0; 직전 b02f3674 |
 | Preview Pages | `555fc0c4-24cc-49de-b846-38aee2f59b31`, source793b671, Functions 포함, deploy exit0 |
 | Preview D1 | `nihongo-n3-topik-preview`, migration0028·FK0, 추가 migration/seed 없음 |
 | 로컬 검증 | gate458개·fresh0028 exit0, 전체 E2E217 pass/30 시각 정책 skip/0 fail |
-| 새 Preview 검증 | 원격 기능187건178 pass/6 fixture skip/3 fail(exit1); Worker21/0/관리자1 미실행, 세션 재전송·설정/테마14개 통과 |
-| 미해결 gate | 실제 SSO start503; 최신555fc0c4 양언어 onend 확인, 가청·Network 미확인; 실패 해소 후 원격 gate 재검증·새 Production backup/restore |
-| rollback | Worker `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39, Pages `d51a81ed-2561-4900-899f-022b99d67679`/source5311ab7; DB 복원은 기본 조치 아님 |
+| 새 Preview 검증 | 이전 전체178 pass/6 fixture skip/3 fail(exit1) 보존, OAuth 연결 후 최종187개181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0(시각60개 별도 제외); 실제 Google 양 트랙 재로그인/계정 연결 보존 확인, Network R2/legacy0 |
+| 미해결 gate | 최신555fc0c4 사람 가청 확인, 승인된 점검 시간의 새 Production backup/restore·최종 gate |
+| rollback | OAuth 설정만 복귀: Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`; 앱 전체 이전 Preview: Worker `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39, Pages `d51a81ed-2561-4900-899f-022b99d67679`/source5311ab7; DB 복원은 기본 조치 아님 |
 | Production/정리 | Production 기준선 유지, 콘텐츠 publication·파일 삭제·최종 Git push 없음 |
 
 최초 새 Preview auth/settings는11 pass/3 fail이었다. 실제 SSO503 두 건과 지연 테스트 interception0 한 건을 분리했다. 지연 테스트에만 SW 제어를 적용한 뒤 정확한 `settings-preferences.spec.ts`/`settings-theme.spec.ts` 원격14개를 통과했다. 첫 명령의 `theme-settings.spec.ts` 파일명 오기로 테마8개가 포함되지 않았음을 기록하며 당시14개에 포함됐다고 쓰지 않는다. 앱 runtime은793b671에서 변경하지 않았다.
@@ -33,6 +33,18 @@
 root의 독립 소스 diff 검토와 로컬 격리 Worker/D1 양 엔진 재검사도 **4 pass / 0 skip / 0 fail**,5.9초·exit0이다(`natural-search-scoped-local-2026-09-06.log`). 전체 로컬217개는 이 테스트 제어 수정 전 결과이며, 수정 후 전체를 다시 실행한 것으로 쓰지 않는다. 앱 runtime은 변경하지 않았으므로 배포/build/fresh458개를 불필요하게 반복하지 않았다.
 
 별도 Agent의 후검사 `learning-experience-2026-09-06-preview-full-postcheck-793b671.json`은187개 고유·연속 index와 `.last-run.json`의3개 실패를 대조했다. Preview health200/source793b671 확인 후 명시한 전용 D1에서 FK0·migration29개·0028적용1회를 조회했다(rows_written0/changed_dbfalse). 조건부 어휘 검색 추가 skip0은 최종skip6과 고정 원격 fixture6개를 대조한 추론임을 artifact에 명시했다. Production에 연결하거나 사용자 원문·인증값을 기록하지 않았다. 이 후속은 테스트/문서만 로컬 형상 보존하며 Production·최종 push·삭제는 하지 않는다.
+
+### Preview OAuth 후속 설정 및 검증
+
+사용자의 기존 운영 OAuth 보존·새 Preview client 생성·JSON 다운로드/Preview secret 등록 승인 후 Google `JLPT Preview`를 생성했습니다. callback은 `https://nihongo-n3-api-topik-preview.kordokrip.workers.dev/api/v1/auth/google/callback` 하나입니다. `wrangler versions secret bulk`로 `GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET`만 추가하고 버전별 코드 etag/runtime/나머지 binding 동일을 확인한 뒤87f8fbf5에100% Preview traffic을 연결했습니다. 앱 source793b671/Pages555fc0c4/D1은 그대로입니다. 이 설정의 rollback은 직전 Worker b02f3674이며 운영 OAuth client를 변경하거나 Preview credential을 운영에 복사하지 않습니다. CLI의 non-versioned logging config 동기화는 사전 원격 snapshot이 없어 이전 값과 동일하다고 주장하지 않습니다.
+
+실제 Chrome에서 JLPT Google 계정 선택→alias 홈·홈 재조회, TOPIK 선택→로그아웃→같은 Google 계정 재로그인→TOPIK 홈을 확인했습니다. 독립 D1 전후20개 SELECT씩은 연결 계정1명·id/role/google_sub/email/FSRS 설정 hash 동일, track만topik-ko입니다. 학습17테이블0행이라는 경계를 명시합니다. `preview-google-preservation-{baseline,after-topik}-2026-09-06.json`과 provider mock 로컬14개 결과를 별도 보존합니다.
+
+현재555 실제 native Network HAR는14개 HTTPS200/동일origin, UI확장요청2개, R2/legacy0입니다. 새로고침 뒤 양언어 onend각1, Console preload경고2·오류0을 관측했습니다. 새 가청 답변은 대기해 strict gate는2개 누락·exit1입니다. 이전 이력의 가청/네트워크 누락 artifact는 덮어쓰지 않습니다. 사용자 조건부 Production·최종 push 승인은 받았지만 점검 시간·새 backup/restore·최종 gate가 남아 외부 Production/Git은 변경하지 않았습니다.
+
+최종 원격 결과는 `preview-oauth-full-functional-2026-09-06-summary.json`의187개/24spec/4project·181 pass/6 로컬 fixture skip/0 fail·exit0이며 `.last-run.json`의passed/실패빈목록과 교차확인했습니다. 네 전체 세션 쓰기91회는 pending/fail0입니다. root도 원본log의최종집계와 metadata를 대조했습니다. 문서 독립 검토에서 과거b02/SSO503 포인터를 교정했고 docs64/82링크·lifecycle·diff check를 통과했습니다.
+
+Production 최신 읽기 전용48/2/3은 `production-final-readonly-crosscheck-2026-09-06.json`에 있습니다. Worker6bbe4bbd/Pages9cc58a1f 및Google설정true·R2참조0·legacy410을 확인했고 pending은0028 하나입니다. releasejobs18개중진행대기/처리/승인대기/재시도0이나 실제Queue/Workflow활성은unknown입니다. live manifest는 이집계에포함되지 않았습니다. 첫stdout JSON파싱실패 뒤1회수집복구를 구분하고 Production변경은없습니다.
 
 ## 2026-09-06 최초 개인 학습 UX 후보 (이하 순차 이력)
 

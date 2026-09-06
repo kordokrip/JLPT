@@ -1,6 +1,6 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-최종 점검: 2026-09-06 KST. 이 문서는 Production 기준선, Preview 콘텐츠 후보, 새 학습 UX의 코드·schema·route·test를 구분한 구조 지도입니다. 최신 Preview는 Pages `555fc0c4`, Worker `b02f3674`, 둘 다 앱 source `793b671`입니다. 이 runtime은 로컬 gate458개와 전체 브라우저217 pass/30 시각 정책 skip/0 fail을 통과했습니다. 새 원격 기능187건은178 pass/6 fixture skip/3 fail로 끝났으며 자연 검색 mock 문제는 후속 부분 재검사로 교정했습니다. 실제 SSO start503 및 최신 후보 가청·Network 증거는 미완료입니다. 전체 실패를 부분 통과와 합산하거나 과거 d51a81ed의 결과를 새 source에 옮기지 않습니다. 최신 증적과 잔여 gate는 [현재 상태](docs/00_overview/CURRENT_STATE.md)를 따릅니다.
+최종 점검: 2026-09-06 KST. 이 문서는 Production 기준선, Preview 콘텐츠 후보, 새 학습 UX의 코드·schema·route·test를 구분한 구조 지도입니다. 최신 Preview는 Pages `555fc0c4`, Worker `87f8fbf5`, 앱 source `793b671`입니다. 별도 Preview OAuth client/secret 연결 후 실제 Chrome JLPT 로그인·TOPIK 재로그인과 D1 계정 연결 보존을 확인했습니다. 기존 runtime 로컬458개·E2E217/30/0, 이전 원격178/6/3과 OAuth 후 최종187개 **181 pass / 6 로컬 fixture skip / 0 fail**,23.3분·exit0을 분리합니다(시각60개 별도 제외). 최신555 음성 onend1/1·실제 Network R2/legacy0을 확보했지만 사람 청취 답변과 새 backup/restore·최종 gate는 대기합니다. 과거 다른 Pages 증거를 옮기거나 Production·최종 push 완료로 표시하지 않습니다. 최신 증적과 잔여 gate는 [현재 상태](docs/00_overview/CURRENT_STATE.md)를 따릅니다.
 
 ## Production 기준선
 

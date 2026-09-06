@@ -215,7 +215,7 @@
 | 요구 | 1차 증거 | 독립/연동 증거 | 현재 판정 |
 | --- | --- | --- | --- |
 | 로그인·설정 | auth 트랙 실패와 Settings 지연/실패/계정 경계 fail-first 후 최소 수정 | 독립 Settings/store22개, 실제 양 엔진 설정14개 통과; 최신 전체 gate458개·E2E217개에 포함 | 로컬 통과, 수정본의 Preview 후속 필요 |
-| Google SSO | 로컬 provider mock callback/SSO start 테스트 | Preview config false/start503 직접 조회 | 실제 provider 로그인 미검증; 통과 아님 |
+| Google SSO | 로컬 provider mock 인증14개 통과; 과거 Preview503 보존 | 별도 Preview OAuth 연결 후 실제 Chrome JLPT 로그인·TOPIK 재로그인/홈 유지 및 D1 identity/FSRS 설정 hash 동일 | Preview 실제 로그인 확인; 최신 원격187개181 pass/6 로컬 fixture skip/0 fail·exit0 |
 | 기존 사용자 데이터 | upgrade 전후 users/daily_logs/SRS 및 legacy tables 비교 | 독립 DB16·전체DB126·API114 통과; 기존 TOPIK/quiz 등 비어있지 않은 fixture 보강 완료 | 운영 실제 snapshot 현재성·기존 기록 연동 추가 확인 |
 | 학습 메모리·기록 | 세션/annotation/FSRS 단위 및 종료 request_id 재전송3개 | 최신 local full217/30/0; 배포된 Preview78건은73/4/1 | 새 수정본의 원격 검증 필요; 부분 결과 합산 금지 |
 | 정리·문서 | docs64/링크81·lifecycle 통과 | 미사용 후보의 runtime/history 참조 독립 감사 | 모든 검증 완료 전 삭제하지 않음 |
@@ -225,6 +225,12 @@
 
 - d51a81ed 원격78건 최종: **73 pass / 4 fixture skip / 1 fail**,14.9분·exit1. WebKit 한자퀴즈의 SW access-control pageerror를 `INC-PWA-056`으로추적한다. session write SLO4건은 pending0/failures0, 최댓값Chromium ko2693/ja2688ms·WebKit ko2916/ja2736ms로모두5초이하였다. 이4건이전체gate실패를대신하지않는다.
 - 안정성 후속의 1차 집중 검사: login/register setTrack 실패2건→최소 수정과 정상 변경2건, settings v6→v7 실제 rehydrate2건을 포함한 독립 Web22개 통과. 실제 local 인증·설정 UI/서버 바인딩은20건 통과했다. 기존 user/TOPIK/FSRS/quiz/activity fixture의 migration 비교를 보강해 DB126개 통과했다. 세션 request_id 재전송3개 fail-first는 최소 정렬 수정 후 API165개 통과했다. 이후 전체 결과는 아래에 구분한다.
+
+### Preview OAuth 및 음성 증거 후속 (2026-09-06)
+
+기존 운영 OAuth를 그대로 두고 사용자에게 별도 승인받은 `JLPT Preview` client/전용 callback과 두 secret을 Preview Worker87f8fbf5에 연결했다. source793b671·Pages555·기존 versioned binding은 보존했다. 실제 Chrome JLPT Google 로그인/홈 재조회, TOPIK 선택 후 Google 재로그인/홈 복귀를 확인했고, 독립 Preview D120개 SELECT 전후 identity/role/Google 연결·FSRS 설정 hash가 같으며 track만topik-ko로 바뀌었다. 학습17테이블0행이라는 한계를 유지한다. 로컬14개 provider mock과 실제 로그인은 별도 증거다.
+
+최신555 native Network 기록을 켜고 reload→양언어onend1/1을 관측했다. sanitized HAR14개HTTPS(동일Preview/200)+확장2개, R2/legacy0, Console preload경고2·오류0이다. 새555의 사람 청취 답변이 없어 strict gate2개 누락exit1이며 과거 가청을 재사용하지 않는다. 최종 원격187개는 새 `preview-oauth-full-functional-2026-09-06-*` 경로에서181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0으로 종료했다(시각60개는 별도 제외). 조건부 Production·최종push 승인은 받았지만 점검 시간·새backup/restore·최종gate 전에는 실행하지 않는다. 아래503/Network미확인 기록은 당시 결과다.
 
 ### 안정성 후속 전체 검사와 새로 드러난 설정 오류
 

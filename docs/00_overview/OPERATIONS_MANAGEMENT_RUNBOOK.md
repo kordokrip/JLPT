@@ -115,6 +115,14 @@ pnpm ops:status:remote
 
 `INC-DATA-024`가 열려 있는 동안 current HEAD 기반 `verify:remote`는 Production 정상 판정에 사용하지 않습니다. 위험한 `verify:remote:audio` 별칭도 fail-closed로 유지합니다. 콘텐츠 검증은 immutable release source SHA, manifest와 실제 seed run을 명시해야 하며 `verify:remote:audio:r2`는 R2 참조 0건만 검사합니다.
 
+## Preview OAuth 설정 관리
+
+운영 OAuth와 별도 `JLPT Preview` client를 사용합니다. Preview callback은 `https://nihongo-n3-api-topik-preview.kordokrip.workers.dev/api/v1/auth/google/callback`, APP_ORIGIN은 branch alias `https://feature-topik-product-expans.nihongo-n3.pages.dev`입니다. 실제 SSO는 alias에서 시작·종료하며 immutable Pages와 host-only 세션 쿠키를 공유한다고 가정하지 않습니다. 로그인 시작의 `jlpt-ja|topik-ko` 선택은 서버 active track을 갱신하는 계약이고 기존 기록 삭제와 다릅니다.
+
+클라이언트 생성/자격 증명 반출/등록의 명시 승인 및 정확한 전용 callback을 확인합니다. secret은 Preview Worker에만 등록하며 값은 출력·문서·Git에 기록하지 않습니다. secret-only 후보는 `versions secret bulk`로 먼저 만들고 이전 버전의 script etag/runtime/기타 binding을 대조한 뒤 활성화합니다. `versions deploy`의 non-versioned settings 동기화도 별도 관찰합니다. CLI는 반드시 apps/api cwd의 `--config wrangler.toml --env topik-preview`를 명시합니다. 상위 wrangler.jsonc 자동 탐색이나 운영 .dev.vars 복사에 의존하지 않습니다.
+
+config=true/start302, 실제 Google callback→홈 재조회, 같은 계정 양 트랙 재로그인과 D1 연결 보존을 별도 gate로 기록합니다. 비어 있는 실제 QA 계정 비교는 비어 있지 않은 기존 학습 이력 보존 증거가 아닙니다. 현재 결과/버전은 릴리스 원장을 따릅니다.
+
 ## Production 릴리스
 
 Production은 사용자가 현재 세션에서 명시적으로 승인했을 때만 다음 순서로 실행합니다.
@@ -131,7 +139,7 @@ clean source commit/tag
 → 문서 원장과 원격 Git 동기화
 ```
 
-하나라도 실패하면 다음 단계로 진행하지 않습니다. Pages-only 변경은 D1 drift를 숨기기 위해 재시드하지 않습니다. 데이터 손상이 없으면 D1 전체 restore를 실행하지 않습니다.
+하나라도 실패하면 다음 단계로 진행하지 않습니다. Pages-only 변경은 D1 drift를 숨기기 위해 재시드하지 않습니다. 데이터 손상이 없으면 D1 전체 restore를 실행하지 않습니다. 운영 export는 테이블별 추출이므로 명시 승인한 점검 시간 동안 쓰기가 정지됐는지 확인합니다. HTTP read-only만으로 queue/workflow 정지를 가정하지 말고 활성 작업을 별도 확인합니다. 이번0028-only upgrade는 원격 pending이0028 하나인지 먼저 검사합니다. 새65-table backup의 local0028 drill은 coversLocalSchema=false이며 새70-table backup으로 표시하지 않습니다.
 
 ## 음성 불변 조건
 
