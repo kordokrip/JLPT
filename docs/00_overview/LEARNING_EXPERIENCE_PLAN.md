@@ -182,5 +182,28 @@
 - Pages 코드는 바꾸지 않았으며 실제 가청이 확인된 `a95437fc`/`94dfb05`를 유지한다. Worker 수정 후보의 로컬 브라우저·원격 실측은 별도 실행 결과가 있어야 완료로 기록한다.
 - 동일한 합성 QA 측정 스크립트를 기존 Preview에서 08:10 UTC에 재실행한 단일 표본은 N5 create/current **2,514/1,075ms**, TOPIK1 **1,573/1,592ms**였다(`preview-performance-before.json`). 최초 N5 7,312/2,118ms와 차이가 있으므로 단일 최악 값만으로 개선율이나 p95를 계산하지 않는다. 첫 측정 스크립트는 GET 경로를 잘못 `/study/sessions/current`로 지정해 404였으며 실제 계약 `/study/sessions`로 바로잡은 위 실행만 성능 비교에 사용한다.
 - API 성능·namespace 수정 후 전체 로컬 브라우저 재검증은 **207 passed / 32 skipped / 0 failed**, exit0/3.6분이다(`learning-experience-2026-09-06-perf-local-e2e.log`). 테스트의 navigation 시간 기준과 Pages 코드는 바꾸지 않았다. 소스 검토·회귀·전체 gate를 통과한 Worker만 Preview에 갱신하며 Production에는 적용하지 않는다.
+- 후속 source `0b20e3960d7d70dc52bcff4108206ce16aae0601` commit/push 후 Preview Worker **`6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`** 배포를 확인했다. Pages `a95437fc`/`94dfb05`와 DB migration/content는 유지했다. 이번 Worker의 직전 버전은 `1fec0907-914d-4a82-9e87-92dcf6beb723`다.
+- 같은 스크립트의 후속 단일 표본(08:15 UTC)은 N5 create/current **882/338ms**, TOPIK1 **814/355ms**, 모두 HTTP200·10단계·create/resume 동일 세션이었다(`preview-performance-after.json`). 전후 측정은 p95/SLO 검증이 아니며 모든 급수의 기능은 원격 E2E로 따로 검사한다.
+- `INC-QA-050`: 후속 원격 E2E의 ko/ja full-session 두 건은 시작 지연이 아니라 전체30초 runner 한도에서7/11단계에 중단됐다. 나머지 학습 시작 검사는 진행했지만 전체실행은 exit130으로 중단해 통과로 세지 않았다. 두 긴 시나리오에만 원격 총90초를 주고, UI action/API GET/poll/navigation 및 실제 study write 응답은 개별5초로 제한했다. 전역 timeout을 늘리거나 원래 실패를 삭제하지 않는다. 실제 write status/latency artifact를 추가했으며 이 계측 변경 후 재검증 결과가 필요하다.
+- 해당 계측의 첫 원격 full-session4건은 통과했지만 독립 검토에서 마지막 요청의 응답 헤더가 도착하기 전에는 대기 목록에 없다는 공백을 발견했다. 최종 계측은 pending0·시작/완료 수 일치·requestfailed/finished Error0을 검사하며 응답별5초를 유지한다. 이 최종 계측의 로컬4건은13.9초/exit0으로 통과했고 원격4건은 다시 검증한다. 최초4건을 최종 계측 통과로 재사용하지 않는다.
+- 원격 나머지72건은 **32 pass / 3 skip / 3 fail / 34 not-run**, exit1로 중단했다(`preview-remaining-e2e.log`). 실패는 자유 SRS starter2건(`INC-SRS-051`)과 WebKit mock records interception1건(`INC-QA-052`)이다. 이 표본을 전체 통과로 합산하지 않는다.
+- `INC-SRS-051`은 API독립진단(init201/10, due200/10, statsnew10)과 실제기기/서버1.636초 차이, 브라우저1분 clock-skew 회귀 실패로 교차재현했다. 이때 카드 원본·FSRS날짜·상태를 바꾸지 않았으며 frontend의 서버due 스냅샷 취급을 수정한다.
+- `INC-QA-052`는 routecounter0으로 실패한 뒤 mock 기록 화면 파일에만 serviceWorkers:block을 적용하여 원격Chromium/WebKit2건을 통과했다(`records-fixture-diagnosis.log`, `records-fixture-fixed.log`). 실제 서버 저장/PWA검사는 차단하지 않는다.
+
+### 기기 시계 차이와 자유 복습 후속 후보
+
+- `useDueCards`는 서버가 due로 반환한 계정×트랙×스케줄 스냅샷과 현재 IDB가 정확히 같은 경우 기기 시각과 무관하게 표시한다. 로컬 평가로 reps/due_at/updated_at이 달라지면 이전 서버 판정은 효력을 잃는다. 응답 적용은 IDB transaction에서 조회 시작과 현재 스냅샷을 비교하므로 늦은 조회가 오프라인/낙관 복습을 덮지 않는다. 실제 FSRS 날짜·API·DB·음성 코어는 변경하지 않는다.
+- 새 hook 회귀는 수정 전6 fail/1 pass →7 pass다(React Query와 observable Dexie mock; 실제 IndexedDB 증거 아님). 실제 브라우저1분 clock-skew 회귀는 기존Preview에서 init201/due200/10개를 확인한 후 card-front5초 실패를 재현했고 로컬수정본 양엔진에서는 표시·Good·reload까지 통과했다.
+- 초기 로컬 영향 검사는10 pass/2 skip이었다. 기존 SRS 음성 검사의 로딩 중 조기 skip을 발견해 준비 상태를 명시적으로 기다리게 했으며 이를 포함한 최종 전체 브라우저를 재실행한다. 카드 fixture가 없거나 실패하면 이제 skip 대신 실패한다.
+- `learning-experience-2026-09-06-srs-full-gate.log`: Ops26/DB126/Web40파일120/API162, OpenAPI81/12, typecheck/build/fresh0000–0028·FK/FTS/품질/control-plane, **exit0**. 총434개 테스트다. fresh artifact는 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-Z7Qcfy/artifacts`다.
+
+### 복습 양면 접근성 후속 검사
+
+- 위434개 gate 뒤 전체 E2E는209 pass/30 skip/2 fail이었다(`srs-final-e2e.log`). 시계 차이 회귀는 두 엔진 모두 통과했지만, 조기 skip이 제거된 발음 검사가 앞면에서 뒷면 버튼을 클릭해 실패했다. 테스트 오류와 별개로 숨긴 뒷면의 접근성 노출을 양 엔진2fail로 재현했다(`srs-face-before.log`, `INC-SRS-053`). 실제 카드 뒤집기→발음 순서와 키보드 조작을 검사하고 source 수정 후 gate를 다시 실행한다.
+- 기존 Pages94dfb05/현재 Worker0b20e39의 별도 WebKit 진단은30 pass/2 fixture skip/0 fail, exit0이었다(`webkit-diagnostic.log`). SRS와 full-session을 제외한32건이므로 새 Pages 또는 전체 gate로 합산하지 않는다.
+- 현재 Worker6f0c0e41의 smoke는21 pass/0 fail/관리자 인증1 manual-required, exit0이다(`current-worker-smoke.json`). 실제 Chrome 네트워크 누락과 Production 승인/새 backup 필요 조건은 그대로다.
+- 카드 source의6개 fail-first 단위는 모두 실패 후 수정해 통과했다. 수정은 숨긴 면 aria-hidden/inert·포커스 이동, 입력/버튼 기본 키보드 동작 보존, 저장 중 단축키/swipe 평가 차단이다. 후속 집중 브라우저에서8 pass/2 fail은 기본 autoPronounce 호출2개를 수동 클릭1개와 혼동한 테스트 집계 오류였다(`srs-face-after.log`). 자동 호출도 언어 검사에 보존하며 클릭/Enter/Space 각각 정확히1회 증가를 검사하도록 고쳤다. 실제 음성 실패로 집계하지 않는다.
+- 최종 source의 `srs-accessibility-full-gate.log`는 **Ops26/DB126/Web41파일126/API162 = 440개**, OpenAPI81/12·typecheck·build·fresh0000–0028·FK/FTS·품질·control-plane 모두 **exit0**이다. fresh artifact는 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-b8jgdy/artifacts`다. 전체 E2E와 Pages 배포 결과는 실행 후 별도로 기록한다.
+- 같은 source 최종 전체 E2E는 **211 passed / 30 skipped / 0 failed**,3.6분·exit0이다(`srs-accessibility-final-e2e.log`). skip은 Chromium 전용 시각baseline의 WebKit30건이며 SRS 음성은 더 이상 skip하지 않는다. 시계 차이·클릭/Enter/Space·전 급수 저장/재개·모바일/PWA를 포함하고 음성은 mock 회귀로 한정한다. 독립 Agent는 SRS stale/계정 경계와 마지막 쓰기응답 누락 방지·mock SW 격리의 코드 검토에서 차단 결함을 찾지 못했다.
 
 참고 패턴: [뇌새김](https://www.brain-study.co.kr/wm/bbs/board.php?bo_table=notice&wr_id=2053)의 연상·암기장, [WaniKani](https://www.wanikani.com/)의 개념 연결·SRS, [Duolingo](https://blog.duolingo.com/duolingo-101-how-to-learn-a-language-on-duolingo/)의 짧은 학습 경로, [TEUIDA](https://www.teuida.net/en/learn/korean)의 상황별 학습. 광고상의 효과를 본 제품의 검증된 학습 효과로 인용하지 않는다.

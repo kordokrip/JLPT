@@ -39,6 +39,8 @@ export function SRSCard({
   const { t } = useTranslation();
   const autoPronounce = useSettingsStore((s) => s.autoPronounce);
   const [flipped, setFlipped] = useState(false);
+  const frontRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -48,6 +50,7 @@ export function SRSCard({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (loading) return;
     const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
     const dy = Math.abs((e.changedTouches[0]?.clientY ?? 0) - touchStartY.current);
     // 수평 스와이프이고, 수직 이동보다 크면
@@ -69,9 +72,18 @@ export function SRSCard({
     }
   }, [autoPronounce, heading, reading]);
 
+  useEffect(() => {
+    if (flipped) backRef.current?.focus({ preventScroll: true });
+    else if (backRef.current?.contains(document.activeElement)) frontRef.current?.focus({ preventScroll: true });
+  }, [flipped]);
+
   /* 키보드 단축키 */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (loading || e.defaultPrevented || e.repeat || e.isComposing || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      // Native controls own Enter/Space and editing keys. Window shortcuts
+      // must not cancel their activation or rate a card while typing a note.
+      if (e.target instanceof Element && e.target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="textbox"], [role="combobox"]')) return;
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         if (!flipped) setFlipped(true);
@@ -84,7 +96,7 @@ export function SRSCard({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipped, onRate]);
+  }, [flipped, loading, onRate]);
 
   return (
     <div className="mx-auto w-full max-w-[760px]" data-testid="review-card">
@@ -102,12 +114,17 @@ export function SRSCard({
         >
           {/* 앞면 */}
           <button
+            ref={frontRef}
             type="button"
             data-testid="card-front"
+            aria-hidden={flipped}
+            {...(flipped ? { inert: '' } : {})}
+            tabIndex={flipped ? -1 : 0}
+            disabled={flipped || loading}
             aria-expanded={flipped}
             aria-label={flipped ? t('review.cardFlippedHint') : t('review.cardFrontHint')}
             className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-6 text-left shadow-[var(--shadow-soft)] backface-hidden"
-            style={{ backfaceVisibility: 'hidden' }}
+            style={{ backfaceVisibility: 'hidden', pointerEvents: flipped ? 'none' : undefined }}
             onClick={() => !flipped && setFlipped(true)}
           >
             <div className="text-center w-full">
@@ -140,9 +157,13 @@ export function SRSCard({
 
           {/* 뒷면 */}
           <div
+            ref={backRef}
             data-testid="card-back"
+            aria-hidden={!flipped}
+            {...(!flipped ? { inert: '' } : {})}
+            tabIndex={flipped ? -1 : undefined}
             className="absolute inset-0 flex flex-col overflow-hidden rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-5 shadow-[var(--shadow-soft)] backface-hidden sm:p-6"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? undefined : 'none' }}
           >
             {/* SRS 상태 뱃지 */}
             <div className="mb-2">

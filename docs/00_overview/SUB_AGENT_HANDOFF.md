@@ -36,7 +36,7 @@
 
 별도 Agent 교차검토에서 `INC-LEARN-043`, `INC-DATA-044/046`(다른 기기의 선행 제출·종료·트랙 변경)과 `INC-OPS-045`(진단 식별자 가림), `INC-DATA-047`(0028 backup profile)을 추가해 회귀를 수정했다. 후속 전체 브라우저는 `207 passed / 32 skipped / 0 failed`다. expected_track 불일치 409를 메모 revision 충돌이나 제출 성공으로 바꾸지 않는다. `/audio-qa` 정상 종료 관측 보강(`INC-QA-048`) 이후의 최종 gate는 계획/릴리스 원장의 최신 결과를 확인한다.
 
-Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·quality link가 before/after 일치하고 FK 0이다. Pages `a95437fc-8411-4151-9519-ab0d8fb92905`와 Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`가 source `94dfb05`다. 실제 Chrome의 양언어 정상 종료와 사용자의 청취 확인을 확보했지만 전체 network capture는 없다. Preview E2E는 시작 지연으로 중단했고 전체 통과가 아니다. 직전 Worker `0d17ba30-b7ea-4879-9e99-e9c3a7ebb8ee`/Pages `885aae1f-d308-4453-b3c6-881999410ec0`는 복귀 기준이다. Production에는 어떤 변경도 하지 않았다.
+Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·quality link가 before/after 일치하고 FK 0이다. Pages `a95437fc-8411-4151-9519-ab0d8fb92905`는 source94dfb05를 유지한다. 현재 Worker는 성능 후속 `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39로, 직전1fec0907을 복귀 기준으로 보존한다. 실제 Chrome의 양언어 정상 종료와 사용자 청취 확인은 동일 Pages의 증거지만 전체 network capture는 없다. 초기 Preview E2E는 지연으로 중단했고 후속 검증 결과는 최신 원장을 확인한다. 최초 UX 이전 Worker0d17ba30/Pages885aae1f도 별도 복귀 기준이다. Production에는 어떤 변경도 하지 않았다.
 
 - shared 계약: `packages/shared/src/learning-experience.ts`.
 - additive DB: `packages/db/drizzle-v2/0028_learning_experience.sql`, Drizzle의 다섯 learning/study 테이블.
@@ -46,6 +46,8 @@ Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·qu
 - 콘텐츠↔개념 approved link는 아직 생성하지 않았다. 새 연상문·이미지·문항 생성/공개 작업이 아니므로 기존 문제를 개념 맞춤 출제로 과장하지 않는다.
 - `최초 응답`은 세션 `practice` 제출 수이지 평생 처음 접한 고유 문항 수가 아니다. 힌트 사용량·홈 진입→시작 시간·재개 성공률은 아직 구현된 운영 지표가 아니며, `revealed`는 개념/복습 해설 열람만 나타낸다.
 - backup/restore는 명시적 0027/65·0028/70 profile이다. 저장된 65개 Production backup의 실제 local0028 restore는 FK 0, trigger 56개 복구, 새 5개 테이블 0행으로 통과했지만 `coversLocalSchema=false`다. 새 Production backup이나 새로운 학습 기록 보존 증거로 바꾸어 쓰지 않는다. 기존 transfer/사용자 정리 도구는 별도 0028 검증 전 사용하지 않는다.
+- 자유 SRS의 시계 차이 결함은 `useSRS.ts`와 `lib/srs-due-snapshot.ts`에서 서버due 스냅샷과 IDB 현재값을 대조해 수정한다. 서버시각을 맞춘다며 FSRS날짜를 덮거나, 늦은due응답이 낙관평가를 덮게 바꾸지 않는다. hook단위와 실제1분clock-skew E2E를 함께 확인한다. 원격에서 발견한 mockrecords 실패는SW interception 문제로 제품 저장 오류와 구분한다.
+- SRSCard 양면 접근성과 전역 키보드 단축키는 `INC-SRS-053`으로 추적한다. 음성 테스트는 실제 뒤집기 이후 재생해야 하고, 카드 준비 전 false를 반환해 skip하면 안 된다. `.artifacts/operations/learning-experience-2026-09-06-srs-final-e2e.log`는209 pass/30 skip/2 fail인 중간 실패 증거이며 최종 통과로 인용하지 않는다.
 - `VITE_LEARNING_EXPERIENCE`는 build-time 화면 플래그이며 Worker 전체 rollback 대체물이 아니다. `0028`은 이전 Worker가 무시하는 additive 테이블이다.
 
 - `apps/web`: React PWA, Dexie queue, 퀴즈·TOPIK·FSRS UI, Google 우선 동일 언어 browser speech.

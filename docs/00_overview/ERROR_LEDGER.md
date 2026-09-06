@@ -28,6 +28,10 @@
 
 `INC-PERF-049` 로컬 후속: D1 read batch·선택 문항만 hydrate·mode별 독립 조회로 최적화했다. 생성 ≤18회/재개 ≤5회 왕복 회귀를 통과했다. 별도 reviewer가 schema-valid `id:version` 구분자 충돌과 문자열 bank ID/숫자 canonical ID 충돌을 찾아 공개 상태·해설 연결 위험을 차단했다. 수정 전 3개 실패를 직접 재현하고 JSON tuple/type guard 뒤 3개 및 전체 routes 114개를 통과했다. 이 두 사례는 현재 운영 데이터 발생으로 확인한 것은 아니다. 최종 로컬 전체 gate는 Ops26/DB126/Web113/API162, fresh0028까지 exit0이며 실제 원격 성능은 별도 검증한다.
 
+- `INC-QA-050` 원격 긴 시나리오 예산·관측 보강: 성능 Worker 후속 Preview에서 시작 navigation은 통과했지만 ko/ja 전체 세션 시뮬레이션이 각각 7/11단계에서 runner의 **총30초** 한도에 도달했다. 이 실패를 단일 요청이 빨랐다는 증거로 바꾸지 않는다. 독립 검토로 aggregate timeout과 개별 요청 지연 증거 부족을 구분했다. 두 full-session 테스트의 원격 총예산만90초로 분리하고 각 UI action·API GET·기존 poll/navigation 5초 한도를 유지/명시했다. 실제 study write 응답의 status·완료 시간을 수집해 하나라도 ≥400 또는5초 초과면 실패한다. 나머지 테스트의 시간 한도는 바꾸지 않았다. 최초2건 실패 후 전체실행 중단(exit130) 로그는 `perf-preview-e2e.log`에 보존하며 재검증 결과는 별도 기록한다.
+- `INC-SRS-051` Preview 재현·수정 중: 자유 복습에서 starter 클릭 뒤 빈 상태가 유지되어 Chromium2개 검사가 실패했다. 독립 API 진단에서 init201/created10, due200/동일10개, stats200/new10이었으나 due_at이 기기 조회 완료 시각보다1.636초 미래였다. `useDueCards`가 서버 due 결과를 기기시각으로 다시 필터링하고 시간 경과에는 재평가하지 않는 코드와 교차확인했다. 서버가 due로 반환한 스냅샷은 표시하되 이후 로컬 평가로 바뀐 카드를 stale 응답으로 되살리지 않는 회귀를 추가한다. 실제 FSRS날짜·상태나 사용자 기록을 보정·초기화하지 않는다. 전체 Preview gate는 이 결함 해결 전 차단한다.
+- `INC-QA-052` mock 기록 화면의 원격 interception 누락: WebKit에서 기대 fixture1/4 대신 실제 빈 계정0/0이 표시됐다. route 호출 counter를 추가한 재현에서 실제 interception0회로 실패했다. 이 테스트만 service worker를 차단해 mock UI 검증 경계를 고정하며, 나머지 실제 API·학습·PWA 검사는 service worker를 유지한다. mock 결과를 운영 활동 통계 또는 실제 저장 검증으로 사용하지 않는다.
+
 전체 브라우저 1차 실행은 과거 홈/더보기/즉시 완료 계약을 기대한 테스트에서 실패했다. 승인된 새 UX 계약으로 갱신하고 WebKit 실제 select 높이 결함을 수정했다. 독립 교차검토 후 두 기기 충돌 시나리오를 양 엔진에 추가한 최종 전체 실행은 `207 passed / 32 skipped / 0 failed`다. 중간 navigation 대기 누락 두 실패도 수정 후 전체 재실행했으며 실패 로그를 보존한다. 상세 범위와 미완료 gate는 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)에 기록한다.
 
 진행 계획은 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)을 따른다. 이번 후보의 테스트와 실제 배포 증거가 확보되기 전에는 closed로 표시하지 않는다.
@@ -104,6 +108,12 @@
 | 운영관리 상태 검사 | local `37 passed / 2 known warnings / 0 failed`; remote read-only `47 passed / 2 known warnings / 0 failed`; Ops unit `23/23` | 통과 |
 
 ## 강제 릴리스 gate
+
+### 2026-09-06 후속 — INC-SRS-053
+
+로컬 수정 검증: source440개 gate·fresh0028 및 최종 전체 브라우저211 pass/30 시각-policy skip/0 fail, exit0을 통과했다. 서버due clock-skew와 숨긴 면/키보드 회귀를 포함한다. 아래 중간 실패는 보존하고 새 Preview 확인 전 Production closed로 표시하지 않는다.
+
+최종 로컬 E2E 첫 실행은 `209 passed / 30 skipped / 2 failed`, exit1이었다(`learning-experience-2026-09-06-srs-final-e2e.log`). 기존 SRS 음성 테스트의 조기 skip을 제거하자 앞면 상태에서 뒷면 발음 버튼을 누르려는 잘못된 테스트 순서가 드러났다. 두 엔진 모두 앞면의 pointer interception으로 실패했으며 음성 엔진 실행 실패로 해석하지 않는다. 동시에 CSS 3D 회전만으로 숨긴 뒷면이 접근성 트리/키보드 탐색에 남는 UI 결함을 확인했다. 앞면에서는 뒷면 조작을 노출하지 않고 실제 뒤집기 후 발음 버튼을 클릭하는 회귀로 고정한다. 수정 뒤 전체 gate와 새 Preview 검증 전에는 해결 완료로 표시하지 않는다.
 
 1. `pnpm release:verify:audio-contract`: same-language fallback과 R2/server 음성 경로 금지를 소스에서 검사한다. `pnpm verify:ci`의 첫 단계다.
 2. 단위 테스트: Google 이름이 없는 `Yuna(ko-KR)`, `Kyoko(ja-JP)`, 빈 voice 목록, 다른 언어 거부, 실제 `onend` 전 성공 금지를 검사한다.

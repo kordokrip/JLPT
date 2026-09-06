@@ -12,7 +12,7 @@
 | source | `feature/topik-product-expansion`, `94dfb052c5ff73caaa70692f1d023bdaae439c8f` commit/push |
 | schema | 전용 Preview에 `0028` 하나 적용; Production은 `0027` 유지 |
 | content | 공개 bank 재시드/변경 없음, Preview 160개 신규 공개 없음 |
-| 검증 | backup·음성 진단 포함 최종 gate Ops 26 / DB 126 / Web 113 / API 157, exit 0. 마지막 전체 Playwright 207 pass/32 skip/0 fail, exit 0. 문서 64/81 및 diff check 통과. [실행 기록](LEARNING_EXPERIENCE_PLAN.md#2026-09-06-검증-기록) |
+| 94dfb05 기준선 검증 | backup·음성 진단 포함 gate Ops 26 / DB 126 / Web 113 / API 157, exit 0. Playwright 207 pass/32 skip/0 fail, exit 0. 문서 64/81 및 diff check 통과. 후속 성능 후보 API162와 분리한다. [실행 기록](LEARNING_EXPERIENCE_PLAN.md#2026-09-06-검증-기록) |
 | 실제 음성 | 새 Preview 양 언어 정상 종료 표시, 사용자의 “두 언어 모두 들렸습니다” 확인. 실제 Chrome 네트워크 상세 관측은 별도이며 자동 mock E2E로 대체 표기하지 않음 |
 | remote read-only | 06:09 UTC 전체 48 pass / 2 warnings / 3 fail; 06:44 UTC 같은 R2 verifier 단독 재검사는 9개 표면 모두 0, exit 0. 전체 재집계는 아님 |
 | Preview/Production | Preview Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`; Production 미반영 |
@@ -27,6 +27,12 @@ Preview Worker smoke 21/0, 관리자 positive 검사 1개 미실행. Preview 콘
 최종 Production read-only는 49 pass/2 warnings/2 fail, exit1이었다. 미배포 TOPIK status/CSP만 실패하며 앞선 R2 7403은 재발하지 않았다. 실제 Chrome 전체 network capture는 미확보다. 사용자 청취 확인은 이 Pages의 가청 증거이며 Production 배포 승인이 아니다.
 
 성능 후속 API 후보는 생성≤18/재개≤5 D1 왕복 예산, ID/version tuple과 static/canonical 타입 분리를 적용했다. 독립 검토 지적 3 fail을 수정한 뒤 Ops26/DB126/Web113/API162와 fresh D1, 전체 로컬 E2E207 pass/32 skip/0 fail(exit0)을 통과했다. 이 후속 후보는 Worker-only Preview 대상으로 형상 고정하며 Pages94dfb05는 유지한다. 원격 배포 ID/사후 결과는 실제 실행 후 추가한다.
+
+후속 Worker source0b20e39는 commit/push 및 Preview `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63` 배포를 완료했다. N5 create/current882/338ms·TOPIK1 814/355ms 단일표본을 확인했다. 후속 원격 나머지72건은32 pass/3 skip/3 fail/34 not-run(exit1): SRSclock-skew2건과mockrecords1건을 발견해차단했다. 현재Web clock-skew수정중이며 Production은변경하지않는다. 긴세션계측의최종4건도별도재검증한다.
+
+## 복습 후속 후보
+
+후속 Web 후보는 `INC-SRS-051/053` 수정과 E2E 증거 경계를 포함한다. source 전체 gate는440개(Ops26/DB126/Web126/API162), fresh0028까지 exit0이다. 최종 로컬 E2E는211 pass/30 시각-policy skip/0 fail, exit0이다. API는 현재 Preview Worker0b20e39를 유지하고 추가 migration/seed 없이 Pages만 교체한다. 실제 Pages ID와 원격 E2E 결과 확보 전까지 릴리스 상태는 검증 중이다.
 
 ## GitHub 사용 범위 (유지)
 

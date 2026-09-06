@@ -35,12 +35,17 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 - 해설 열기만으로 TOPIK owner 완료를 기록하지 않습니다. 단계 최초 응답/재시도/학습 완료/복습 평가를 분리하고 서버 채점·원자적 batch·재전송 중복 방지·계정×트랙 격리를 적용합니다.
 - 브라우저 음성 코어와 같은 언어 fallback은 보존합니다. 듣기 대본은 응답 전 화면에 표시하지 않지만 브라우저 합성을 위해 API에 text가 필요합니다. R2와 legacy audio 재생 요청은 사용하지 않습니다.
 - `VITE_LEARNING_EXPERIENCE=false`로 이전 홈/탐색으로 빌드할 수 있습니다. additive DB는 유지합니다. 전체 Worker/Pages 회귀는 이전 버전으로 되돌리며 이 플래그만으로 모든 수정이 취소된다고 간주하지 않습니다.
-- 독립 교차검토로 동시 종료·기기 간 pending/트랙 충돌과 backup 누락을 수정했습니다. 최종 로컬 통합 gate는 Ops 26, DB 126, Web 113, API 157 및 fresh `0000–0028` 통과입니다. 기존 65개 backup의 실제 local0028 restore도 FK 0으로 통과했습니다. 새 학습 테이블까지 포함한 backup은 70개 profile로 별도 검사합니다.
+- 독립 교차검토로 동시 종료·기기 간 pending/트랙 충돌과 backup 누락을 수정했습니다. `94dfb05` 기준선 gate는 Ops 26, DB 126, Web 113, API 157 및 fresh `0000–0028` 통과입니다. 성능 수정 후 최신 API 162 결과는 아래 후속 후보에 분리합니다. 기존 65개 backup의 실제 local0028 restore도 FK 0으로 통과했습니다. 새 학습 테이블까지 포함한 backup은 70개 profile로 별도 검사합니다.
 - `/audio-qa` 정상 종료 관측까지 포함한 로컬 전체 브라우저는 `207 passed / 32 skipped / 0 failed`, exit 0입니다. 실제 Chrome 새 Preview에서 양 언어의 정상 종료 표시를 확인했고 사용자가 **“두 언어 모두 들렸습니다”**라고 가청을 확인했습니다. 이는 해당 Pages 후보의 증거이며 Production 완료 판정은 아닙니다.
-- Preview D1 `0028`, Worker `1fec0907-914d-4a82-9e87-92dcf6beb723`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`. Worker smoke 21개 통과, 관리자 인증 smoke 1개는 별도 미실행입니다. 기존 콘텐츠 집계·공개 상태·quality link는 보존했고 FK 0입니다.
+- Preview D1 `0028`, Pages `a95437fc-8411-4151-9519-ab0d8fb92905`(source94dfb05)는 유지합니다. 성능 후속 Worker는 `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`(source0b20e39)입니다. 직전 Worker1fec0907에서 smoke21개 통과·관리자 인증1개 미실행이었으며 후속 검사는 별도로 기록합니다. 기존 콘텐츠 집계·공개 상태·quality link는 보존했고 FK 0입니다.
 - 원격 학습 E2E에서는 세션 시작 지연을 발견했습니다(`INC-PERF-049`: create 7,312ms, current GET 2,118ms). 전체 실행을 중단하고 API 조회를 최적화하는 중이며 Preview 전체 gate 또는 Production 완료로 표시하지 않습니다.
-- 성능 후속 후보는 API-only read batch와 불필요한 hydrate 제거를 적용했습니다. 독립 검토에서 발견한 ID namespace 두 경계를 fail-first 3개로 수정했으며 전체 Ops26/DB126/Web113/API162·fresh D1 및 로컬 E2E207 pass/32 skip/0 fail을 다시 통과했습니다. 실제 원격 성능 재검증 전에는 해결 완료로 표시하지 않습니다.
+- 성능 후속 후보는 API-only read batch와 불필요한 hydrate 제거를 적용했습니다. 독립 검토에서 발견한 ID namespace 두 경계를 fail-first 3개로 수정했으며 전체 Ops26/DB126/Web113/API162·fresh D1 및 로컬 E2E207 pass/32 skip/0 fail을 다시 통과했습니다. Preview 후속 단일 표본은 N5 create/current882/338ms, TOPIK1 814/355ms였습니다. 원격 전체 영향 E2E는 별도 검사 중이며 단일 표본을 성능 보장으로 표시하지 않습니다.
+- 후속 원격 검사에서 자유 SRS가 서버due를 기기시각으로 다시 필터링하는 clock-skew 결함(`INC-SRS-051`)을 발견해 Web 수정 중입니다. 원격 나머지72건은32 pass/3 skip/3 fail/34 not-run이었으며 전체통과가 아닙니다. 함께 실패한 mock records는 interception0을 재현하고 해당fixture만SW차단하여2건을 통과했습니다. 상세 재현·계측·최신 후보는 계획/오류원장에 기록합니다.
 - 마지막 Production 전체 read-only 재검사는 `49 passed / 2 warnings / 2 failed`, exit1입니다. 실패는 여전히 Production 미반영 TOPIK status/CSP입니다. 06:09 UTC 최초 검사의 R2 7403은 후속 검사에서 재발하지 않았고 9개 표면 참조는 0입니다. 단발 실패의 원인은 미확정으로 보존합니다.
+
+### 최신 후속 후보: 복습 카드·검증 경계
+
+기기 시각 차이로 서버 due 카드가 숨는 결함(`INC-SRS-051`), 카드 양면 접근성/키보드 충돌(`INC-SRS-053`)을 수정했습니다. 같은 언어 음성 엔진·API·DB schema·FSRS 날짜·공개 콘텐츠는 변경하지 않습니다. mock 기록 화면의 SW interception과 긴 세션의 개별 요청5초 계측도 독립 검토했습니다. 최신 전체 로컬 gate는 **Ops26 / DB126 / Web126 / API162 = 440개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane 모두 exit0입니다(`srs-accessibility-full-gate.log`). 전체 브라우저는 **211 pass / 30 시각-baseline 정책 skip / 0 fail**, exit0입니다(`srs-accessibility-final-e2e.log`). 새 Pages Preview 반영은 다음 단계이며 이전 실패209/30/2를 최신 통과로 인용하지 않습니다.
 
 ## Production 콘텐츠 (기존 기준선)
 

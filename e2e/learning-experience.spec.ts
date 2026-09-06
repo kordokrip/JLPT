@@ -61,6 +61,37 @@ for (const language of ["ko", "ja"] as const) {
   test(
     "complete a full guided session and enter FSRS review " + language,
     async ({ page }) => {
+      // A remote run simulates an entire 20-minute session (including retries
+      // and the next FSRS review). Bound each action/request to 5s instead of
+      // treating the runner's 30s total default as an individual response SLO.
+      if (process.env.E2E_BASE_URL) test.setTimeout(90_000);
+      page.setDefaultTimeout(5_000);
+      const started = new Map<import("@playwright/test").Request, number>();
+      let writeCount = 0;
+      const failures: string[] = [];
+      const timings: Array<{ operation: string; ms: number; status: number }> = [];
+      const completed: Promise<void>[] = [];
+      page.on("request", (request) => {
+        if (request.url().includes("/api/v1/study/sessions") && request.method() !== "GET") {
+          started.set(request, Date.now());
+          writeCount++;
+        }
+      });
+      page.on("requestfailed", (request) => {
+        if (!started.has(request)) return;
+        failures.push("study write request failed");
+        started.delete(request);
+      });
+      page.on("response", (response) => {
+        const begin = started.get(response.request());
+        if (begin === undefined) return;
+        completed.push((async () => {
+          const error = await response.finished();
+          if (error) failures.push("study write response did not finish");
+          timings.push({ operation: /\/(reveal|submit)$/.exec(new URL(response.url()).pathname)?.[1] ?? "session-write", ms: Date.now() - begin, status: response.status() });
+          started.delete(response.request());
+        })());
+      });
       const copy = locale[language];
       await register(page, language);
       await page.getByRole("button", { name: copy.save, exact: true }).click();
@@ -68,7 +99,7 @@ for (const language of ["ko", "ja"] as const) {
       await expect(page).toHaveURL(/\/study\/[\w-]+$/);
       const id = page.url().split("/").pop()!;
       const get = async () =>
-        (await (await page.request.get("/api/v1/study/sessions/" + id)).json())
+        (await (await page.request.get("/api/v1/study/sessions/" + id, { timeout: 5_000 })).json())
           .data;
       let session = await get(),
         loop = 0;
@@ -147,10 +178,23 @@ for (const language of ["ko", "ja"] as const) {
       await expect
         .poll(
           async () =>
-            (await (await page.request.get("/api/v1/learning/records")).json())
+            (await (await page.request.get("/api/v1/learning/records", { timeout: 5_000 })).json())
               .data.totals.reviews,
         )
         .toBe(1);
+      // Include requests whose response headers have not arrived yet, notably
+      // the final review whose DB commit may precede its HTTP response.
+      await expect.poll(() => started.size).toBe(0);
+      await Promise.all(completed);
+      await test.info().attach("guided-session-request-times", { body: JSON.stringify(timings), contentType: "application/json" });
+      expect(failures).toEqual([]);
+      expect(timings).toHaveLength(writeCount);
+      expect(timings.length).toBeGreaterThan(10);
+      for (const timing of timings) {
+        expect(timing.status, timing.operation).toBeLessThan(400);
+        expect(timing.ms, timing.operation + " response time").toBeLessThanOrEqual(5_000);
+      }
+      console.info("guided session write timing", JSON.stringify({ language, requests: writeCount, pending: started.size, failures: failures.length, max_ms: Math.max(...timings.map((timing) => timing.ms)) }));
     },
   );
 }

@@ -7,7 +7,7 @@
 | 상태 | DB/런타임 | 콘텐츠 |
 | --- | --- | --- |
 | production | D1 `0000–0027`, Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `https://9cc58a1f.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
-| preview candidate | Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a` | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
+| 2026-08-23 콘텐츠 Preview 기록 | 당시 Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`; 현재 Preview 배포는 릴리스 원장 참조 | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
 
 Worker/content source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`, 현재 Pages source SHA는 `2bd657e96d8a43c6d28efe414acd468c1abd0861`입니다.
 
