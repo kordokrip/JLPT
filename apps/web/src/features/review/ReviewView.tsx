@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SRSCard } from '../../components/feature/SRSCard';
 import { Button, Card, Progress } from '../../components/ui';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { useDataScope } from '../../hooks/useDataScope';
 import { useVocabItem } from '../../hooks/useVocab';
 import type { ReviewViewProps } from './types';
 import type { Rating } from '../../lib/fsrs-client';
@@ -94,44 +97,28 @@ export function ReviewView(props: ReviewViewProps) {
 
       <Progress data-visual-dynamic value={total > 0 ? reviewed : 0} max={Math.max(total, 1)} size="sm" className="mb-5" />
 
-      {current && <VocabReviewCard card={current} onRate={onRate} loading={reviewing} />}
+      {current && (current.item_type === 'vocab'
+        ? <VocabReviewCard card={current} onRate={onRate} loading={reviewing} />
+        : <TypedReviewCard card={current} onRate={onRate} loading={reviewing} />)}
     </div>
   );
 }
 
-function VocabReviewCard({
-  card,
-  onRate,
-  loading,
-}: {
-  card: SrsCard;
-  onRate: (rating: Rating) => Promise<void>;
-  loading: boolean;
-}) {
-  const { item } = useVocabItem(card.item_id);
-
-  if (!item) {
-    return (
-      <div
-        className="border-[0.5px] border-[var(--border)] rounded-2xl bg-card flex items-center justify-center"
-        style={{ height: '220px' }}
-      >
-        <span className="h-6 w-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <SRSCard
-      card={card}
-      heading={item.word}
-      {...(item.reading ? { reading: item.reading } : {})}
-      meaning={item.meaning}
-      {...(item.part_of_speech ? { partOfSpeech: item.part_of_speech } : {})}
-      {...(item.example_jp ? { example: item.example_jp } : {})}
-      {...(item.example_ko ? { exampleKo: item.example_ko } : {})}
-      onRate={onRate}
-      loading={loading}
-    />
-  );
+function TypedReviewCard({card,onRate,loading}:{card:SrsCard;onRate:(rating:Rating)=>Promise<void>;loading:boolean}){
+ const scope=useDataScope(),{t}=useTranslation();
+ const query=useQuery({queryKey:['review-content',scope,card.item_type,card.item_id],queryFn:async()=>{
+ const res=await api.get<{prompt:string;reading:string|null;solution:{explanation:string}}>('/learning/content/'+card.item_type+'/'+card.item_id,{expected_track:'jlpt-ja'});
+ if(!res.ok)throw new Error(res.message);return res.data;
+ },retry:1});
+ if(query.isError)return <div role="alert"><p>{t('study.unavailable')}</p><Button onClick={()=>void query.refetch()}>{t('study.retry')}</Button></div>;
+ if(!query.data)return <p role="status">{t('study.loading')}</p>;
+ return <SRSCard key={card.item_type+':'+card.item_id} card={card} heading={query.data.prompt}
+ {...(query.data.reading?{reading:query.data.reading}:{})} meaning={query.data.solution.explanation} onRate={onRate} loading={loading}/>;
+}
+function VocabReviewCard({card,onRate,loading}:{card:SrsCard;onRate:(rating:Rating)=>Promise<void>;loading:boolean}){
+ const {item}=useVocabItem(card.item_id);
+ if(!item)return <div className="border-[0.5px] border-[var(--border)] rounded-2xl bg-card flex items-center justify-center" style={{height:'220px'}}><span className="h-6 w-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin"/></div>;
+ return <SRSCard card={card} heading={item.word} {...(item.reading?{reading:item.reading}:{})} meaning={item.meaning}
+ {...(item.part_of_speech?{partOfSpeech:item.part_of_speech}:{})} {...(item.example_jp?{example:item.example_jp}:{})}
+ {...(item.example_ko?{exampleKo:item.example_ko}:{})} onRate={onRate} loading={loading}/>;
 }

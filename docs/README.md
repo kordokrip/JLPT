@@ -1,6 +1,6 @@
 # JLPT · TOPIK 문서
 
-기준일: 2026-08-30 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다.
+기준일: 2026-09-06 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 콘텐츠 수·스키마·API 동작은 문서의 서술보다 코드와 fresh-D1 검증 결과가 우선한다. `0028`과 새 학습 UX는 로컬 후보이며 기존 Production과 구분한다.
 
 ## 먼저 읽을 문서
 
@@ -18,6 +18,7 @@
 | 원본 파일과 seed 소유자 | [학습 원본 지도](00_overview/00_source_map.md) |
 | 교육 단위와 확장 원칙 | [커리큘럼 설계](00_overview/CURRICULUM_BLUEPRINT.md) |
 | 다음 우선순위 | [로드맵](ROADMAP.md) |
+| 매일 학습 UX·세션·기록의 구현 계약과 후보 검증 | [학습 경험 구현 계획](00_overview/LEARNING_EXPERIENCE_PLAN.md) |
 | 문제은행 품질과 release gate | [JLPT·TOPIK 문제은행 품질 파이프라인](00_overview/QUESTION_BANK_QUALITY_PIPELINE.md) |
 | 출처·라이선스·오디오 증적 | [Attributions](ATTRIBUTIONS.md) |
 

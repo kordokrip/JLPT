@@ -1,13 +1,33 @@
 # 오류·회귀 차단 원장
 
-최종 점검: 2026-08-30 KST
-현재 상태: **첫 클릭 사용자 활성화 소실과 설치형 PWA의 이전 JS 잔존을 복구해 source `2bd657e...`를 Preview와 Production에 배포했다. 전체 로컬 gate, Production Chromium/WebKit 영향 기능, 실제 Chrome 한국어·일본어 lifecycle을 통과했다. 물리 스피커 가청 여부는 자동 검증과 구분하고, 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.**
+최종 점검: 2026-09-06 KST
+현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 로컬 후보이며 Production 미반영이다. 과거 Chrome lifecycle을 현재 후보의 가청 검증으로 재사용하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
 현재 Production에서 열린 결함은 manifest drift `INC-DATA-024`, TOPIK v2 상태 오판 `INC-TOPIK-031`, quiz 활동 유실 가능성 `INC-ACT-032`, R2 검사/CSP 공백 `INC-AUD-033`입니다. 031–033은 로컬 코드와 회귀 테스트를 수정했지만 아직 Worker Production에 배포하지 않았으므로 완료로 표시하지 않습니다. `INC-LEGACY-034`의 파일 정리는 이번 후보에 포함했고 legacy DB 열·테이블 제거는 별도 additive migration 전까지 보류합니다. `INC-OPS-035`는 이번 검증 중 발견해 표면별 D1 쿼리와 회귀 테스트로 즉시 닫았습니다. 실제 사용자 장치의 물리 가청 확인은 자동 lifecycle 검사와 별도인 사후 관찰 항목입니다.
 
 ## 오류 원장
+
+### 2026-09-06 학습 경험 개선 후보 (Production 미반영)
+
+- `INC-UX-036` local candidate: 공개 언어 선택·가입/로그인 ko/ja/en, TOPIK 일본어 기본 안내와 조작 문구, UI/해설 분리를 구현했다. 명시적 기존 영어 선택을 유지한다. foundation의 기존 영문 교육 내용에 새 번역을 작성·공개한 것은 아니다.
+- `INC-LEARN-037` local candidate: Home 간이 주간 진행률과 달력 기반 완료를 제거하고 실제 profile/세션/accepted 결과를 사용한다. 빈 readiness 맞춤 추천을 제거했고 quiz 기본값은 profile 또는 N5다.
+- `INC-LEARN-038` local candidate: owner 해설 GET과 완료 POST를 분리하고, QuizResult는 소유권 검증된 서버 결과로 새로고침 복구한다. 지연 응답이 새 메모 초안을 지우는 경계를 회귀 테스트로 고정했다.
+- `INC-SRS-039` local candidate: vocab/grammar/kanji/sentence/sysprog의 유형별 복습 조회와 표시를 분리했다. 안내 세션은 기존 JLPT/TOPIK FSRS 저장 서비스를 재사용한다.
+- `INC-QA-040` release gate open: 실제 Chrome의 로컬 주소 접근은 저장된 사용자 브라우저 설정으로 차단되었다. 원격 전용 Preview `/audio-qa`는 실제 Chrome에서 열 수 있음을 확인했다. 아직 이전 Preview 화면이므로 새 후보 양언어 lifecycle·사람 가청은 미확인이다. 로컬 제한 우회나 Playwright mock으로 이를 대체하지 않는다.
+- `INC-OPS-041` 재발 관찰: 06:09 UTC 전체 read-only의 R2 조회는 Cloudflare D1 API `7403`으로 실패했다. 06:44 UTC 같은 명령은 설정·인증 변경 없이 exit 0, 9개 표면 모두 0이었다. 원인을 지속적인 권한 부족으로 단정하지 않는다. 최초 전체 status `48 pass / 2 warnings / 3 fail`과 단독 재검사 성공을 별도로 보존한다. TOPIK status·CSP 두 실패는 미배포 상태다.
+- `INC-UI-042` local candidate: 새 목표 설정 select가 WebKit에서 min-height를 무시해 23px 터치 영역으로 렌더링되었다. `mobile-touch-audit`가 실제 측정해 실패했으며, study 전용 select에 appearance 제거·3rem 최소 높이·화살표를 적용했다. Chromium 통과만으로 iPhone 터치 검증을 대체하지 않는다.
+- `INC-LEARN-043` local candidate, 수정·회귀 통과: 다른 기기가 먼저 제출하면 오프라인 pending이 영구 409에 막히던 결함. 서버 수락 결과를 재조회하고 미수락 로컬 답을 별도 초안에 보존한 뒤 명시적 확인으로 복귀한다. Web 회귀와 양 엔진 기기 충돌 E2E를 통과했다.
+- `INC-DATA-044` local candidate, 수정·회귀 통과: 선행 status 조회 후 동시 요청이 종료하면 stale PATCH/submit이 terminal 상태를 덮어쓰던 결함. SQL terminal guard와 부모 open 상태 claim trigger를 추가했다. 실제 격리 D1의 동시 완료→pause/active, abandoned→submit 세 회귀가 수정 전 실패·수정 후 통과했다.
+- `INC-OPS-045` 로컬 도구 수정·회귀 통과: Cloudflare 오류의 URL은 가려도 중첩 `accountTag` 식별자가 진단 artifact에 남을 수 있었다. JSON·escaped JSON·stderr의 계정/D1 경로 식별자를 가리고 오류 코드는 보존한다. 수정 전 회귀 실패 후 Ops 26/26 통과. 기존 실패 원문은 ignored evidence로 보존하며 값을 문서로 복사하지 않는다.
+- `INC-DATA-046` local candidate, 수정·회귀 통과: 다른 기기의 계정 트랙 변경으로 오래 열린 날짜 메모·profile/current가 잘못된 트랙에 저장/바인딩되던 결함. 선택적 `expected_track` 불일치는 저장 전 409로 거부한다. 양방향 API 회귀, ko/ja/en 새로고침 안내·메모 보존과 양 엔진 E2E를 통과했다. 구 클라이언트 계약은 유지한다.
+- `INC-DATA-047` local candidate, 수정·복원 통과: 기존 backup allowlist는 0027/65뿐이었다. 실제 schema로 0027/65 또는 0028/70을 선택하고 부분·누락·unknown 테이블을 차단한다. 첫 실제 로컬 restore는 Node SQLite에 없는 Miniflare `_cf_METADATA` 때문에 중단했다. 정확히 이 생성 테이블만 제외했고 실제 schema 판정, 대상 15개 테스트와 저장된 65개 backup의 local0028 restore를 통과했다(FK 0, trigger 56개 복구). `coversLocalSchema=false`인 구 backup 결과를 새 70-table backup 증거로 사용하지 않는다. 최종 전체 gate와 이후 실제 원격 backup 시점의 profile 검사는 별도다.
+- `INC-QA-048` 로컬 진단 보강·회귀 통과: 기존 `/audio-qa`는 재생 중→대기만 표시해 정상 종료를 나중에 확실히 대조하기 어려웠다. 기존 `speakText`의 실제 onend가 true로 끝난 뒤에만 언어별 정상 종료 횟수와 마지막 결과를 표시한다. 실패/중단/언어 변경의 늦은 응답은 성공으로 세지 않는다. 단위 7개 및 진단 완료 표시를 추가한 최종 전체 E2E 207/32/0을 통과했다. 이는 실제 Chrome 가청 증거가 아니며 음성 코어 또는 R2 정책 변경도 아니다.
+
+전체 브라우저 1차 실행은 과거 홈/더보기/즉시 완료 계약을 기대한 테스트에서 실패했다. 승인된 새 UX 계약으로 갱신하고 WebKit 실제 select 높이 결함을 수정했다. 독립 교차검토 후 두 기기 충돌 시나리오를 양 엔진에 추가한 최종 전체 실행은 `207 passed / 32 skipped / 0 failed`다. 중간 navigation 대기 누락 두 실패도 수정 후 전체 재실행했으며 실패 로그를 보존한다. 상세 범위와 미완료 gate는 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)에 기록한다.
+
+진행 계획은 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)을 따른다. 이번 후보의 테스트와 실제 배포 증거가 확보되기 전에는 closed로 표시하지 않는다.
 
 | ID | 오류와 영향 | 확인된 원인·증거 | 현재 조치 | 배포 차단 조건 |
 | --- | --- | --- | --- | --- |

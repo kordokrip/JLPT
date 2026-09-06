@@ -2,6 +2,7 @@ import {
   LEARNING_TRACK_DEFINITIONS,
   type LearningTrackId,
 } from '@nihongo-n3/shared';
+import { learningExperienceEnabled } from './learning-flag';
 
 export type NavigationKey =
   | 'home'
@@ -101,6 +102,13 @@ export function navigationForTrack(
   track: LearningTrackId,
   role?: 'user' | 'admin',
 ): readonly TrackNavigationItem[] {
+  if (learningExperienceEnabled) return [
+    { to: homePathForTrack(track), key: 'home', icon: 'home', primary: true },
+    { to: '/learn', key: 'learn', icon: 'learn', primary: true },
+    { to: '/questions', key: 'quiz', icon: 'quiz', primary: true },
+    { to: track === 'jlpt-ja' ? '/review' : '/track/topik-ko/review', key: 'review', icon: 'review', primary: true },
+    { to: '/records', key: 'stats', icon: 'stats', primary: true },
+  ];
   return WEB_TRACK_REGISTRY[track].navigation.filter((item) => !item.adminOnly || role === 'admin');
 }
 

@@ -14,7 +14,7 @@ import {
 } from '@nihongo-n3/shared';
 
 import { appSessionAuth } from '../lib/auth-session.js';
-import { schedule, type CardSnapshot } from '../lib/fsrs.js';
+import { topikCompletionStatements, reviewStatements } from '../lib/learning-effects.js';
 import type { AppEnv } from '../types.js';
 
 /**
@@ -61,27 +61,7 @@ function isTopikTrack(c: { get: (key: 'learningTrack') => string }) {
   return c.get('learningTrack') === 'topik-ko';
 }
 
-const publishedOwnerItem = (alias: string) => `(
-  NOT EXISTS (
-    SELECT 1 FROM content_quality_audits pending_audit
-    WHERE pending_audit.learning_track = 'topik-ko'
-      AND pending_audit.content_type = 'topik-owner'
-      AND pending_audit.content_id = ${alias}.id
-  )
-  OR EXISTS (
-    SELECT 1
-    FROM content_quality_audits published_audit
-    JOIN content_release_quality_audit_links release_link
-      ON release_link.audit_id = published_audit.id
-    JOIN content_releases published_release
-      ON published_release.id = release_link.release_id
-    WHERE published_audit.learning_track = 'topik-ko'
-      AND published_audit.content_type = 'topik-owner'
-      AND published_audit.content_id = ${alias}.id
-      AND published_audit.release_state = 'published'
-      AND published_release.release_state = 'published'
-  )
-)`;
+import { publishedOwnerItem } from '../lib/owner-publication.js';
 
 function parseAnswer(value: string): Record<string, unknown> {
   try {
@@ -301,29 +281,7 @@ topikOwnerCurriculumOA.openapi(completeRoute, async (c) => {
   if (!exists) return c.json({ title: 'Not found', status: 404, detail: 'TOPIK 1–6 자체 저작 학습 항목을 찾을 수 없습니다.' }, 404);
   const userId = c.get('userId');
   const now = Math.floor(Date.now() / 1000);
-  await c.env.DB.batch([
-    c.env.DB.prepare(
-      `INSERT INTO topik_owner_curriculum_progress
-         (user_id, item_id, status, completed_at, last_studied_at, created_at, updated_at)
-       VALUES (?, ?, 'completed', ?, ?, ?, ?)
-       ON CONFLICT(user_id, item_id) DO UPDATE SET
-         status = 'completed',
-         completed_at = COALESCE(topik_owner_curriculum_progress.completed_at, excluded.completed_at),
-         last_studied_at = excluded.last_studied_at,
-         updated_at = excluded.updated_at`,
-    ).bind(userId, itemId, now, now, now, now),
-    c.env.DB.prepare(
-      `INSERT OR IGNORE INTO topik_owner_srs_cards
-         (user_id, item_id, state, stability, difficulty, due_at, lapses, reps, learning_steps_idx, desired_retention, created_at, updated_at)
-       VALUES (?, ?, 'new', 2.5, 5.0, ?, 0, 0, 0, 0.9, ?, ?)`,
-    ).bind(userId, itemId, now, now, now),
-    c.env.DB.prepare(
-      `INSERT OR IGNORE INTO learning_activity_events
-         (event_id, user_id, learning_track, event_type, content_type, content_id,
-          level_tag, section, occurred_at)
-       VALUES (?, ?, 'topik-ko', 'content_completed', 'topik-owner-item', ?, ?, ?, ?)`,
-    ).bind(`topik-complete:${itemId}`, userId, itemId, `grade-${exists.target_grade}`, exists.item_type, now),
-  ]);
+  await c.env.DB.batch(topikCompletionStatements(c.env.DB, userId, exists, now));
   const card = await c.env.DB.prepare(
     'SELECT id FROM topik_owner_srs_cards WHERE user_id = ? AND item_id = ?',
   ).bind(userId, itemId).first<{ id: number }>();
@@ -403,76 +361,12 @@ topikOwnerCurriculumOA.openapi(reviewRoute, async (c) => {
   if (!isTopikTrack(c)) return c.json({ title: 'Track mismatch', status: 409, detail: 'TOPIK 학습 트랙으로 전환한 뒤 다시 시도하세요.' }, 409);
   const { card_id: cardId, rating, response_ms: responseMs } = c.req.valid('json');
   const userId = c.get('userId');
-  const card = await c.env.DB.prepare(
-    `SELECT id, item_id, state, stability, difficulty, lapses, reps, last_reviewed_at
-       FROM topik_owner_srs_cards
-      WHERE id = ? AND user_id = ?`,
-  ).bind(cardId, userId).first<{
-    id: number;
-    item_id: string;
-    state: CardSnapshot['state'];
-    stability: number;
-    difficulty: number;
-    lapses: number;
-    reps: number;
-    last_reviewed_at: number | null;
-  }>();
-  if (!card) return c.json({ title: 'Not found', status: 404, detail: `TOPIK 복습 카드 id=${cardId}을 찾을 수 없습니다.` }, 404);
-  const now = new Date();
-  const snapshot: CardSnapshot = {
-    state: card.state,
-    stability: card.stability,
-    difficulty: card.difficulty,
-    lapses: card.lapses,
-    reps: card.reps,
-    lastReviewedAt: card.last_reviewed_at ? new Date(card.last_reviewed_at * 1000) : null,
-  };
-  const result = schedule(snapshot, rating, now);
-  const nowSeconds = Math.floor(now.getTime() / 1000);
-  const dueAt = Math.floor(result.dueAt.getTime() / 1000);
-  const elapsedDays = snapshot.lastReviewedAt
-    ? Math.round((now.getTime() - snapshot.lastReviewedAt.getTime()) / 86_400_000)
-    : 0;
-  const scheduledDays = Math.round((result.dueAt.getTime() - now.getTime()) / 86_400_000);
-  await c.env.DB.batch([
-    c.env.DB.prepare(
-      `UPDATE topik_owner_srs_cards SET
-         state = ?, stability = ?, difficulty = ?, lapses = ?, reps = ?,
-         due_at = ?, last_reviewed_at = ?, updated_at = ?
-       WHERE id = ? AND user_id = ?`,
-    ).bind(result.state, result.stability, result.difficulty, result.lapses, result.reps, dueAt, nowSeconds, nowSeconds, cardId, userId),
-    c.env.DB.prepare(
-      `INSERT INTO topik_owner_review_logs
-         (card_id, rating, elapsed_days, scheduled_days, response_ms, reviewed_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    ).bind(cardId, rating, elapsedDays, scheduledDays, responseMs ?? null, nowSeconds),
-    c.env.DB.prepare(
-      `UPDATE topik_owner_curriculum_progress
-          SET last_studied_at = ?, updated_at = ?
-        WHERE user_id = ? AND item_id = ?`,
-    ).bind(nowSeconds, nowSeconds, userId, card.item_id),
-    c.env.DB.prepare(
-      `INSERT OR IGNORE INTO learning_activity_events
-         (event_id, user_id, learning_track, event_type, content_type, content_id,
-          rating, duration_ms, occurred_at)
-       VALUES (?, ?, 'topik-ko', 'review_rated', 'topik-owner-item', ?, ?, ?, ?)`,
-    ).bind(
-      `topik-review:${cardId}:rep:${result.reps}`,
-      userId,
-      card.item_id,
-      rating,
-      responseMs ?? null,
-      nowSeconds,
-    ),
-  ]);
-  return c.json({ data: {
-    state: result.state,
-    stability: result.stability,
-    difficulty: result.difficulty,
-    lapses: result.lapses,
-    reps: result.reps,
-    due_at: dueAt,
-  } }, 200);
+  const mutation = await reviewStatements(c.env.DB, userId, 'topik-ko', cardId, rating, responseMs);
+  if (!mutation) return c.json({ title: 'Not found', status: 404, detail: 'Review card not found' }, 404);
+  await c.env.DB.batch(mutation.statements);
+  const { result } = mutation;
+  return c.json({ data: { state: result.state, stability: result.stability, difficulty: result.difficulty,
+    lapses: result.lapses, reps: result.reps, due_at: Number(mutation.due_at) } }, 200);
 });
 
 export { topikOwnerCurriculumOA };

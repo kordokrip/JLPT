@@ -2,6 +2,7 @@ import { BookOpenText, ChartNoAxesColumnIncreasing, Headphones, Languages } from
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../stores/settings-store';
+import { LanguageSelect } from '../features/study/StudyComponents';
 
 const FEATURES = [
   { key: 'path', icon: BookOpenText },
@@ -11,9 +12,16 @@ const FEATURES = [
 ] as const;
 
 export default function Welcome() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const learningTrack = useSettingsStore((state) => state.learningTrack);
   const setLearningTrack = useSettingsStore((state) => state.setLearningTrack);
+  const chooseTrack = (track: 'jlpt-ja' | 'topik-ko') => {
+    setLearningTrack(track);
+    useSettingsStore.getState().suggestLanguage(track === 'jlpt-ja' ? 'ko' : 'ja');
+    const language = useSettingsStore.getState().language;
+    void i18n.changeLanguage(language);
+    document.documentElement.lang = language;
+  };
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-[var(--background)] text-foreground">
@@ -28,6 +36,7 @@ export default function Welcome() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
           <div className="max-w-[680px]">
+            <div className="mb-5"><LanguageSelect /></div>
             <div className="flex items-center gap-3">
               <img
                 src="/brand-mark.png"
@@ -53,14 +62,14 @@ export default function Welcome() {
                 <TrackChoice
                   checked={learningTrack === 'jlpt-ja'}
                   title={t('welcome.jlptTitle')}
-                  description={t('welcome.jlptDescription')}
-                  onClick={() => setLearningTrack('jlpt-ja')}
+                  description={t('study.jlptWelcome')}
+                  onClick={() => chooseTrack('jlpt-ja')}
                 />
                 <TrackChoice
                   checked={learningTrack === 'topik-ko'}
                   title={t('welcome.topikTitle')}
-                  description={t('welcome.topikDescription')}
-                  onClick={() => setLearningTrack('topik-ko')}
+                  description={t('study.topikWelcome')}
+                  onClick={() => chooseTrack('topik-ko')}
                 />
               </div>
             </fieldset>

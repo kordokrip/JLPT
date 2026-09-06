@@ -1,7 +1,7 @@
 /**
  * RootLayout — 앱 공통 레이아웃 (Outlet)
  */
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { SideNav }         from './SideNav';
 import { BottomTabBar }    from './BottomTabBar';
 import { useUiStore }      from '../../stores/ui-store';
@@ -9,13 +9,23 @@ import { IosInstallHint }  from '../IosInstallHint';
 import { useTranslation }  from 'react-i18next';
 import { useContentVersionInvalidation } from '../../hooks/useContentVersionInvalidation';
 import { useSettingsStore } from '../../stores/settings-store';
+import { useAuthStore } from '../../stores/auth-store';
+import { useDataScope } from '../../hooks/useDataScope';
+import { learningExperienceEnabled } from '../../lib/learning-flag';
+import { LanguageSelect, studyButton } from '../../features/study/StudyComponents';
+import { LearningTrackSwitch } from '../feature/LearningTrackSwitch';
+import { useLearningProfile } from '../../hooks/useLearningProfile';
 
 export function RootLayout() {
+  useLearningProfile();
   useContentVersionInvalidation();
   const isOnline = useUiStore((s) => s.isOnline);
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
   const learningTrack = useSettingsStore((s) => s.learningTrack);
   const { t } = useTranslation();
+  const scope = useDataScope();
+  const user = useAuthStore(s => s.user);
+  const logout = useAuthStore(s => s.logout);
 
   return (
     <div
@@ -23,7 +33,7 @@ export function RootLayout() {
       data-learning-track={learningTrack}
       className="app-shell relative min-h-dvh overflow-x-clip bg-[var(--background)]"
     >
-      <div
+      {!learningExperienceEnabled && <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 bg-no-repeat mix-blend-multiply dark:mix-blend-soft-light"
         style={{
@@ -32,7 +42,7 @@ export function RootLayout() {
           backgroundSize: 'min(78vw, 760px) auto',
           opacity: 'var(--track-art-opacity)',
         }}
-      />
+      />}
       {/* 스크린리더용 건너뛰기 링크 */}
       <a
         href="#main-content"
@@ -66,7 +76,17 @@ export function RootLayout() {
           !isOnline ? 'mt-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
         ].join(' ')}
       >
-        <Outlet />
+        {learningExperienceEnabled && <header className="flex justify-end border-b border-[var(--border)] px-4 py-2">
+          <details className="w-full max-w-xl">
+            <summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary>
+            <div className="space-y-4 py-4"><LanguageSelect /><LearningTrackSwitch />
+              <Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>
+              {user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}
+              <button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button>
+            </div>
+          </details>
+        </header>}
+        <div key={scope}><Outlet /></div>
       </main>
 
       {/* 하단 탭 (모바일) */}

@@ -1,6 +1,6 @@
 # 현재 구현 상태
 
-기준일: 2026-08-30 KST. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 production 운영 기준입니다.
+문서 갱신: 2026-09-06 KST. 아래 Production 기준선과 새 로컬 후보를 구분합니다. 새 노트북에서 상태를 복원할 때 가장 먼저 읽는 운영 기준입니다.
 
 > 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 
@@ -25,7 +25,21 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
-## Production 콘텐츠
+## 2026-09-06 학습 경험 후보 — 로컬 구현, 미배포
+
+상세 설계·API·DB·검증 범위는 [매일 이어지는 학습 경험](LEARNING_EXPERIENCE_PLAN.md)에 통합합니다. 출발 HEAD는 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc`이며 이 후보는 아직 commit/push 또는 Preview/Production에 반영하지 않았습니다.
+
+- 오늘/학습/문제/복습/기록과 한 번 눌러 시작·세션 재개를 구현했습니다. 공개 화면·가입/로그인·TOPIK 조작 안내는 ko/ja/en으로 분리하고 명시적인 기존 언어 선택은 보존합니다.
+- 새 migration `0028_learning_experience.sql`은 프로필, 세션, 단계 결과, 메모, 검수된 문제↔개념 링크 다섯 테이블만 추가합니다. 기존 공개 콘텐츠, FSRS, progress, daily_logs는 재시드·초기화하지 않습니다.
+- `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`, 유형별 `/learning/content/:type/:id`, 소유권 검사 후 `/quiz/attempts/:id` 결과 조회를 추가했습니다. 공통 TOPIK 완료·FSRS 저장 서비스를 기존 route와 안내 세션이 공유합니다.
+- 해설 열기만으로 TOPIK owner 완료를 기록하지 않습니다. 단계 최초 응답/재시도/학습 완료/복습 평가를 분리하고 서버 채점·원자적 batch·재전송 중복 방지·계정×트랙 격리를 적용합니다.
+- 브라우저 음성 코어와 같은 언어 fallback은 보존합니다. 듣기 대본은 응답 전 화면에 표시하지 않지만 브라우저 합성을 위해 API에 text가 필요합니다. R2와 legacy audio 재생 요청은 사용하지 않습니다.
+- `VITE_LEARNING_EXPERIENCE=false`로 이전 홈/탐색으로 빌드할 수 있습니다. additive DB는 유지합니다. 전체 Worker/Pages 회귀는 이전 버전으로 되돌리며 이 플래그만으로 모든 수정이 취소된다고 간주하지 않습니다.
+- 독립 교차검토로 동시 종료·기기 간 pending/트랙 충돌과 backup 누락을 수정했습니다. 최종 로컬 통합 gate는 Ops 26, DB 126, Web 113, API 157 및 fresh `0000–0028` 통과입니다. 기존 65개 backup의 실제 local0028 restore도 FK 0으로 통과했습니다. 새 학습 테이블까지 포함한 backup은 70개 profile로 별도 검사합니다.
+- `/audio-qa` 정상 종료 관측까지 포함한 마지막 전체 브라우저 실행은 `207 passed / 32 skipped / 0 failed`, exit 0입니다. 실제 Chrome의 원격 Preview 접근은 가능하지만 새 후보 lifecycle·사람 가청·Preview 배포는 아직 미완료입니다.
+- 06:09 UTC 원격 전체 read-only는 `48 passed / 2 warnings / 3 failed`였습니다. 06:44 UTC 같은 R2 verifier를 설정·인증 변경 없이 재검사해 9개 표면 참조 0을 확인했습니다. 앞선 7403의 원인은 미확정이며 전체 상태 수치를 재집계한 것은 아닙니다. TOPIK status/CSP는 여전히 미배포 수정입니다.
+
+## Production 콘텐츠 (기존 기준선)
 
 manifest `content-v3-d102868e3d43b9b3c1a4`는 26개 source와 canonical 6,501행을 생성합니다.
 
@@ -98,7 +112,7 @@ TOPIK 다음 행동 순서는 `due review → incomplete owner item → weakest 
 
 ## 브라우저 음성 정책
 
-발음은 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용합니다. 한국어에는 `ko-*`, 일본어에는 `ja-*`만 허용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. production의 R2 pronunciation 참조는 0이며 legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
+발음은 Google 브라우저 음성을 우선하고, 없으면 같은 언어의 기기 음성을 사용합니다. 한국어에는 `ko-*`, 일본어에는 `ja-*`만 허용합니다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지합니다. Production R2 pronunciation 참조는 2026-09-06 06:44 UTC 단독 재검사에서 9개 표면 모두 0이었습니다. 같은 날 앞선 7403 실패와 재검사 성공을 `INC-OPS-041`에 함께 보존합니다. legacy `/api/v1/audio/*`와 관리자 생성 경로는 `410 Gone`입니다. Production speech contract는 `ready|unavailable`만 기록하고 실제 음성 binary를 저장하지 않습니다. report/evidence R2는 발음 경로가 아닙니다.
 
 `0027`의 provider `google-browser`와 API의 `kind: "google"`은 데이터/클라이언트 호환용 식별자입니다. 런타임에서 Google 이름을 강제한다는 뜻이 아닙니다. 재생 click에서는 voice 준비를 기다리지 않고 같은 task 안에서 즉시 `speak()`를 호출합니다. 비동기 voice list는 background에서 다음 재생을 위해 준비하며 실제 `onend` 이후에만 `played`를 기록합니다.
 

@@ -52,6 +52,7 @@ import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
 import { activityOA } from './routes/activity-oa.js';
+import { learningExperienceOA } from './routes/learning-experience.js';
 import { aiOA } from './routes/ai-oa.js';
 import { adminAiOA, aiLearningOA } from './routes/ai-learning-oa.js';
 import { authOA } from './routes/auth-oa.js';
@@ -159,6 +160,7 @@ const v1 = new OpenAPIHono<AppEnv>();
 
 v1.get('/ping', (c) => c.json({ data: { message: 'pong', version: '1.0.0' } }));
 v1.route('/', authOA);
+v1.route('/', learningExperienceOA);
 v1.route('/', tracksOA);
 v1.route('/', topikPlacementOA);
 v1.route('/', topikPracticeOA);

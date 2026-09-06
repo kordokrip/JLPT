@@ -21,7 +21,7 @@ type ProgressData = { completed_item_ids: string[] };
 
 function ownerCurriculumSection(page: Page) {
   return page.locator('section').filter({
-    has: page.getByRole('heading', { name: '자체 저작 학습 단위' }),
+    has: page.getByRole('heading', { name: '급수별 개념 학습' }),
   });
 }
 
@@ -77,7 +77,11 @@ async function openFixtureUnit(page: Page): Promise<void> {
   const section = ownerCurriculumSection(page);
   await expect(section).toBeVisible();
   await section.getByRole('tab', { name: '1급', exact: true }).click();
-  await section.getByRole('button', { name: `${FIXTURE_UNIT_TITLE} 학습 시작` }).click();
+  const data=await topikApi<{data:{units:Array<{id:string;items:Array<{id:string}>}>}}>(page,'/tracks/topik-ko/curriculum?target_grade=1');
+  const unit=data.data.data.units.find(u=>u.items.some(i=>i.id===FIXTURE_VOCAB_ID))!;
+  await section.locator(`article[data-unit-id="${unit.id}"]`).getByRole('button',{name:'학습',exact:true}).click();
+  for(let i=0;i<unit.items.findIndex(item=>item.id===FIXTURE_VOCAB_ID);i++)await section.getByRole('button',{name:'다음 항목'}).click();
+  await expect(section.locator(`article[data-item-id="${FIXTURE_VOCAB_ID}"]`)).toBeVisible();
 }
 
 test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
@@ -114,13 +118,13 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     expect(JSON.stringify(payload)).not.toContain('해설');
 
     const section = ownerCurriculumSection(page);
-    await expect(section.getByRole('button', { name: '한국어 음성 재생' })).toHaveCount(2);
-    await expect(section.getByText('오디오를 제공하지 않습니다')).toHaveCount(1);
+    await expect(section.locator('article')).toHaveCount(1);
+    await expect(section.getByRole('button', { name: '소리 듣기' })).toHaveCount(1);
     const activityRequest = page.waitForRequest((request) =>
       request.url().endsWith('/api/v1/activity/events') && request.method() === 'POST');
     await section.locator('article')
       .filter({ hasText: 'Which meaning best matches 안녕하세요?' })
-      .getByRole('button', { name: '한국어 음성 재생' })
+      .getByRole('button', { name: '소리 듣기' })
       .click();
     expect((await activityRequest).postDataJSON()).toEqual({
       events: [expect.objectContaining({
@@ -132,6 +136,12 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     });
     await expect.poll(() => page.evaluate(() => window.__topikSpeechCalls ?? 0)).toBe(1);
     await expect.poll(() => page.evaluate(() => window.__topikSpeechVoiceNames ?? [])).toEqual(['Google Korean']);
+    // Inspect the unavailable item without assuming the fixture's display order.
+    const unavailableIndex=fixtureUnit!.items.findIndex(item=>item.audio?.kind==='unavailable');
+    const vocabIndex=fixtureUnit!.items.findIndex(item=>item.id===FIXTURE_VOCAB_ID);
+    for(let i=0;i<Math.abs(unavailableIndex-vocabIndex);i++)await section.getByRole('button',{name:unavailableIndex<vocabIndex?'이전 항목':'다음 항목'}).click();
+    await expect(section.locator('article')).toHaveCount(1);
+    await expect(section.getByRole('button', {name:'소리 듣기'})).toHaveCount(0);
     expect(audioRequests).toEqual([]);
   });
 
@@ -152,14 +162,16 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     const completeResponse = page.waitForResponse((response) =>
       response.url().includes(`/api/v1/tracks/topik-ko/curriculum/items/${FIXTURE_VOCAB_ID}/complete`) && response.request().method() === 'POST',
     );
-    await vocabCard.getByRole('button', { name: '정답과 해설 보기' }).click();
+    await vocabCard.getByRole('button', { name: '해설', exact:true }).click();
     expect((await solutionResponse).status()).toBe(200);
+    expect((await topikApi<{data:ProgressData}>(page,'/tracks/topik-ko/curriculum/progress')).data.data.completed_item_ids).not.toContain(FIXTURE_VOCAB_ID);
+    await vocabCard.getByRole('button', {name:'학습 완료로 기록'}).click();
     const completion = await completeResponse;
     expect(completion.status()).toBe(200);
     const completionBody = await completion.json() as { data: { item_id: string; status: string; card_id: number } };
     expect(completionBody.data).toMatchObject({ item_id: FIXTURE_VOCAB_ID, status: 'completed' });
     expect(typeof completionBody.data.card_id).toBe('number');
-    await expect(vocabCard.getByText('학습 완료 · FSRS 복습에 추가됨')).toBeVisible();
+    await expect(vocabCard.getByText('학습 완료', {exact:true})).toBeVisible();
 
     const progress = await topikApi<{ data: ProgressData }>(page, '/tracks/topik-ko/curriculum/progress');
     expect(progress.status).toBe(200);
@@ -171,18 +183,18 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     )).toBe(true);
 
     await page.goto('/track/topik-ko/review');
-    const reviewSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'TOPIK 1–6 복습' }) });
+    const reviewSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'TOPIK 1–6 · 복습' }) });
     await expect(reviewSection.getByText('Which meaning best matches 안녕하세요?')).toBeVisible();
-    await reviewSection.getByRole('button', { name: '정답과 해설 보기' }).click();
+    await reviewSection.getByRole('button', { name: '해설', exact:true }).click();
     const reviewResponse = page.waitForResponse((response) =>
       response.url().endsWith('/api/v1/tracks/topik-ko/curriculum/review') && response.request().method() === 'POST',
     );
-    await reviewSection.getByRole('button', { name: '보통' }).click();
+    await reviewSection.getByRole('button', { name: '기억했어요' }).click();
     const reviewed = await reviewResponse;
     expect(reviewed.status()).toBe(200);
     const reviewBody = await reviewed.json() as { data: { due_at: number } };
     expect(reviewBody.data.due_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
-    await expect(reviewSection.getByText('대기 중인 TOPIK 복습이 없습니다.')).toBeVisible();
+    await expect(reviewSection.getByText('예약된 복습이 없습니다.')).toBeVisible();
     const dueAfterReview = await topikApi<{ data: DueData }>(page, '/tracks/topik-ko/curriculum/review/due?limit=20');
     expect(dueAfterReview.data.data.cards.some((card) =>
       card.card_id === completionBody.data.card_id && card.item.id === FIXTURE_VOCAB_ID,
@@ -211,17 +223,20 @@ test.describe('TOPIK 1–6 owner-authored curriculum local fixture', () => {
     const section = ownerCurriculumSection(page);
     await expect(section).toBeVisible();
     await section.getByRole('tab', { name: '6급', exact: true }).click();
-    await section.getByRole('button', { name: `${BATCH4_GRADE6_UNIT_TITLE} 학습 시작` }).click();
+    const unitData=await topikApi<{data:{units:Array<{title_ko:string;title_en:string}>}}>(page,'/tracks/topik-ko/curriculum?target_grade=6');
+    const title=unitData.data.data.units.find(u=>u.title_ko===BATCH4_GRADE6_UNIT_TITLE)!.title_en;
+    await section.locator('article').filter({has:page.getByRole('heading',{name:title,exact:true})}).getByRole('button',{name:'학습',exact:true}).click();
     const batch4Card = section.locator('article').filter({ hasText: '자료 해석' });
     await expect(batch4Card).toBeVisible();
-    await batch4Card.getByRole('button', { name: '한국어 음성 재생' }).click();
+    await batch4Card.getByRole('button', { name: '소리 듣기' }).click();
     await expect.poll(() => page.evaluate(() => window.__topikSpeechCalls ?? 0)).toBe(1);
     await expect.poll(() => page.evaluate(() => window.__topikSpeechVoiceNames ?? [])).toEqual(['Google Korean']);
     await batch4Card.getByRole('radio', { name: '자료 해석' }).click();
     const completionResponse = page.waitForResponse((response) =>
       response.url().includes(`/api/v1/tracks/topik-ko/curriculum/items/${BATCH4_GRADE6_VOCAB_ID}/complete`) && response.request().method() === 'POST',
     );
-    await batch4Card.getByRole('button', { name: '정답과 해설 보기' }).click();
+    await batch4Card.getByRole('button', { name: '해설', exact:true }).click();
+    await batch4Card.getByRole('button', { name:'학습 완료로 기록' }).click();
     expect((await completionResponse).status()).toBe(200);
     const progress = await topikApi<{ data: ProgressData }>(page, '/tracks/topik-ko/curriculum/progress');
     const due = await topikApi<{ data: DueData }>(page, '/tracks/topik-ko/curriculum/review/due?limit=20');

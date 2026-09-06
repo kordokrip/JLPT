@@ -81,10 +81,13 @@ function addCheck(checks, id, status, detail) {
   checks.push({ id, status, detail });
 }
 
-function safeDiagnostic(value) {
+export function safeDiagnostic(value) {
   return String(value)
     .replace(/\u001b\[[0-9;]*m/gu, '')
     .replace(/\/accounts\/[0-9a-f]+\//giu, '/accounts/[redacted]/')
+    .replace(/(\/d1\/database\/)[0-9a-f-]{36}\b/giu, '$1[redacted]')
+    // Child-process errors can contain JSON, escaped JSON, or inspect() output.
+    .replace(/(\b(?:accountTag|account_?id)["'\\]*\s*:\s*["'\\]*)[0-9a-f]{32}\b/giu, '$1[redacted]')
     .slice(-800);
 }
 

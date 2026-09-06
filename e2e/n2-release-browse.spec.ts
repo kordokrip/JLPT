@@ -62,8 +62,7 @@ test.describe('N2/N1 public learning contract', () => {
       },
     });
     await page.goto('/');
-    await expect(page.getByText(/N5부터 N1까지의 콘텐츠가 준비되었습니다/)).toBeVisible();
-    await expect(page.getByLabel('학습 범위').getByText('N1', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('목표 급수', {exact:true}).locator('option')).toHaveText(['N5','N4','N3','N2','N1']);
 
     await page.goto('/browse/vocab');
     await expect(page.getByRole('button', { name: 'N2', exact: true })).toBeVisible();

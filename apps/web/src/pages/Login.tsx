@@ -3,10 +3,13 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../lib/api';
 import { useAuthStore } from '../stores/auth-store';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSelect } from '../features/study/StudyComponents';
 import { useSettingsStore } from '../stores/settings-store';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { status, user, error, config, login, loadConfig } = useAuthStore();
   const [email, setEmail] = useState('');
@@ -36,18 +39,19 @@ export default function Login() {
     <main className="min-h-dvh bg-[var(--background)] px-5 py-8 text-foreground">
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center">
         <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT · TOPIK Study</Link>
-        <section className="surface-card p-6">
-          <h1 className="text-2xl font-semibold">로그인</h1>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">학습 기록과 복습 데이터를 계정에 연결합니다.</p>
+        <LanguageSelect />
+        <section className="surface-card mt-4 p-6">
+          <h1 className="text-2xl font-semibold">{t('study.auth.login')}</h1>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">{t('study.auth.description')}</p>
           {params.get('error') && (
             <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              Google 로그인 처리 중 오류가 발생했습니다.
+              {t('study.auth.failed')}
             </p>
           )}
-          {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{t('study.auth.failed')}</p>}
           <form onSubmit={submit} className="mt-5 space-y-4">
             <label className="block text-sm font-semibold">
-              이메일
+              {t('study.auth.email')}
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -58,7 +62,7 @@ export default function Login() {
               />
             </label>
             <label className="block text-sm font-semibold">
-              비밀번호
+              {t('study.auth.password')}
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -73,13 +77,13 @@ export default function Login() {
               disabled={submitting}
               className="min-h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white disabled:opacity-60"
             >
-              {submitting ? '로그인 중...' : '로그인'}
+              {t(submitting ? 'study.loading' : 'study.auth.login')}
             </button>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-xs text-[var(--muted-foreground)]">
             <span className="h-px flex-1 bg-[var(--border)]" />
-            또는
+            {t('study.auth.or')}
             <span className="h-px flex-1 bg-[var(--border)]" />
           </div>
 
@@ -90,16 +94,16 @@ export default function Login() {
               config?.google_enabled ? '' : 'pointer-events-none opacity-50'
             }`}
           >
-            Google로 로그인
+            {t('study.auth.google')}
           </a>
           {!config?.google_enabled && (
             <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-              Google SSO는 운영 환경변수 설정 후 활성화됩니다.
+              {t('study.auth.googleUnavailable')}
             </p>
           )}
         </section>
         <p className="mt-5 text-center text-sm text-[var(--muted-foreground)]">
-          계정이 없나요? <Link to="/register" className="font-semibold text-[var(--accent)]">회원가입</Link>
+          {t('study.auth.newAccount')} <Link to="/register" className="font-semibold text-[var(--accent)]">{t('study.auth.register')}</Link>
         </p>
       </div>
     </main>

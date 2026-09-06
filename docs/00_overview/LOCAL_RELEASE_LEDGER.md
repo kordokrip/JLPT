@@ -1,10 +1,28 @@
 # 로컬 형상관리·릴리스 원장
 
-최종 점검: 2026-08-30 KST
+최종 점검: 2026-09-06 KST
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
-## GitHub 사용 범위
+## 2026-09-06 개인 학습 UX 로컬 후보
+
+| 항목 | 상태 |
+| --- | --- |
+| candidate | learning-experience-2026-09-06; draft/local |
+| source | `feature/topik-product-expansion`, 출발 `cb064e19dd3645076c7f17f7e82deddaee5ae4cc` 위 미커밋 변경 |
+| schema | 새 `0028`; 로컬 fresh/upgrade만 적용, 원격 migration 미실행 |
+| content | 공개 bank 재시드/변경 없음, Preview 160개 신규 공개 없음 |
+| 검증 | backup·음성 진단 포함 최종 gate Ops 26 / DB 126 / Web 113 / API 157, exit 0. 마지막 전체 Playwright 207 pass/32 skip/0 fail, exit 0. 문서 64/81 및 diff check 통과. [실행 기록](LEARNING_EXPERIENCE_PLAN.md#2026-09-06-검증-기록) |
+| 실제 음성 | Chrome 로컬 접근 제한, 원격 Preview 접근 가능. 새 후보 lifecycle/가청은 미확인 |
+| remote read-only | 06:09 UTC 전체 48 pass / 2 warnings / 3 fail; 06:44 UTC 같은 R2 verifier 단독 재검사는 9개 표면 모두 0, exit 0. 전체 재집계는 아님 |
+| Preview/Production | 미배포; 신규 deployment ID 없음 |
+| backup/restore | 과거 65-table backup → local0028 실제 restore exit 0, FK 0, trigger 56; coversLocalSchema=false. 새 Production backup 아님 |
+| Git | commit/push/tag 미실행 |
+| rollback | additive 데이터를 보존하고 이전 Worker/Pages 복귀; 화면 옵션 `VITE_LEARNING_EXPERIENCE=false` |
+
+이 후보를 출시 완료로 표시하지 않는다. 기존 Production ID와 rollback 이력은 아래에 보존한다.
+
+## GitHub 사용 범위 (유지)
 
 - 저장소: 공개 `kordokrip/JLPT`
 - 용도: commit, branch, tag와 원격 백업

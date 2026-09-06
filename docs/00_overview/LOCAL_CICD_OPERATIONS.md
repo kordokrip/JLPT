@@ -1,6 +1,6 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-08-30 KST
+최종 점검: 2026-09-06 KST
 
 이 저장소의 릴리스 gate는 GitHub Actions가 아니라 검증된 로컬 명령과 로컬 원장으로 운영한다. GitHub는 commit·branch·tag 보관과 push에만 사용하며 `.github/workflows/ci.yml`은 `workflow_dispatch`와 `if: false`를 유지하는 비활성 placeholder다.
 
@@ -24,6 +24,17 @@
 `CI=true`는 도구의 비대화식 동작과 reporter 선택에만 사용할 수 있다. GitHub Actions 실행을 의미하지 않는다. E2E는 격리된 로컬 Worker와 Vite 서버를 기본으로 사용하며 `E2E_REUSE_EXISTING_SERVER=1`은 호출자가 해당 프로세스의 checkout과 build를 확인한 경우에만 허용한다.
 
 ## 변경 유형별 추가 gate
+
+### 학습 경험 `0028` 후보
+
+- `pnpm -F @nihongo-n3/db exec node --import=tsx --test src/ops/learning-experience-migration.test.ts`: 0000–0027 upgrade 전후 기존 테이블 행 비교, FK, 단계 중복 claim rollback.
+- `pnpm -F @nihongo-n3/api exec vitest run src/__tests__/routes.test.ts`: 전 급수 profile/session, 실패 원자성, 소유권/track, 정답 비노출, 결과 재조회, withdrawn 세션 종료, 메모 CAS.
+- `pnpm -F @nihongo-n3/e2e exec playwright test learning-experience.spec.ts learning-activity.spec.ts topik-owner-curriculum.spec.ts quiz-modes.spec.ts srs-review.spec.ts --project=chromium --project=webkit --reporter=line`: 실제 격리 D1 기반 학습 흐름과 mock speech를 구분한다.
+- 전체 E2E와 시각 baseline도 새 다섯 메뉴에 맞게 검증한다. snapshot 갱신은 UI를 직접 검토한 뒤 수행하며 실패/skip을 통과로 바꾸는 수단으로 쓰지 않는다.
+- 로컬 `VITE_LEARNING_EXPERIENCE=false pnpm -F @nihongo-n3/web build`는 화면 복귀용 별도 build 검증이다. false 빌드를 Preview/Production에 자동 반영하지 않는다.
+- 로컬 자동 E2E는 disposable D1을 사용한다. 승인된 전용 Preview 검증은 Preview에만 별도 합성 QA 계정을 만들 수 있으며 실제 사용자 계정을 사용하거나 Production에 테스트 기록을 만들지 않는다. test DB/snapshot을 Production backup이라고 부르지 않는다. Preview에 있는 미출시 콘텐츠 160개를 UX 배포 목적으로 Production publication하지 않는다.
+- 기기 간 동시 요청: 완료 후 stale pause/active, abandoned 후 submit, 다른 기기의 먼저 수락된 답과 오프라인 pending, 계정 트랙 변경 후 날짜 메모를 검사한다. expected_track 409는 명시적 reload를 안내하고 미수락 초안을 보존한다.
+- backup/restore는 실제 schema로 0027/65와 0028/70 profile을 구분한다. `coversLocalSchema=false`인 구 65개 snapshot을 새 학습 데이터까지 포함한 backup으로 표기하지 않는다. 실제 Miniflare `_cf_METADATA`를 포함한 목록 판정과 과거 65개 backup의 local0028 restore는 통과했다. 기존 transfer·사용자 정리 도구의 65-table 기본 계약은 0028에서 아직 사용할 수 없다.
 
 - DB·콘텐츠: `question:quality`, `content:contract:verify`, `content:control-plane:verify`, idempotent fresh/upgrade와 source checksum을 확인한다.
 - API·데이터 바인딩: OpenAPI 생성 전후 diff, track guard, 정답 사전 노출 금지, progress→FSRS→activity transaction을 확인한다.

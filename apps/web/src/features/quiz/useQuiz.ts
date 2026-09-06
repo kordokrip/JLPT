@@ -6,6 +6,7 @@ import { useTrackStatus } from '../../hooks/useTrackStatus';
 import { isQuizMode, toQuizAnswers } from './logic';
 import type { JlptLevel, QuizGenerateResponse, QuizMode, QuizQuestion, QuizStrategy, QuizSubmitResponse } from './types';
 import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
+import { useLearningProfile } from '../../hooks/useLearningProfile';
 
 export function useQuizRoute() {
   const { mode: rawMode } = useParams<{ mode?: string }>();
@@ -29,8 +30,11 @@ export function useQuizSession(mode: QuizMode) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { levels } = useTrackStatus();
-  const highestLevel = levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
-  const [level, setLevel] = useState<JlptLevel>(highestLevel);
+  const profile = useLearningProfile();
+  const target = profile.data?.target_level;
+  const defaultLevel: JlptLevel = target?.startsWith('N') ? target as JlptLevel : 'N5';
+  const [chosenLevel, setLevel] = useState<JlptLevel | null>(null);
+  const level = chosenLevel ?? defaultLevel;
   const [count, setCount] = useState(5);
   const [strategy, setStrategy] = useState<QuizStrategy>(() =>
     searchParams.get('strategy') === 'weakest' ? 'weakest' : 'random');
@@ -42,8 +46,8 @@ export function useQuizSession(mode: QuizMode) {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!levels.includes(level)) setLevel(highestLevel);
-  }, [highestLevel, level, levels]);
+    if (chosenLevel && !levels.includes(chosenLevel)) setLevel(null);
+  }, [chosenLevel, levels]);
 
   const generateMut = useMutation({
     mutationFn: async () => {

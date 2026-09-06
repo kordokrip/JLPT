@@ -63,6 +63,9 @@ test('anonymous audio QA plays Japanese and Korean browser voices without an R2 
   await expect.poll(() => page.evaluate(() => window.__audioQaSpeech ?? [])).toEqual([
     { lang: 'ja-JP', voice: 'google-ja-jp' },
   ]);
+  const result = page.getByRole('status', { name: '재생 진단 결과' });
+  await expect(result).toContainText('정상 종료 확인(실제 가청 여부는 별도 확인)');
+  await expect(result).toContainText('일본어 1회 · 한국어 0회');
 
   await page.getByRole('tab', { name: '한국어' }).click();
   await page.getByRole('button', { name: '브라우저 음성으로 재생' }).click();
@@ -70,6 +73,9 @@ test('anonymous audio QA plays Japanese and Korean browser voices without an R2 
     { lang: 'ja-JP', voice: 'google-ja-jp' },
     { lang: 'ko-KR', voice: 'google-ko-kr' },
   ]);
+  await expect(result).toContainText('마지막 재생 언어: 한국어');
+  await expect(result).toContainText('일본어 1회 · 한국어 1회');
+  await expect(result).toContainText('일본어 1개 · 한국어 1개');
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.locator('audio[src]')).toHaveCount(0);
   expect(forbiddenAudioRequests).toEqual([]);

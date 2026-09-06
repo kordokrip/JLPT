@@ -14,6 +14,7 @@ export * from './content-dto';
 export * from './audio-policy';
 export * from './audio-qa';
 export * from './study-plan-policy';
+export * from './learning-experience';
 export * from './jlpt-levels';
 export * from './learning-tracks';
 export * from './content-release-control-plane';

@@ -47,7 +47,7 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
         class="flex gap-2 flex-wrap"
       >
         <button
-          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
+          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
           type="button"
         >
           N5
@@ -59,7 +59,7 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
           N4
         </button>
         <button
-          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+          class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
           type="button"
         >
           N3
@@ -154,7 +154,7 @@ exports[`Quiz page baseline > keeps the mode selection screen stable before feat
     <h1
       class="font-pretendard text-[32px] font-medium text-foreground leading-none mb-2"
     >
-      퀴즈
+      문제
     </h1>
     <p
       class="font-pretendard text-[14px] text-[var(--muted-foreground)] mb-8"

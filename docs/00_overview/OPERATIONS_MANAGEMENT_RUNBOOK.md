@@ -4,7 +4,7 @@
 
 **Frequency:** 작업 시작·종료, 버그 수정, 리팩터링, Preview/Production 전후, 주 1회
 
-**Last Updated:** 2026-08-30 KST
+**Last Updated:** 2026-09-06 KST
 
 **Last Run:** 이 관리체계 도입 검증은 아래 History에 기록
 
@@ -72,6 +72,14 @@ git log -1 --oneline
 5. `pnpm verify:ci`와 관련 Chromium/WebKit E2E를 통과시킨 뒤 문서를 동기화합니다.
 
 ## 로컬 CI 대체 gate
+
+학습 UX 후보의 추가 계약은 [학습 경험 구현 계획](LEARNING_EXPERIENCE_PLAN.md)을 따른다. 공개 콘텐츠 재시드 없이 `0028`만 additive 적용하고, 해설 조회/완료/정답/FSRS rating을 각각 검사한다. 메모 충돌·응답 저장 실패·오프라인 pending을 성공으로 집계하지 않는다. 철회된 콘텐츠는 세션 snapshot에서 재노출하지 않고 명시적으로 `abandoned` 종료하여 기존 기록을 보존한다.
+
+기기 간 충돌은 서버의 수락 기록을 우선하며 미수락 로컬 답/메모를 보존한다. `expected_track`이 인증 트랙과 다르면 409로 멈추고 명시적 reload를 안내한다. terminal 세션의 상태는 SQL 실행 시점에도 보호한다. 백업은 0027/65와 0028/70 profile을 구분하며 새 5개 테이블 누락을 허용하지 않는다(`INC-DATA-047`). Cloudflare 진단의 계정 식별자는 URL과 중첩 JSON/stderr 모두에서 가린다.
+
+`d1:backup`은 실제 원격 schema를 export 전과 manifest 확정 전에 비교한다. `d1:restore-drill`의 `passed=true`만 읽지 말고 `schemaProfile`, `localSchemaProfile`, `coversLocalSchema`, `omittedTableCounts`도 확인한다. 구 65개 backup을 0028에 복원하면 새 다섯 테이블은 0행이어야 하고 `coversLocalSchema=false`다. `_cf_METADATA`는 확인된 Miniflare 생성 metadata만 제외하며 임의의 `_cf_*` 앱 테이블은 제외하지 않는다. 기존 blue/green transfer·사용자 정리 도구의 기본 65-table 계약은 이번에 변경하지 않았으므로 0028 학습 기록을 다루는 작업에는 사용하지 않는다. 해당 도구는 별도 upgrade 검증 후 사용한다.
+
+이번 변경의 브라우저 실제 확인은 로컬 주소에 대한 저장된 접근 설정에 의해 차단되었다. 자동 테스트가 통과해도 실제 Chrome 또는 사용자 가청 완료로 표시하지 않는다. 해당 제한을 다른 브라우저 표면이나 우회 명령으로 회피하지 않는다.
 
 ```bash
 pnpm ops:verify

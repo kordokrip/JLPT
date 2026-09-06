@@ -77,10 +77,8 @@ test.describe('어휘 검색', () => {
     await page.waitForLoadState('networkidle', { timeout: 10_000 });
 
     // 結果 있는 경우 — 일본어 문자가 포함된 텍스트 확인
-    const japaneseText = page.locator('text=/[\\u3000-\\u9FFF]/').first();
-    const noResult = page.locator('text=/결과 없음|검색 결과가 없습니다|No results/i');
-
-    await expect(japaneseText.or(noResult)).toBeVisible({ timeout: 10_000 });
+    // Assert the seeded result itself, not the hidden 日本語 language option.
+    await expect(page.locator('main article').getByRole('button',{name:/^経験 —/})).toBeVisible({ timeout: 10_000 });
   });
 
   test('검수된 동음이의어 목록은 공개 API에서 렌더링된다', async ({ page }) => {

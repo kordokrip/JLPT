@@ -152,33 +152,33 @@ test.describe('TOPIK product flow', () => {
     }));
 
     await registerTopikUser(page);
-    await expect(page.locator('a[href="/track/topik-ko/learn"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/learn"]').first()).toBeVisible();
     await expect(page.locator('a[href="/browse/vocab"]')).toHaveCount(0);
 
     await page.goto('/settings');
     await page.getByRole('button', { name: '日本語' }).last().click();
 
-    await page.goto('/track/topik-ko/learn');
+    await page.goto('/track/topik-ko/learn?view=practice');
     const practice = page.locator('section[aria-labelledby="topik-practice-title"]');
     await expect(practice).toBeVisible();
     await practice.getByRole('button', { name: /한국어 음성 재생|韓国語音声を再生|Play Korean audio/ }).first().click();
     await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
       { lang: 'ko-KR', voice: 'apple-ko-kr' },
     ]);
-    const ownerCurriculum = page.locator('section').filter({
-      has: page.getByRole('heading', { name: '자체 저작 학습 단위' }),
-    });
+    await page.goto('/track/topik-ko/learn?view=owner');
+    const ownerCurriculum = page.locator('#topik-owner-curriculum');
     await expect(ownerCurriculum).toBeVisible();
-    await ownerCurriculum.getByRole('button', { name: /학습 시작|学習開始|Start learning/ }).first().click();
-    const koreanPlay = ownerCurriculum.getByRole('button', { name: '한국어 음성 재생' }).first();
+    await ownerCurriculum.getByRole('button', { name: /^(학습|学習|Learn)$/ }).first().click();
+    const koreanPlay = ownerCurriculum.getByRole('button', { name: /소리 듣기|音声を聞く|Listen/ }).first();
     await expect(koreanPlay).toBeVisible();
     await koreanPlay.click();
     await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([
       { lang: 'ko-KR', voice: 'apple-ko-kr' },
-      { lang: 'ko-KR', voice: 'apple-ko-kr' },
     ]);
+    await page.goto('/track/topik-ko/learn?view=foundation');
     await page.getByRole('button', { name: /완료로 표시|Mark complete|完了にする/ }).first().click();
     await expect(page.getByRole('button', { name: /미완료로 변경|Mark incomplete|未完了に戻す/ }).first()).toHaveAttribute('aria-pressed', 'true');
+    await page.goto('/track/topik-ko/learn?view=practice');
     await page.getByRole('radio', { name: /은행/ }).last().click();
     await page.getByRole('button', { name: /해설 확인|Show explanation|解説を見る/ }).click();
     await expect(page.getByText(/聞き取り文で、銀行へ行くと言っています/)).toBeVisible();
@@ -206,7 +206,7 @@ test.describe('TOPIK product flow', () => {
   test('first Korean playback preserves the click while a delayed Google voice warms for the next play', async ({ page }) => {
     await installDelayedGoogleKoreanSpeechMock(page);
     await registerTopikUser(page);
-    await page.goto('/track/topik-ko/learn');
+    await page.goto('/track/topik-ko/learn?view=foundation');
 
     await page.getByRole('button', { name: '안녕하세요? 재생' }).click();
     await expect.poll(() => page.evaluate(() => window.__topikProductGoogleSpeech ?? [])).toEqual([

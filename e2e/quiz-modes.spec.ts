@@ -96,7 +96,7 @@ test.describe('퀴즈 기능 smoke', () => {
   test('퀴즈 모드 선택 화면에서 4개 모드가 모두 보인다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.goto('/quiz');
-      await expect(page.getByRole('heading', { name: /퀴즈|Quiz|クイズ/ })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /문제|Questions|問題/ })).toBeVisible();
       for (const { title } of QUIZ_MODES) {
         await expect(page.getByRole('button', { name: title })).toBeVisible();
       }

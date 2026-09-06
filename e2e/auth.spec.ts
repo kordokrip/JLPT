@@ -12,7 +12,7 @@ test.describe('로그인 온보딩', () => {
     await page.getByLabel('비밀번호').fill('Passw0rd1234');
     await page.getByRole('button', { name: '계정 만들기' }).click();
 
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
   });
 
   test('Google SSO 버튼은 설정 상태를 반영한다', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('로그인 온보딩', () => {
     await page.getByLabel('이메일').fill(email);
     await page.getByLabel('비밀번호').fill(password);
     await page.getByRole('button', { name: '계정 만들기' }).click();
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
 
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await page.locator('#main-content').getByRole('button', { name: '로그아웃' }).click();
@@ -53,6 +53,6 @@ test.describe('로그인 온보딩', () => {
     await page.getByLabel('이메일').fill(email);
     await page.getByLabel('비밀번호').fill(password);
     await page.getByRole('button', { name: '로그인' }).click();
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 15_000 });
   });
 });

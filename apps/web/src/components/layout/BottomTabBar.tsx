@@ -113,7 +113,7 @@ export function BottomTabBar() {
           height: 'calc(var(--nav-height, 64px) + env(safe-area-inset-bottom))',
         }}
       >
-        <ul className="grid grid-cols-6 px-1" style={{ height: 'var(--nav-height, 64px)' }}>
+        <ul className={`grid ${moreTabs.length ? 'grid-cols-6' : 'grid-cols-5'} px-1`} style={{ height: 'var(--nav-height, 64px)' }}>
           {primaryTabs.map(({ to, key, icon }) => {
             const Icon = ICONS[icon];
             return (
@@ -138,7 +138,7 @@ export function BottomTabBar() {
               </li>
             );
           })}
-          <li className="min-w-0">
+          {moreTabs.length > 0 && <li className="min-w-0">
             <button
               type="button"
               aria-expanded={open}
@@ -152,7 +152,7 @@ export function BottomTabBar() {
               <MoreHorizontal aria-hidden="true" size={20} strokeWidth={1.8} />
               <span className="max-w-full truncate text-[11px] font-semibold leading-tight">{t('nav.more')}</span>
             </button>
-          </li>
+          </li>}
         </ul>
       </nav>
     </>

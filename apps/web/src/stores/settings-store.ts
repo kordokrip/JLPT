@@ -18,6 +18,8 @@ interface SettingsState {
   setInstructionLanguage: (track: LearningTrackId, language: InstructionLanguage) => void;
   // 언어
   language:    SupportedLang;
+  languageExplicit: boolean;
+  suggestLanguage: (language: SupportedLang) => void;
   setLanguage: (l: SupportedLang) => void;
 
   // 외관
@@ -50,13 +52,15 @@ export const useSettingsStore = create<SettingsState>()(
       setLearningTrack: (learningTrack) => set({ learningTrack }),
       instructionLanguages: {
         'jlpt-ja': LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
-        'topik-ko': LEARNING_TRACK_DEFINITIONS['topik-ko'].defaultInstructionLanguage,
+        'topik-ko': 'ja',
       },
       setInstructionLanguage: (track, language) => set((state) => ({
         instructionLanguages: { ...state.instructionLanguages, [track]: language },
       })),
       language:    'ko',
-      setLanguage: (l) => set({ language: l }),
+      languageExplicit: false,
+      suggestLanguage: (language) => set(state => state.languageExplicit ? {} : { language }),
+      setLanguage: (l) => set({ language: l, languageExplicit: true }),
 
       theme:        'system',
       setTheme:     (t) => set({ theme: t }),
@@ -77,18 +81,19 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 6,
+      version: 7,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>
           : {};
         return {
           ...state,
+          languageExplicit: state.languageExplicit ?? state.language !== undefined,
           instructionLanguages: {
             'jlpt-ja': state.instructionLanguages?.['jlpt-ja']
               ?? LEARNING_TRACK_DEFINITIONS['jlpt-ja'].defaultInstructionLanguage,
             'topik-ko': state.instructionLanguages?.['topik-ko']
-              ?? LEARNING_TRACK_DEFINITIONS['topik-ko'].defaultInstructionLanguage,
+              ?? 'ja',
           },
         };
       },

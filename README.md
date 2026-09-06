@@ -17,6 +17,15 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
+## 2026-09-06 로컬 학습 UX 후보 — 미배포
+
+오늘 / 학습 / 문제 / 복습 / 기록, 계정·트랙별 목표, 기본 20분 세션, 중단·재개, 자동 기록과 개인 메모를 구현했습니다. 한국어 JLPT와 일본어 TOPIK에 같은 흐름을 적용하고, 해설 열람·명시적 완료·첫 정답·재시도·FSRS 평가를 분리합니다.
+
+- 새 additive migration은 `0028_learning_experience.sql`입니다. Production은 여전히 `0000–0027`이며 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
+- 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
+- 로컬 unit/API/DB·fresh/upgrade·build와 전체 브라우저 자동 검사를 실행했습니다. 실제 Chrome 음성·사람 가청·Preview·Production은 완료하지 않았습니다. 정확한 수치와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
+- 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
+
 ## 구조
 
 ```text
@@ -59,6 +68,8 @@ pnpm -F @nihongo-n3/db question:quality
 2026-08-24 추가 조사에서 TOPIK/JLPT 첫 클릭이 voice 준비 Promise를 기다리며 사용자 활성화를 잃는 문제와 설치형 PWA가 이전 JS를 계속 실행하는 문제를 확인했습니다. 복구본은 click task 안에서 즉시 `speak()`를 호출하고, voice는 background에서 준비하며, 배포 전부터 기존 worker가 제어하던 PWA만 controller 교체 때 한 번 갱신합니다. 첫 방문자는 reload하지 않습니다. 이 복구본은 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`을 거쳐 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에 배포됐습니다. 실제 Chrome에서 한국어·일본어 모두 `재생 중 → onend 정상 종료`, 경고·콘솔 오류 0건을 확인했으며, 물리 스피커 가청 여부는 자동 증거와 구분합니다. 성공은 실제 `onend` 이후에만 기록하고 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
 
 현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
+
+현재 로컬 `verify:fresh`는 새 후보 migration `0000–0028`까지 검사합니다. 위 `0000–0027` 복구 기록은 2026-08-24 당시의 역사적 검증 범위입니다.
 
 운영 감사, 버그·리팩터링 gate, 로컬 CI/CD와 Cloudflare 상태 추적은 [운영관리 runbook](./docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md)과 프로젝트 전담 `project-operations-steward` Sub Agent가 담당합니다. 작업 전후 `pnpm ops:status`, 전체 로컬 gate는 `pnpm ops:verify`, 원격 read-only 확인은 `pnpm ops:status:remote`를 사용합니다.
 

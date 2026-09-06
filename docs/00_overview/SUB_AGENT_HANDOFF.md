@@ -1,6 +1,6 @@
 # Sub Agent 운영 인수인계
 
-최종 점검: 2026-08-30 KST
+최종 점검: 2026-09-06 KST
 
 이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
 
@@ -30,10 +30,28 @@
 
 ## 코드·데이터 지도
 
+### 새 로컬 학습 UX 후보
+
+먼저 [LEARNING_EXPERIENCE_PLAN](LEARNING_EXPERIENCE_PLAN.md)의 실제 검증/미실행 표를 읽는다. 현재 HEAD 위 미커밋 후보이며 Production 배포로 오인하지 않는다.
+
+별도 Agent 교차검토에서 `INC-LEARN-043`, `INC-DATA-044/046`(다른 기기의 선행 제출·종료·트랙 변경)과 `INC-OPS-045`(진단 식별자 가림), `INC-DATA-047`(0028 backup profile)을 추가해 회귀를 수정했다. 후속 전체 브라우저는 `207 passed / 32 skipped / 0 failed`다. expected_track 불일치 409를 메모 revision 충돌이나 제출 성공으로 바꾸지 않는다. `/audio-qa` 정상 종료 관측 보강(`INC-QA-048`) 이후의 최종 gate는 계획/릴리스 원장의 최신 결과를 확인한다.
+
+Preview 준비의 read-only 조회에서 D1은 0027, FK 0이었으며 Pages Preview API_ORIGIN은 전용 `nihongo-n3-api-topik-preview`였다. 현재 활성 Preview Worker는 기존 문서의 4c6846d8보다 뒤인 `0d17ba30-b7ea-4879-9e99-e9c3a7ebb8ee`(deployment `940565dc-9e54-4d31-807a-a602758b8a9a`)로 확인했다. 이 식별자는 복귀 후보이지 새 UX 배포 결과가 아니다.
+
+- shared 계약: `packages/shared/src/learning-experience.ts`.
+- additive DB: `packages/db/drizzle-v2/0028_learning_experience.sql`, Drizzle의 다섯 learning/study 테이블.
+- API: `apps/api/src/routes/learning-experience.ts`; `lib/study-content.ts`의 typed content/publication/strict-level, `lib/learning-effects.ts`의 완료·FSRS 공통 batch, `lib/quiz-questions.ts`의 기존 출제 계약.
+- 웹: `Today`, `StudySession`, `LearningRecords`, `LearnHub`, `QuestionsHub`; `features/study/StudyComponents.tsx`의 메모 CAS·speech; `i18n/study.ts`의 ko/ja/en 조작 문구.
+- 테스트: `learning-experience-migration.test.ts`, API `learning experience contract`, `e2e/learning-experience.spec.ts`, 메모 지연 응답·result 소유권 웹 테스트.
+- 콘텐츠↔개념 approved link는 아직 생성하지 않았다. 새 연상문·이미지·문항 생성/공개 작업이 아니므로 기존 문제를 개념 맞춤 출제로 과장하지 않는다.
+- `최초 응답`은 세션 `practice` 제출 수이지 평생 처음 접한 고유 문항 수가 아니다. 힌트 사용량·홈 진입→시작 시간·재개 성공률은 아직 구현된 운영 지표가 아니며, `revealed`는 개념/복습 해설 열람만 나타낸다.
+- backup/restore는 명시적 0027/65·0028/70 profile이다. 저장된 65개 Production backup의 실제 local0028 restore는 FK 0, trigger 56개 복구, 새 5개 테이블 0행으로 통과했지만 `coversLocalSchema=false`다. 새 Production backup이나 새로운 학습 기록 보존 증거로 바꾸어 쓰지 않는다. 기존 transfer/사용자 정리 도구는 별도 0028 검증 전 사용하지 않는다.
+- `VITE_LEARNING_EXPERIENCE`는 build-time 화면 플래그이며 Worker 전체 rollback 대체물이 아니다. `0028`은 이전 Worker가 무시하는 additive 테이블이다.
+
 - `apps/web`: React PWA, Dexie queue, 퀴즈·TOPIK·FSRS UI, Google 우선 동일 언어 browser speech.
 - `apps/api`: Cloudflare Worker/Hono, 인증·track guard, 학습 API, OpenAPI source.
 - `packages/shared`: Zod API schema, DTO, FSRS와 공통 정책.
-- `packages/db`: Drizzle schema, migration `0000–0027`, seed, quality/release verifier.
+- `packages/db`: Drizzle schema, 로컬 migration `0000–0028`(Production은 `0027` 유지), seed, quality/release verifier.
 - `docs/01_n5`–`docs/07_topik`: 코드가 읽는 학습 source-of-truth가 포함된 영역. 삭제 전에 문자열 참조·manifest source·checksum을 대조한다.
 - `e2e`: Chromium/WebKit 제품 흐름과 발음의 server/R2 요청 0건 검증.
 

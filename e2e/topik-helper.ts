@@ -88,6 +88,9 @@ export async function mockTopikReadApis(page: Page): Promise<void> {
 export async function registerTopikUser(page: Page): Promise<void> {
   const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
+  // Existing English-content fixtures intentionally retain their original
+  // explanation language; Japanese guided journeys have separate coverage.
+  await page.getByRole('combobox').selectOption('ko');
   await page.getByRole('radio', { name: /한국어 · TOPIK|Korean · TOPIK|韓国語 · TOPIK/ }).click();
   await page.getByRole('link', { name: /회원가입|Create account|アカウント作成/ }).first().click();
   await page.getByLabel('이름').fill('TOPIK E2E 사용자');
@@ -95,5 +98,8 @@ export async function registerTopikUser(page: Page): Promise<void> {
   await page.getByLabel('비밀번호').fill('Passw0rd1234');
   await page.getByRole('button', { name: /계정 만들기|Create account|アカウント作成/ }).click();
   await expect(page).toHaveURL(/\/track\/topik-ko$/);
-  await expect(page.getByRole('heading', { name: /현재 실력에서 시작하는 한국어 학습 루틴|Build a Korean routine|今の実力から韓国語/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘도, 한 걸음' })).toBeVisible();
+  await page.getByLabel('해설 언어', { exact: true }).selectOption('en');
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expect(page.getByRole('button',{name:'20분 공부 시작'})).toBeVisible();
 }

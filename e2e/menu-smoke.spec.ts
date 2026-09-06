@@ -2,14 +2,17 @@ import { expect, test, type Page } from "@playwright/test";
 import { ensureAuthenticated } from "./auth-helper";
 
 const ROUTES = [
-  { path: "/", label: "홈", text: /오늘 할 일|Today's Tasks|今日のタスク/ },
+  { path: "/", label: "오늘", text: /오늘도, 한 걸음|One step today|今日も、一歩ずつ/ },
+  { path: "/learn", label: "학습", text: /자유롭게 학습하기|自由に学ぶ|Explore freely/ },
+  { path: "/questions", label: "문제", text: /문제|問題|Questions/ },
+  { path: "/records", label: "기록", text: /기록|記録|Records/ },
   { path: "/review", label: "복습", text: /복습|Review|復習/ },
   {
     path: "/browse/vocab",
     label: "찾아보기",
     text: /어휘 찾아보기|Browse Vocabulary|語彙ブラウズ/,
   },
-  { path: "/quiz", label: "퀴즈", text: /퀴즈|Quiz|クイズ/ },
+  { path: "/quiz", label: "퀴즈", text: /문제|Questions|問題/ },
   {
     path: "/characters",
     label: "문자암기",
@@ -191,7 +194,7 @@ test.describe("운영 메뉴 smoke", () => {
       await assertNoRuntimeFailures(page, async () => {
         await gotoAppRoute(page, "/");
 
-        for (const route of ROUTES) {
+        for (const route of ROUTES.filter(r=>['/','/learn','/questions','/review','/records'].includes(r.path))) {
           await expectVisibleHref(page, route.path, route.label);
         }
 

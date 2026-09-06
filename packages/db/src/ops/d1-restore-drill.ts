@@ -5,11 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { D1_TRANSFER_TABLES } from './d1-tables.js';
-
-interface BackupManifest {
-  files: Array<{ table: string; file: string; rowCount: number; sha256: string }>;
-}
+import { D1_BACKUP_SCHEMA_QUERY, detectD1BackupSchemaProfile, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
+import { validateD1BackupManifest } from './d1-backup-manifest.js';
 
 interface SqliteTrigger {
   name: string;
@@ -20,9 +17,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const input = process.argv.find((arg) => arg.startsWith('--input='))?.slice('--input='.length);
 if (!input) throw new Error('--input=<backup directory> is required');
 const inputDir = path.resolve(root, input);
-const manifest = JSON.parse(
+const manifest = validateD1BackupManifest(JSON.parse(
   fs.readFileSync(path.join(inputDir, 'manifest.json'), 'utf8'),
-) as BackupManifest;
+));
+const restoreTables = tablesForPhase('all', manifest.schemaProfile);
 const persistTo = fs.mkdtempSync(path.join(os.tmpdir(), 'nihongo-n3-restore-'));
 const config = path.join(root, 'apps/api/wrangler.toml');
 const reportArg = process.argv.find((arg) => arg.startsWith('--out='))?.slice('--out='.length);
@@ -36,6 +34,7 @@ function wrangler(args: string[], label: string): string {
       cwd: root,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, CI: 'true', WRANGLER_WRITE_LOGS: '0' },
       // A full D1 import returns one JSON result per statement. Production
       // backups legitimately exceed Node's 1 MiB execFileSync default.
       maxBuffer: 64 * 1024 * 1024,
@@ -105,14 +104,16 @@ function readTriggers(): SqliteTrigger[] {
 }
 
 try {
-  const expectedTables = D1_TRANSFER_TABLES.map((table) => table.name).sort();
-  const manifestTables = manifest.files.map((entry) => entry.table).sort();
-  if (new Set(manifestTables).size !== manifestTables.length ||
-      JSON.stringify(manifestTables) !== JSON.stringify(expectedTables)) {
-    throw new Error('Backup manifest table allowlist does not match the canonical transfer table list');
-  }
-
   wrangler(['d1', 'migrations', 'apply', 'DB', ...localArgs()], 'applying migrations');
+  const localSchemaTables = parseD1SchemaTableNames(wrangler([
+    'd1', 'execute', 'DB', ...localArgs(), '--json', '--command', D1_BACKUP_SCHEMA_QUERY,
+  ], 'reading local schema metadata'));
+  const localSchemaProfile = detectD1BackupSchemaProfile(localSchemaTables);
+  const currentTables = tablesForPhase('all', localSchemaProfile);
+  if (restoreTables.some((table) => !currentTables.some((current) => current.name === table.name))) {
+    throw new Error('Backup schema profile is newer than the local restore schema');
+  }
+  const omittedTables = currentTables.filter((table) => !restoreTables.some((restored) => restored.name === table.name));
   // A backup contains already-validated immutable and published rows. Runtime
   // insert/delete gates intentionally reject replaying those rows into a fresh
   // schema (for example legacy audio bindings and published JLPT questions).
@@ -126,7 +127,7 @@ try {
     'utf8',
   );
   wrangler(['d1', 'execute', 'DB', ...localArgs(), '--file', dropTriggersPath], 'suspending restore-time triggers');
-  const deletes = [...D1_TRANSFER_TABLES]
+  const deletes = [...currentTables]
     .reverse()
     .map((table) => `DELETE FROM ${table.name}`)
     .join('; ');
@@ -134,7 +135,7 @@ try {
 
   const restoreSqlPath = path.join(persistTo, 'restore.sql');
   const restoreSql: string[] = [];
-  for (const table of D1_TRANSFER_TABLES) {
+  for (const table of restoreTables) {
     const entry = manifest.files.find((file) => file.table === table.name);
     if (!entry) throw new Error(`Backup manifest is missing table ${table.name}`);
     const filePath = path.join(inputDir, entry.file);
@@ -170,6 +171,13 @@ try {
     }
   }
 
+  const omittedTableCounts: Record<string, number | undefined> = {};
+  for (const table of omittedTables) {
+    const count = queryCount(table.name);
+    omittedTableCounts[table.name] = count;
+    if (count !== 0) failures.push(`${table.name}: legacy backup must leave the new table empty`);
+  }
+
   for (const [source, fts] of [['vocab', 'vocab_fts'], ['sentences', 'sentences_fts']] as const) {
     const sourceCount = queryCount(source);
     const ftsCount = queryCount(fts);
@@ -186,6 +194,11 @@ try {
   const report = {
     generatedAt: new Date().toISOString(),
     backup: inputDir,
+    schemaProfile: manifest.schemaProfile,
+    legacyProfileInferred: manifest.legacyProfileInferred,
+    localSchemaProfile,
+    coversLocalSchema: manifest.schemaProfile === localSchemaProfile,
+    omittedTableCounts,
     tables: manifest.files.length,
     restoredTriggers: triggers.length,
     counts,
@@ -200,7 +213,7 @@ try {
   fs.mkdirSync(path.dirname(reportPath), { recursive: true });
   fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   if (failures.length > 0) throw new Error(`Restore drill failed:\n${failures.join('\n')}`);
-  console.log(`Restore drill passed for ${manifest.files.length} regular tables.`);
+  console.log(`Restore drill passed for profile ${manifest.schemaProfile}: ${manifest.files.length} regular tables${omittedTables.length ? '; five 0028 tables remain empty, not a full 0028 backup' : ''}.`);
 } finally {
   fs.rmSync(persistTo, { recursive: true, force: true });
 }

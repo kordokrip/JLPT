@@ -3,6 +3,15 @@ import { act, renderHook } from '@testing-library/react';
 import { useSettingsStore } from '../../stores/settings-store';
 
 describe('useSettingsStore', () => {
+  it('suggests Japanese for new TOPIK users but preserves an explicit English choice', () => {
+    useSettingsStore.setState({language:'ko',languageExplicit:false});
+    useSettingsStore.getState().suggestLanguage('ja');
+    expect(useSettingsStore.getState().language).toBe('ja');
+    useSettingsStore.getState().setLanguage('en');
+    useSettingsStore.getState().suggestLanguage('ja');
+    expect(useSettingsStore.getState().language).toBe('en');
+    useSettingsStore.getState().setLanguage('ko');
+  });
   beforeEach(() => {
     // Zustand persist 스토어 초기화
     useSettingsStore.setState({

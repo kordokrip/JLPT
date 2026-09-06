@@ -1,6 +1,6 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-최종 점검: 2026-08-30 KST. 이 문서는 현재 Production, 검증이 끝난 Preview 후보, 로컬 코드·schema·route·test를 구분한 구조 지도입니다.
+최종 점검: 2026-09-06 KST. 이 문서는 Production 기준선, 과거 Preview 콘텐츠 후보, 새 로컬 학습 UX의 코드·schema·route·test를 구분한 구조 지도입니다. 새 로컬 검증을 원격 배포 완료로 해석하지 않습니다.
 
 ## Production 기준선
 
@@ -10,6 +10,24 @@
 | preview candidate | Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a` | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
 
 Worker/content source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`, 현재 Pages source SHA는 `2bd657e96d8a43c6d28efe414acd468c1abd0861`입니다.
+
+## 새 로컬 학습 경험 후보
+
+Production 변경 없이 `0028_learning_experience.sql`에 프로필, 세션, 단계별 결과, revision 기반 메모, 검수된 문제↔개념 링크 다섯 테이블을 추가했습니다. 기존 content/progress/SRS/daily_logs는 보존합니다.
+
+| 계층 | 새 구현 진입점 |
+| --- | --- |
+| shared 계약 | `packages/shared/src/learning-experience.ts`: ref, profile, session, submission, records, annotations Zod DTO |
+| API | `apps/api/src/routes/learning-experience.ts`: 계정×트랙 소유권, 단계 순서, 정답 비노출, 서버 채점·중복 claim·원자적 저장 |
+| 콘텐츠 바인딩 | `apps/api/src/lib/study-content.ts`: 같은 급수 due → 새 개념 → 문제 → 지연 retry; 유형별 canonical/owner adapter |
+| 공통 저장 | `apps/api/src/lib/learning-effects.ts`: 기존 TOPIK 완료와 JLPT/TOPIK FSRS 효과 재사용. 내부 HTTP 재호출 없음 |
+| Web | `Today`, `LearnHub`, `QuestionsHub`, `StudySession`, `LearningRecords`, `features/study`: 다섯 메뉴·재개·메모·실제 기록 |
+| 결과 재조회 | `GET /api/v1/quiz/attempts/:id`: 소유한 완료 JLPT attempt만 반환; 이전 route state로 계정 검사를 우회하지 않음 |
+| 회귀 | DB upgrade 기존 행 보존, API 계약, 메모 충돌, Chromium/WebKit 전 급수·오프라인·모바일 E2E |
+
+단계 결과와 activity를 합산하지 않고, 최초 응답/재시도/자기평가를 분리합니다. 콘텐츠 문자열 ID를 정수형 FSRS ID로 강제 변환하지 않습니다. `content_learning_links`는 아직 승인 행을 넣지 않았으므로 개념 맞춤 출제를 주장하지 않습니다. 공개 교육 원문·정답·감사 원장을 새 UI 때문에 재시드하지 않았습니다.
+
+`VITE_LEARNING_EXPERIENCE=false`는 이전 홈·탐색용 빌드 옵션이며 전체 backend rollback이 아닙니다. 상세 동작·검증 결과·남은 출시 조건은 [학습 경험 구현 계획](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 통합했습니다.
 
 ## 계층과 데이터 흐름
 

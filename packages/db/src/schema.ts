@@ -24,6 +24,53 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
+/** Additive daily-learning state; existing content and FSRS tables remain authoritative. */
+export const learningProfiles = sqliteTable('learning_profiles', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  learningTrack: text('learning_track').notNull(),
+  targetLevel: text('target_level').notNull(),
+  instructionLanguage: text('instruction_language').notNull(),
+  dailyMinutes: integer('daily_minutes').notNull().default(20),
+  timezone: text('timezone').notNull(), updatedAt: integer('updated_at').notNull(),
+}, (t) => ({ pk: primaryKey({ columns: [t.userId, t.learningTrack] }) }));
+
+export const studySessions = sqliteTable('study_sessions', {
+  id: text('id').primaryKey().notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  learningTrack: text('learning_track').notNull(), level: text('level').notNull(),
+  dailyMinutes: integer('daily_minutes').notNull(),
+  status: text('status', { enum: ['active', 'paused', 'completed', 'abandoned'] }).notNull().default('active'),
+  requestId: text('request_id').notNull(), noticesJson: text('notices_json').notNull().default('[]'),
+  createdAt: integer('created_at').notNull(), updatedAt: integer('updated_at').notNull(),
+}, (t) => ({
+  requestUk: uniqueIndex('study_sessions_request_uk').on(t.userId, t.learningTrack, t.requestId),
+  openUk: uniqueIndex('study_sessions_one_open').on(t.userId, t.learningTrack).where(sql`${t.status} IN ('active','paused')`),
+  historyIdx: index('study_sessions_history').on(t.userId, t.learningTrack, t.createdAt),
+}));
+export const studySteps = sqliteTable('study_steps', {
+  id: text('id').primaryKey().notNull(),
+  sessionId: text('session_id').notNull().references(() => studySessions.id, { onDelete: 'cascade' }),
+  ordinal: integer('ordinal').notNull(), phase: text('phase').notNull(),
+  contentRef: text('content_ref').notNull(), contentType: text('content_type').notNull(),
+  contentId: text('content_id').notNull(), section: text('section').notNull(), level: text('level').notNull(),
+  publicJson: text('public_json').notNull(), solutionJson: text('solution_json').notNull(),
+  cardId: integer('card_id'), revealed: integer('revealed').notNull().default(0),
+  requestId: text('request_id'), answer: text('answer'), rating: text('rating'),
+  correct: integer('correct'), activeMs: integer('active_ms').notNull().default(0), submittedAt: integer('submitted_at'),
+}, (t) => ({ positionUk: uniqueIndex('study_steps_position_uk').on(t.sessionId, t.ordinal) }));
+export const learningAnnotations = sqliteTable('learning_annotations', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  learningTrack: text('learning_track').notNull(), scope: text('scope').notNull(),
+  ref: text('ref').notNull(), text: text('text').notNull(),
+  revision: integer('revision').notNull().default(1), updatedAt: integer('updated_at').notNull(),
+}, (t) => ({ pk: primaryKey({ columns: [t.userId, t.learningTrack, t.scope, t.ref] }) }));
+export const contentLearningLinks = sqliteTable('content_learning_links', {
+  learningTrack: text('learning_track').notNull(), questionRef: text('question_ref').notNull(),
+  conceptRef: text('concept_ref').notNull(), evidenceSha256: text('evidence_sha256').notNull(),
+  reviewerA: text('reviewer_a').notNull(), reviewerB: text('reviewer_b').notNull(),
+  status: text('status').notNull().default('draft'), createdAt: integer('created_at').notNull(),
+}, (t) => ({ pk: primaryKey({ columns: [t.learningTrack, t.questionRef, t.conceptRef] }) }));
+
 // ─────────────────────────────────────────────
 // 공통 타임스탬프
 // ─────────────────────────────────────────────

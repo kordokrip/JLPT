@@ -1,13 +1,46 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { inspect } from 'node:util';
 
 import {
   parseCurrentState,
   parseR2AbsenceReport,
+  safeDiagnostic,
   validateAuthProxyResponse,
   validateTopikTrackStatusResponse,
   validateWorkflowPolicy,
 } from '../project-ops-status.mjs';
+
+test('safeDiagnostic redacts nested Cloudflare APIError identifiers in serialized stderr', () => {
+  const account = '0123456789abcdef0123456789abcdef';
+  const database = '12345678-1234-1234-1234-123456789abc';
+  const payload = JSON.stringify({
+    error: {
+      text: `Cloudflare API (/accounts/${account}/d1/database/${database}/query) failed.`,
+      name: 'APIError',
+      code: 7403,
+      accountTag: account,
+      account_id: account,
+      accountId: account,
+    },
+  }, null, 2);
+
+  for (const input of [payload, inspect({ stdout: payload }), JSON.stringify(payload)]) {
+    const result = safeDiagnostic(input);
+    assert.equal(result.includes(account), false, 'account identifiers must not survive serialization');
+    assert.equal(result.includes(database), false, 'D1 API path identifiers must be redacted');
+    assert.match(result, /APIError/u);
+    assert.match(result, /7403/u);
+    assert.match(result, /\[redacted\]/u);
+  }
+});
+
+test('safeDiagnostic retains bounded useful diagnostics without ANSI formatting', () => {
+  const result = safeDiagnostic(`${'x'.repeat(1000)}\u001b[31mCloudflare APIError: code 7403\u001b[0m`);
+  assert.equal(result.length, 800);
+  assert.equal(result.includes('\u001b'), false);
+  assert.match(result, /Cloudflare APIError: code 7403$/u);
+});
 
 test('parseCurrentState extracts the immutable production identifiers', () => {
   const state = parseCurrentState(`

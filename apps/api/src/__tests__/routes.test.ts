@@ -6,7 +6,7 @@
  * 모든 요청은 실제 Workers 런타임에서 실행된다.
  * 인증이 필요한 라우트는 ENVIRONMENT=test 에서 dev bypass를 사용한다.
  */
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { JLPT_LEVELS, type JlptLevel } from '@nihongo-n3/shared';
 import app, {
@@ -81,6 +81,8 @@ import rawJlptPracticeQuestionsMigration from '../../../../packages/db/drizzle-v
 import rawReleaseQualityLinksMigration from '../../../../packages/db/drizzle-v2/0026_release_quality_links.sql?raw';
 // @ts-ignore – Vite raw import (번들 시점 처리됨)
 import rawGoogleSpeechContractMigration from '../../../../packages/db/drizzle-v2/0027_google_speech_contract.sql?raw';
+// @ts-ignore – Vite raw import
+import rawLearningExperienceMigration from '../../../../packages/db/drizzle-v2/0028_learning_experience.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -89,7 +91,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -163,6 +165,7 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   return res.json<T>();
 }
+
 
 async function registerTestSession(role: 'user' | 'admin' = 'user'): Promise<string> {
   const email = `admin-route-${role}-${Date.now()}-${crypto.randomUUID()}@example.com`;
@@ -2512,5 +2515,283 @@ describe('존재하지 않는 경로', () => {
     const body = await res.json<{ type: string; status: number }>();
     expect(body.status).toBe(404);
     expect(body.type).toContain('not-found');
+  });
+});
+
+describe('learning experience contract', () => {
+
+  beforeAll(async () => {
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    await db.prepare("INSERT INTO sources(id,code,title,file_path) VALUES(990001,'study-test','Study test','test only')").run();
+    for(const level of ['N5','N4','N3','N2','N1']) for(let n=0;n<4;n++){
+      await db.prepare("INSERT INTO vocab(source_id,level,ja,kana,ko,pos) VALUES(?,?,?,?,?,'noun')")
+        .bind(990001,level,'試験用'+level+n,'しけんよう'+n,'테스트 뜻 '+n).run();
+    }
+    await db.prepare(`INSERT INTO content_source_assets(id,asset_kind,source_url,license_id,license_url,attribution_text,allowed_use,source_sha256,generated_at,selection_reason)
+      VALUES('study-fixture','self-authored-fixture','https://example.invalid','LicenseRef-test','https://example.invalid','test fixture','test only',?,1,'contract test')`).bind('f'.repeat(64)).run();
+    for(let grade=1;grade<=6;grade++){
+      await db.prepare(`INSERT INTO topik_owner_authored_curriculum_units(id,target_grade,stable_ref,section,title_ko,title_ja,title_en,source_asset_id)
+        VALUES(?,?,?,'vocab','테스트','テスト','Test','study-fixture')`).bind('study-unit-'+grade,grade,'study.unit.'+grade).run();
+      await db.prepare(`INSERT INTO topik_owner_authored_curriculum_items(id,unit_id,target_grade,stable_ref,item_type,prompt_ko,prompt_ja,prompt_en,answer_json,explanation_ko,explanation_ja,explanation_en,source_asset_id)
+        VALUES(?,?,?,?,'vocab','테스트 표현','テストの表現','Test expression','{}','테스트 뜻','テストの意味','Test meaning','study-fixture')`).bind('study-item-'+grade,'study-unit-'+grade,grade,'study.item.'+grade).run();
+    }
+  });
+
+  async function learner(track:'jlpt-ja'|'topik-ko',level:string){
+    const cookie=await registerTestSession(),headers={Cookie:cookie,'Content-Type':'application/json'};
+    if(track==='topik-ko')expect((await fetch('/api/v1/auth/track',{method:'PATCH',headers,body:JSON.stringify({track})})).status).toBe(200);
+    expect((await fetch('/api/v1/learning/profile',{method:'PUT',headers,body:JSON.stringify({target_level:level,instruction_language:track==='jlpt-ja'?'ko':'ja',daily_minutes:10,timezone:'Asia/Tokyo'})})).status).toBe(200);
+    return headers;
+  }
+  async function callSession(headers:Record<string,string>,path:string,body?:unknown,method='POST'){
+    const response=await fetch('/api/v1/study/sessions'+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
+    return {response,body:await response.json<{data:import('@nihongo-n3/shared').StudySession}>()};
+  }
+  it.each(['N5','N4','N3','N2','N1','1','2','3','4','5','6'])('starts, saves, resumes and records at %s without cross-level fallback',async(level)=>{
+    const track=level.startsWith('N')?'jlpt-ja':'topik-ko',headers=await learner(track,level);
+    const request_id=crypto.randomUUID();
+    const started=await callSession(headers,'',{request_id});
+    expect(started.response.status).toBe(200);
+    let session=started.body.data;
+    expect(session.level).toBe(level);
+    expect(session.steps.length).toBeGreaterThan(0);
+    expect(session.steps.filter(s=>s.phase!=='practice').every(s=>s.level===level&&s.ref.track===track)).toBe(true);
+    expect(session.steps.every(s=>s.solution===null&&!s.submitted)).toBe(true);
+    expect((await callSession(headers,'',{request_id})).body.data.id).toBe(session.id);
+    const first=session.steps[0]!;
+    expect((await callSession(headers,'/'+session.id+'/steps/'+first.id+'/reveal')).response.status).toBe(200);
+    const before=await json<{data:import('@nihongo-n3/shared').LearningRecords}>('/api/v1/learning/records',{headers});
+    expect(before.data.totals.learned).toBe(0);
+    const body={request_id:crypto.randomUUID(),rating:'good',active_ms:1000};
+    const posted=await callSession(headers,'/'+session.id+'/steps/'+first.id+'/submit',body);
+    expect(posted.response.status).toBe(200);
+    expect(posted.body.data.steps[0]?.submitted).toBe(true);
+    expect((await callSession(headers,'/'+session.id+'/steps/'+first.id+'/submit',body)).response.status).toBe(200);
+    expect((await callSession(headers,'/'+session.id+'/steps/'+first.id+'/submit',{...body,request_id:crypto.randomUUID()})).response.status).toBe(409);
+    session=posted.body.data;
+    if(session.status!=='completed'){
+      expect((await callSession(headers,'/'+session.id,{status:'paused'},'PATCH')).body.data.status).toBe('paused');
+      expect((await callSession(headers,'/'+session.id,undefined,'GET')).body.data.steps[0]?.submitted).toBe(true);
+      expect((await callSession(headers,'/'+session.id,{status:'active'},'PATCH')).body.data.status).toBe('active');
+    }
+    const records=await json<{data:import('@nihongo-n3/shared').LearningRecords}>('/api/v1/learning/records?window=7d',{headers});
+    expect(records.data.totals.learned).toBe(1);
+    expect(records.data.totals.active_ms).toBe(1000);
+    expect(records.data.totals.first_answers).toBe(0);
+    const secondHeaders=await learner(track,level);
+    expect((await callSession(secondHeaders,'/'+session.id,undefined,'GET')).response.status).toBe(404);
+    const otherTrack=track==='jlpt-ja'?'topik-ko':'jlpt-ja';
+    await fetch('/api/v1/auth/track',{method:'PATCH',headers,body:JSON.stringify({track:otherTrack})});
+    expect((await callSession(headers,'/'+session.id,undefined,'GET')).response.status).toBe(404);
+  });
+  it('grades on the server, refuses solution reveal and duplicate side effects, and preserves separate retry metrics',async()=>{
+    const headers=await learner('jlpt-ja','N5');
+    let session=(await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data;
+    const first=session.steps[0]!;
+    const practice=session.steps.find(s=>s.phase==='practice')!;
+    expect(practice).toBeDefined();
+    expect((await callSession(headers,'/'+session.id+'/steps/'+practice.id+'/reveal')).response.status).toBe(409);
+    expect((await callSession(headers,'/'+session.id+'/steps/'+practice.id+'/submit',{request_id:crypto.randomUUID(),answer:practice.choices[0]})).response.status).toBe(409);
+    for(const step of session.steps.filter(s=>s.phase==='learn')){
+      await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal');
+      const submitted=await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',{request_id:crypto.randomUUID(),rating:'good'});
+      expect(submitted.response.status).toBe(200);session=submitted.body.data;
+    }
+    const request={request_id:crypto.randomUUID(),answer:practice.choices[0],correct:true};
+    const results=await Promise.all([callSession(headers,'/'+session.id+'/steps/'+practice.id+'/submit',request),callSession(headers,'/'+session.id+'/steps/'+practice.id+'/submit',request)]);
+    expect(results.map(r=>r.response.status)).toEqual([200,200]);
+    const accepted=results[0]!.body.data.steps.find(s=>s.id===practice.id)!;
+    expect(accepted.solution?.answer).toBeTruthy();
+    expect(accepted.correct).toBe(practice.choices[0]===accepted.solution?.answer);
+    const records=await json<{data:import('@nihongo-n3/shared').LearningRecords}>('/api/v1/learning/records',{headers});
+    expect(records.data.totals.first_answers).toBe(1);
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const count=await db.prepare('SELECT count(*) AS n FROM learning_activity_events WHERE event_id=?').bind('study:'+practice.id).first<{n:number}>();
+    expect(count?.n).toBe(1);
+  });
+  it('rolls back step/progress when a later activity statement fails',async()=>{
+    const headers=await learner('jlpt-ja','N5');
+    const session=(await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data,step=session.steps[0]!;
+    await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal');
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    await db.prepare(`CREATE TRIGGER study_test_failure BEFORE INSERT ON learning_activity_events WHEN NEW.event_id='study:${step.id}' BEGIN SELECT RAISE(ABORT,'injected test failure'); END`).run();
+    const result=await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',{request_id:crypto.randomUUID(),rating:'good'});
+    expect(result.response.status).toBe(500);
+    expect((await db.prepare('SELECT request_id FROM study_steps WHERE id=?').bind(step.id).first<{request_id:string|null}>())?.request_id).toBeNull();
+    expect((await callSession(headers,'/'+session.id,undefined,'GET')).body.data.steps[0]?.submitted).toBe(false);
+  });
+  it.each(['paused', 'active'])('does not let a stale %s PATCH reopen a concurrently completed session', async (status) => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const session = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    const step = session.steps[0]!;
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    // This disposable learner has one final step, so the competing submit closes it.
+    await db.prepare('DELETE FROM study_steps WHERE session_id=? AND id<>?').bind(session.id, step.id).run();
+    await callSession(headers, '/' + session.id + '/steps/' + step.id + '/reveal');
+    let injected = false;
+    const wrappedDb = new Proxy(db, {
+      get(target, key) {
+        if (key === 'prepare') return (sql: string) => {
+          const prepared = target.prepare(sql);
+          if (!/UPDATE study_sessions SET status=/i.test(sql)) return prepared;
+          const wrap = (statement: D1PreparedStatement): D1PreparedStatement => new Proxy(statement, {
+            get(statementTarget, statementKey) {
+              if (statementKey === 'bind') return (...values: unknown[]) => wrap(statementTarget.bind(...values));
+              if (statementKey === 'run') return async () => {
+                if (!injected) {
+                  injected = true;
+                  const completed = await callSession(headers, '/' + session.id + '/steps/' + step.id + '/submit', {
+                    request_id: crypto.randomUUID(), rating: 'good', active_ms: 700,
+                  });
+                  expect(completed.response.status).toBe(200);
+                  expect(completed.body.data.status).toBe('completed');
+                }
+                return statementTarget.run();
+              };
+              const value = Reflect.get(statementTarget, statementKey);
+              return typeof value === 'function' ? value.bind(statementTarget) : value;
+            },
+          });
+          return wrap(prepared);
+        };
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const response = await fetchWithEnv('/api/v1/study/sessions/' + session.id, { ...env, DB: wrappedDb }, {
+      method: 'PATCH', headers, body: JSON.stringify({ status }),
+    });
+    expect(injected).toBe(true);
+    expect((await db.prepare('SELECT status FROM study_sessions WHERE id=?').bind(session.id).first<{ status: string }>())?.status).toBe('completed');
+    expect(response.status).toBe(409);
+    expect((await json<{ data: unknown }>('/api/v1/study/sessions', { headers })).data).toBeNull();
+  });
+  it('rejects a submit abandoned after its pre-read and rolls back every learning side effect', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const session = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    const step = session.steps[0]!;
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const owner = await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(session.id).first<{ user_id: string }>();
+    await callSession(headers, '/' + session.id + '/steps/' + step.id + '/reveal');
+    let injected = false;
+    const wrappedDb = new Proxy(db, {
+      get(target, key) {
+        if (key === 'batch') return async (statements: D1PreparedStatement[]) => {
+          if (!injected) {
+            injected = true;
+            const abandoned = await callSession(headers, '/' + session.id, { status: 'abandoned' }, 'PATCH');
+            expect(abandoned.response.status).toBe(200);
+            expect(abandoned.body.data.status).toBe('abandoned');
+          }
+          return target.batch(statements);
+        };
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    const response = await fetchWithEnv('/api/v1/study/sessions/' + session.id + '/steps/' + step.id + '/submit', { ...env, DB: wrappedDb }, {
+      method: 'POST', headers, body: JSON.stringify({ request_id: crypto.randomUUID(), rating: 'good', active_ms: 800 }),
+    });
+    expect(injected).toBe(true);
+    expect((await db.prepare('SELECT status FROM study_sessions WHERE id=?').bind(session.id).first<{ status: string }>())?.status).toBe('abandoned');
+    expect(response.status).toBe(409);
+    expect((await db.prepare('SELECT request_id,submitted_at FROM study_steps WHERE id=?').bind(step.id).first())).toEqual({ request_id: null, submitted_at: null });
+    expect((await db.prepare('SELECT count(*) AS n FROM srs_cards WHERE user_id=? AND learning_track=? AND item_type=? AND item_id=?').bind(owner!.user_id, 'jlpt-ja', step.ref.type, Number(step.ref.id)).first<{ n: number }>())?.n).toBe(0);
+    expect((await db.prepare('SELECT count(*) AS n FROM learning_activity_events WHERE user_id=? AND event_id=?').bind(owner!.user_id, 'study:' + step.id).first<{ n: number }>())?.n).toBe(0);
+  });
+  it('keeps annotation revisions and track/account scope; no inferred history',async()=>{
+    const headers=await learner('jlpt-ja','N5'),note={scope:'day',ref:'2026-09-06',text:'memo',revision:0};
+    const save=(body:unknown)=>fetch('/api/v1/learning/annotations',{method:'PUT',headers,body:JSON.stringify(body)});
+    expect((await save(note)).status).toBe(200);
+    expect((await save(note)).status).toBe(200); // Lost response retransmission, same accepted text.
+    expect((await save({...note,text:'conflicting'})).status).toBe(409);
+    expect((await save({...note,text:'updated',revision:1})).status).toBe(200);
+    expect((await save({...note,scope:'content',ref:'topik-ko:wrong'})).status).toBe(400);
+    await fetch('/api/v1/auth/track',{method:'PATCH',headers,body:JSON.stringify({track:'topik-ko'})});
+    expect((await json<{data:unknown[]}>('/api/v1/learning/annotations',{headers})).data).toEqual([]);
+  });
+  it.each(['jlpt-ja', 'topik-ko'] as const)('rejects stale expected_track=%s reads and day-note saves after another device switches track', async (expectedTrack) => {
+    const headers = await learner(expectedTrack, expectedTrack === 'jlpt-ja' ? 'N5' : '1');
+    const identity = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers });
+    const otherTrack = expectedTrack === 'jlpt-ja' ? 'topik-ko' : 'jlpt-ja';
+    // Track choice is account-wide; the first device still expects its original scope.
+    expect((await fetch('/api/v1/auth/track', {
+      method: 'PATCH', headers, body: JSON.stringify({ track: otherTrack }),
+    })).status).toBe(200);
+    const note = { scope: 'day', ref: '2026-09-05', text: 'original device note', revision: 0 };
+    const saved = await fetch('/api/v1/learning/annotations?expected_track=' + expectedTrack, {
+      method: 'PUT', headers, body: JSON.stringify(note),
+    });
+    expect(saved.status).toBe(409);
+    for (const path of ['/learning/profile', '/study/sessions', '/learning/records', '/learning/annotations']) {
+      expect((await fetch('/api/v1' + path + '?expected_track=' + expectedTrack, { headers })).status).toBe(409);
+    }
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    expect((await db.prepare('SELECT count(*) AS n FROM learning_annotations WHERE user_id=? AND scope=? AND ref=?')
+      .bind(identity.data.user.id, note.scope, note.ref).first<{ n: number }>())?.n).toBe(0);
+    const current = await json<{ data: { learning_track: string } }>('/api/v1/learning/profile?expected_track=' + otherTrack, { headers });
+    expect(current.data.learning_track).toBe(otherTrack);
+    // Existing clients that omit the new expected scope retain their API contract.
+    expect((await fetch('/api/v1/learning/profile', { headers })).status).toBe(200);
+  });
+
+  it('keeps withdrawn snapshots private and permits explicit closure without deleting history',async()=>{
+    const headers=await learner('jlpt-ja','N5');
+    const session=(await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data;
+    const step=session.steps[0]!;
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const stored=await db.prepare('SELECT public_json FROM study_steps WHERE id=?').bind(step.id).first<{public_json:string}>();
+    const draft=JSON.parse(stored!.public_json);draft.ref={...draft.ref,type:'jlpt-practice',id:'withdrawn-test',version:'unpublished'};
+    await db.prepare('UPDATE study_steps SET public_json=? WHERE id=?').bind(JSON.stringify(draft),step.id).run();
+    const response=await fetch('/api/v1/study/sessions/'+session.id,{headers});
+    expect(response.status).toBe(410);
+    expect(await response.text()).not.toContain(step.prompt);
+    const closed=await callSession(headers,'/current',{status:'abandoned'},'PATCH');
+    expect(closed.response.status).toBe(200);
+    expect(closed.body.data.status).toBe('abandoned');
+    expect(closed.body.data.steps).toEqual([]);
+    expect((await db.prepare('SELECT count(*) AS n FROM study_steps WHERE session_id=?').bind(session.id).first<{n:number}>())!.n).toBe(session.steps.length);
+    expect((await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data.id).not.toBe(session.id);
+  });
+
+  it('binds equal numeric IDs to their own content type and prioritizes due FSRS before new study',async()=>{
+    const db=(env as typeof env & {DB:D1Database}).DB,id=991001,headers=await learner('jlpt-ja','N5');
+    await db.batch([
+      db.prepare("INSERT INTO vocab(id,source_id,level,ja,kana,ko,pos) VALUES(?,990001,'N5','typed-vocab','かな','단어 뜻','noun')").bind(id),
+      db.prepare("INSERT INTO grammar(id,source_id,level,pattern,meaning_ko) VALUES(?,990001,'N5','typed-grammar','문법 뜻')").bind(id),
+      db.prepare("INSERT INTO kanji(id,char,meaning_ko,jlpt_level) VALUES(?,'typed-kanji','한자 뜻','N5')").bind(id),
+      db.prepare("INSERT INTO sentences(id,source_id,level,register,ja,ko) VALUES(?,990001,'N5','polite','typed-sentence','문장 뜻')").bind(id),
+    ]);
+    for(const type of ['vocab','grammar','kanji','sentence']){
+      const result=await json<{data:{prompt:string;ref:{type:string};solution:{explanation:string}}}>('/api/v1/learning/content/'+type+'/'+id,{headers});
+      expect(result.data.ref.type).toBe(type);expect(result.data.prompt).toBe('typed-'+type);
+      expect((await fetch('/api/v1/srs/init',{method:'POST',headers,body:JSON.stringify({item_type:type,item_ids:[id]})})).status).toBe(201);
+    }
+    await fetch('/api/v1/learning/profile',{method:'PUT',headers,body:JSON.stringify({target_level:'N5',instruction_language:'ko',daily_minutes:20,timezone:'Asia/Seoul'})});
+    const session=(await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data;
+    expect(session.steps.slice(0,4).every(step=>step.phase==='review')).toBe(true);
+    expect(new Set(session.steps.slice(0,4).map(step=>step.ref.type))).toEqual(new Set(['vocab','grammar','kanji','sentence']));
+  });
+
+  it('reloads only the owned, submitted quiz result',async()=>{
+    const headers=await learner('jlpt-ja','N5');
+    const quiz=await json<{data:{quiz_id:number;questions:Array<{id:string;choices:string[]}>}}>('/api/v1/quiz/generate',{method:'POST',headers,body:JSON.stringify({level:'N5',mode:'vocab_mc',count:3})});
+    const path='/api/v1/quiz/attempts/'+quiz.data.quiz_id;
+    expect((await fetch(path,{headers})).status).toBe(404);
+    const submitted=await fetch('/api/v1/quiz/submit',{method:'POST',headers,body:JSON.stringify({quiz_id:quiz.data.quiz_id,answers:quiz.data.questions.map(q=>({question_id:q.id,answer:q.choices[0]}))})});
+    expect(submitted.status).toBe(200);
+    expect((await fetch(path,{headers})).status).toBe(200);
+    const other=await learner('jlpt-ja','N5');
+    expect((await fetch(path,{headers:other})).status).toBe(404);
+    await fetch('/api/v1/auth/track',{method:'PATCH',headers,body:JSON.stringify({track:'topik-ko'})});
+    expect((await fetch(path,{headers})).status).toBe(404);
+  });
+
+  it('serves a track-scoped learning profile rather than an unavailable route', async () => {
+    const response = await fetch('/api/v1/learning/profile');
+    expect(response.status).toBe(200);
+    const body = await response.json<{ data: { daily_minutes: number; learning_track: string } }>();
+    expect(body.data.daily_minutes).toBe(20);
+    expect(body.data.learning_track).toBe('jlpt-ja');
   });
 });

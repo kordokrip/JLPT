@@ -4,6 +4,12 @@ import { RootLayout } from './components/layout/RootLayout';
 import { useAuthStore } from './stores/auth-store';
 import type { ReactNode } from 'react';
 import { useSettingsStore } from './stores/settings-store';
+import { learningExperienceEnabled } from './lib/learning-experience';
+const Today = lazy(() => import('./pages/Today'));
+const LearnHub = lazy(() => import('./pages/LearnHub'));
+const QuestionsHub = lazy(() => import('./pages/QuestionsHub'));
+const LearningRecords = lazy(() => import('./pages/LearningRecords'));
+const StudySession = lazy(() => import('./pages/StudySession'));
 
 // ─────────────────────────────────────────────
 // Lazy 페이지 로드
@@ -85,10 +91,16 @@ export default function App() {
             creating a test account. */}
         <Route path="audio-qa" element={<AudioQa />} />
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
+          {learningExperienceEnabled && <>
+            <Route path="learn" element={<LearnHub />} />
+            <Route path="questions" element={<QuestionsHub />} />
+            <Route path="records" element={<LearningRecords />} />
+            <Route path="study/:id" element={<StudySession />} />
+          </>}
           <Route path="settings"         element={<Settings />} />
           <Route path="admin/users"  element={<AdminUsers />} />
           <Route element={<RequireTopikTrack />}>
-            <Route path="track/topik-ko" element={<TopikDashboard />} />
+            <Route path="track/topik-ko" element={learningExperienceEnabled ? <Today /> : <TopikDashboard />} />
             <Route path="track/topik-ko/placement" element={<TopikPlacement />} />
             <Route path="track/topik-ko/learn" element={<TopikLearn />} />
             <Route path="track/topik-ko/characters" element={<TopikCharacterTrainer />} />
@@ -96,7 +108,7 @@ export default function App() {
             <Route path="track/topik-ko/progress" element={<TopikProgress />} />
           </Route>
           <Route element={<RequireJlptTrack />}>
-            <Route index          element={<Home />} />
+            <Route index          element={learningExperienceEnabled ? <Today /> : <Home />} />
             <Route path="review"  element={<Review />} />
             <Route path="browse/:type"     element={<Browse />} />
             <Route path="browse/:type/:id" element={<BrowseDetail />} />

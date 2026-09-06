@@ -3,6 +3,11 @@
  * Figma Make 디자인 적용
  */
 import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLearningProfile } from '../hooks/useLearningProfile';
+import { useDataScope } from '../hooks/useDataScope';
+import { learningApi, learningExperienceEnabled } from '../lib/learning-experience';
+import { StudyRequestError } from '../features/study/StudyRequestError';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '../stores/settings-store';
@@ -45,6 +50,11 @@ export default function Settings() {
     instructionLanguages, setInstructionLanguage,
   } = useSettingsStore();
   const switchTrack = useAuthStore((s) => s.switchTrack);
+  const profile=useLearningProfile(),scope=useDataScope(),queryClient=useQueryClient();
+  const saveInstruction=useMutation({mutationFn:async(value:'ko'|'ja'|'en')=>{
+    if(!learningExperienceEnabled||!profile.data?.configured)return null;
+    return learningApi.saveProfile({...profile.data,instruction_language:value});
+  },onSuccess:(saved,value)=>{setInstructionLanguage(learningTrack,value);if(saved)queryClient.setQueryData(['learning-profile',scope],saved);}});
 
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
   const [isSubscribed, setIsSubscribed]       = useState(false);
@@ -120,8 +130,10 @@ export default function Settings() {
                   { value: 'ja', label: '日本語' },
                 ]}
             value={instructionLanguages[learningTrack]}
-            onChange={(value) => setInstructionLanguage(learningTrack, value)}
+            onChange={(value) => {if(!saveInstruction.isPending)saveInstruction.mutate(value);}}
           />
+          {saveInstruction.isPending&&<p role="status">{t('study.saving')}</p>}
+          {(saveInstruction.isError || profile.isError)&&<StudyRequestError error={saveInstruction.error ?? profile.error} />}
         </SettingRow>
       </SettingSection>
 

@@ -416,6 +416,1367 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learning/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/profile */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                target_level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                /** @enum {string} */
+                                instruction_language: "ko" | "ja" | "en";
+                                /** @default 20 */
+                                daily_minutes: 10 | 20 | 30;
+                                timezone: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                configured: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        /** PUT /learning/profile */
+        put: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        target_level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                        /** @enum {string} */
+                        instruction_language: "ko" | "ja" | "en";
+                        /** @default 20 */
+                        daily_minutes?: 10 | 20 | 30;
+                        timezone: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                target_level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                /** @enum {string} */
+                                instruction_language: "ko" | "ja" | "en";
+                                /** @default 20 */
+                                daily_minutes: 10 | 20 | 30;
+                                timezone: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                configured: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/study/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /study/sessions */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            } | null;
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** POST /study/sessions */
+        post: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        request_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/study/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /study/sessions/{id} */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** PATCH /study/sessions/{id} */
+        patch: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "active" | "paused" | "completed" | "abandoned";
+                    };
+                };
+            };
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/study/sessions/{id}/steps/{stepId}/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** POST /study/sessions/{id}/steps/{stepId}/reveal */
+        post: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/study/sessions/{id}/steps/{stepId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** POST /study/sessions/{id}/steps/{stepId}/submit */
+        post: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        request_id: string;
+                        answer?: string;
+                        /** @enum {string} */
+                        rating?: "again" | "hard" | "good" | "easy";
+                        /** @default 0 */
+                        active_ms?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                id: string;
+                                /** @enum {string} */
+                                learning_track: "jlpt-ja" | "topik-ko";
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                daily_minutes: number;
+                                /** @enum {string} */
+                                status: "active" | "paused" | "completed" | "abandoned";
+                                created_at: number;
+                                updated_at: number;
+                                steps: {
+                                    id: string;
+                                    ordinal: number;
+                                    /** @enum {string} */
+                                    phase: "review" | "learn" | "practice" | "retry";
+                                    ref: {
+                                        /** @enum {string} */
+                                        track: "jlpt-ja" | "topik-ko";
+                                        /** @enum {string} */
+                                        type: "vocab" | "grammar" | "kanji" | "sentence" | "sysprog" | "homophone" | "jlpt-practice" | "topik-owner-item" | "topik-practice";
+                                        id: string;
+                                        version: string;
+                                    };
+                                    section: string;
+                                    level: string;
+                                    prompt: string;
+                                    reading: string | null;
+                                    choices: string[];
+                                    audio: {
+                                        /** @enum {string} */
+                                        language: "ja" | "ko";
+                                        text: string;
+                                    } | null;
+                                    /** @enum {string} */
+                                    mode: "recall" | "choice" | "writing";
+                                    revealed: boolean;
+                                    submitted: boolean;
+                                    correct: boolean | null;
+                                    answer: string | null;
+                                    rating: string | null;
+                                    solution: {
+                                        explanation: string;
+                                        answer: string | null;
+                                        sample: string | null;
+                                    } | null;
+                                }[];
+                                notices: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learning/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/annotations */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                scope: "content" | "day";
+                                ref: string;
+                                text: string;
+                                revision: number;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        /** PUT /learning/annotations */
+        put: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        scope: "content" | "day";
+                        ref: string;
+                        text: string;
+                        revision: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                scope: "content" | "day";
+                                ref: string;
+                                text: string;
+                                revision: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learning/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/records */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                    window?: "7d" | "30d";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                window: "7d" | "30d";
+                                totals: {
+                                    first_answers: number;
+                                    first_correct: number;
+                                    retry_answers: number;
+                                    retry_correct: number;
+                                    learned: number;
+                                    reviews: number;
+                                    active_ms: number;
+                                };
+                                days: {
+                                    date: string;
+                                    completed: number;
+                                    reviews: number;
+                                    answers: number;
+                                    correct: number;
+                                    active_ms: number;
+                                }[];
+                                groups: {
+                                    level: string;
+                                    section: string;
+                                    answered: number;
+                                    correct: number;
+                                }[];
+                                sessions: {
+                                    id: string;
+                                    level: string;
+                                    status: string;
+                                    created_at: number;
+                                    updated_at: number;
+                                    done: number;
+                                    total: number;
+                                }[];
+                                next_review_at: number | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learning/content/{type}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/content/{type}/{id} */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GenericDataResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tracks/{track}/status": {
         parameters: {
             query?: never;
@@ -3722,6 +5083,51 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quiz/attempts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 본인의 제출 완료 결과 재조회 */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Saved grading result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GenericDataResponse"];
+                    };
+                };
+                /** @description Missing, unsubmitted or another account */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

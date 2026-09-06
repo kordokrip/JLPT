@@ -18,7 +18,11 @@ import { useSearchParams } from 'react-router-dom';
 
 export default function TopikLearn() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedView=searchParams.get('view') ?? (searchParams.has('section')||window.location.hash==='#topik-practice'?'practice':'owner');
+  const view=['owner','foundation','practice'].includes(requestedView)?requestedView:'owner';
+  const [foundationIndex,setFoundationIndex]=useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
   const progress = useTopikLearningProgress();
   const authUser = useAuthStore((state) => state.user);
   const audio = useKoreanAudio();
@@ -39,7 +43,7 @@ export default function TopikLearn() {
     ? (['listening', 'reading'] as const)
     : (['listening', 'writing', 'reading'] as const), [examLevel]);
   const selectLevel = (next: 'TOPIK-I' | 'TOPIK-II') => {
-    setExamLevel(next);
+    setExamLevel(next); setQuestionIndex(0); audio.stop();
     if (next === 'TOPIK-I' && section === 'writing') setSection('listening');
     setSolutionError(null);
   };
@@ -75,12 +79,14 @@ export default function TopikLearn() {
   return (
     <div className="app-page">
       <header className="mb-6 max-w-[800px]">
-        <p className="text-sm font-bold text-[var(--accent)]">{t('topik.learn.eyebrow')}</p>
-        <h1 className="mt-2 text-3xl font-black">{t('topik.learn.title')}</h1>
-        <p className="mt-3 leading-7 text-[var(--muted-foreground)]">{t('topik.learn.description')}</p>
+        <p className="text-sm font-bold text-[var(--accent)]">{view==='foundation'?t('topik.learn.eyebrow'):'TOPIK 1–6'}</p>
+        <h1 className="mt-2 text-3xl font-black">{t(view==='foundation'?'topik.learn.title':view==='owner'?'study.learn':'study.questions')}</h1>
+        <p className="mt-3 leading-7 text-[var(--muted-foreground)]">{t(view==='foundation'?'topik.learn.description':'study.free')}</p>
       </header>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {TOPIK_FOUNDATION_UNITS.map((unit) => {
+      <nav className="mb-6 flex flex-wrap gap-3">{([["owner", "study.owner"], ["foundation", "study.foundation"], ["practice", "study.practice"]] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={view === id} className="touch-target rounded-xl border px-4" onClick={() => setSearchParams({ view: id })}>{t(label)}</button>)}</nav>
+      {view === 'foundation' && <label className="mb-4 block">{t('study.foundation')}<select className="study-select ml-3 min-h-12 max-w-full rounded-xl border bg-[var(--card)] p-2" value={foundationIndex} onChange={e=>{audio.stop();setFoundationIndex(Number(e.target.value));}}>{TOPIK_FOUNDATION_UNITS.map((unit,index)=><option key={unit.id} value={index}>{index+1} · {unit.titleKo}</option>)}</select></label>}
+      {view === 'foundation' && <div className="grid max-w-3xl gap-4">
+        {TOPIK_FOUNDATION_UNITS.slice(foundationIndex,foundationIndex+1).map((unit) => {
           const complete = progress.completed.has(unit.id);
           return (
             <article key={unit.id} className="surface-panel p-5 sm:p-6">
@@ -104,12 +110,12 @@ export default function TopikLearn() {
             </article>
           );
         })}
-      </div>
+      </div>}
       {audio.error && <p role="alert" className="mt-4 max-w-[800px] text-sm text-red-700 dark:text-red-300">{t(`topik.characters.audio.${audio.error}`)}</p>}
 
-      <TopikOwnerAuthoredCurriculum initialGrade={Number(searchParams.get('grade') ?? 1)} />
+      {view === 'owner' && <TopikOwnerAuthoredCurriculum key={scope + searchParams.get('grade')} initialGrade={Number(searchParams.get('grade') ?? 1)} />}
 
-      <section id="topik-practice" className="mt-10 max-w-[960px] scroll-mt-24 border-t border-[var(--border)] pt-8" aria-labelledby="topik-practice-title">
+      {view === 'practice' && <section id="topik-practice" className="mt-10 max-w-[960px] scroll-mt-24 border-t border-[var(--border)] pt-8" aria-labelledby="topik-practice-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-[var(--accent)]">{t('topik.practice.eyebrow')}</p>
@@ -123,7 +129,7 @@ export default function TopikLearn() {
           {(['TOPIK-I', 'TOPIK-II'] as const).map((level) => <button key={level} type="button" role="tab" aria-selected={examLevel === level} onClick={() => selectLevel(level)} className={`touch-target rounded-[var(--radius-md)] px-4 text-sm font-bold ${examLevel === level ? 'bg-[var(--accent)] text-white' : 'border border-[var(--border)]'}`}>{level.replace('-', ' ')}</button>)}
         </div>
         <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label={t('topik.practice.sectionLabel')}>
-          {sections.map((item) => <button key={item} type="button" role="tab" aria-selected={section === item} onClick={() => { setSection(item); setSolutionError(null); }} className={`touch-target rounded-[var(--radius-md)] px-4 text-sm font-bold ${section === item ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'border border-[var(--border)]'}`}>{t(`topik.sections.${item}`)}</button>)}
+          {sections.map((item) => <button key={item} type="button" role="tab" aria-selected={section === item} onClick={() => { setSection(item); setQuestionIndex(0); audio.stop(); setSolutionError(null); }} className={`touch-target rounded-[var(--radius-md)] px-4 text-sm font-bold ${section === item ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'border border-[var(--border)]'}`}>{t(`topik.sections.${item}`)}</button>)}
         </div>
         {examLevel === 'TOPIK-II' && section === 'writing' && (
           <AiAssistanceNotice tone="info">{t('topik.practice.aiWritingNotice')}</AiAssistanceNotice>
@@ -132,13 +138,14 @@ export default function TopikLearn() {
         {practice.isLoading && !practice.data && <p className="mt-6 text-sm text-[var(--muted-foreground)]">{t('topik.practice.loading')}</p>}
         {practice.isCached && <p role="status" className="mt-5 text-sm text-[var(--muted-foreground)]">{t('topik.practice.cached')}</p>}
         {practice.isUnavailableOffline && <div role="status" className="surface-panel mt-6 p-5"><p className="font-bold">{t('topik.practice.offlineTitle')}</p><p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">{t('topik.practice.offlineDescription')}</p></div>}
-        {practice.isError && !practice.data && !practice.isOffline && <p role="alert" className="mt-6 rounded-[var(--radius-md)] border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/30 dark:text-red-200">{practice.error.message}</p>}
-        {solutionError && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">{solutionError}</p>}
+        {practice.isError && !practice.data && !practice.isOffline && <p role="alert" className="mt-6 rounded-[var(--radius-md)] border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/30 dark:text-red-200">{t('study.error')}</p>}
+        {solutionError && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">{t('study.error')}</p>}
         <div className="mt-6 grid gap-4">
-          {practice.data?.questions.map((question, index) => {
+          {practice.data?.questions.slice(questionIndex, questionIndex + 1).map((question) => {
+            const index = questionIndex;
             const solution = solutions[question.id];
             const selected = answers[question.id];
-            const canReveal = question.question_type === 'writing' || selected !== undefined;
+            const canReveal = question.question_type === 'writing' ? !!drafts[question.id]?.trim() : selected !== undefined;
             const audioSource = question.audio;
             return <article key={question.id} className="surface-panel p-5 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-[var(--muted-foreground)]">
@@ -154,11 +161,13 @@ export default function TopikLearn() {
               {question.question_type === 'choice' ? <fieldset className="mt-5 grid gap-2"><legend className="sr-only">{t('topik.practice.answerLabel')}</legend>{question.choices.map((choice, choiceIndex) => <button key={choice} type="button" role="radio" aria-checked={selected === choiceIndex} onClick={() => setAnswers((current) => ({ ...current, [question.id]: choiceIndex }))} className={`touch-target rounded-[var(--radius-md)] border px-4 py-3 text-left font-semibold ${selected === choiceIndex ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--accent)]'}`}><span className="mr-3 text-xs text-[var(--muted-foreground)]">{choiceIndex + 1}</span>{choice}</button>)}</fieldset> : <textarea value={drafts[question.id] ?? ''} onChange={(event) => setDrafts((current) => ({ ...current, [question.id]: event.target.value }))} className="mt-5 min-h-32 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-3 text-sm leading-6" placeholder={t('topik.practice.writingPlaceholder')} aria-label={t('topik.practice.writingLabel')} />}
               {!solution && <button type="button" disabled={!canReveal} onClick={() => void revealSolution(question.id)} className="mt-5 touch-target rounded-[var(--radius-md)] border border-[var(--border)] px-4 font-bold disabled:opacity-40">{t('topik.practice.reveal')}</button>}
               {solution && <div className="mt-5 border-t border-[var(--border)] pt-4 text-sm leading-6"><p className="font-bold text-[var(--accent)]">{t('topik.practice.explanation')}</p>{question.question_type === 'choice' && <p className="mt-2">{selected === solution.answer_index ? t('topik.practice.correct') : t('topik.practice.correctAnswer', { answer: question.choices[solution.answer_index ?? 0] })}</p>}<p className="mt-2 text-[var(--muted-foreground)]">{explanationText(solution)}</p>{sampleText(solution) && <><p className="mt-4 font-bold text-[var(--accent)]">{t('topik.practice.sample')}</p><p className="mt-2 whitespace-pre-wrap text-[var(--muted-foreground)]">{sampleText(solution)}</p></>}</div>}
+              {solution && audioSource?.kind === 'google' && <details className="mt-4"><summary className="touch-target">{t('study.transcript')}</summary><p lang="ko">{audioSource.text_ko}</p></details>}
+              <div className="mt-5 flex gap-3"><button type="button" className="touch-target rounded-xl border px-4" disabled={questionIndex === 0} onClick={() => { audio.stop(); setQuestionIndex(i => i - 1); }}>{t('study.previous')}</button><button type="button" className="touch-target rounded-xl border px-4" disabled={questionIndex + 1 >= (practice.data?.questions.length ?? 0)} onClick={() => { audio.stop(); setQuestionIndex(i => i + 1); }}>{t('study.next')}</button></div>
             </article>;
           })}
           {practice.data && practice.data.questions.length === 0 && <div className="surface-panel p-5"><p className="font-bold">{t('topik.practice.emptyTitle')}</p><p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">{t('topik.practice.emptyDescription')}</p></div>}
         </div>
-      </section>
+      </section>}
       {authUser?.role === 'admin' && <OwnerPrivateTopikPanel />}
     </div>
   );

@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import i18n from "../../i18n";
 import Quiz from "../Quiz";
+vi.mock('../../hooks/useLearningProfile', () => ({ useLearningProfile: () => ({ data: { target_level: 'N5' } }) }));
 
 vi.mock("../../hooks/useTrackStatus", () => ({
   useTrackStatus: () => ({ levels: ["N5", "N4", "N3"] }),

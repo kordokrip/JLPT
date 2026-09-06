@@ -14,25 +14,10 @@ const counters = {
   speech_errors: 0,
 };
 
-test('TOPIK dashboard orders next action as due review, incomplete owner learning, then weakest area', async ({ page }) => {
-  let dueCards = 2;
-  let completedItems = 0;
+test('guided records keep first responses, retries and legacy activity separate', async ({ page }) => {
   await mockTopikReadApis(page);
-  await page.route('**/api/v1/tracks/topik-ko/curriculum/progress', (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ data: {
-      grades: Array.from({ length: 6 }, (_, index) => ({
-        target_grade: index + 1,
-        total_items: 4,
-        completed_items: index === 0 ? completedItems : 4,
-        due_cards: index === 0 ? dueCards : 0,
-        review_cards: 0,
-      })),
-      completed_item_ids: [],
-    } }),
-  }));
-  await page.route('**/api/v1/activity/summary?window=30d', (route) => route.fulfill({
+  await page.route('**/api/v1/learning/records?*',route=>route.fulfill({json:{data:{window:'7d',totals:{first_answers:4,first_correct:1,retry_answers:2,retry_correct:2,learned:3,reviews:1,active_ms:120000},days:[],groups:[],sessions:[],next_review_at:null}}}));
+  await page.route('**/api/v1/activity/summary?*', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify({ data: {
@@ -50,17 +35,11 @@ test('TOPIK dashboard orders next action as due review, incomplete owner learnin
   }));
 
   await registerTopikUser(page);
-  await expect(page.getByRole('heading', { name: /먼저 복습 2개|Complete 2 due reviews|復習2件/ })).toBeVisible();
-
-  dueCards = 0;
-  await page.reload();
-  await expect(page.getByRole('heading', { name: /TOPIK 1급 미완료|incomplete TOPIK level 1|TOPIK 1級/ })).toBeVisible();
-
-  completedItems = 4;
-  await page.reload();
-  await expect(page.getByRole('heading', { name: /listening 취약|weakest listening|listening領域/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /시작하기|Start|始める/ }).first()).toHaveAttribute(
-    'href',
-    '/track/topik-ko/learn?section=listening#topik-practice',
-  );
+  await page.goto('/records');
+  await expect(page.getByRole('heading',{name:'최초 응답'}).locator('..')).toContainText('1/4');
+  await expect(page.getByRole('heading',{name:'재시도',exact:true}).locator('..')).toContainText('2/2');
+  const all=page.getByRole('heading',{name:'전체 학습 활동'}).locator('..');
+  await expect(all).toContainText('응답 수: 10');
+  await expect(all).toContainText('위 세션 통계와 더하지 않습니다');
+  await expect(page.getByText('50/10/5')).toHaveCount(0);
 });

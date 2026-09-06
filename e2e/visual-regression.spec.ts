@@ -163,15 +163,15 @@ test.describe('핵심 화면 시각 회귀', () => {
     }
   }
 
-  test('mobile-390: more sheet', async ({ page }) => {
+  test('mobile-390: account menu', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await prepareVisualPage(page);
     await ensureAuthenticated(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await disableAnimations(page);
     await waitForVisualSettled(page);
-    await page.getByRole('button', { name: /더보기|More|その他/ }).click();
-    await expect(page.getByRole('dialog', { name: /추가 메뉴|More menu|追加メニュー/ })).toBeVisible();
+    await page.locator('header details summary').click();
+    await expect(page.locator('header details[open]')).toBeVisible();
 
     await expect(page).toHaveScreenshot('mobile-390-more-sheet.png', {
       fullPage: false,
