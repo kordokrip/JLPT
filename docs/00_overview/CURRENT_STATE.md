@@ -62,8 +62,11 @@ commit/push한 source `5311ab72c2aafa001fb436e50cd1335d775c81b4`를 Pages **`d51
 - 수정본을 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`으로 고정하고 전용 Preview Worker **`b02f3674-6a59-47c8-818a-2397bcd295fd`**, Pages **`555fc0c4-24cc-49de-b846-38aee2f59b31`**에 반영했습니다. 두 source 모두793b671이고 deploy exit0입니다. 추가 migration/seed·Production 변경·최종 push·삭제는 없습니다. Git 원격은5311ab7을 유지합니다.
 - 새 Preview Worker smoke **21 pass / 0 fail / 관리자 positive1 미실행**, D1 migration0028·FK0입니다. 독립 실제 HTTP 검사에서 A세션 중단→B새세션→A요청 재전송은 원래 A를 반환하고 current는 B를 유지했습니다. 일반 JLPT/TOPIK 설정의 PUT/GET/reload도 양 엔진 모두 통과했습니다.
 - auth/settings 첫14건은 **11 pass / 3 fail**입니다. 2개는 SSO503, 1개는 지연 테스트의 WebKit interception0입니다. 지연 테스트에만 SW 제어를 적용한 뒤 실제 설정·테마 양 엔진 **14 pass / 0 skip / 0 fail**, exit0입니다. 앱/SW source와 배포는 바꾸지 않았고 실제 SSO 실패도 그대로입니다.
-- 새555fc0c4의 실제 Chrome은 일본어 ‘재생 중’까지만 확인한 뒤 `cgWindowNotFound`/`Debugger unattached`로 후속 관측이 중단됐습니다. 정상 종료·한국어·network·가청을 통과 처리하지 않았습니다. 새 URL 청취 질문은 별도로 보냈으며, d51a81ed의 HAR/onend 또는 a95437fc의 가청을 옮겨 쓰지 않습니다.
-- 전체 원격 후보 검증, Preview 전용 OAuth 설정/실제 SSO, 최종 source의 실제 음성 증거, 새 Production backup/restore와 릴리스 gate가 남았습니다. 마지막 전체 remote status는 **48 pass / 2 warn / 3 fail**, exit1: 의도적으로 아직 push하지 않은 Git SHA 차이와 기존 Production TOPIK status/CSP입니다.
+- 새555fc0c4의 첫 실제 Chrome 관측은 `cgWindowNotFound`/`Debugger unattached`로 중단됐지만, 10:06 UTC 후속에서 새 탭에 연결해 일본어·한국어 정상 종료 각1회와 탭 콘솔 warn/error0을 확인했습니다. native Network 수집은 여전히 `cgWindowNotFound`여서 요청 수는 미확인입니다. `stability-preview-actual-audio.json`의 strict gate는 가청/확인자/R2·legacy 요청 수 4개 누락으로 exit1입니다. 사용자의 “두 언어 모두 들렸습니다”는 질문에 연결된 a95437fc에만 기록하며 새 후보에 옮겨 쓰지 않습니다.
+- 새 Preview의 PC·모바일 원격 기능187건은 **178 pass / 6 로컬 fixture skip / 3 fail**,23.6분·exit1입니다(`stability-preview-full-functional.log`). 실패는 Google SSO start503 두 건과 자연 일본어 번역 fixture 우회 한 건입니다. 시각 suite60건은 이 원격 명령에서 제외했으며 로컬 시각 결과와 구분합니다. 양 엔진·양언어 전체 세션4건은 저장 실패/pending0, 최대 write3,428ms로 통과했습니다. 전 급수 재개·계정/트랙 격리·오프라인 복귀·퀴즈·복습·설정·메뉴 검사를 포함합니다.
+- 자연 검색의 mock 누락을 counter0 fail-first로 재현한 뒤 해당 테스트만 SW 제어·요청 계약 검사로 교정했습니다. 원격 양 엔진4개가 통과했고 앱 runtime/source793b671은 유지합니다. 최초 전체178/6/3과 이 부분 통과를 합쳐 전체 gate 통과로 쓰지 않습니다.
+- 별도 root 로컬 재검사4개도 통과했고, 독립 Agent가187개 수집/집계·실패 metadata와 Preview health/source를 대조했습니다. 전용 D1 후검사는 FK0·migration0028 적용1회·읽기 전용(rows_written0)입니다. 전체 로컬217개는 자연 검색 테스트 제어 수정 전 결과이며 후속 부분4개와 분리합니다.
+- Preview 전용 OAuth 설정/실제 SSO, 최종 source의 실제 음성 증거, 새 Production backup/restore와 릴리스 gate가 남았습니다. 마지막 Production 전체 remote status는 **48 pass / 2 warn / 3 fail**, exit1: 의도적으로 아직 push하지 않은 Git SHA 차이와 기존 Production TOPIK status/CSP입니다. Preview 기능 검사187건과 별개의 집계입니다.
 
 ## Production 콘텐츠 (기존 기준선)
 

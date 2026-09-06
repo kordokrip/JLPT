@@ -13,8 +13,8 @@
 | Preview Pages | `555fc0c4-24cc-49de-b846-38aee2f59b31`, source793b671, Functions 포함, deploy exit0 |
 | Preview D1 | `nihongo-n3-topik-preview`, migration0028·FK0, 추가 migration/seed 없음 |
 | 로컬 검증 | gate458개·fresh0028 exit0, 전체 E2E217 pass/30 시각 정책 skip/0 fail |
-| 새 Preview 검증 | Worker21/0/관리자1 미실행, 독립 실제 HTTP 세션 재전송 통과, 설정·테마14/0/0 |
-| 미해결 gate | 실제 SSO start503; 최신555fc0c4 음성 관측 중 UI 연결 중단; 최종 전체 원격·새 Production backup/restore |
+| 새 Preview 검증 | 원격 기능187건178 pass/6 fixture skip/3 fail(exit1); Worker21/0/관리자1 미실행, 세션 재전송·설정/테마14개 통과 |
+| 미해결 gate | 실제 SSO start503; 최신555fc0c4 양언어 onend 확인, 가청·Network 미확인; 실패 해소 후 원격 gate 재검증·새 Production backup/restore |
 | rollback | Worker `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39, Pages `d51a81ed-2561-4900-899f-022b99d67679`/source5311ab7; DB 복원은 기본 조치 아님 |
 | Production/정리 | Production 기준선 유지, 콘텐츠 publication·파일 삭제·최종 Git push 없음 |
 
@@ -23,6 +23,16 @@
 증적은 `stability-preview-worker-deploy.log`, `stability-preview-pages-deploy.log`, `stability-pages-after.json`, `stability-preview-db-check.json`, `preview-session-replay-793b671.json`, `settings-transport-preview-2026-09-06.log`다(`.artifacts/operations/`의 날짜 prefix 파일). 555fc0c4 음성 관측 중단은 `stability-preview-audio-interrupted.json`에 기록한다. 과거555 이전 HAR·가청은 이 release에 재사용하지 않는다. 최신 remote status48/2/3(exit1)은 미push SHA차이와 기존 Production TOPIK/CSP 실패를 포함한다.
 
 지연 테스트 제어 범위만 교정한 뒤 전체 로컬 E2E도 `transport-final-local-e2e.log`에서 **217 pass / 30 시각 정책 skip / 0 fail**,3.9분·exit0으로 다시 통과했다. 앱 runtime은793b671이며 후속 test/docs 안전 커밋은 배포 source와 구분한다. docs64개/82상대 링크 및 lifecycle/diff check도 통과했다. 사용자 데이터·backup·HAR 원문은 ignored artifact로 보존하고 source에 포함하지 않는다.
+
+10:06 UTC 실제 Chrome 새 탭에서 양언어 각각 정상 종료1회, voice 목록10/10, 탭 `dev.logs` warn/error0을 확인했다. native Network 수집은 `cgWindowNotFound`로 미확인이므로 R2/legacy 요청 수는 null을 유지한다. `learning-experience-2026-09-06-stability-preview-actual-audio.json`은 release793b671/deployment555fc0c4에만 연결되며 strict gate4개 누락·exit1이다. 사용자 가청 답변의 질문 URL은 a95437fc이므로 최신 후보 확인으로 재분류하지 않는다. 앞선 관측 중단 artifact도 보존한다.
+
+`stability-preview-full-functional.log`는 immutable555fc0c4/source793b671에서 24개 파일·4개 project의187개를 끝까지 실행해 **178 pass / 6 skip / 3 fail**,23.6분·exit1이다. 시각 suite60개는 별도 제외다. 실패는 SSO503 양 엔진2건과 WebKit 자연 검색 fixture 우회1건이며, 최초 전체 결과를 후속 부분 재검사와 합쳐 전체 통과로 바꾸지 않는다. 양언어×양엔진 전체 세션4건은 pending/fail0, 최대 write는 Chromium ko2,950/ja3,428ms, WebKit ko2,568/ja2,579ms다. 실제 Preview 합성 계정의 학습 기록이며 Production 사용량 지표가 아니다.
+
+자연 검색 후속은 mock interception counter1 기대/실제0으로 WebKit fail-first1건·exit1을 재현하고, 해당 사례만 SW 제어 뒤 원격 양 엔진4 pass/0 skip/0 fail·12.2초·exit0을 통과했다. sidebar의 SW 허용 및 원래 문구/검색/URL/시간 한도는 유지한다. `natural-search-fail-first-2026-09-06.log`와 `natural-search-scoped-preview-2026-09-06.log`를 별도 증거로 보존하며 앱/배포 source793b671은 변경하지 않았다.
+
+root의 독립 소스 diff 검토와 로컬 격리 Worker/D1 양 엔진 재검사도 **4 pass / 0 skip / 0 fail**,5.9초·exit0이다(`natural-search-scoped-local-2026-09-06.log`). 전체 로컬217개는 이 테스트 제어 수정 전 결과이며, 수정 후 전체를 다시 실행한 것으로 쓰지 않는다. 앱 runtime은 변경하지 않았으므로 배포/build/fresh458개를 불필요하게 반복하지 않았다.
+
+별도 Agent의 후검사 `learning-experience-2026-09-06-preview-full-postcheck-793b671.json`은187개 고유·연속 index와 `.last-run.json`의3개 실패를 대조했다. Preview health200/source793b671 확인 후 명시한 전용 D1에서 FK0·migration29개·0028적용1회를 조회했다(rows_written0/changed_dbfalse). 조건부 어휘 검색 추가 skip0은 최종skip6과 고정 원격 fixture6개를 대조한 추론임을 artifact에 명시했다. Production에 연결하거나 사용자 원문·인증값을 기록하지 않았다. 이 후속은 테스트/문서만 로컬 형상 보존하며 Production·최종 push·삭제는 하지 않는다.
 
 ## 2026-09-06 최초 개인 학습 UX 후보 (이하 순차 이력)
 

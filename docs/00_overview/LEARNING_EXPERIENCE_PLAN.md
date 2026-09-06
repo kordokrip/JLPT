@@ -234,15 +234,15 @@
 - SW진단은같은Preview의WebKit한자퀴즈3회/exit0,각trace의`/sw.js`200·failure없음이다. 최초오류는원인미확정으로남기며네트워크오류를무시하는코드/테스트변경은하지않았다.
 - 로컬`apps/api/.env`와`.dev.vars`에는동일Google설정이있으나callback은ProductionWorker다. 값은출력/커밋하지않았고Preview에복사하지않았다. 전용Preview설정준비여부를사용자에게문의했다.
 
-### 최신 안정성 재검증 — Production 완료 아님
+### 안정성 재검증 당시 기록 — Preview 반영 전
 
 - INC-SET-057의 확장 fail-first **3 fail / 3 pass** 후, 프로필 조회 중/실패 차단 및 요청 당시 계정·트랙 cache 바인딩을 수정했다. 기존 기능 플래그 false·미설정 계정의 로컬 동작은 보존했다. 독립 검토와 Settings7/store15 단위 **22 pass**, 실제 서버 payload 지연을 포함한 양 엔진 설정 **14 pass**다. 임의 응답을 주입하거나 시간 한도/PUT 검사를 낮추지 않았다.
 - 최종 전체 `learning-experience-2026-09-06-settings-final-full-gate.log`: **Ops26 / DB126 / Web139 / API167 = 458개**, OpenAPI·typecheck·build·fresh0000–0028·FK/FTS·품질/control-plane, **exit0**. fresh workspace는 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-dvxMDm/artifacts`다.
-- `learning-experience-2026-09-06-settings-final-local-e2e.log`: **217 pass / 30 시각 기준 정책 skip / 0 fail**,3.8분·**exit0**. 모바일·PWA·전 급수·저장/재개와 기존 기능을 포함하지만 실제 Google provider 또는 물리 음성으로 확대 해석하지 않는다. 이후 runtime/test source를 바꾸지 않았다.
+- `learning-experience-2026-09-06-settings-final-local-e2e.log`: **217 pass / 30 시각 기준 정책 skip / 0 fail**,3.8분·**exit0**. 모바일·PWA·전 급수·저장/재개와 기존 기능을 포함하지만 실제 Google provider 또는 물리 음성으로 확대 해석하지 않는다. 이후 테스트 제어 수정과 후속 실행은 아래에 별도로 기록한다.
 - 기존 Preview의 Google UI 검사는 `/auth/config`와 비활성 anchor의 href/aria-disabled를 대조하도록 교정했다. 실제 start302 검사는 그대로 유지했다. 같은 d51a81ed에서 **2 pass / 2 fail**,exit1이며 두 실패 모두 start503이다. 실제 SSO는 미완료다.
 - 09:37–09:39 UTC, 실제 Chrome 앱의 DevTools Network 기록을 켠 뒤 d51a81ed `/audio-qa` 새로고침→일본어 onend→한국어 onend를 관측했다. UI18개 요청 중 sanitized HAR16개 HTTPS 요청은 모두 동일 Preview origin/200이고 다른2개는 확장 리소스다. R2 발음/legacy audio 요청0을 확인했다. `srs-chrome-network.har` SHA-256은 `7d3975389f1873f0e5442d426ee733f610a069d56393b14b2b41aa460ee30cb0`이다. native Console 경고6개는 SW resource mismatch/unused preload 각3개며 오류0개다. 최초 WebKit access-control 실패의 원인으로 단정하지 않는다.
 - 최신 실제 음성 artifact `srs-preview-actual-audio-network.json`의 predeploy는 **2개 누락/exit1**이다(사람 가청·확인자). 사용자의 답변은 질문 URL인 a95437fc/source94dfb05에만 연결한다. 앞선 network null/4개 누락 artifact와 중간 실패 로그도 보존한다.
-- 현재 최신 소스는 HEAD5311ab7 위 작업 트리다. 신규 기능·콘텐츠 공개·운영 DB 변경·추가 배포·최종 Git push·파일 삭제는 하지 않았다. Preview OAuth 전용 설정과 실제 로그인, 최종 후보 Preview 재검증, 새 Production backup/restore·승인 gate가 필요하다. 수정이 생기면 해당 후보의 gate를 새로 실행한다.
+- 당시 소스는 HEAD5311ab7 위 작업 트리였으며 아직 추가 배포를 하지 않은 상태였다. 후속 source793b671의 Preview 반영과 검증은 아래에 분리한다. 신규 기능·콘텐츠 공개·운영 DB 변경·최종 Git push·파일 삭제는 하지 않았다. Preview OAuth 전용 설정과 실제 로그인, 새 Production backup/restore·승인 gate는 계속 필요하다.
 
 독립 검토의 한계도 남긴다. 설정 reload 검사는 서버와 로컬값이 이미 같은 상태의 보존을 검증한다. 상충하는 로컬값 또는 새 기기 복원까지 직접 증명한 것으로 쓰지 않는다. GET 실패 뒤에는 reload/재조회로 복구하며 새 재시도 UX를 이번 안정성 범위에 추가하지 않았다.
 
@@ -253,6 +253,16 @@
 - Worker smoke21 pass/0 fail/관리자 positive1 미실행, Preview D1 FK0·latest migration0028이다. 새 migration/seed는 없었다.
 - 첫 원격 auth/settings14건은 **11 pass / 3 fail**,exit1이다. 두 실패는 SSO503, 하나는 지연 제어 테스트의 WebKit interception0이다. 원래 JLPT/TOPIK 설정4건은 모두 통과했다. `theme-settings.spec.ts`는 잘못 지정한 파일명이므로 이 실행에 테마8개는 없었다. 정확한 파일명으로 후속 검사했다.
 - 지연 제어 테스트만 describe 범위에서 SW를 차단했다. 실제 `route.fetch` payload, interception1, 지연 중 disabled/PUT0, 해제 후 PUT200/1회·독립GET·reload와 시간 한도는 유지했다. 일반 설정 및 테마 테스트의 SW와 앱 runtime은 바꾸지 않았다. `settings-transport-preview-2026-09-06.log`는 **14 pass / 0 skip / 0 fail**,1.5분·exit0이며 SSO 검사는 이14건에 포함하지 않는다.
-- 최신555fc0c4 실제 Chrome에서 일본어 재생 중 표시를 관측했지만 이후 native `cgWindowNotFound`/tab `Debugger unattached`로 검증이 중단됐다. 정상 종료·한국어·network·사람 가청을 통과 처리하지 않았다. `stability-preview-audio-interrupted.json`에 구분했고 새 URL 청취 질문을 보냈다. 과거 d51a81ed HAR/onend와 a95437fc 사람 확인은 보존하되 이 후보로 옮기지 않는다.
+- 555fc0c4의 첫 실제 Chrome 관측에서 일본어 재생 중 표시를 관측했지만 이후 native `cgWindowNotFound`/tab `Debugger unattached`로 검증이 중단됐다. 당시 정상 종료·한국어·network·사람 가청을 통과 처리하지 않았다. `stability-preview-audio-interrupted.json`에 구분했고 새 URL 청취 질문을 보냈다. 과거 d51a81ed HAR/onend와 a95437fc 사람 확인은 보존하되 이 후보로 옮기지 않는다.
+- 10:06 UTC 새 Chrome 탭 연결 후 양언어 정상 종료 각1회·voice10/10·탭 콘솔0을 확인했다. native Network는 수집 오류로 미확인이며 가청도 최신 후보 확인은 없다. 새 `stability-preview-actual-audio.json`의 strict gate4개 누락·exit1이다. 기존 관측 중단을 삭제하지 않고, 질문 URL a95437fc의 사용자 답변은 해당 이전 후보에만 연결한다.
 - 최신 Production read-only 상태는 **48 pass / 2 warn / 3 fail**,exit1이다. 미push(local793b671/remote5311ab7), 기존 Production TOPIK status 및 CSP다. 조회 결과를 신규 배포 실패로 오인하거나 검증 완료 조건을 건너뛰어 push하지 않는다.
 - 지연 테스트 scope 수정 뒤 `learning-experience-2026-09-06-transport-final-local-e2e.log`로 전체 로컬 브라우저를 다시 실행해 **217 pass / 30 시각 정책 skip / 0 fail**,3.9분·exit0을 확인했다. 앱 source793b671은 유지하며 단위/API/fresh gate458개의 runtime을 바꾸지 않았다. 문서 검사는64개/82상대 링크, lifecycle9개 활성·4개 retired 부재·36개 DB source 참조와 diff check를 통과했다. 후속 test/docs는 로컬 안전 커밋으로 보존하되 최종 push는 전체 외부 gate 이후에 수행한다.
+
+### 555fc0c4 원격 기능 전수 후속
+
+- `stability-preview-full-functional.log`: 24개 파일·Chromium/WebKit·모바일 두 project, **178 pass / 6 로컬 fixture skip / 3 fail**,23.6분·exit1. 시각 baseline60개는 원격에서 별도 제외다. 기존 Google start503 두 실패와 WebKit 자연 일본어 번역 fixture 우회1개를 보존한다.
+- 양언어×양엔진 전체 안내 세션4개는 pending0/fail0, 최대 write는 Chromium ko2,950/ja3,428ms와 WebKit ko2,568/ja2,579ms다. 전 급수 저장·재개, 오프라인 재전송, 다른 기기 선행 응답, 계정/트랙 격리, 설정·복습·퀴즈·메뉴·모바일 검사를 포함한다. mock 음성/provider/화면 fixture의 성공을 실제 외부 서비스 성공으로 확대하지 않는다.
+- 자연 검색 실패 화면과 trace는 실제 AI 응답200/4,102ms가 UI에 표시됐으나 fixture fulfill0임을 보여준다. `INC-QA-052` 후속으로 해당 mock만 통제하며 runtime·음성·API·schema·공개 콘텐츠를 변경하지 않는다. 최초 전체 실패와 후속 부분 결과를 분리한다.
+- 요청 POST/body·counter를 추가한 WebKit fail-first1건은 expected1/actual0으로 exit1이었다. 이후 번역 사례만 scoped SW 제어를 적용해 원격 양 엔진4 pass/0 skip/0 fail(12.2초·exit0)을 확인했다. sidebar·기존 exact 문구/검색/URL 검사와 시간 한도는 그대로다. 이 결과는 mock UI 회귀이며 실제 AI provider 품질·전체187개 성공이 아니다.
+- root가 diff를 독립 검토하고 격리 local Worker/D1에서 같은 파일을 양 엔진으로 재실행해4 pass/0 skip/0 fail(5.9초·exit0)을 확인했다. 전체217개는 자연 검색 테스트 수정 전이며 후속4건과 분리한다. runtime이 그대로인 build/단위/fresh458개와 배포는 반복하지 않았다.
+- 별도 Agent는 로그187개 고유 index와 `.last-run.json` 실패3개를 대조하고 Preview health200/source793b671 뒤 전용 D1의 FK0·migration0028 적용1회를 읽기 전용으로 확인했다. `preview-full-postcheck-793b671.json`에 raw 사용자/인증값 없이 기록했다. 후속 작업은 e2e1개·문서만 변경하며 Production/최종push/파일삭제는 보류한다.

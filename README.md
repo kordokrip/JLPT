@@ -23,7 +23,7 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 - 새 additive migration은 `0028_learning_experience.sql`입니다. Production은 여전히 `0000–0027`이며 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
 - 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
-- 최신 전용 Preview는 Pages `555fc0c4`, Worker `b02f3674`이며 둘 다 source `793b671`입니다. 로그인 트랙·세션 재전송·설정 바인딩 수정본은 로컬458개 gate와 전체 브라우저217 pass/30 시각 정책 skip/0 fail을 통과했습니다. 새 Preview 설정·테마14개와 실제 세션 재전송 검사는 통과했지만 실제 Google SSO start503 및 최종 후보 음성 증거가 남아 있습니다. Production과 Git 원격은 변경하지 않았습니다. 과거 배포의 가청 확인은 재사용하지 않습니다. 정확한 현재 배포와 미완료 gate는 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)을 따릅니다.
+- 최신 전용 Preview는 Pages `555fc0c4`, Worker `b02f3674`이며 둘 다 앱 source `793b671`입니다. 이 runtime은 로컬458개 gate와 전체 브라우저217 pass/30 시각 정책 skip/0 fail을 통과했습니다. 새 원격 기능187건은178 pass/6 fixture skip/3 fail이며, 자연 검색 mock 문제는 후속 부분 재검사로 교정했습니다. 실제 Google SSO start503과 최신 후보의 가청·Network 증거는 남아 있습니다. Chrome 양언어 정상 종료는 확인했지만 과거 배포의 사용자 가청을 재사용하지 않습니다. Production·Git 원격은 변경하지 않았으며 [학습 경험 구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 전체 실패와 후속 결과를 분리합니다.
 - 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
 
 ## 구조

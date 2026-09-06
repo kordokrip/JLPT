@@ -1,7 +1,7 @@
 # 오류·회귀 차단 원장
 
 최종 점검: 2026-09-06 KST
-현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 실제 Chrome 양언어 정상 종료와 사용자 가청 확인은 Pages `a95437fc`/source `94dfb05`의 증거다. 이후 `d51a81ed` 및 미배포 안정성 수정본의 가청 통과로 재사용하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
+현재 상태: 2026-08-24 음성 복구 배포는 역사 기준선이다. 2026-09-06 새 학습 UX·`0028`은 전용 Preview 검증 중이며 Production 미반영이다. 최신 Preview는 Pages `555fc0c4`/Worker `b02f3674`이며 앱 source는 `793b671`이다. 사용자의 가청 확인은 Pages `a95437fc`/source `94dfb05`에만 연결한다. 이후 Preview의 정상 종료 관측과 가청 통과를 혼동하지 않는다. 현재 HEAD와 운영 콘텐츠 manifest의 source hash drift는 별도 공개 결함으로 추적한다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
@@ -115,7 +115,7 @@
 
 ### INC-LEARN-055 — 종료된 세션의 생성 요청 ID 재전송
 
-종료된 세션의 원래 request_id를 다시 보낼 때 새 open session이 존재하면 최신 세션을 반환하는 쿼리 결함을 독립 검토와 fail-first3건으로 재현했다(완료·중단 후 재전송, 동시 생성 경합 복구). 운영 발생으로 단정하지 않는다. 정확한 request_id를 우선 정렬하고 최초/경합 조회를 공유하는 최소 수정 후3건 및 전체 API165개를 통과했다. 공개 API/schema·계정/트랙 조건·조회 횟수는 유지한다. Preview Worker에는 아직 미반영이다.
+종료된 세션의 원래 request_id를 다시 보낼 때 새 open session이 존재하면 최신 세션을 반환하는 쿼리 결함을 독립 검토와 fail-first3건으로 재현했다(완료·중단 후 재전송, 동시 생성 경합 복구). 운영 발생으로 단정하지 않는다. 정확한 request_id를 우선 정렬하고 최초/경합 조회를 공유하는 최소 수정 후3건 및 당시 전체 API165개를 통과했다. 공개 API/schema·계정/트랙 조건·조회 횟수는 유지한다. 후속 source793b671의 Preview Worker b02f3674에 반영했고 실제 HTTP 재전송 검사도 통과했다. Production은 미반영이다.
 
 ### INC-PWA-056 — Preview WebKit의 SW access-control 오류
 
@@ -129,7 +129,7 @@ source5311ab7 Pages d51a81ed/Worker0b20e39 원격78건은 **73 pass / 4 fixture 
 
 Preview 인증/설정 20건은 **14 pass / 6 fail**, exit1이었다(`auth-settings-preview.log`). Google 관련 4건 중 2건은 비활성 anchor에 link role을 요구한 테스트 오류이고, 나머지 2건은 실제 OAuth start 503이다. 설정 2건은 profile 저장200 뒤 새 Settings 화면에서 해설 언어를 바꿨지만 PUT이 없었다. `Settings.tsx`가 조회 중 undefined와 확인된 `configured:false`를 같은 null 성공으로 취급하는 코드와 교차확인했다.
 
-확장 fail-first는 **3 fail / 3 pass**였다. 프로필 조회 중 로컬 변경 1건과 저장 응답 전에 계정/트랙이 바뀌는 2건을 재현했다. 최소 수정은 조회 중/오류 시 선택 차단, 조회 완료 후에만 저장, 요청 당시 계정·트랙·cache scope 보존이다. 기능 플래그 false와 확인된 미설정 계정의 기존 로컬 설정은 유지한다. 독립 검토와 Settings7·store15 단위 **22 pass**, 실제 서버 응답을 지연시킨 회귀 포함 양 엔진 설정 **14 pass / 0 skip / 0 fail**, typecheck·diff check exit0이다. 새 Preview에 아직 반영하지 않았다. 시간 한도나 PUT 검사를 완화하지 않았다.
+확장 fail-first는 **3 fail / 3 pass**였다. 프로필 조회 중 로컬 변경 1건과 저장 응답 전에 계정/트랙이 바뀌는 2건을 재현했다. 최소 수정은 조회 중/오류 시 선택 차단, 조회 완료 후에만 저장, 요청 당시 계정·트랙·cache scope 보존이다. 기능 플래그 false와 확인된 미설정 계정의 기존 로컬 설정은 유지한다. 독립 검토와 Settings7·store15 단위 **22 pass**, 실제 서버 응답을 지연시킨 회귀 포함 양 엔진 로컬 설정 **14 pass / 0 skip / 0 fail**, typecheck·diff check exit0이다. 후속 Preview555fc0c4에 반영했으며 원격 검증 결과는 아래에 분리한다. 시간 한도나 PUT 검사를 완화하지 않았다.
 
 Google 버튼 검사는 실제 `/auth/config`의 boolean과 href/aria-disabled/안내문을 대조하도록 바로잡았다. 별도 OAuth start의 strict302 조건은 유지한다. 같은 Preview 재검사 **2 pass / 2 fail**, exit1(`sso-config-crosscheck.log`): 비활성 상태 표시는 통과하지만 실제 start는 양 엔진 모두503이므로 SSO 통과가 아니다.
 
@@ -137,7 +137,15 @@ Google SSO Preview 상태는 별도 **미검증 gate**다. Pages와 직접 Worke
 
 source793b671의 새 Preview555fc0c4/b02f3674 후속: 일반 설정4건은 실제 PUT/GET/reload를 양 엔진에서 통과했다. 첫14건11 pass/3 fail의 추가 실패1건은 지연 테스트 interception0으로, 해당 describe만 SW 제어 후 정확한 설정/테마14개를 모두 통과했다. 실제 payload·횟수·시간 한도를 완화하지 않았고 일반 설정/PWA는 SW 허용을 유지한다(`INC-QA-052`와 같은 테스트 제어 경계). SSO503 두 실패는 별도 유지한다. 독립 HTTP의 종료 세션 request_id 보존도 새 Worker에서 통과했다. Production은 미반영이다.
 
-최신555fc0c4 실제 음성 관측은 일본어 재생 중 이후 native `cgWindowNotFound` 및 tab `Debugger unattached`로 중단됐다. 연결 문제를 제품 무음으로 진단하지 않으며, 새 배포의 정상 종료·한국어·network·사람 확인은 미완료로 남긴다. 이전 두 Preview의 음성 증거는 별도 source에만 유효하다.
+555fc0c4의 첫 실제 음성 관측은 일본어 재생 중 이후 native `cgWindowNotFound` 및 tab `Debugger unattached`로 중단됐다. 당시 새 배포의 정상 종료·한국어·network·사람 확인은 미완료로 기록했다. 연결 문제를 제품 무음으로 진단하지 않으며, 탭 연결 복구 후의 결과는 아래에 별도로 기록한다. 이전 두 Preview의 음성 증거는 별도 source에만 유효하다.
+
+10:06 UTC 후속은 새 Chrome 탭 연결에 성공해 일본어·한국어 정상 종료 각1회와 탭 콘솔 warn/error0을 확인했다. native Network는 같은 오류로 수집하지 못했으며 사람 확인도 최신 후보에는 없다. strict predeploy4개 누락·exit1을 보존한다. 따라서 이전 관측 중단은 복구됐지만 전체 음성 gate가 해결된 것은 아니다. 질문 URL이 a95437fc인 사용자의 가청 확인을555fc0c4로 옮기지 않는다.
+
+### INC-QA-052 후속 — 자연 일본어 검색 fixture의 실제 API 유출
+
+555fc0c4 원격 기능 전수 검사에서 WebKit `natural-search.spec.ts:17`이 고정 fixture 문구를 찾지 못했다. 독립 trace 검토에서는 route 등록이 있지만 fulfill 호출0이며 실제 `/ai/translate`가200/4,102ms로 다른 번역문을 반환했다. 실패 화면과 `NaturalJapaneseSearch.tsx`를 대조해 실제 응답 문장을 정상 표시한 것을 확인했다. 따라서 이 실패는 변환 결과 미표시나5초 지연 초과로 진단하지 않는다. SW 관련 routing 누락이 유력하나 직접 인과는 비교 실행 전 미확정이다.
+
+기존 전체187건은178 pass/6 skip/3 fail·exit1로 보존했다. 종료 후 counter와 POST/body 계약만 먼저 추가한 WebKit fail-first1건에서 expected1/actual0·5초 실패를 재현했다. 번역 mock 사례만 nested describe에서 SW를 차단한 뒤 원격 양 엔진4건이 모두 통과했다(12.2초·exit0). sidebar·실제 학습·PWA·전역 설정·고정 문구/검색/URL/시간 한도는 유지한다. 로그는 `natural-search-fail-first-2026-09-06.log`, `natural-search-scoped-preview-2026-09-06.log`다. 앱·AI 설정·음성·DB 계약은 변경하지 않았으며, 부분 mock UI 통과를 실제 AI provider 품질 또는 전체187개 통과로 바꾸지 않는다.
 
 ### 2026-09-06 후속 — INC-SRS-053
 

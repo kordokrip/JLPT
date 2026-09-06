@@ -42,6 +42,22 @@
 - 기존 기능 안정성: authStore 실패/성공·설정 v6 rehydrate, 비어 있지 않은 양 트랙 기록의 upgrade, 실제 UI 설정→profile PUT/GET→reload를 함께 검사한다. 프로필 GET 지연·실패, PUT 실패와 늦은 응답의 계정/트랙 변경도 포함한다. 조회 지연 E2E는 실제 Worker/D1 응답의 전달만 늦추며 payload를 만들지 않는다.
 - Google 버튼의 설정 표시는 `/auth/config`와 href/aria-disabled를 대조한다. 비활성 anchor에 link role이 없는 것은 정상이나, 실제 OAuth start 503은 별도 실패다. OAuth bridge의 Google 응답 mock과 실제 provider 로그인은 별도 gate다. Preview 설정 준비 없이 운영 OAuth secret을 복사하지 않는다. 최신 결과는 학습 경험 계획의 안정성 표를 따른다.
 
+전용 Preview의 넓은 기능 회귀는 아래처럼 Web과 직접 API 주소를 함께 지정한다. `E2E_API_URL`을 생략하면 메뉴 health 검사가 localhost를 조회한다. 2026-09-06 목록 기준 24개 파일·187개 기능 검사이며 로컬 fixture에만 의존하는 TOPIK 6개는 명시적 원격 skip이다. 시각 baseline suite60개는 이 명령에서 제외되므로 원격 시각 검사를 통과했다고 쓰지 않는다. 검색 입력란 부재의 조건부 skip은 별도로 원인을 검토한다. mock 음성/provider/화면 fixture는 실제 외부 서비스 성공 증거가 아니다.
+
+```sh
+E2E_BASE_URL=https://555fc0c4.nihongo-n3.pages.dev \
+E2E_API_URL=https://nihongo-n3-api-topik-preview.kordokrip.workers.dev \
+pnpm -F @nihongo-n3/e2e exec playwright test \
+  --grep-invert '핵심 화면 시각 회귀' \
+  --project=chromium --project=webkit \
+  --project=mobile-chromium --project=mobile-webkit \
+  --workers=1 --retries=0 --max-failures=0 \
+  --trace=retain-on-failure --reporter=line \
+  --output=/Users/sunghokang/JLPT/.artifacts/operations/stability-preview-full-functional-results
+```
+
+기존 메뉴 테스트에는 일부 SW access-control 오류를 조건부 제외하는 코드가 있으므로 메뉴 통과만으로 `INC-PWA-056`을 닫지 않는다. `offline.spec.ts` 이름만으로 실제 네트워크 차단을 검증했다고 쓰지 않으며, 실제 pending/reconnect는 학습 세션 테스트에서 확인한다. 자연 일본어 번역 mock은 해당 nested describe만 SW 제어하고 counter1·POST/body·고정 문구/검색/URL을 함께 검사한다. 실제 AI 응답이 흘러들어온 결과를 mock 통과로 인정하지 않는다. 실패한 SSO를 grep/skip으로 제거한 뒤 전체 gate 통과로 표시하지 않는다.
+
 - DB·콘텐츠: `question:quality`, `content:contract:verify`, `content:control-plane:verify`, idempotent fresh/upgrade와 source checksum을 확인한다.
 - API·데이터 바인딩: OpenAPI 생성 전후 diff, track guard, 정답 사전 노출 금지, progress→FSRS→activity transaction을 확인한다.
 - 음성: `pnpm release:verify:audio-contract`, Chromium/WebKit 재생 lifecycle, 실제 배포 Chrome의 한국어·일본어 `onend`, `/api/v1/audio/*` 요청 0건과 Production D1 R2 발음 참조 0건을 서로 분리해 기록한다.

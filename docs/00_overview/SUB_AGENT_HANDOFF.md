@@ -36,9 +36,11 @@
 
 새 Preview의 auth/settings14건은11/0/3(exit1): SSO503 두 건과 지연 테스트 WebKit interception0 한 건이다. 후자는 해당 describe에만 `serviceWorkers:block`을 적용해 실제 응답·interception1·PUT/GET/reload 검사를 유지했다. 이후 원격 `settings-preferences.spec.ts`와 `settings-theme.spec.ts` **14 pass / 0 skip / 0 fail**이다. 일반 설정·테마는 SW를 허용하며 앱 runtime은 변경하지 않았다. SSO 실패를 제거/skip하거나 전체 원격 통과로 합산하지 않는다.
 
-555fc0c4의 실제 Chrome은 일본어 재생 중 표시 이후 native `cgWindowNotFound`와 탭 `Debugger unattached`로 관측 중단됐다. 정상 종료/한국어/가청/network는 미완료다. 최신 URL 청취 질문은 별도로 요청했다. 자동화 연결 실패를 제품 무음 원인으로 단정하지 않는다. 과거 d51a81ed의 onend/HAR와 a95437fc의 사람 확인은 새 배포에 재사용하지 않는다.
+555fc0c4의 첫 실제 Chrome 관측은 UI 연결 오류로 중단됐지만 10:06 UTC 새 탭 후속에서 양언어 onend각1회·voice10/10·탭 콘솔0을 확인했다. native Network는 `cgWindowNotFound`로 미확인, 새 URL 가청도 대기다. `stability-preview-actual-audio.json`의 strict gate는4개 누락·exit1이다. 이전 중단 artifact와 구분하며, d51a81ed HAR와 질문 URL a95437fc의 사용자 가청 답변을 새 배포에 재사용하지 않는다.
 
-남은 순서는 Preview OAuth 전용 설정/실제 로그인 및 최신 음성 관측 확보→최종 전체 원격 회귀→승인된 maintenance의 새 Production backup/restore→릴리스 gate→Production→smoke→최종 push다. 전체 검증 전 파일 삭제·콘텐츠 증량은 하지 않는다. 현재 운영 read-only48/2/3은 미push SHA와 기존 TOPIK/CSP 두 실패다. 최신 실행 파일과 rollback 전체ID는 릴리스 원장에 있다.
+최신 원격 기능187건은 **178 pass / 6 로컬 fixture skip / 3 fail**,23.6분·exit1이다(`stability-preview-full-functional.log`). 시각60개는 별도 제외다. 실패는 실제 Google start503 양 엔진2건과 WebKit 자연 검색 fixture 우회1건이다. full-session4건은 pending/fail0·최대 write3,428ms이며 전 급수 저장·재개도 검사했다. 후속 부분 재검사와 이 전체 실패를 합쳐 전체 통과로 만들지 않는다.
+
+자연 검색 mock 누락은 counter0 fail-first 후 해당 사례만 SW 제어해 원격 양 엔진4개를 통과했다. 앱/배포 source793b671은 그대로이며 전체178/6/3은 별도 실패 기록으로 유지한다. 남은 순서는 Preview OAuth 전용 설정/실제 로그인 및 최신 음성 증거 확보→원격 gate 재검증→승인된 maintenance의 새 Production backup/restore→릴리스 gate→Production→smoke→최종 push다. 전체 검증 전 파일 삭제·콘텐츠 증량은 하지 않는다. Production read-only48/2/3은 미push SHA와 기존 TOPIK/CSP 두 실패로 Preview187건과 다른 집계다. 최신 실행 파일과 rollback 전체ID는 릴리스 원장에 있다.
 
 #### 이전 검증 이력 (현재 포인터 아님)
 
