@@ -1,18 +1,22 @@
 # JLPT · TOPIK 문서
 
-기준일: 2026-09-07 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 현재 실행 결과·코드·schema가 과거 서술보다 우선한다. `0028`과 새 학습 UX는 Production에 반영했고 기존 콘텐츠는 재시드하지 않았다. 현재 배포 ID·사후 검증은 CURRENT_STATE와 릴리스 원장, 날짜별 과거 실패는 오류 원장에 구분한다.
+기준일: 2026-09-11 KST. 이 디렉터리는 학습 원본과 이를 운영하는 기준 문서다. 현재 실행 결과·코드·schema가 과거 서술보다 우선한다. `0028`과 새 학습 UX는 Production에 반영했고 기존 콘텐츠는 재시드하지 않았다. 현재 배포 ID·사후 검증은 CURRENT_STATE와 릴리스 원장, 날짜별 과거 실패는 오류 원장에 구분한다.
 
 ## 먼저 읽을 문서
 
 | 목적 | 문서 |
 | --- | --- |
 | 현재 구현, 데이터 모델, 운영 명령 | [현재 상태](00_overview/CURRENT_STATE.md) |
+| 2026-08-09~09-11 시계열 변경 이력 | [시계열 변경 이력](00_overview/CHANGELOG_TIMELINE_2026-09-11.md) |
 | 현재 오류, 잘못된 판정, 강제 배포 차단 gate | [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md) |
 | 운영 Sub Agent, 버그·리팩터링, 로컬 CI/CD와 Cloudflare 추적 | [운영관리 runbook](00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md) |
 | 로컬 gate, GitHub 비활성 정책, 증적 수명주기 | [로컬 CI/CD 운영 기준](00_overview/LOCAL_CICD_OPERATIONS.md) |
+| Sub Agent 전용 로컬 CI/CD 관리 | [로컬 CI/CD 관리 매뉴얼](00_overview/LOCAL_CICD_MANAGEMENT.md) |
 | commit·release·rollback 실행 이력 | [로컬 형상관리·릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md) |
 | 새 Sub Agent의 현재 코드·DB·API 진입점 | [Sub Agent 운영 인수인계](00_overview/SUB_AGENT_HANDOFF.md) |
+| 프로젝트 폴더 정리 | [프로젝트 인벤토리](00_overview/PROJECT_INVENTORY_2026-09-11.md) |
 | 2026-08-23 TOPIK 음성 장애와 수정 검증 | [TOPIK Google 한국어 음성 장애 기록](00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md) |
+| 프로젝트 전체 파일 지도 | [PROJECT_FILE_CATALOG_2026-09-11.md](00_overview/PROJECT_FILE_CATALOG_2026-09-11.md) |
 | 2026-08-23 N2/N1·TOPIK Batch 6 Preview 릴리스 | [다음 콘텐츠 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md) |
 | 콘텐츠 수와 원본-시드 대응 | [콘텐츠 감사](00_overview/CONTENT_AUDIT.md) |
 | 원본 파일과 seed 소유자 | [학습 원본 지도](00_overview/00_source_map.md) |

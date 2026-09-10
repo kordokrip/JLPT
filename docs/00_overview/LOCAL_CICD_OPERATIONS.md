@@ -1,6 +1,8 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-09-07 KST
+최종 점검: 2026-09-11 KST
+
+요약 체크리스트는 [LOCAL_CICD_MANAGEMENT.md](LOCAL_CICD_MANAGEMENT.md)에 정리되어 있습니다.
 
 이 저장소의 릴리스 gate는 GitHub Actions가 아니라 검증된 로컬 명령과 로컬 원장으로 운영한다. GitHub는 commit·branch·tag 보관과 push에만 사용하며 `.github/workflows/ci.yml`은 `workflow_dispatch`와 `if: false`를 유지하는 비활성 placeholder다.
 

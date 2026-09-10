@@ -1,6 +1,6 @@
 # Sub Agent 운영 인수인계
 
-최종 점검: 2026-09-07 KST
+최종 점검: 2026-09-11 KST
 
 이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
 
@@ -14,6 +14,13 @@
 6. `LOCAL_CICD_OPERATIONS.md`
 7. `LOCAL_RELEASE_LEDGER.md`
 8. 작업과 직접 관련된 schema, migration, route, source, test
+
+추가 운영 체크리스트:
+
+- [시계열 변경 이력](CHANGELOG_TIMELINE_2026-09-11.md)
+- [로컬 CI/CD 관리 매뉴얼](LOCAL_CICD_MANAGEMENT.md)
+- [프로젝트 폴더 인벤토리](PROJECT_INVENTORY_2026-09-11.md)
+- [프로젝트 파일 지도(전체 파일 분류)](PROJECT_FILE_CATALOG_2026-09-11.md)
 
 운영 감사·버그·리팩터링·정리에는 `.codex/skills/project-operations-steward`를 사용한다. 콘텐츠 publication에는 `.codex/skills/content-release-automation`도 읽는다.
 

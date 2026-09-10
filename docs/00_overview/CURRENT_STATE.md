@@ -1,6 +1,15 @@
 # 현재 구현 상태
 
-문서 갱신: 2026-09-07 KST. 새 학습 UX를 Production에 배포했습니다. 아래 현재 기준과 날짜별 과거 검증 이력을 구분합니다.
+문서 갱신: 2026-09-11 KST. 새 학습 UX의 적용 이력은 상기 릴리스 이력에서 확인하고, 현재는 폴더/문서 정비와 실행 가이드 갱신 상태입니다. 아래 현재 기준과 날짜별 과거 검증 이력을 구분합니다.
+
+- 2026-09-11 로컬 재점검: `pnpm ops:status` = `40 passed / 1 warning / 0 failed` (`INC-DATA-024` drift만 경고)
+- 2026-09-11 원격 재점검: `pnpm ops:status:remote` = `40 passed / 1 warning / 11 failed` (네트워크/DNS 접근 장애로 remote 판정은 보류)
+
+### 2026-09-11 운영 정리 내역
+
+- `scripts/fsrs-optimizer-service.example.mjs` 삭제: 참조 추적 결과(`rg --files` 기반)에서 코드/route/job/테스트에서 사용되지 않음이 확인되어 `Unreferenced sample`으로 분류 후 제거.
+- 전체 문서 정렬: `docs/00_overview/PROJECT_FILE_CATALOG_2026-09-11.md` 추가 및 시계열/CI/CD/인벤토리 문서 갱신.
+- 오디오는 `pnpm ops:status`에서 `google speech` 정책 및 R2 금지 문구 그대로 유지됨(원격 11 fail는 네트워크 인프라 한계로 남음).
 
 > 2026-08-24 음성 장애를 다시 조사해 같은 언어 fallback 제거뿐 아니라 첫 클릭 전 비동기 voice 대기와 설치형 PWA의 이전 JS 잔존을 확인했습니다. 현재 코드는 click task 안에서 즉시 재생하고 새 service worker가 기존 client를 한 번 갱신하도록 복구했습니다. 실제 배포 상태는 아래 릴리스 기록과 음성 장애 기록을 기준으로 판단합니다.
 

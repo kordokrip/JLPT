@@ -2,7 +2,9 @@
 
 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-최종 점검: 2026-09-07 KST. 새 학습 UX는 Production에 반영했습니다. 기존 콘텐츠 Preview160개는 공개하지 않고 이후 사용성 관찰과 분리합니다.
+최종 점검: 2026-09-11 KST. 문서·폴더 정비 및 운영 가이드 정합성 업데이트를 완료했습니다. 기존 콘텐츠 Preview160개는 공개하지 않고 이후 사용성 관찰과 분리합니다.
+
+로컬 기준점은 2026-09-11 `pnpm ops:status`에서 `40 passed / 1 warning / 0 failed`입니다 (`INC-DATA-024` 경고만 유지). 반면 `pnpm ops:status:remote`는 현재 실행 환경의 DNS/네트워크 제약으로 `failed 11`로 판단되어 원격 확정 판정은 미수행 상태입니다.
 
 ## 우선 작업 — 매일 이어지는 개인 학습
 
