@@ -95,7 +95,10 @@ export default function Settings() {
         const perm = await requestNotificationPermission();
         setNotifPermission(perm);
         if (perm !== 'granted') return;
-        const ok = await subscribeToPush({ morningOn: true, eveningOn: true });
+        const notificationLanguage = language === 'ko' || language === 'ja' || language === 'en'
+          ? language
+          : learningTrack === 'topik-ko' ? 'ja' : 'ko';
+        const ok = await subscribeToPush({ morningOn: true, eveningOn: true, notificationLanguage });
         setIsSubscribed(ok);
       }
     } finally {

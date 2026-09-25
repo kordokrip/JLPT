@@ -11,6 +11,7 @@ const subscriptionBodySchema = z.object({
   auth: z.string().min(1),
   morningOn: z.boolean().optional(),
   eveningOn: z.boolean().optional(),
+  notificationLanguage: z.enum(['ko', 'ja', 'en']).optional(),
 });
 
 mountLegacyRouteWithOpenApiDocs(notificationsOA, notifications, [

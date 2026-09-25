@@ -1,5 +1,7 @@
 # 학습 콘텐츠·플랫폼 로드맵
 
+> 2026-09-25 우선순위: [빠른 학습·개인 보상 후보](00_overview/PERSONAL_LEARNING_UX_2026-09-25.md)의 로컬 구현과 검증을 끝낸 뒤 전용 Preview에서 양언어/전 급수·실제 음성·원격 D1을 확인한다. 원격 D1 API `7403`이 남거나 새 후보의 가청·백업/복원 gate가 없으면 `0029–0030`과 Worker/Pages를 Production에 반영하지 않는다. 자유 TOPIK practice의 client activity만으로 확정 스트릭을 만들지 않는 서버 채점 경계도 후속 해결 대상으로 둔다. 이 문서 아래 `0028`은 마지막으로 문서화된 Production 기준선이다.
+
 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
 최종 점검: 2026-09-11 KST. 문서·폴더 정비 및 운영 가이드 정합성 업데이트를 완료했습니다. 기존 콘텐츠 Preview160개는 공개하지 않고 이후 사용성 관찰과 분리합니다.

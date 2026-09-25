@@ -52,12 +52,12 @@ export default defineConfig({
     },
     {
       name: "mobile-chromium",
-      testMatch: /.*(menu-smoke|pwa)\.spec\.ts/,
+      testMatch: /.*(menu-smoke|pwa|learning-experience)\.spec\.ts/,
       use: { ...devices["Pixel 5"] },
     },
     {
       name: "mobile-webkit",
-      testMatch: /.*(menu-smoke|pwa|mobile-touch-audit)\.spec\.ts/,
+      testMatch: /.*(menu-smoke|pwa|mobile-touch-audit|learning-experience)\.spec\.ts/,
       use: { ...devices["iPhone 13"] },
     },
   ],

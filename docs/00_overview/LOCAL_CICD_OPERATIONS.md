@@ -1,6 +1,14 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-09-11 KST
+최종 점검: 2026-09-25 KST. 아래 2026-09-07 릴리스 수치는 과거 Production 증거이며 2026-09-25 후보 통과 증거가 아니다.
+
+## 2026-09-25 빠른 학습 후보 추가 gate
+
+- DB `0029_study_motivation.sql`과 `0030_push_notification_deliveries.sql`을 fresh와 `0028` 운영형 snapshot의 additive upgrade 양쪽에서 검증한다. 백업 allowlist는 새 후보에서 `0030`/72개 테이블이다. 과거 `0028`/70개 백업을 새 테이블까지 보존한 백업이라고 표시하지 않는다.
+- `pnpm openapi:generate && pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh` 및 `pnpm docs:check`, `git diff --check`를 같은 후보에서 실행한다. 실패·skip 수를 그대로 기록한다.
+- 빠른 학습은 생성/재전송/중단/재개/제출, 급수 고정, 공개 콘텐츠, 최초 응답과 재시도 분리, 트랙·프로필 시간대 스트릭, XP 원본 중복·일일 상한을 검사한다. Push는 opt-in, UI 언어, 현지 07/22시, 오늘 학습 시 skip, 같은 endpoint·일자·시간대의 중복 발송 차단을 검사한다.
+- Chromium/WebKit 실제 화면·음성 검증은 단위 테스트와 별개다. 새 Preview 후보의 실제 계정·양언어 가청·R2 요청 0을 확인하기 전에는 2026-09-07 증거를 전용하지 않는다. 원격 D1 `7403`이면 Preview/Production DB gate 미완료로 차단한다.
+- 결과와 차단 사유는 [2026-09-25 후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)에 최신 실행 시각·명령·종료 코드로 적는다. 전체 gate·Preview·백업/복원·rollback 대상과 현 세션 승인이 모두 있을 때만 Production을 변경한다.
 
 요약 체크리스트는 [LOCAL_CICD_MANAGEMENT.md](LOCAL_CICD_MANAGEMENT.md)에 정리되어 있습니다.
 

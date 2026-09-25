@@ -8,8 +8,9 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
-import { ok, created, badRequest, notFound } from '../lib/response.js';
+import { ok, created, badRequest, conflict, notFound } from '../lib/response.js';
 import { sendPushNotification } from '../lib/push.js';
+import { reminderLanguage, reminderPayload } from '../lib/push-reminders.js';
 
 const notifications = new Hono<AppEnv>();
 notifications.use('*', cfAccessAuth);
@@ -22,6 +23,7 @@ notifications.post('/notifications/subscribe', async (c) => {
     auth:      string;
     morningOn?: boolean;
     eveningOn?: boolean;
+    notificationLanguage?: 'ko' | 'ja' | 'en';
   }>().catch(() => null);
 
   if (!body?.endpoint || !body?.p256dh || !body?.auth) {
@@ -32,16 +34,18 @@ notifications.post('/notifications/subscribe', async (c) => {
   const ua     = c.req.header('User-Agent') ?? null;
   const now    = Math.floor(Date.now() / 1000);
 
-  await c.env.DB.prepare(
+  const saved = await c.env.DB.prepare(
     `INSERT INTO push_subscriptions
-       (user_id, endpoint, p256dh, auth, user_agent, morning_on, evening_on, created_at, last_seen_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (user_id, endpoint, p256dh, auth, user_agent, morning_on, evening_on, notification_language, created_at, last_seen_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(endpoint) DO UPDATE SET
        p256dh       = excluded.p256dh,
        auth         = excluded.auth,
        morning_on   = excluded.morning_on,
        evening_on   = excluded.evening_on,
-       last_seen_at = excluded.last_seen_at`,
+       notification_language = excluded.notification_language,
+       last_seen_at = excluded.last_seen_at
+     WHERE push_subscriptions.user_id = excluded.user_id`,
   )
     .bind(
       userId,
@@ -49,12 +53,17 @@ notifications.post('/notifications/subscribe', async (c) => {
       body.p256dh,
       body.auth,
       ua,
-      body.morningOn !== false ? 1 : 0,
-      body.eveningOn !== false ? 1 : 0,
+      body.morningOn === true ? 1 : 0,
+      body.eveningOn === true ? 1 : 0,
+      body.notificationLanguage === 'ko' || body.notificationLanguage === 'ja' || body.notificationLanguage === 'en'
+        ? body.notificationLanguage
+        : null,
       now,
       now,
     )
     .run();
+
+  if (!saved.meta.changes) return conflict(c, '이미 다른 계정에 등록된 구독입니다');
 
   return created(c, { subscribed: true });
 });
@@ -87,8 +96,11 @@ notifications.post('/notifications/test', async (c) => {
 
   const userId = c.get('userId');
   const rows = await c.env.DB.prepare(
-    `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ? LIMIT 5`,
-  ).bind(userId).all<{ endpoint: string; p256dh: string; auth: string }>();
+    `SELECT s.endpoint, s.p256dh, s.auth, u.learning_track, s.notification_language
+       FROM push_subscriptions s
+       JOIN users u ON u.id = s.user_id
+      WHERE s.user_id = ? LIMIT 5`,
+  ).bind(userId).all<{ endpoint: string; p256dh: string; auth: string; learning_track: 'jlpt-ja' | 'topik-ko'; notification_language: string | null }>();
 
   if (!rows.results?.length) {
     return notFound(c, '등록된 구독이 없습니다');
@@ -99,11 +111,9 @@ notifications.post('/notifications/test', async (c) => {
       sendPushNotification(
         sub,
         {
-          title: 'JLPT · TOPIK 테스트 알림',
-          body:  '알림이 정상 작동합니다!',
-          icon:  '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          url:   '/',
+          ...reminderPayload('morning', reminderLanguage(sub.learning_track, sub.notification_language)),
+          url: '/',
+          tag: 'push-test',
         },
         vapidPublicKey,
         vapidPrivateKey,

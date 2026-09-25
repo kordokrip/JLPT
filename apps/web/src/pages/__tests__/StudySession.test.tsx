@@ -16,6 +16,9 @@ const scope = "session-test:jlpt-ja";
 vi.mock("../../hooks/useDataScope", () => ({
   useDataScope: () => "session-test:jlpt-ja",
 }));
+vi.mock("../../hooks/useLearningProfile", () => ({
+  useLearningProfile: () => ({ data: { timezone: "Asia/Seoul" } }),
+}));
 vi.mock("../../features/study/StudyComponents", () => ({
   ContentNote: () => null,
   StudySpeech: () => null,
@@ -27,6 +30,7 @@ const session = (): Session => ({
   id: "session-test",
   learning_track: "jlpt-ja",
   level: "N3",
+  mode: "daily",
   daily_minutes: 20,
   status: "active",
   created_at: 1,
@@ -155,4 +159,20 @@ it("does not reconcile a stale track rejection as a successful submission", asyn
   expect(
     screen.queryByRole("button", { name: "서버 기록으로 이어서 공부" }),
   ).not.toBeInTheDocument();
+});
+
+it("shows first answers, retries and the next review after a saved quick lesson", async () => {
+  const completed = session();
+  completed.mode = "quick";
+  completed.status = "completed";
+  completed.steps[0] = { ...completed.steps[0]!, submitted: true, correct: false };
+  completed.steps[1] = { ...completed.steps[1]!, phase: "retry", submitted: true, correct: true };
+  writeStudyLocal(scope, "pending:session-test", null);
+  vi.spyOn(learningApi, "session").mockResolvedValue(completed);
+  vi.spyOn(learningApi, "records").mockResolvedValue({ next_review_at: 1_800_000_000 } as never);
+  mount();
+  expect(await screen.findByText(/최초 응답.*0\/1/)).toBeVisible();
+  expect(screen.getByText(/재시도.*1\/1/)).toBeVisible();
+  expect(await screen.findByText(/다음 복습.*2027/)).toBeVisible();
+  expect(screen.getByText("빠른 학습 · 3~5분")).toBeVisible();
 });

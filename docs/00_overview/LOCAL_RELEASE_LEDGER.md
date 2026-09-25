@@ -1,6 +1,10 @@
 # 로컬 형상관리·릴리스 원장
 
-최종 점검: 2026-09-07 KST
+최종 점검: 2026-09-25 KST
+
+## 2026-09-25 개인 학습 동기부여 후보 — 미배포
+
+`0029–0030` additive DB, quick/daily 세션, 서버 학습일 스트릭, 안내 세션 XP·성취, opt-in 현지화 Push를 구현 후보로 검증 중이다. **Production Worker/Pages/D1에는 아직 반영하지 않았다.** 정확한 명령 결과와 남은 Preview/백업/음성 gate는 [후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)에 누적한다. 과거 `0028`/70-table 백업·2026-09-07 가청 결과를 이 후보의 새 검증으로 재사용하지 않는다. Git commit/push 및 새 deployment ID가 없으면 공란으로 유지한다.
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 

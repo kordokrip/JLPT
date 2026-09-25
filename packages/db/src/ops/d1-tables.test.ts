@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 
-import { D1_BACKUP_SCHEMA_QUERY, D1_TRANSFER_TABLES, D1_LEARNING_TRANSFER_TABLES, EXCLUDED_TRANSIENT_TABLES, detectD1BackupSchemaProfile, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
+import { D1_BACKUP_SCHEMA_QUERY, D1_TRANSFER_TABLES, D1_LEARNING_TRANSFER_TABLES, D1_REWARD_TRANSFER_TABLES, D1_NOTIFICATION_TRANSFER_TABLES, EXCLUDED_TRANSIENT_TABLES, detectD1BackupSchemaProfile, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
 
 test('0028 backup profile includes all five additive learning tables', () => {
   const tables = tablesForPhase('all', '0028');
@@ -12,6 +12,18 @@ test('0028 backup profile includes all five additive learning tables', () => {
   for (const name of ['learning_profiles', 'study_sessions', 'study_steps', 'learning_annotations', 'content_learning_links']) {
     assert.ok(names.includes(name), name);
   }
+});
+
+test('0029 and 0030 backup profiles cover reward and notification delivery evidence', () => {
+  const reward = tablesForPhase('all', '0029').map((table) => table.name);
+  const current = tablesForPhase('all', '0030').map((table) => table.name);
+  assert.equal(reward.length, 71);
+  assert.equal(current.length, 72);
+  assert.equal(D1_REWARD_TRANSFER_TABLES[0]?.name, 'study_reward_events');
+  assert.equal(D1_NOTIFICATION_TRANSFER_TABLES[0]?.name, 'push_notification_deliveries');
+  assert.equal(detectD1BackupSchemaProfile(reward), '0029');
+  assert.equal(detectD1BackupSchemaProfile(current), '0030');
+  assert.throws(() => detectD1BackupSchemaProfile([...tablesForPhase('all', '0028').map((table) => table.name), 'push_notification_deliveries']), /Partial 0029\/0030/u);
 });
 
 test('schema profiles reject partial, missing, unknown, and duplicate regular tables', () => {
@@ -31,6 +43,10 @@ test('actual Miniflare generated _cf_METADATA does not turn a complete backup pr
   const current = tablesForPhase('all', '0028').map((table) => table.name);
   assert.equal(detectD1BackupSchemaProfile([...current, '_cf_METADATA']), '0028');
   assert.throws(() => detectD1BackupSchemaProfile([...current, '_cf_application_rows']), /unknown/u);
+});
+
+test('new profile still rejects unknown regular tables', () => {
+  assert.throws(() => detectD1BackupSchemaProfile([...tablesForPhase('all', '0030').map((table) => table.name), 'unreviewed_table']), /unknown/u);
 });
 
 test('schema mismatch diagnostics name missing and unknown tables without including row data', () => {
@@ -67,6 +83,25 @@ test('actual migrated metadata selects 65 then 70 tables and learning FK order i
     assert.equal(tablesForPhase('content', '0028').some((table) => table.name === 'content_learning_links'), true);
     db.exec('CREATE TABLE sqlitex_unreviewed(id TEXT)');
     assert.throws(() => detectD1BackupSchemaProfile(names()), /missing or unknown/u);
+  } finally {
+    db.close();
+  }
+});
+
+test('actual 0029 and 0030 migrations select the complete backup profiles', () => {
+  const db = new DatabaseSync(':memory:');
+  const directory = new URL('../../drizzle-v2/', import.meta.url);
+  try {
+    for (const name of readdirSync(directory).filter((name) => /^00\d\d_.*\.sql$/u.test(name) && name < '0029').sort()) {
+      db.exec(readFileSync(new URL(name, directory), 'utf8').replaceAll('--> statement-breakpoint', ''));
+    }
+    const names = () => db.prepare(D1_BACKUP_SCHEMA_QUERY).all().map((row) => row.name as string);
+    db.exec(readFileSync(new URL('0029_study_motivation.sql', directory), 'utf8').replaceAll('--> statement-breakpoint', ''));
+    assert.equal(detectD1BackupSchemaProfile(names()), '0029');
+    db.exec(readFileSync(new URL('0030_push_notification_deliveries.sql', directory), 'utf8').replaceAll('--> statement-breakpoint', ''));
+    assert.equal(detectD1BackupSchemaProfile(names()), '0030');
+    assert.equal(db.prepare("SELECT name FROM pragma_table_info('study_sessions') WHERE name='mode'").get()?.name, 'mode');
+    assert.deepEqual(db.prepare('PRAGMA foreign_key_list(study_reward_events)').all().map((row) => row.table), ['users']);
   } finally {
     db.close();
   }

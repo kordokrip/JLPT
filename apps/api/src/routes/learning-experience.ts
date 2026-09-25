@@ -8,6 +8,7 @@ import {
   learningProfileSchema,
   studySessionSchema,
   learningRecordsSchema,
+  learningMotivationSchema,
   levelBelongsToTrack,
   studyRefKey,
   type LearningProfile,
@@ -16,6 +17,7 @@ import {
   type LearningRecords,
 } from "@nihongo-n3/shared";
 import type { AppEnv } from "../types.js";
+import { learningMotivation, learningTimezone, studyRewardStatement } from "../lib/motivation.js";
 import { cfAccessAuth } from "../middleware/auth.js";
 import { ok, badRequest, conflict, notFound } from "../lib/response.js";
 import {
@@ -70,6 +72,7 @@ type SessionRow = {
   learning_track: "jlpt-ja" | "topik-ko";
   level: LearningProfile["target_level"];
   daily_minutes: number;
+  mode: "quick" | "daily";
   status: StudySession["status"];
   created_at: number;
   updated_at: number;
@@ -177,6 +180,7 @@ async function sessionDto(db: DB, row: SessionRow): Promise<StudySession> {
     learning_track: row.learning_track,
     level: row.level,
     daily_minutes: row.daily_minutes,
+    mode: row.mode,
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -186,6 +190,9 @@ async function sessionDto(db: DB, row: SessionRow): Promise<StudySession> {
 }
 routes.get("/learning/profile", async (c) =>
   ok(c, await profileFor(c.env.DB, c.get("userId"), c.get("learningTrack"))),
+);
+routes.get("/learning/motivation", async (c) =>
+  ok(c, await learningMotivation(c.env.DB, c.get("userId"), c.get("learningTrack"))),
 );
 routes.put("/learning/profile", async (c) => {
   const parsed = learningProfileInputSchema.safeParse(
@@ -223,7 +230,7 @@ routes.get("/study/sessions", async (c) => {
 });
 routes.post("/study/sessions", async (c) => {
   const parsed = z
-    .object({ request_id: z.string().uuid() })
+    .object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily") })
     .safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return badRequest(c, "Invalid request ID");
   const db = c.env.DB,
@@ -242,7 +249,9 @@ routes.post("/study/sessions", async (c) => {
   const profile = await profileFor(db, user, track);
   if (!profile.configured)
     return conflict(c, "Configure your learning profile first");
-  const draft = await buildStudySteps(db, user, profile);
+  const draft = await buildStudySteps(db, user, profile, parsed.data.mode);
+  if (parsed.data.mode === "quick" && draft.steps.length < 2)
+    return conflict(c, "Not enough published content for a quick lesson at this level");
   if (!draft.steps.length)
     return conflict(c, "No published content is available at this level");
   const id = crypto.randomUUID(),
@@ -250,19 +259,20 @@ routes.post("/study/sessions", async (c) => {
   const statements = [
     db
       .prepare(
-        `INSERT INTO study_sessions(id,user_id,learning_track,level,daily_minutes,status,request_id,notices_json,created_at,updated_at)
-    VALUES(?,?,?,?,?,'active',?,?,?,?)`,
+        `INSERT INTO study_sessions(id,user_id,learning_track,level,daily_minutes,status,request_id,notices_json,created_at,updated_at,mode)
+    VALUES(?,?,?,?,?,'active',?,?,?,?,?)`,
       )
       .bind(
         id,
         user,
         track,
         profile.target_level,
-        profile.daily_minutes,
+        parsed.data.mode === "quick" ? 5 : profile.daily_minutes,
         parsed.data.request_id,
         JSON.stringify(draft.notices),
         now,
         now,
+        parsed.data.mode,
       ),
   ];
   draft.steps.forEach((step, i) => {
@@ -558,6 +568,7 @@ routes.post("/study/sessions/:id/steps/:stepId/submit", async (c) => {
       );
     }
   }
+  statements.push(studyRewardStatement(db, user, track, step, input.request_id, await learningTimezone(db, user, track), now));
   statements.push(
     db
       .prepare(
@@ -782,6 +793,7 @@ const expectedTrackQuery = z.object({
 });
 const definitions = [
   ["get", "/learning/profile"],
+  ["get", "/learning/motivation"],
   ["put", "/learning/profile"],
   ["get", "/study/sessions"],
   ["post", "/study/sessions"],
@@ -829,7 +841,7 @@ mountLegacyRouteWithOpenApiDocs(
             body: {
               content: {
                 "application/json": {
-                  schema: z.object({ request_id: z.string().uuid() }),
+                  schema: z.object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily") }),
                 },
               },
             },
@@ -903,6 +915,8 @@ mountLegacyRouteWithOpenApiDocs(
                             ? z.array(annotationInputSchema)
                             : annotationInputSchema,
                       })
+                    : path === "/learning/motivation"
+                      ? z.object({ data: learningMotivationSchema })
                     : path === "/learning/records"
                       ? z.object({ data: learningRecordsSchema })
                       : dataResponseSchema,

@@ -20,12 +20,12 @@ export function validateD1BackupManifest(value: unknown): ValidatedD1BackupManif
     throw new Error('Invalid backup manifest');
   }
   const declared = 'schemaProfile' in value ? value.schemaProfile : undefined;
-  if (declared !== undefined && declared !== '0027' && declared !== '0028') {
+  if (declared !== undefined && (typeof declared !== 'string' || !['0027', '0028', '0029', '0030'].includes(declared))) {
     throw new Error('Unknown backup manifest schema profile');
   }
   // Historical manifests predate profile metadata. Only the exact old 65-table
   // set may infer 0027; an unversioned 70-table file is not trusted as 0028.
-  const schemaProfile = declared ?? '0027';
+  const schemaProfile = (declared ?? '0027') as D1BackupSchemaProfile;
   const files = value.files.map((entry: unknown): D1BackupFile => {
     if (!entry || typeof entry !== 'object') throw new Error('Invalid backup manifest file');
     const file = entry as Partial<D1BackupFile>;

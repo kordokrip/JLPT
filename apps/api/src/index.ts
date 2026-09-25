@@ -1,7 +1,7 @@
 import { app } from './app.js';
 import { runFsrsOptimizer } from './jobs/optimize-fsrs.js';
 import { handleContentReleaseQueueBatch } from './lib/content-release-control-plane.js';
-import { sendPushToMany } from './lib/push.js';
+import { runPushReminder } from './lib/push-reminders.js';
 import { safeErrorName } from './lib/safe-log.js';
 import { isReadOnlyMaintenance } from './middleware/maintenance.js';
 import { buildWeeklyReport, sendReportEmail } from './routes/admin.js';
@@ -71,31 +71,12 @@ export default {
         }
       }
 
-      if (cron === '0 22 * * *' || cron === '0 13 * * *') {
+      if (cron === '0 * * * *') {
         try {
-          if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-            console.log({ event: 'push_notification_skipped', reason: 'vapid_not_configured' });
-            return;
-          }
-          const isMorning = cron === '0 22 * * *';
-          const col = isMorning ? 'morning_on' : 'evening_on';
-          const title = isMorning ? '오늘의 복습 알림' : '취침 전 미니 회상';
-          const body = isMorning
-            ? '오늘 복습할 카드가 기다리고 있어요.'
-            : '자기 전 5분, 오늘 배운 단어를 떠올려 보세요.';
-          const subs = await env.DB.prepare(
-            `SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE ${col} = 1 LIMIT 200`,
-          ).all<{ endpoint: string; p256dh: string; auth: string }>();
-          const { sent, failed, expired } = await sendPushToMany(
-            subs.results ?? [],
-            { title, body, icon: '/pwa-192x192.png', badge: '/pwa-192x192.png', url: '/review', tag: 'daily-reminder' },
-            env.VAPID_PUBLIC_KEY,
-            env.VAPID_PRIVATE_KEY,
-          );
-          for (const endpoint of expired) {
-            await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').bind(endpoint).run();
-          }
-          console.log({ event: 'push_notification_completed', schedule: isMorning ? 'morning' : 'evening', sent, failed, expired: expired.length });
+          await Promise.all([
+            runPushReminder(env, 'morning'),
+            runPushReminder(env, 'evening'),
+          ]);
         } catch (err) {
           console.error({ event: 'push_notification_error', error_name: safeErrorName(err) });
         }

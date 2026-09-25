@@ -27,6 +27,11 @@ export default function Today() {
     queryFn: learningApi.current,
     retry: 1,
   });
+  const motivation = useQuery({
+    queryKey: ["learning-motivation", scope],
+    queryFn: learningApi.motivation,
+    retry: 1,
+  });
   const profileData =
     profile.data ??
     (!navigator.onLine
@@ -48,11 +53,11 @@ export default function Today() {
   const withdrawn =
     (current.error as { status?: number } | null)?.status === 410;
   const start = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (mode: "quick" | "daily") => {
       const id =
         readStudyLocal<string>(scope, "start-request") ?? crypto.randomUUID();
       writeStudyLocal(scope, "start-request", id);
-      const session = await learningApi.start(id);
+      const session = await learningApi.start(id, mode);
       writeStudyLocal(scope, "start-request", null);
       return session;
     },
@@ -99,31 +104,63 @@ export default function Today() {
           <section className="surface-panel space-y-5 p-6">
             <h2 className="text-xl font-bold">{t("study.routine")}</h2>
             <p>{t("study.guidance")}</p>
-            <button
-              className={studyPrimary + " w-full text-lg"}
-              disabled={
-                start.isPending ||
-                (!currentData &&
-                  (current.isPending ||
+            {motivation.data && (
+              <div className="rounded-xl bg-[var(--surface-alt)] p-4" aria-live="polite">
+                <p className="font-semibold">
+                  {t("study.motivationSummary", {
+                    streak: motivation.data.streak,
+                    xp: motivation.data.xp,
+                    level: motivation.data.level,
+                  })}
+                </p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  {t("study.dueCount", { count: motivation.data.due_count })}
+                </p>
+              </div>
+            )}
+            {currentData ? (
+              <button
+                className={studyPrimary + " w-full text-lg"}
+                disabled={start.isPending || withdrawn}
+                onClick={() => navigate("/study/" + currentData.id)}
+              >
+                {t("study.resume")}
+              </button>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  className={studyPrimary + " w-full text-lg"}
+                  disabled={
+                    start.isPending ||
+                    current.isPending ||
                     current.isError ||
-                    !navigator.onLine)) ||
-                withdrawn
-              }
-              onClick={() =>
-                currentData
-                  ? navigate("/study/" + currentData.id)
-                  : start.mutate()
-              }
-            >
-              {t(
-                start.isPending
-                  ? "study.loading"
-                  : currentData
-                    ? "study.resume"
-                    : "study.start",
-                { minutes: profileData.daily_minutes },
-              )}
-            </button>
+                    !navigator.onLine ||
+                    withdrawn
+                  }
+                  onClick={() => start.mutate("quick")}
+                >
+                  {t(start.isPending ? "study.loading" : "study.quickStart")}
+                </button>
+                <button
+                  className={studyButton + " w-full"}
+                  disabled={
+                    start.isPending ||
+                    current.isPending ||
+                    current.isError ||
+                    !navigator.onLine ||
+                    withdrawn
+                  }
+                  onClick={() => start.mutate("daily")}
+                >
+                  {t("study.start", { minutes: profileData.daily_minutes })}
+                </button>
+              </div>
+            )}
+            {motivation.isError && (
+              <p className="text-sm text-[var(--text-secondary)]" role="status">
+                {t("study.motivationUnavailable")}
+              </p>
+            )}
             {withdrawn && (
               <p role="alert">
                 {t("study.withdrawn")}{" "}

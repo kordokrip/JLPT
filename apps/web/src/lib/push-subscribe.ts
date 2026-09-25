@@ -35,6 +35,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 export interface SubscribeOptions {
   morningOn?: boolean;
   eveningOn?: boolean;
+  notificationLanguage?: 'ko' | 'ja' | 'en';
 }
 
 export async function subscribeToPush(opts: SubscribeOptions = {}): Promise<boolean> {
@@ -59,8 +60,9 @@ export async function subscribeToPush(opts: SubscribeOptions = {}): Promise<bool
       endpoint:  subscription.endpoint,
       p256dh:    btoa(String.fromCharCode(...new Uint8Array(key as ArrayBuffer))),
       auth:      btoa(String.fromCharCode(...new Uint8Array(auth as ArrayBuffer))),
-      morningOn: opts.morningOn ?? true,
-      eveningOn: opts.eveningOn ?? true,
+      morningOn: opts.morningOn ?? false,
+      eveningOn: opts.eveningOn ?? false,
+      notificationLanguage: opts.notificationLanguage,
     };
 
     const res = await fetch(apiUrl('/notifications/subscribe'), {

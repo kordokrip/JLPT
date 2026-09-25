@@ -1,6 +1,8 @@
 # Sub Agent 운영 인수인계
 
-최종 점검: 2026-09-11 KST
+최종 점검: 2026-09-25 KST
+
+> 현재 작업 트리의 `0029–0030`/quick lesson/XP/streak/push는 [2026-09-25 후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 먼저 보십시오. 아래 `0028`·Worker/Pages·rollback ID는 마지막으로 문서화한 Production 기준선이며 새 후보의 배포 완료 표시가 아닙니다. 새 세션의 XP는 안내 세션에 한정하고, 자유 TOPIK practice의 client activity만으로 서버 확정 스트릭을 만들지 않습니다. 원격 D1 7403은 확인 실패이지 R2 참조 0의 증거가 아닙니다.
 
 이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
 

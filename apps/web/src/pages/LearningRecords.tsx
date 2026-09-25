@@ -26,6 +26,11 @@ export default function LearningRecords() {
     queryFn: learningApi.notes,
     retry: 1,
   });
+  const motivation = useQuery({
+    queryKey: ["learning-motivation", scope],
+    queryFn: learningApi.motivation,
+    retry: 1,
+  });
   const date = new Intl.DateTimeFormat("en-CA", {
     timeZone: profile.data?.timezone ?? "Asia/Seoul",
     year: "numeric",
@@ -37,6 +42,43 @@ export default function LearningRecords() {
   return (
     <div className="app-page mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-bold">{t("study.records")}</h1>
+      <section className="surface-panel space-y-3 p-4">
+        <h2 className="text-xl font-bold">{t("study.motivation")}</h2>
+        {motivation.isError ? (
+          <p role="status">{t("study.motivationUnavailable")}</p>
+        ) : !motivation.data ? (
+          <p>{t("study.loading")}</p>
+        ) : (
+          <>
+            <p>
+              {t("study.motivationSummary", {
+                streak: motivation.data.streak,
+                xp: motivation.data.xp,
+                level: motivation.data.level,
+              })}
+            </p>
+            <p>{t("study.longestStreak", { count: motivation.data.longest_streak })}</p>
+            <p>{t("study.dueCount", { count: motivation.data.due_count })}</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t("study.xpScope")}</p>
+            <div className="flex flex-wrap gap-2" aria-label={t("study.badges")}>
+              {motivation.data.badges.length === 0 ? (
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {t("study.noBadges")}
+                </span>
+              ) : (
+                motivation.data.badges.map((badge) => (
+                  <span
+                    className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm"
+                    key={badge.id}
+                  >
+                    {t("study.badge." + badge.id)}
+                  </span>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </section>
       <div className="flex gap-3">
         {(["7d", "30d"] as const).map((w) => (
           <button

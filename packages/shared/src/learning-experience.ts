@@ -104,6 +104,7 @@ export const studySessionSchema = z.object({
   learning_track: learningTrackSchema,
   level: studyLevelSchema,
   daily_minutes: z.number(),
+  mode: z.enum(["quick", "daily"]).default("daily"),
   status: z.enum(["active", "paused", "completed", "abandoned"]),
   created_at: z.number(),
   updated_at: z.number(),
@@ -114,6 +115,21 @@ export type LearningProfile = z.infer<typeof learningProfileSchema>;
 export type StudySession = z.infer<typeof studySessionSchema>;
 export type StudyStep = z.infer<typeof studyStepSchema>;
 export type StudySubmission = z.infer<typeof studySubmissionSchema>;
+export const learningMotivationSchema = z.object({
+  streak: z.number(),
+  longest_streak: z.number(),
+  xp: z.number(),
+  level: z.number(),
+  due_count: z.number(),
+  badges: z.array(z.object({ id: z.string(), earned_at: z.string() })),
+  rules: z.object({
+    xp_scope: z.literal("guided-sessions"),
+    daily_cap: z.literal(100),
+    cap_scope: z.literal("track-local-day"),
+    level_step: z.literal(100),
+  }).optional(),
+});
+export type LearningMotivation = z.infer<typeof learningMotivationSchema>;
 export type LearningAnnotation = {
   scope: "content" | "day";
   ref: string;

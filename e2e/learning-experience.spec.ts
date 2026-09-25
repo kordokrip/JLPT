@@ -58,6 +58,46 @@ test("Japanese owner explanation is not completion; explicit completion creates 
 });
 
 for (const language of ["ko", "ja"] as const) {
+  test("quick lesson starts, resumes, and records one accepted step " + language, async ({ page }) => {
+    const copy = locale[language];
+    await register(page, language);
+    await page.getByRole("button", { name: copy.save, exact: true }).click();
+    const quickStart = page.getByRole("button", { name: language === "ko" ? "3~5분 빠르게 시작" : "3〜5分で始める" });
+    await expect(quickStart).toBeVisible();
+    const target = await quickStart.boundingBox();
+    expect(target?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(target?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await quickStart.click();
+    await expect(page).toHaveURL(/\/study\/[\w-]+$/);
+    const id = page.url().split("/").pop()!;
+    const get = async () => (await (await page.request.get("/api/v1/study/sessions/" + id)).json()).data;
+    const initial = await get();
+    expect(initial.mode).toBe("quick");
+    expect(initial.steps.length).toBeGreaterThanOrEqual(2);
+    expect(initial.steps.length).toBeLessThanOrEqual(4);
+    await page.getByRole("button", { name: copy.pause, exact: true }).click();
+    await page.getByRole("button", { name: copy.resume, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/study/${id}$`));
+    const step = initial.steps[0];
+    if (step.phase === "learn" || step.phase === "review") {
+      if (step.mode === "writing") await page.locator("article textarea").fill("저는 한국어를 공부합니다.");
+      await page.getByRole("button", { name: copy.reveal, exact: true }).click();
+      await page.getByRole("button", { name: copy.hide, exact: true }).click();
+      await page.getByRole("button", { name: copy.good, exact: true }).click();
+    } else {
+      if (step.mode === "choice") await page.locator("article input[type=radio]").first().check();
+      else await page.locator("article textarea").fill("저는 한국어를 공부합니다.");
+      await page.getByRole("button", { name: language === "ko" ? "답 제출" : "回答を送信", exact: true }).click();
+    }
+    await expect.poll(async () => (await get()).steps.find((candidate: {id:string;submitted:boolean}) => candidate.id === step.id)?.submitted).toBe(true);
+    const motivation = (await (await page.request.get("/api/v1/learning/motivation")).json()).data;
+    expect(motivation.streak).toBe(1);
+    expect(motivation.xp).toBeGreaterThan(0);
+    await page.goto("/records");
+    await expect(page.getByRole("heading", { name: language === "ko" ? "기록" : "記録" })).toBeVisible();
+  });
+
   test(
     "complete a full guided session and enter FSRS review " + language,
     async ({ page }) => {

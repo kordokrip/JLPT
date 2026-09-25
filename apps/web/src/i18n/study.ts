@@ -43,6 +43,9 @@ export const studyKo = {
   title: "오늘도, 한 걸음",
   subtitle: "기억하고 적용하며 나만의 학습을 이어가세요.",
   start: "{{minutes}}분 공부 시작",
+  quickStart: "3~5분 빠르게 시작",
+  quickLesson: "빠른 학습 · 3~5분",
+  dailyLesson: "오늘의 학습",
   resume: "이어서 공부",
   setup: "학습 목표 설정",
   target: "목표 급수",
@@ -97,6 +100,22 @@ export const studyKo = {
   done: "오늘의 학습을 마쳤어요",
   summary:
     "제출한 결과가 기록되었습니다. 다음 복습은 기억 평가에 따라 안내합니다.",
+  completionSummary: "{{total}}개 중 {{done}}개를 기록했어요.",
+  motivation: "나의 학습 흐름",
+  motivationSummary: "{{streak}}일 연속 · {{xp}} XP · 학습 단계 {{level}}",
+  longestStreak: "최장 연속 학습: {{count}}일",
+  dueCount: "예정 복습 {{count}}개",
+  xpScope: "XP는 안내 학습에서 저장된 결과에만 부여합니다. 자유 학습 기록은 아래에 별도로 표시합니다.",
+  badges: "개인 성취",
+  noBadges: "첫 학습을 마치면 성취가 여기에 표시됩니다.",
+  motivationUnavailable: "보상 현황을 지금 불러올 수 없습니다. 학습은 계속할 수 있습니다.",
+  badge: {
+    first_lesson: "첫 학습",
+    streak_3: "3일 연속",
+    streak_7: "7일 연속",
+    streak_30: "30일 연속",
+    reviews_20: "복습 20회",
+  },
   phase: {
     review: "예정 복습",
     learn: "이해와 회상",
@@ -105,6 +124,7 @@ export const studyKo = {
   },
   notice: {
     "review-priority": "복습이 쌓여 신규 학습을 줄였습니다.",
+    "quick-review-only": "이번 빠른 학습은 복습 항목만 제공됩니다.",
     "topik-exam-band":
       "TOPIK 문제는 급수별 진단이 아닌 TOPIK I(1–2급) / II(3–6급) 공통 영역입니다.",
     "no-practice":
@@ -207,6 +227,9 @@ export const studyJa: typeof studyKo = {
   title: "今日も、一歩ずつ",
   subtitle: "覚えて使い、自分のペースで学習を続けましょう。",
   start: "{{minutes}}分の学習を始める",
+  quickStart: "3〜5分で始める",
+  quickLesson: "クイック学習 · 3〜5分",
+  dailyLesson: "今日の学習",
   resume: "続きから学習",
   setup: "学習目標の設定",
   target: "目標レベル",
@@ -261,6 +284,22 @@ export const studyJa: typeof studyKo = {
   done: "今日の学習を終えました",
   summary:
     "送信した結果を記録しました。次の復習は記憶の評価に応じてご案内します。",
+  completionSummary: "{{total}}項目中{{done}}項目を記録しました。",
+  motivation: "自分の学習の流れ",
+  motivationSummary: "{{streak}}日連続 · {{xp}} XP · 学習ステップ {{level}}",
+  longestStreak: "最長連続学習: {{count}}日",
+  dueCount: "予定の復習 {{count}}件",
+  xpScope: "XPはガイド付き学習で保存した結果に付与します。自由学習の記録は下に別表示します。",
+  badges: "自分の達成",
+  noBadges: "最初の学習を終えると、ここに達成が表示されます。",
+  motivationUnavailable: "現在、達成状況を読み込めません。学習は続けられます。",
+  badge: {
+    first_lesson: "最初の学習",
+    streak_3: "3日連続",
+    streak_7: "7日連続",
+    streak_30: "30日連続",
+    reviews_20: "復習20回",
+  },
   phase: {
     review: "予定の復習",
     learn: "理解と想起",
@@ -269,6 +308,7 @@ export const studyJa: typeof studyKo = {
   },
   notice: {
     "review-priority": "復習がたまっているため、新しい学習を減らしました。",
+    "quick-review-only": "今回のクイック学習は復習項目のみです。",
     "topik-exam-band":
       "問題は級別の診断ではなく、TOPIK I（1–2級）/ II（3–6級）の共通問題です。",
     "no-practice":
@@ -372,6 +412,9 @@ export const studyEn: typeof studyKo = {
   title: "One more step today",
   subtitle: "Remember, apply, and keep learning at your own pace.",
   start: "Start {{minutes}} minutes",
+  quickStart: "Start in 3–5 minutes",
+  quickLesson: "Quick lesson · 3–5 min",
+  dailyLesson: "Today's lesson",
   resume: "Continue learning",
   setup: "Learning goals",
   target: "Target level",
@@ -425,6 +468,22 @@ export const studyEn: typeof studyKo = {
   learned: "Learning completed",
   done: "You finished this session",
   summary: "Your submissions are saved. Reviews follow your memory ratings.",
+  completionSummary: "Recorded {{done}} of {{total}} items.",
+  motivation: "My learning flow",
+  motivationSummary: "{{streak}} day streak · {{xp}} XP · learning step {{level}}",
+  longestStreak: "Longest streak: {{count}} days",
+  dueCount: "{{count}} reviews due",
+  xpScope: "XP is awarded for saved guided lessons only. Free-study records appear separately below.",
+  badges: "Personal achievements",
+  noBadges: "Finish your first lesson to see an achievement here.",
+  motivationUnavailable: "Your rewards are unavailable right now. You can still study.",
+  badge: {
+    first_lesson: "First lesson",
+    streak_3: "3-day streak",
+    streak_7: "7-day streak",
+    streak_30: "30-day streak",
+    reviews_20: "20 reviews",
+  },
   phase: {
     review: "Due reviews",
     learn: "Understand & recall",
@@ -433,6 +492,7 @@ export const studyEn: typeof studyKo = {
   },
   notice: {
     "review-priority": "New learning reduced because reviews are waiting.",
+    "quick-review-only": "This quick lesson contains reviews only.",
     "topik-exam-band":
       "These are shared TOPIK I (grades 1–2) / II (grades 3–6) questions, not a grade-specific diagnosis.",
     "no-practice":

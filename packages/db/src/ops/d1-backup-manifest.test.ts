@@ -26,7 +26,15 @@ test('explicit 0028 manifests require all 70 tables and a 65-table backup cannot
   assert.equal(current.legacyProfileInferred, false);
   assert.throws(() => validateD1BackupManifestForSchema({ files: files('0027') }, schema), /does not cover/u);
   assert.throws(() => validateD1BackupManifest({ schemaProfile: '0027', files: files('0028') }), /allowlist/u);
-  assert.throws(() => validateD1BackupManifest({ schemaProfile: '0029', files: files('0028') }), /Unknown/u);
+  assert.throws(() => validateD1BackupManifest({ schemaProfile: '0031', files: files('0028') }), /Unknown/u);
+});
+
+test('0030 backup manifests include all 72 regular tables and older profiles cannot cover them', () => {
+  const schema = tablesForPhase('all', '0030').map((table) => table.name);
+  assert.equal(validateD1BackupManifestForSchema({ schemaProfile: '0030', files: files('0030') }, schema).files.length, 72);
+  for (const older of ['0027', '0028', '0029'] as const) {
+    assert.throws(() => validateD1BackupManifestForSchema({ schemaProfile: older, files: files(older) }, schema), /does not cover/u);
+  }
 });
 
 test('manifest validation fails closed for duplicate, unknown, missing, and unsafe file metadata', () => {

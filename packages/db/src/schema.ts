@@ -39,6 +39,7 @@ export const studySessions = sqliteTable('study_sessions', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   learningTrack: text('learning_track').notNull(), level: text('level').notNull(),
   dailyMinutes: integer('daily_minutes').notNull(),
+  mode: text('mode', { enum: ['daily', 'quick'] }).notNull().default('daily'),
   status: text('status', { enum: ['active', 'paused', 'completed', 'abandoned'] }).notNull().default('active'),
   requestId: text('request_id').notNull(), noticesJson: text('notices_json').notNull().default('[]'),
   createdAt: integer('created_at').notNull(), updatedAt: integer('updated_at').notNull(),
@@ -64,6 +65,16 @@ export const learningAnnotations = sqliteTable('learning_annotations', {
   ref: text('ref').notNull(), text: text('text').notNull(),
   revision: integer('revision').notNull().default(1), updatedAt: integer('updated_at').notNull(),
 }, (t) => ({ pk: primaryKey({ columns: [t.userId, t.learningTrack, t.scope, t.ref] }) }));
+export const studyRewardEvents = sqliteTable('study_reward_events', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  learningTrack: text('learning_track').notNull(), sourceId: text('source_id').notNull(),
+  phase: text('phase').notNull(), studyDay: text('study_day').notNull(),
+  timezone: text('timezone').notNull(), points: integer('points').notNull(),
+  occurredAt: integer('occurred_at').notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.learningTrack, t.sourceId] }),
+  dayIdx: index('study_reward_events_day').on(t.userId, t.learningTrack, t.studyDay),
+}));
 export const contentLearningLinks = sqliteTable('content_learning_links', {
   learningTrack: text('learning_track').notNull(), questionRef: text('question_ref').notNull(),
   conceptRef: text('concept_ref').notNull(), evidenceSha256: text('evidence_sha256').notNull(),
@@ -1473,12 +1484,22 @@ export const pushSubscriptions = sqliteTable('push_subscriptions', {
   p256dh: text('p256dh').notNull(),
   auth: text('auth').notNull(),
   userAgent: text('user_agent'),
+  notificationLanguage: text('notification_language', { enum: ['ko', 'ja', 'en'] }),
   morningOn: integer('morning_on', { mode: 'boolean' }).notNull().default(true),
   eveningOn: integer('evening_on', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at').notNull().default(sql`(unixepoch())`),
   lastSeenAt: integer('last_seen_at'),
 }, (t) => ({
   userIdx: index('push_subscriptions_user_idx').on(t.userId),
+}));
+export const pushNotificationDeliveries = sqliteTable('push_notification_deliveries', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  endpoint: text('endpoint').notNull(), localDate: text('local_date').notNull(),
+  schedule: text('schedule', { enum: ['morning', 'evening'] }).notNull(),
+  status: text('status', { enum: ['claimed', 'sent'] }).notNull(),
+  claimedAt: integer('claimed_at').notNull(), sentAt: integer('sent_at'),
+}, (t) => ({
+  deliveryUk: uniqueIndex('push_notification_deliveries_endpoint_date_schedule_uk').on(t.endpoint, t.localDate, t.schedule),
 }));
 
 // ═══════════════════════════════════════════════════════════════════

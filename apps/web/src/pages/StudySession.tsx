@@ -21,6 +21,7 @@ import {
   studyPrimary,
 } from "../features/study/StudyComponents";
 import { useSettingsStore } from "../stores/settings-store";
+import { useLearningProfile } from "../hooks/useLearningProfile";
 import { homePathForTrack } from "../lib/track-registry";
 import {
   StudyRequestError,
@@ -33,9 +34,10 @@ export default function StudySession() {
   return <SessionView key={scope + id} scope={scope} id={id} />;
 }
 function SessionView({ scope, id }: { scope: string; id: string }) {
-  const { t } = useTranslation(),
+  const { t, i18n } = useTranslation(),
     qc = useQueryClient(),
     navigate = useNavigate();
+  const profile = useLearningProfile();
   const home = homePathForTrack(useSettingsStore((s) => s.learningTrack));
   const query = useQuery({
     queryKey: ["study-session", scope, id],
@@ -58,6 +60,12 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
   const serverStatus = (query.error as { status?: number } | null)?.status;
   const denied = !!serverStatus && serverStatus >= 400 && serverStatus < 500;
   const session = denied ? null : (query.data ?? cache);
+  const completedRecords = useQuery({
+    queryKey: ["study-records", scope, "7d"],
+    queryFn: () => learningApi.records("7d"),
+    enabled: session?.status === "completed",
+    retry: 1,
+  });
   const accept = (s: Session) => {
     qc.setQueryData(["study-session", scope, id], s);
     setCache(s);
@@ -188,7 +196,12 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
   return (
     <div className="app-page mx-auto max-w-3xl space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">{t("study.resume")}</h1>
+        <div>
+          <p className="text-sm font-semibold text-[var(--accent)]">
+            {t(session.mode === "quick" ? "study.quickLesson" : "study.dailyLesson")}
+          </p>
+          <h1 className="text-xl font-bold">{t("study.resume")}</h1>
+        </div>
         <button
           className={studyButton}
           disabled={pause.isPending || !!pending}
@@ -287,6 +300,24 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
       ) : (
         <section className="surface-panel space-y-4 p-6">
           <h2 className="text-2xl font-bold">{t("study.done")}</h2>
+          <p>
+            {t("study.completionSummary", {
+              done: session.steps.filter((s) => s.submitted).length,
+              total: session.steps.length,
+            })}
+          </p>
+          <p>
+            {t("study.first")}: {session.steps.filter((s) => s.phase === "practice" && s.correct === true).length}/
+            {session.steps.filter((s) => s.phase === "practice" && s.correct !== null).length}
+            {" · "}
+            {t("study.retryMetric")}: {session.steps.filter((s) => s.phase === "retry" && s.correct === true).length}/
+            {session.steps.filter((s) => s.phase === "retry" && s.correct !== null).length}
+          </p>
+          <p>
+            {t("study.nextReview")}: {completedRecords.data?.next_review_at
+              ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short", timeZone: profile.data?.timezone ?? (session.learning_track === "topik-ko" ? "Asia/Tokyo" : "Asia/Seoul") }).format(new Date(completedRecords.data.next_review_at * 1000))
+              : completedRecords.isPending ? t("study.loading") : t("study.noReview")}
+          </p>
           <p>{t("study.summary")}</p>
           <Link
             className={studyPrimary + " inline-flex items-center"}

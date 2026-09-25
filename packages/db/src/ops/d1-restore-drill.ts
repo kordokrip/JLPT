@@ -213,7 +213,7 @@ try {
   fs.mkdirSync(path.dirname(reportPath), { recursive: true });
   fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   if (failures.length > 0) throw new Error(`Restore drill failed:\n${failures.join('\n')}`);
-  console.log(`Restore drill passed for profile ${manifest.schemaProfile}: ${manifest.files.length} regular tables${omittedTables.length ? '; five 0028 tables remain empty, not a full 0028 backup' : ''}.`);
+  console.log(`Restore drill passed for profile ${manifest.schemaProfile}: ${manifest.files.length} regular tables${omittedTables.length ? `; ${omittedTables.length} newer tables remain empty, not a full ${localSchemaProfile} backup` : ''}.`);
 } finally {
   fs.rmSync(persistTo, { recursive: true, force: true });
 }

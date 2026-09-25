@@ -604,6 +604,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learning/motivation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/motivation */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                streak: number;
+                                longest_streak: number;
+                                xp: number;
+                                level: number;
+                                due_count: number;
+                                badges: {
+                                    id: string;
+                                    earned_at: string;
+                                }[];
+                                rules?: {
+                                    /** @enum {string} */
+                                    xp_scope: "guided-sessions";
+                                    /** @enum {number} */
+                                    daily_cap: 100;
+                                    /** @enum {string} */
+                                    cap_scope: "track-local-day";
+                                    /** @enum {number} */
+                                    level_step: 100;
+                                };
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/study/sessions": {
         parameters: {
             query?: never;
@@ -637,6 +742,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -745,6 +855,11 @@ export interface paths {
                     "application/json": {
                         /** Format: uuid */
                         request_id: string;
+                        /**
+                         * @default daily
+                         * @enum {string}
+                         */
+                        mode?: "quick" | "daily";
                     };
                 };
             };
@@ -763,6 +878,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -894,6 +1014,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1024,6 +1149,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1153,6 +1283,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1298,6 +1433,11 @@ export interface paths {
                                 /** @enum {string} */
                                 level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
                                 daily_minutes: number;
+                                /**
+                                 * @default daily
+                                 * @enum {string}
+                                 */
+                                mode: "quick" | "daily";
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -6008,6 +6148,8 @@ export interface paths {
                         auth: string;
                         morningOn?: boolean;
                         eveningOn?: boolean;
+                        /** @enum {string} */
+                        notificationLanguage?: "ko" | "ja" | "en";
                     };
                 };
             };

@@ -19,6 +19,7 @@ import { receiver as observabilityReceiver } from '../observability-receiver.js'
 import { isSideEffectingRequest } from '../middleware/maintenance.js';
 import { buildStudySteps, canonicalContent, contentStillPublished, contentsStillPublished } from '../lib/study-content.js';
 import * as quizQuestions from '../lib/quiz-questions.js';
+import { runPushReminder } from '../lib/push-reminders.js';
 
 // Vite ?raw import 타입 선언 (env.d.ts에 전역 선언됨)
 // @ts-ignore – wildcard module declaration only valid in .d.ts files
@@ -85,6 +86,10 @@ import rawReleaseQualityLinksMigration from '../../../../packages/db/drizzle-v2/
 import rawGoogleSpeechContractMigration from '../../../../packages/db/drizzle-v2/0027_google_speech_contract.sql?raw';
 // @ts-ignore – Vite raw import
 import rawLearningExperienceMigration from '../../../../packages/db/drizzle-v2/0028_learning_experience.sql?raw';
+// @ts-ignore – Vite raw import
+import rawStudyMotivationMigration from '../../../../packages/db/drizzle-v2/0029_study_motivation.sql?raw';
+// @ts-ignore – Vite raw import
+import rawPushNotificationDeliveriesMigration from '../../../../packages/db/drizzle-v2/0030_push_notification_deliveries.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -93,7 +98,7 @@ beforeAll(async () => {
   // miniflare D1 exec()는 \n 기준으로 한 줄씩 실행하므로 사용 불가.
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
-  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}`
+  const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}\n${rawStudyMotivationMigration}\n${rawPushNotificationDeliveriesMigration}`
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -2499,6 +2504,159 @@ describe('POST /api/v1/logs/daily (dev bypass)', () => {
   });
 });
 
+describe('timezone-aware Push reminders', () => {
+  it('does not let another account replace an existing endpoint owner', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const first = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const second = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const firstUser = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers: first });
+    const endpoint = `https://push.example.test/owner-${crypto.randomUUID()}`;
+    const body = { endpoint, p256dh: 'test-key', auth: 'test-auth', morningOn: true, notificationLanguage: 'ko' };
+    expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: first, body: JSON.stringify(body) })).status).toBe(201);
+    expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: first, body: JSON.stringify(body) })).status).toBe(201);
+    expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: second, body: JSON.stringify({ ...body, notificationLanguage: 'ja' }) })).status).toBe(409);
+    expect(await db.prepare('SELECT user_id,notification_language FROM push_subscriptions WHERE endpoint=?').bind(endpoint).first())
+      .toEqual({ user_id: firstUser.data.user.id, notification_language: 'ko' });
+    await db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').bind(endpoint).run();
+  });
+
+  it('keeps a new subscription disabled until the learner explicitly opts in', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const headers = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const endpoint = `https://push.example.test/consent-${crypto.randomUUID()}`;
+    const response = await fetch('/api/v1/notifications/subscribe', {
+      method: 'POST', headers,
+      body: JSON.stringify({ endpoint, p256dh: 'test-key', auth: 'test-auth', notificationLanguage: 'ja' }),
+    });
+    expect(response.status).toBe(201);
+    expect(await db.prepare(
+      'SELECT morning_on, evening_on, notification_language FROM push_subscriptions WHERE endpoint = ?',
+    ).bind(endpoint).first()).toEqual({ morning_on: 0, evening_on: 0, notification_language: 'ja' });
+  });
+
+  it('uses the TOPIK learner UI language, skips accepted study, and claims a delivery once', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const now = new Date('2026-09-01T22:00:00.000Z');
+    const koreanHeaders = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const japaneseHeaders = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    expect((await fetch('/api/v1/auth/track', {
+      method: 'PATCH', headers: japaneseHeaders, body: JSON.stringify({ track: 'topik-ko' }),
+    })).status).toBe(200);
+    const korean = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers: koreanHeaders });
+    const japanese = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers: japaneseHeaders });
+    const koreanEndpoint = `https://push.example.test/ko-${crypto.randomUUID()}`;
+    const japaneseEndpoint = `https://push.example.test/ja-${crypto.randomUUID()}`;
+    await db.batch([
+      db.prepare(`INSERT INTO learning_profiles(user_id,learning_track,target_level,instruction_language,daily_minutes,timezone,updated_at)
+        VALUES (?, 'jlpt-ja', 'N5', 'ko', 20, 'Asia/Seoul', unixepoch())`).bind(korean.data.user.id),
+      db.prepare(`INSERT INTO learning_profiles(user_id,learning_track,target_level,instruction_language,daily_minutes,timezone,updated_at)
+        VALUES (?, 'topik-ko', '1', 'ko', 20, 'Asia/Tokyo', unixepoch())`).bind(japanese.data.user.id),
+      db.prepare(`INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,notification_language,created_at)
+        VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'ko', unixepoch())`).bind(korean.data.user.id, koreanEndpoint),
+      db.prepare(`INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,notification_language,created_at)
+        VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'ja', unixepoch())`).bind(japanese.data.user.id, japaneseEndpoint),
+      db.prepare(`INSERT INTO learning_activity_events(event_id,user_id,learning_track,event_type,content_type,content_id,correct,occurred_at)
+        VALUES (?, ?, 'jlpt-ja', 'quiz_answered', 'jlpt-quiz', 'reminder-test', 1, ?)`).bind(`reminder-study-${crypto.randomUUID()}`, korean.data.user.id, Math.floor(now.getTime() / 1000) - 60),
+    ]);
+
+    const delivered: Array<{ endpoint: string; title: string }> = [];
+    const send = async (subscription: { endpoint: string }, payload: { title: string }) => {
+      delivered.push({ endpoint: subscription.endpoint, title: payload.title });
+      return { ok: true, status: 201 };
+    };
+    const reminderEnv = { ...env, VAPID_PRIVATE_KEY: 'test-vapid-private-key' } as unknown as import('../types.js').Env;
+    const first = await runPushReminder(reminderEnv, 'morning', { now, send });
+    const second = await runPushReminder(reminderEnv, 'morning', { now, send });
+
+    expect(first).toMatchObject({ sent: 1, skippedStudied: 1, claimed: 1 });
+    expect(delivered).toEqual([{ endpoint: japaneseEndpoint, title: '今日の復習リマインダー' }]);
+    expect(second).toMatchObject({ sent: 0, claimed: 0, skippedStudied: 1 });
+    expect((await db.prepare('SELECT count(*) AS n FROM push_notification_deliveries WHERE endpoint = ?').bind(japaneseEndpoint).first<{ n: number }>())?.n).toBe(1);
+    await db.prepare('DELETE FROM push_subscriptions WHERE endpoint IN (?, ?)').bind(koreanEndpoint, japaneseEndpoint).run();
+  });
+
+  it('releases a known send failure so the next matching run retries', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const now = new Date('2026-09-02T22:00:00.000Z');
+    const headers = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const user = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers });
+    const endpoint = `https://push.example.test/retry-${crypto.randomUUID()}`;
+    await db.batch([
+      db.prepare(`INSERT INTO learning_profiles(user_id,learning_track,target_level,instruction_language,daily_minutes,timezone,updated_at)
+        VALUES (?, 'jlpt-ja', 'N5', 'en', 20, 'Asia/Seoul', unixepoch())`).bind(user.data.user.id),
+      db.prepare(`INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,notification_language,created_at)
+        VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'en', unixepoch())`).bind(user.data.user.id, endpoint),
+    ]);
+    const reminderEnv = { ...env, VAPID_PRIVATE_KEY: 'test-vapid-private-key' } as unknown as import('../types.js').Env;
+    const failed = await runPushReminder(reminderEnv, 'morning', {
+      now,
+      send: async () => ({ ok: false, status: 503 }),
+    });
+    const retried = await runPushReminder(reminderEnv, 'morning', {
+      now,
+      send: async () => ({ ok: true, status: 201 }),
+    });
+    expect(failed).toMatchObject({ failed: 1, claimed: 1 });
+    expect(retried).toMatchObject({ sent: 1, claimed: 1 });
+    await db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').bind(endpoint).run();
+  });
+
+  it('keeps an uncertain delivery claim to prevent a duplicate Push', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const now = new Date('2026-09-03T22:00:00.000Z');
+    const headers = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const user = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers });
+    const endpoint = `https://push.example.test/uncertain-${crypto.randomUUID()}`;
+    await db.batch([
+      db.prepare(`INSERT INTO learning_profiles(user_id,learning_track,target_level,instruction_language,daily_minutes,timezone,updated_at)
+        VALUES (?, 'jlpt-ja', 'N5', 'en', 20, 'Asia/Seoul', unixepoch())`).bind(user.data.user.id),
+      db.prepare(`INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,notification_language,created_at)
+        VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'en', unixepoch())`).bind(user.data.user.id, endpoint),
+    ]);
+    const reminderEnv = { ...env, VAPID_PRIVATE_KEY: 'test-vapid-private-key' } as unknown as import('../types.js').Env;
+    const uncertain = await runPushReminder(reminderEnv, 'morning', {
+      now,
+      send: async () => ({ ok: false, status: 0 }),
+    });
+    const duplicateProtected = await runPushReminder(reminderEnv, 'morning', {
+      now,
+      send: async () => ({ ok: true, status: 201 }),
+    });
+    expect(uncertain).toMatchObject({ failed: 1, claimed: 1 });
+    expect(duplicateProtected).toMatchObject({ sent: 0, claimed: 0 });
+    await db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').bind(endpoint).run();
+  });
+
+  it('pages through more than 200 opted-in subscriptions', async () => {
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const now = new Date('2026-09-04T22:00:00.000Z');
+    const headers = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
+    const user = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers });
+    const endpoints = Array.from({ length: 201 }, (_, index) => `https://push.example.test/page-${index}-${crypto.randomUUID()}`);
+    await db.prepare(`INSERT INTO learning_profiles(user_id,learning_track,target_level,instruction_language,daily_minutes,timezone,updated_at)
+      VALUES (?, 'jlpt-ja', 'N5', 'en', 20, 'Asia/Seoul', unixepoch())`).bind(user.data.user.id).run();
+    for (let offset = 0; offset < endpoints.length; offset += 50) {
+      await db.batch(endpoints.slice(offset, offset + 50).map((endpoint) => db.prepare(
+        `INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,notification_language,created_at)
+         VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'en', unixepoch())`,
+      ).bind(user.data.user.id, endpoint)));
+    }
+    let calls = 0;
+    const reminderEnv = { ...env, VAPID_PRIVATE_KEY: 'test-vapid-private-key' } as unknown as import('../types.js').Env;
+    const result = await runPushReminder(reminderEnv, 'morning', {
+      now,
+      send: async () => { calls++; return { ok: true, status: 201 }; },
+    });
+    expect(result).toMatchObject({ sent: 201, claimed: 201 });
+    expect(calls).toBe(201);
+    for (let offset = 0; offset < endpoints.length; offset += 50) {
+      await db.batch(endpoints.slice(offset, offset + 50).map((endpoint) => db.prepare(
+        'DELETE FROM push_subscriptions WHERE endpoint = ?',
+      ).bind(endpoint)));
+    }
+  });
+});
+
 // ─────────────────────────────────────────────
 // 404
 // ─────────────────────────────────────────────
@@ -2549,6 +2707,129 @@ describe('learning experience contract', () => {
     const response=await fetch('/api/v1/study/sessions'+path,{method,headers,...(body===undefined?{}:{body:JSON.stringify(body)})});
     return {response,body:await response.json<{data:import('@nihongo-n3/shared').StudySession}>()};
   }
+  it('quick lessons expose mode, resume the open session and keep legacy callers daily', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const quick = await callSession(headers, '', { request_id: crypto.randomUUID(), mode: 'quick' });
+    expect(quick.response.status).toBe(200);
+    expect(quick.body.data).toMatchObject({ mode: 'quick', daily_minutes: 5 });
+    expect(quick.body.data.steps.length).toBeGreaterThanOrEqual(2);
+    expect(quick.body.data.steps.length).toBeLessThanOrEqual(4);
+    expect(quick.body.data.steps.every((step) => step.level === 'N5')).toBe(true);
+    expect((await callSession(headers, '', { request_id: crypto.randomUUID(), mode: 'daily' })).body.data.id).toBe(quick.body.data.id);
+    await callSession(headers, '/' + quick.body.data.id, { status: 'abandoned' }, 'PATCH');
+    expect((await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data).toMatchObject({ mode: 'daily', daily_minutes: 10 });
+    expect((await callSession(headers, '', { request_id: crypto.randomUUID(), mode: 'unknown' })).response.status).toBe(400);
+  });
+  it.each(['N5','N4','N3','N2','N1','1','2','3','4','5','6'])('quick lesson saves, resumes and finishes at %s', async (level) => {
+    const track = level.startsWith('N') ? 'jlpt-ja' : 'topik-ko';
+    const headers = await learner(track, level);
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    if (track === 'topik-ko') {
+      await db.prepare(`INSERT INTO topik_owner_authored_curriculum_items(id,unit_id,target_grade,stable_ref,item_type,prompt_ko,prompt_ja,prompt_en,answer_json,explanation_ko,explanation_ja,explanation_en,source_asset_id)
+        VALUES(?,?,?,?,'vocab','두번째 표현','次の表現','Second expression','{}','설명','説明','Meaning','study-fixture')`).bind('quick-item-'+level,'study-unit-'+level,Number(level),'quick.item.'+level).run();
+    }
+    let session = (await callSession(headers, '', {request_id:crypto.randomUUID(),mode:'quick'})).body.data;
+    expect(session.mode).toBe('quick');
+    expect(session.steps.length).toBeGreaterThanOrEqual(2);
+    expect(session.steps.length).toBeLessThanOrEqual(4);
+    expect(session.steps.filter((s) => s.phase !== 'practice').every((s) => s.level === level && s.ref.track === track)).toBe(true);
+    expect(session.steps.every((s) => s.solution === null)).toBe(true);
+    await callSession(headers, '/'+session.id, {status:'paused'}, 'PATCH');
+    const resumed = (await callSession(headers, '', {request_id:crypto.randomUUID(),mode:'daily'})).body.data;
+    expect(resumed.id).toBe(session.id);
+    expect(resumed.mode).toBe('quick');
+    for (let n=0;n<10 && session.status !== 'completed';n++) {
+      const step = session.steps.find((s) => !s.submitted)!;
+      const recall = step.phase === 'learn' || step.phase === 'review';
+      if (recall) await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal');
+      const accepted = await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',{
+        request_id:crypto.randomUUID(), ...(recall ? {rating:'good',...(step.mode==='writing'?{answer:'작성'}:{})} : {answer:step.choices[0] ?? '작성'}),
+      });
+      expect(accepted.response.status).toBe(200);
+      session = accepted.body.data;
+    }
+    expect(session.status).toBe('completed');
+    expect((await (await fetch('/api/v1/learning/motivation',{headers})).json<{data:{badges:{id:string}[]}}>()).data.badges.some((b) => b.id==='first_lesson')).toBe(true);
+  });
+  it('counts accepted study completions in streak and rewards once while reveal earns nothing', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const session = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    const step = session.steps.find((s) => s.phase === 'learn')!;
+    await callSession(headers, '/' + session.id + '/steps/' + step.id + '/reveal');
+    const read = async (path: string) => (await (await fetch('/api/v1/' + path, { headers })).json<{data:Record<string,unknown>}>()).data;
+    expect(await read('logs/streak')).toMatchObject({ currentStreak: 0 });
+    expect(await read('learning/motivation')).toMatchObject({ xp: 0, streak: 0 });
+    const payload = { request_id: crypto.randomUUID(), rating: 'good' };
+    expect((await callSession(headers, '/' + session.id + '/steps/' + step.id + '/submit', payload)).response.status).toBe(200);
+    expect((await callSession(headers, '/' + session.id + '/steps/' + step.id + '/submit', payload)).response.status).toBe(200);
+    expect(await read('logs/streak')).toMatchObject({ currentStreak: 1, totalDays: 1 });
+    expect(await read('learning/motivation')).toMatchObject({ xp: 5, streak: 1, level: 1 });
+  });
+  it('uses profile timezone and authoritative free learning alongside historical daily logs', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const session = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    const user = (await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(session.id).first<{user_id:string}>())!.user_id;
+    await db.prepare("UPDATE learning_profiles SET timezone='America/Los_Angeles' WHERE user_id=?").bind(user).run();
+    const now = new Date('2026-09-25T01:00:00Z').getTime();
+    const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      await db.prepare("INSERT INTO quiz_attempts(user_id,learning_track,quiz_type,total,correct,finished_at) VALUES(?,'jlpt-ja','practice',1,0,?)").bind(user, new Date(now).toISOString()).run();
+      await db.prepare("INSERT INTO daily_logs(user_id,learning_track,date,items_new) VALUES(?,'jlpt-ja','2026-09-23',1)").bind(user).run();
+      const response = await fetch('/api/v1/logs/streak', { headers });
+      expect((await response.json<{data:unknown}>()).data).toMatchObject({ currentStreak: 2, totalDays: 2, lastStudyDate: '2026-09-24' });
+      await fetch('/api/v1/auth/track', { method: 'PATCH', headers, body: JSON.stringify({ track: 'topik-ko' }) });
+      expect((await (await fetch('/api/v1/logs/streak', { headers })).json<{data:unknown}>()).data).toMatchObject({ currentStreak: 0 });
+    } finally { dateSpy.mockRestore(); }
+  });
+  it('does not turn client activity, reveal or speech events into earned learning days or XP', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const events = ['content_completed','quiz_answered','review_rated','speech_attempted','content_opened'].map((event_type) => ({
+      event_id: crypto.randomUUID(), event_type, learning_track:'jlpt-ja', content_type:'vocab',content_id:'1',correct:true,rating:'good',speech_outcome:'played',occurred_at:new Date().toISOString(),
+    }));
+    expect((await fetch('/api/v1/activity/events', {method:'POST',headers,body:JSON.stringify({events})})).status).toBe(201);
+    expect((await (await fetch('/api/v1/learning/motivation',{headers})).json<{data:unknown}>()).data).toMatchObject({streak:0,xp:0});
+  });
+  it('keeps accepting learning and FSRS after the daily XP cap and isolates reward accounts', async () => {
+    const headers = await learner('jlpt-ja', 'N5');
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const session = (await callSession(headers, '', { request_id: crypto.randomUUID() })).body.data;
+    const user = (await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(session.id).first<{user_id:string}>())!.user_id;
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit' }).format(new Date());
+    await db.batch(Array.from({length:20},(_,n) => db.prepare("INSERT INTO study_reward_events VALUES(?,'jlpt-ja',?,'learn',?,'Asia/Tokyo',5,unixepoch())").bind(user, 'synthetic-cap-'+n,day)));
+    const step = session.steps[0]!;
+    await callSession(headers, '/' + session.id + '/steps/' + step.id + '/reveal');
+    const payload = { request_id:crypto.randomUUID(), rating:'good' };
+    expect((await callSession(headers, '/' + session.id + '/steps/' + step.id + '/submit', payload)).response.status).toBe(200);
+    expect((await db.prepare('SELECT count(*) AS n FROM srs_cards WHERE user_id=?').bind(user).first<{n:number}>())?.n).toBe(1);
+    expect((await db.prepare('SELECT points FROM study_reward_events WHERE source_id=?').bind('study:'+step.id).first<{points:number}>())?.points).toBe(0);
+    await callSession(headers, '/' + session.id, {status:'abandoned'}, 'PATCH');
+    const reviewSession = (await callSession(headers, '', {request_id:crypto.randomUUID(),mode:'quick'})).body.data;
+    const review = reviewSession.steps[0]!;
+    expect(review.phase).toBe('review');
+    await callSession(headers,'/'+reviewSession.id+'/steps/'+review.id+'/reveal');
+    expect((await callSession(headers,'/'+reviewSession.id+'/steps/'+review.id+'/submit',{request_id:crypto.randomUUID(),rating:'good'})).response.status).toBe(200);
+    expect((await db.prepare('SELECT count(*) AS n FROM review_logs r JOIN srs_cards c ON c.id=r.card_id WHERE c.user_id=?').bind(user).first<{n:number}>())?.n).toBe(1);
+    expect((await db.prepare('SELECT points FROM study_reward_events WHERE source_id=?').bind('study:'+review.id).first<{points:number}>())?.points).toBe(0);
+    const current = await fetch('/api/v1/learning/motivation', {headers});
+    expect((await current.json<{data:unknown}>()).data).toMatchObject({ xp:100,level:2,rules:{xp_scope:'guided-sessions'} });
+    const other = await learner('jlpt-ja', 'N5');
+    expect((await (await fetch('/api/v1/learning/motivation', {headers:other})).json<{data:unknown}>()).data).toMatchObject({xp:0});
+  });
+  it('quick reserves a learning/application step after due reviews and recent mistakes', async () => {
+    const headers = await learner('jlpt-ja','N5');
+    const db = (env as typeof env & { DB: D1Database }).DB;
+    const old = (await callSession(headers,'',{request_id:crypto.randomUUID()})).body.data;
+    const user = (await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(old.id).first<{user_id:string}>())!.user_id;
+    const questions = old.steps.filter((s) => s.phase==='practice').slice(0,2);
+    expect(questions).toHaveLength(2);
+    for (const step of questions) await db.prepare('UPDATE study_steps SET request_id=?,correct=0,submitted_at=unixepoch() WHERE id=?').bind(crypto.randomUUID(),step.id).run();
+    await callSession(headers,'/'+old.id,{status:'abandoned'},'PATCH');
+    const vocab = await db.prepare("SELECT id FROM vocab WHERE level='N5' ORDER BY id LIMIT 2").all<{id:number}>();
+    for (const row of vocab.results ?? []) await db.prepare("INSERT INTO srs_cards(user_id,learning_track,item_type,item_id,due_at) VALUES(?,'jlpt-ja','vocab',?,1)").bind(user,row.id).run();
+    const quick = (await callSession(headers,'',{request_id:crypto.randomUUID(),mode:'quick'})).body.data;
+    expect(quick.steps.map((s) => s.phase)).toEqual(['review','review','retry','learn']);
+  });
   it.each(['completed', 'abandoned'] as const)('replays the original %s session request even when a newer session is open', async (terminal) => {
     const headers = await learner('jlpt-ja', 'N5');
     const db = (env as typeof env & { DB: D1Database }).DB;
@@ -2887,6 +3168,7 @@ describe('learning experience contract', () => {
     expect((await db.prepare('SELECT request_id,submitted_at FROM study_steps WHERE id=?').bind(step.id).first())).toEqual({ request_id: null, submitted_at: null });
     expect((await db.prepare('SELECT count(*) AS n FROM srs_cards WHERE user_id=? AND learning_track=? AND item_type=? AND item_id=?').bind(owner!.user_id, 'jlpt-ja', step.ref.type, Number(step.ref.id)).first<{ n: number }>())?.n).toBe(0);
     expect((await db.prepare('SELECT count(*) AS n FROM learning_activity_events WHERE user_id=? AND event_id=?').bind(owner!.user_id, 'study:' + step.id).first<{ n: number }>())?.n).toBe(0);
+    expect((await db.prepare('SELECT count(*) AS n FROM study_reward_events WHERE user_id=?').bind(owner!.user_id).first<{n:number}>())?.n).toBe(0);
   });
   it('keeps annotation revisions and track/account scope; no inferred history',async()=>{
     const headers=await learner('jlpt-ja','N5'),note={scope:'day',ref:'2026-09-06',text:'memo',revision:0};
@@ -2912,7 +3194,7 @@ describe('learning experience contract', () => {
       method: 'PUT', headers, body: JSON.stringify(note),
     });
     expect(saved.status).toBe(409);
-    for (const path of ['/learning/profile', '/study/sessions', '/learning/records', '/learning/annotations']) {
+    for (const path of ['/learning/profile', '/study/sessions', '/learning/records', '/learning/annotations', '/learning/motivation']) {
       expect((await fetch('/api/v1' + path + '?expected_track=' + expectedTrack, { headers })).status).toBe(409);
     }
     const db = (env as typeof env & { DB: D1Database }).DB;

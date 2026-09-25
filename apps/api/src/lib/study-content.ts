@@ -341,13 +341,14 @@ export async function buildStudySteps(
   db: DB,
   userId: string,
   profile: LearningProfile,
+  mode: "quick" | "daily" = "daily",
 ): Promise<{ steps: DraftStep[]; notices: string[] }> {
   const topik = profile.learning_track === "topik-ko",
     level = profile.target_level,
     lang = profile.instruction_language;
   const steps: DraftStep[] = [],
     notices: string[] = [];
-  const count = profile.daily_minutes === 10 ? 3 : 5;
+  const count = mode === "quick" ? 2 : profile.daily_minutes === 10 ? 3 : 5;
   const dueRows = topik
     ? await db
         .prepare(
@@ -458,6 +459,7 @@ export async function buildStudySteps(
     .prepare(
       `SELECT st.public_json,st.solution_json FROM study_steps st JOIN study_sessions s ON s.id=st.session_id
     WHERE s.user_id=? AND s.learning_track=? AND s.level=? AND st.phase='practice' AND st.correct=0
+    AND st.submitted_at>=unixepoch()-30*86400
     AND NOT EXISTS(SELECT 1 FROM study_steps done JOIN study_sessions ds ON ds.id=done.session_id
       WHERE ds.user_id=s.user_id AND done.content_ref=st.content_ref AND done.correct=1 AND done.submitted_at>st.submitted_at)
     GROUP BY st.content_ref ORDER BY max(st.submitted_at) DESC LIMIT 2`,
@@ -654,5 +656,20 @@ export async function buildStudySteps(
   steps.push(...practice.filter((s) => !previousRefs.has(studyRefKey(s.ref))));
   if (!practice.length) notices.push("no-practice");
   else if (!linked.size) notices.push("no-links");
+  // 예정 복습과 최근 오답을 먼저 배치한다. 빠른 학습은 처음 4단계만 제공한다.
+  // 이후 서버가 추가하는 지연 재시도는 시간 제한 없이 별도 단계로 유지한다.
+  const priority = { review: 0, retry: 1, learn: 2, practice: 3 };
+  steps.sort((a, b) => priority[a.phase] - priority[b.phase]);
+  if (mode === "quick") {
+    const selected = steps.slice(0, 4);
+    if (!selected.some((s) => s.phase === "learn" || s.phase === "practice")) {
+      const next = steps.find((s) => s.phase === "learn" || s.phase === "practice");
+      if (next) {
+        if (selected.length === 4) selected.pop();
+        selected.push(next);
+      } else notices.push("quick-review-only");
+    }
+    return { steps: selected, notices };
+  }
   return { steps, notices };
 }
