@@ -22,6 +22,7 @@
 | Preview 기능 | 실제 Preview D1 계정 흐름에서 quick 4/4(Chromium 한국어·일본어, mobile WebKit 한국어·일본어), Worker smoke 21 pass/0 fail·관리자/Google positive 2 manual-required. | 실제 Preview 기능 부분 통과 |
 | Preview 전 급수 | 같은 immutable Pages에서 JLPT N5–N1·TOPIK 1–6급 저장→중단→재개→기록·strict-level·정답 비노출·R2 요청 차단을 Chromium/WebKit 22/22, 4.4분, exit 0으로 확인했다. | 실제 Preview 기능 통과; 쓰기는 Preview QA 계정에만 발생 |
 | Preview 음성 | 실제 Chrome `/audio-qa` 일본어·한국어 onend 각 1, 콘솔 warn/error 0. 같은 Pages의 Chromium/WebKit 자동 음성 2/2와 R2/legacy 요청 0, Preview D1 R2 발음 참조 9표면 모두 0, legacy API 410. | 물리 청취 사용자 답변 대기; 자동 음성은 mock |
+| 종료 원격 점검 | `pnpm ops:status:remote` 51 pass/1 known manifest warning/1 fail. 유일한 실패는 미push 로컬 `98deadb`와 origin `79eadf5` 차이. Production D1 pending은 `0029–0030` 두 건으로 확인했다. | Production 변경 없음·push 미실행 |
 | 교차검토 보강 | Push 구독 endpoint를 다른 계정이 재등록해 기존 소유자의 언어/알림 설정을 바꾸는 결함을 fail-first `1 fail`로 재현했다. 소유자가 다르면 409를 반환하도록 수정했다. API 전체 `190/190`, 재타입검사·API dry-run build exit 0. | 로컬 회귀 통과 |
 
 ## 제품 계약
