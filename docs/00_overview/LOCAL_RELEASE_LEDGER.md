@@ -2,7 +2,7 @@
 
 최종 점검: 2026-09-25 KST
 
-## 2026-09-25 빠른 레슨·개인 보상 — Production 배포, Git 최종 동기화 전
+## 2026-09-25 빠른 레슨·개인 보상 — Production 배포 및 Git 동기화
 
 `0029–0030` additive DB, quick/daily 세션, 서버 학습일 스트릭, 안내 세션 XP·성취, opt-in 현지화 Push를 구현했다. Preview source `f8bb1679981844d29cbfdf9283c5343d207b74e8`, Worker `6be32f94-9809-4f16-a1d6-98e21bceac08`, Pages `a2dfacf2.nihongo-n3.pages.dev`에서 실제 사용자 양언어 가청과 학습을 검증했다. 최종 배포 source `032b50ddfea4051309ae95829520e6309e67a6ff`와 Preview source 사이의 변경은 문서 여섯 파일뿐이다. 콘텐츠 재시드·공개 변경은 없었다.
 
@@ -16,9 +16,9 @@
 | Worker·Pages | Worker `aedcbd40-6605-44d2-8227-d145a186bef0`; Pages `f62a8bdb-298e-446a-ab74-7d78ca47efd8`/main. source `032b50d`; Functions bundle 포함 |
 | 사후 검증 | source-pinned content 392/392, FK/FTS·R2 발음 9표면 0, Worker smoke 7/7, auth proxy 3/3, Pages `/`·`/audio-qa` 200·legacy 410; 실제 Chrome PWA 새 자산 및 양언어 onend 1/1·Network 요청 0. Production 사람 가청은 별도 질문 대기 |
 | rollback | 직전 Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`; D1은 데이터 손상일 때만 백업 복원 |
-| Git | 이 기록 작성 시 아직 원격 push 전. 완료 여부는 아래 후속 기록으로만 확정 |
+| Git | 배포 source `032b50d`와 문서 커밋 `29e0c0a`를 `origin/feature/topik-product-expansion`에 push 완료. 이어진 읽기 전용 원격 검사 `52 passed / 1 known warning / 0 failed` |
 
-predeploy/postdeploy gate는 `.artifacts/operations/quick-lesson-production-{predeploy,postdeploy}-result-2026-09-25.json`에서 모두 `passed=true`다. 자동 392개는 운영 원본을 immutable source에 고정했고 current HEAD manifest drift `INC-DATA-024`를 숨기려고 재시드하지 않았다. `pnpm ops:status:remote`의 배포 직후 실패 5건은 문서 기준선 0028/이전 Worker·Pages와 미push SHA의 불일치로, 이 문서 갱신·push 후 재검사해야 한다.
+predeploy/postdeploy gate는 `.artifacts/operations/quick-lesson-production-{predeploy,postdeploy}-result-2026-09-25.json`에서 모두 `passed=true`다. 자동 392개는 운영 원본을 immutable source에 고정했고 current HEAD manifest drift `INC-DATA-024`를 숨기려고 재시드하지 않았다. `pnpm ops:status:remote`의 배포 직후 실패 5건은 문서 기준선 0028/이전 Worker·Pages와 미push SHA의 불일치였으며, 문서 push 후 재검사에서는 `52 passed / 1 known warning / 0 failed`였다.
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
