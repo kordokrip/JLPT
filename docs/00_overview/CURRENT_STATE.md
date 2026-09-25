@@ -1,8 +1,8 @@
 # 현재 구현 상태
 
-> 2026-09-25 후속 후보: 빠른 레슨, 트랙별 학습일·XP·성취, 현지화 알림과 D1 `0029–0030`을 전용 Preview에 적용했습니다. Preview Worker `6be32f94`/Pages `a2dfacf2`/source `f8bb167`이며 **이 후보는 Production 배포가 아닙니다.** Preview 실제 학습·음성 자동 검증과 사람 가청 대기 상태는 [개인 학습 UX 변경 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 참조합니다. 아래 표의 `0028`·Worker/Pages ID는 마지막으로 문서화된 Production 기준선입니다.
+> 2026-09-25 릴리스: 빠른 레슨, 트랙별 학습일·XP·성취, 현지화 알림과 additive D1 `0029–0030`을 Production에 반영했습니다. Worker `aedcbd40`/Pages `f62a8bdb`/배포 source `032b50d`입니다. Preview `a2dfacf2`에서 실제 양언어 청취 확인을 받았고 Production Chrome onend 각 1회를 확인했습니다. Production 사람 가청 답변은 별도 판정합니다. 상세 결과는 [개인 학습 UX 변경 기록](PERSONAL_LEARNING_UX_2026-09-25.md)과 릴리스 원장을 따릅니다.
 
-문서 갱신: 2026-09-25 KST. `0029–0030` 후보의 상태는 첫 단락과 별도 기록을, 아래 `0028` 표와 날짜별 검증은 마지막으로 문서화된 Production 이력으로 구분합니다.
+문서 갱신: 2026-09-25 KST. 아래 표는 현재 Production이며 `2026-09-07` 이하 배포·미완료 문단은 당시 이력입니다.
 
 - 2026-09-11 로컬 재점검: `pnpm ops:status` = `40 passed / 1 warning / 0 failed` (`INC-DATA-024` drift만 경고)
 - 2026-09-11 원격 재점검: `pnpm ops:status:remote` = `40 passed / 1 warning / 11 failed` (네트워크/DNS 접근 장애로 remote 판정은 보류)
@@ -27,17 +27,27 @@ GitHub는 공개 원격에서 **commit·branch·tag 보관** 범위로만 사용
 
 | 구분 | Production 기준 |
 | --- | --- |
-| D1 migration | `0000–0028` |
-| Worker | `c2901280-4c10-4671-bc61-dc262c88c692` |
-| Pages | `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
-| Worker release SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
+| D1 migration | `0000–0030` |
+| Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
+| Pages | `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
+| Worker release SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | 콘텐츠 release | N3 120, TOPIK owner Batch 5 20, historical TOPIK practice v2 300 모두 published |
 | release control | quality requirements/links와 G0–G4 production 연결 |
 | 다음 증량 후보 | Preview만 published: N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
 
-## 최신 — 학습 UX Production 배포 (2026-09-07)
+## 최신 — 빠른 레슨·학습 보상 Production 릴리스 (2026-09-25)
+
+Production은 `f62a8bdb-298e-446a-ab74-7d78ca47efd8`입니다. 아래의 2026-09-07 Pages ID는 이전 릴리스 이력입니다.
+
+- Preview `a2dfacf2`/Worker `6be32f94`의 실제 학습, 전 급수 저장·재개와 사용자 양언어 가청을 확인했습니다. 배포 직전 동일 후보의 `pnpm ops:verify`·fresh D1 `0030`·Preview 빠른 레슨 Chromium/WebKit·모바일 `8/8`·음성 strict gate가 통과했습니다. 앱 runtime은 Preview source `f8bb167`부터 배포 source `032b50d`까지 변경되지 않았고 중간 여섯 파일은 문서뿐입니다.
+- 운영 점검 중 70-table D1 백업을 만들고 원래 Worker/Queue·설정으로 복귀했습니다. 직후 자동 health 검사와 첫 독립 확인은 일시 실패로 남기며, 최종 독립 확인은 maintenance off·health 200·OAuth 설정 200·비인가 쓰기 401·Queue 2개 정상·백업 checksum 70/70입니다. 실제 로컬 복원은 기존 70개 행수·FK 0·FTS 일치와 신규 2개 테이블 0행으로 통과했습니다. 백업은 `0028` profile이며 `0030` 이후 새 보상/알림 행까지 담은 백업은 아닙니다.
+- 운영 D1에 `0029–0030`만 적용해 ledger 31개·pending/unknown 0을 확인했고 콘텐츠 seed/publication은 하지 않았습니다. 운영 콘텐츠 source `3485c6e` 고정 verifier 392/392, FK/FTS, R2 발음 9표면 참조 0은 배포 후에도 통과했습니다.
+- Worker 공개 smoke `7/7`, Pages auth proxy 설정·로그인 차단·Google 시작 `3/3`, canonical `/`·`/audio-qa` 200, legacy `/api/v1/audio/test` 410을 확인했습니다. 실제 Chrome에서 PWA가 새 `index-shAZY8gr.js`로 교체된 뒤 일본어/한국어 onend 각 1회, 재생 구간 Network 요청 0을 확인했습니다. 이는 Production 사람 가청 확인과 별개입니다.
+- rollback은 직전 Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, 백업 `.artifacts/d1-backups/quick-lesson-2026-09-25-pre0029`입니다. 데이터 손상이 없다면 additive migration과 사용자 기록을 되돌리지 않습니다. Git 원격 동기화 여부는 릴리스 원장에서 별도 확인합니다.
+
+## 이전 릴리스 — 학습 UX Production 배포 (2026-09-07)
 
 Production은 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 검증 runtime793b671과 배포 commit a7d5d87의 apps/packages/lock tree가 동일하고, 운영에서 내려받은 정적 파일70개가 사용자가 청취한 Preview555와 SHA-256까지 일치합니다. 콘텐츠 seed/publication은 실행하지 않았습니다.
 

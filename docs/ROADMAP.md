@@ -1,12 +1,12 @@
 # 학습 콘텐츠·플랫폼 로드맵
 
-> 2026-09-25 우선순위: [빠른 학습·개인 보상 후보](00_overview/PERSONAL_LEARNING_UX_2026-09-25.md)는 로컬 gate를 지나 전용 Preview D1 `0030`·Worker/Pages에 적용됐다. Preview 양언어 quick·음성 자동 검사는 통과했고 전 급수 추가 검사와 같은 배포본의 사람 가청, Production 백업/복원은 남았다. 이 조건이 없으면 `0029–0030`과 Worker/Pages를 Production에 반영하지 않는다. 자유 TOPIK practice의 client activity만으로 확정 스트릭을 만들지 않는 서버 채점 경계도 후속 해결 대상으로 둔다. 이 문서 아래 `0028`은 마지막으로 문서화된 Production 기준선이다.
+> 2026-09-25 현재: [빠른 학습·개인 보상 릴리스](00_overview/PERSONAL_LEARNING_UX_2026-09-25.md)는 Preview 실학습·사용자 양언어 가청, 운영70-table 백업/복원과 predeploy gate를 거쳐 Production `0029–0030`/Worker `aedcbd40`/Pages `f62a8bdb`에 반영됐다. Production Chrome 양언어 onend·R2/legacy 요청 0을 확인했고 사람 가청은 별도 질문 중이다. 다음 우선순위는 실제 7/30일 사용 기록과 진입/재개 UX를 관찰하는 것이다. 자유 TOPIK practice의 client activity만으로 확정 스트릭을 만들지 않는 서버 채점 경계는 유지한다.
 
 모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
 
-최종 점검: 2026-09-11 KST. 문서·폴더 정비 및 운영 가이드 정합성 업데이트를 완료했습니다. 기존 콘텐츠 Preview160개는 공개하지 않고 이후 사용성 관찰과 분리합니다.
+최종 점검: 2026-09-25 KST. 기존 콘텐츠 Preview160개는 Production에 공개하지 않고 이후 사용성 관찰과 분리합니다.
 
-로컬 기준점은 2026-09-11 `pnpm ops:status`에서 `40 passed / 1 warning / 0 failed`입니다 (`INC-DATA-024` 경고만 유지). 반면 `pnpm ops:status:remote`는 현재 실행 환경의 DNS/네트워크 제약으로 `failed 11`로 판단되어 원격 확정 판정은 미수행 상태입니다.
+이번 릴리스 직전 로컬 `pnpm ops:status`는 `40 pass / 1 known warning / 0 fail`이었고, 배포 직후 원격 상태 명령은 아직 이전 문서 기준선을 비교해 5건 실패했다. 본 문서·원장과 Git 동기화 후 최종 재실행 결과를 기준으로 확정한다. 단발 Cloudflare D1 `7403`은 후속 9표면 참조 0 조회와 분리 보존한다.
 
 ## 우선 작업 — 매일 이어지는 개인 학습
 
@@ -16,10 +16,10 @@
 
 ## Production 완료 기준선
 
-- D1 `nihongo-n3-prod-v2` migration `0000–0028`
-- Worker `c2901280-4c10-4671-bc61-dc262c88c692` (rollback6bbe4bbd)
-- Pages `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback9cc58a1f)
-- Worker/web source `a7d5d87946334fe8c7970b8f124853aaba443955`; content source `3485c6ef8addda3cd3e209730646c296175cf3c9` 유지
+- D1 `nihongo-n3-prod-v2` migration `0000–0030`
+- Worker `aedcbd40-6605-44d2-8227-d145a186bef0` (rollback `c2901280`)
+- Pages `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback `ce4e5e57`)
+- Worker/web 배포 source `032b50ddfea4051309ae95829520e6309e67a6ff`; content source `3485c6ef8addda3cd3e209730646c296175cf3c9` 유지
 - JLPT N2 Batch 1–5, N1 Batch 1–4, TOPIK owner Batch 1–5
 - TOPIK practice v2 300문항 공개, v1 28문항 보존·비공개
 - TOPIK v2 선택형 영역별 `15/15/15/15`, JLPT 정적 독해 정답 위치 편향 검사 통과

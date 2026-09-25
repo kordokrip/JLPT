@@ -1,19 +1,21 @@
 # 개인용 JLPT · TOPIK PWA 코드베이스 분석
 
-최종 점검: 2026-09-07 KST. 새 학습 UX와0028을 Production에 반영했습니다. 검증 runtime793b671과 배포 a7d5d87은 앱/패키지/lock tree가 동일합니다. 로컬458개·E2E217/30/0, Preview181/6/0(시각60개 제외), 실제 Preview 로그인·사용자 양언어 청취, 새 백업/복원과 strict predeploy를 확인했습니다. 사후 DB392/392·기존21테이블 hash 보존·Worker7/auth proxy3·정적70파일 hash가 통과했습니다. 실제 Production Chrome onend각1회와 speech-mock E2E2개는 사람 가청과 구분합니다. [현재 상태](docs/00_overview/CURRENT_STATE.md)에 증적과 배포/후속 Git 상태를 기록합니다.
+최종 점검: 2026-09-25 KST. 빠른 레슨·트랙별 스트릭/XP·현지화 Push와 additive `0029–0030`을 Production에 반영했습니다. Preview runtime `f8bb167`과 배포 `032b50d` 사이에는 문서 여섯 파일만 변경됐습니다. 현 세션 로컬 `ops:verify`·Preview 빠른 레슨 8/8·사용자 양언어 청취·70-table 백업/복원·strict predeploy를 확인했습니다. 사후 DB source-pinned392/392·FK/FTS·R2참조0·Worker7/auth proxy3, 실제 Production Chrome onend각1회/재생 중 요청0을 확인했으며 Production 사람 가청은 별도입니다. [현재 상태](docs/00_overview/CURRENT_STATE.md)에 증적과 배포/후속 Git 상태를 기록합니다.
 
 ## Production 기준선
 
 | 상태 | DB/런타임 | 콘텐츠 |
 | --- | --- | --- |
-| production | D1 `0000–0028`, Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `https://ce4e5e57.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
+| production | D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `https://f62a8bdb.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
 | 2026-08-23 콘텐츠 Preview 기록 | 당시 Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`; 현재 Preview 배포는 릴리스 원장 참조 | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
 
-Worker/Pages source SHA는 `a7d5d87946334fe8c7970b8f124853aaba443955`, Pages ID는 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 콘텐츠 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`와 manifest d102를 유지하며 앱 배포 SHA와 혼용하지 않습니다.
+Worker/Pages source SHA는 `032b50ddfea4051309ae95829520e6309e67a6ff`, Pages ID는 `f62a8bdb-298e-446a-ab74-7d78ca47efd8`입니다. 콘텐츠 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`와 manifest d102를 유지하며 앱 배포 SHA와 혼용하지 않습니다.
 
 ## Production 학습 경험
 
 Production에 `0028_learning_experience.sql`로 프로필, 세션, 단계별 결과, revision 기반 메모, 검수된 문제↔개념 링크 다섯 테이블을 추가했습니다. 기존 content/progress/SRS/daily_logs는 보존합니다.
+
+2026-09-25의 `0029_study_motivation.sql`은 기존 세션에 기본 `daily`와 선택적 `quick` mode, 원본 ID 중복 차단 및 하루100 XP 상한을 가진 `study_reward_events`를 추가했습니다. `0030_push_notification_deliveries.sql`은 구독의 알림 언어와 endpoint×현지 날짜×발송 시간대 claim을 추가합니다. 스트릭은 서버에 수락된 학습 행동과 과거 일지를 프로필 시간대로 집계합니다. 조회·해설·음성만으로 학습일/XP를 올리지 않고 자유 TOPIK practice의 client activity만으로 서버 확정 학습일을 만들지 않습니다. 기존 API request/response는 유지하고 quick `mode`만 선택적으로 추가합니다.
 
 | 계층 | 새 구현 진입점 |
 | --- | --- |
@@ -58,6 +60,8 @@ packages/shared DTO·FSRS ── apps/api Worker
 | `0026_release_quality_links.sql` | `content_release_quality_requirements`와 `content_release_quality_audit_links`. 완전하고 승인된 audit 링크 집합 없이는 공개 차단 |
 | `0027_google_speech_contract.sql` | `content_speech_bindings`: provider `google-browser`, state `ready|unavailable`. legacy `content_audio_bindings`는 한 호환 릴리스 동안 보존하되 신규 insert 차단 |
 | `0028_learning_experience.sql` | learning profile·study sessions/steps·annotations·content links. 기존 콘텐츠/학습 이력 보존, 새 백업70-table profile |
+| `0029_study_motivation.sql` | quick/daily 세션 mode와 idempotent `study_reward_events`, 트랙별 일일 XP 100 상한 |
+| `0030_push_notification_deliveries.sql` | 구독 알림 언어와 endpoint·날짜·시간대 중복 발송 claim; 새 백업72-table profile |
 
 `0025`는 뒤 migration의 테이블을 참조하지 않습니다. release-link 의존 trigger는 `0026`이 관련 테이블을 만든 뒤 설치하므로 fresh migration 순서가 유효합니다.
 

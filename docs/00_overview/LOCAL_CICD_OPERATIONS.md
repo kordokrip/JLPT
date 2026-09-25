@@ -1,8 +1,10 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-09-25 KST. 아래 2026-09-07 릴리스 수치는 과거 Production 증거이며 2026-09-25 후보 통과 증거가 아니다.
+최종 점검: 2026-09-25 KST. 현재 Production은 `0029–0030`/Worker `aedcbd40`/Pages `f62a8bdb`이다. 아래 2026-09-07 릴리스 수치는 과거 증거이며 이번 릴리스 통과 근거가 아니다.
 
-## 2026-09-25 빠른 학습 후보 추가 gate
+## 2026-09-25 빠른 학습 릴리스 gate
+
+이번 릴리스에서 `pnpm ops:verify` exit 0, Preview 빠른 레슨 데스크톱·모바일 Chromium/WebKit 8/8, Preview 사람 양언어 청취·실제 Chrome onend 1/1·Native Network 요청 0, Production 백업70·로컬 복원/FK0/FTS, 배포 직전·직후 운영 콘텐츠 고정 verifier392/392·R2 9표면0, Worker smoke7/7·auth proxy3/3·Production Chrome 양언어 onend 1/1을 기록했다. `production-predeploy`와 `postdeploy` gate checker가 모두 exit0이다. 운영 점검 직후 health 단발 실패는 [오류 원장](ERROR_LEDGER.md)에 보존했다. Production 사람 가청은 Preview의 사용자 답변과 별도로 판정한다. Git 최종 동기화 여부는 릴리스 원장을 따른다.
 
 - DB `0029_study_motivation.sql`과 `0030_push_notification_deliveries.sql`을 fresh와 `0028` 운영형 snapshot의 additive upgrade 양쪽에서 검증한다. 백업 allowlist는 새 후보에서 `0030`/72개 테이블이다. 과거 `0028`/70개 백업을 새 테이블까지 보존한 백업이라고 표시하지 않는다.
 - `pnpm openapi:generate && pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh` 및 `pnpm docs:check`, `git diff --check`를 같은 후보에서 실행한다. 실패·skip 수를 그대로 기록한다.

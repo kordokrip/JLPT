@@ -1,6 +1,6 @@
 # 개인 학습 UX · 빠른 레슨과 기록 기반 동기부여
 
-기준일: 2026-09-25 KST. 이 문서는 이번 변경 후보의 시계열·계약·검증 경계를 기록한다. 현재 Production 기준선은 [현재 상태](CURRENT_STATE.md)와 [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다.
+기준일: 2026-09-25 KST. 이 문서는 변경 후보부터 Production까지의 시계열·계약·검증 경계를 기록한다. 현재 Production 기준선은 [현재 상태](CURRENT_STATE.md)와 [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다.
 
 ## 시계열
 
@@ -24,6 +24,11 @@
 | Preview 음성 | 실제 Chrome `/audio-qa` 일본어·한국어 onend 각 1, 콘솔 warn/error 0. 같은 Pages의 Chromium/WebKit 자동 음성 2/2와 R2/legacy 요청 0, Preview D1 R2 발음 참조 9표면 모두 0, legacy API 410. | 물리 청취 사용자 답변 대기; 자동 음성은 mock |
 | 종료 원격 점검 | `pnpm ops:status:remote` 51 pass/1 known manifest warning/1 fail. 유일한 실패는 미push 로컬 `98deadb`와 origin `79eadf5` 차이. Production D1 pending은 `0029–0030` 두 건으로 확인했다. | Production 변경 없음·push 미실행 |
 | 교차검토 보강 | Push 구독 endpoint를 다른 계정이 재등록해 기존 소유자의 언어/알림 설정을 바꾸는 결함을 fail-first `1 fail`로 재현했다. 소유자가 다르면 409를 반환하도록 수정했다. API 전체 `190/190`, 재타입검사·API dry-run build exit 0. | 로컬 회귀 통과 |
+| 현 세션 최종 확인 | Preview `a2dfacf2`의 사용자 실제 양언어 청취 답변, 실제 Chrome onend 1/1·재생 중 Native Network 요청 0을 같은 배포/source에 연결했다. strict audio gate exit 0. `pnpm ops:verify` exit 0, 같은 Preview의 빠른 레슨 4개 브라우저 환경×2언어 `8/8`. | Production 진행 허용 |
+| 운영 백업·복원 | 운영 Worker `c2901280`에서 잠시 read-only·Queue pause로 70-table `0028` 백업. 점검 직후 자동 health 실패와 첫 postcheck 실패를 보존하고, 후속 독립 postcheck는 Worker/Queue·설정 원복, OAuth 200, 비인가 쓰기 401, checksum 70/70을 확인했다. 임시 로컬 `0030` 복원은 FK 0·FTS 일치·새 2개 테이블 0. | 백업·복원 gate 통과, 최초 실패 보존 |
+| 배포 직전 DB 검증 | 기존 콘텐츠 immutable source 고정 392/392, 운영 ledger `0028`까지 29개·pending `0029–0030`만, FK/FTS, R2 발음 9표면 0. 첫 predeploy wrapper는 과거 `pending=0` 판정을 복사해 exit 1이었고, 해당 판정만 현재 릴리스의 정확한 pending 2개로 수정한 재실행은 exit 0. | predeploy gate 통과 |
+| 운영 DB·Worker·Pages | `0029–0030` 적용 후 migration 31개·pending/unknown 0, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `f62a8bdb-298e-446a-ab74-7d78ca47efd8`/main, 배포 source `032b50d`. Preview `f8bb167` 이후 runtime 코드는 변경되지 않고 문서 6개만 갱신됐다. 콘텐츠 seed 없음. | Production 반영 |
+| 배포 후 | source-pinned verifier 392/392, FK/FTS, R2 발음 참조 0, Worker smoke 7/7, auth proxy 3/3, canonical `/`·`/audio-qa` 200·legacy 410. Chrome의 기존 PWA는 새 `index-shAZY8gr.js`로 갱신됐고 양언어 onend 1/1, 그 재생 구간 Network 요청 0. Production 사람 가청 답변은 질문 대기. | 자동·실제 브라우저 관측 통과; 사람 청취 별도 |
 
 ## 제품 계약
 
@@ -39,8 +44,8 @@
 | --- | --- | --- |
 | 로컬 | 0028→0029→0030 upgrade, fresh D1, FK, 백업 profile 72개, API/Web/DB 테스트, OpenAPI·typecheck·build | 명령 종료 코드 0. 전용 upgrade/profile 테스트 통과 |
 | 브라우저 | 양 트랙·전 급수, quick→제출→재개→기록, Chromium/WebKit 모바일, 일본어 문구·접근성 | 로컬 양언어 quick 4엔진 8/8, 전 급수 기존 저장·재개+음성 mock 24/24; Preview quick 4/4·전 급수 22/22. 전체 앱 E2E·스크린리더 실기 전수는 미실행 |
-| 음성 | 실제 한국어·일본어 재생, R2/legacy 요청 0, 같은 배포 후보의 사람 가청 | 새 Preview Chrome onend 각 1·콘솔 오류 0, 자동 2/2·R2 D1 0·legacy 410. 사람 가청 대기 |
+| 음성 | 실제 한국어·일본어 재생, R2/legacy 요청 0, 같은 배포 후보의 사람 가청 | Preview 사람 양언어 청취 확인·Chrome onend 1/1·Native Network 요청 0. Production Chrome onend 1/1·요청 0; Production 사람 가청은 별도 대기 |
 | Preview | 전용 D1 migration, 기존 사용자·콘텐츠 보존, 실제 로그인 및 smoke | migration 0029–0030·기존 수량/FK 보존, 기능 4/4, smoke 21/0. Google positive/admin 수동 2건 미실행 |
-| Production | 현 세션 승인 범위, 최신 D1 backup/restore, 이전 Worker/Pages ID, predeploy 통과, 사후 smoke | 미실행 |
+| Production | 현 세션 승인 범위, 최신 D1 backup/restore, 이전 Worker/Pages ID, predeploy 통과, 사후 smoke | 적용·사후 gate 통과. Git push는 원장 후속 상태 확인 |
 
-테스트가 실패하거나 원격 D1 접근 권한이 재발하면 Production은 기존 릴리스로 유지한다. 과거 음성 가청·Preview 테스트를 새 후보의 통과 증거로 옮기지 않는다.
+배포 전 Cloudflare D1 `7403` 단발과 백업 직후 health 불일치는 최초 실패를 보존한다. 후속 독립 검사에서 회복됐다고 해서 최초 명령을 통과로 고쳐 쓰지 않는다. 과거 음성 가청·Preview 테스트를 새 후보의 통과 증거로 옮기지 않았다. 배포 후 문제가 재현되면 이전 Worker/Pages로 복귀하며 D1 전체 복원은 확인된 데이터 손상에 한정한다.

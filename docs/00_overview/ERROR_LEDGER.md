@@ -2,13 +2,18 @@
 
 ## 2026-09-25 개인 학습 UX 후보
 
+2026-09-25 Production 후속: `0029–0030`, Worker `aedcbd40`, Pages `f62a8bdb`를 반영했다. Preview `a2dfacf2`의 사용자 양언어 실제 청취와 Production Chrome 양언어 onend 1/1·재생 중 Network 요청 0을 구분한다. Production 사람 가청 질문은 별도 대기다. 운영 콘텐츠 고정 verifier 392/392·R2 발음 9표면 0·Worker 7/7·auth proxy 3/3·legacy 410을 사후 확인했다. 기존 콘텐츠는 재시드하지 않았고 `INC-DATA-024`는 계속 열려 있다.
+
+- `INC-OPS-063` — 70-table 백업 자체는 exit 0이었으나 점검 해제 직후 wrapper health 검사와 첫 독립 postcheck가 각각 실패했다. 후속 독립 postcheck에서 기존 Worker `c2901280`, maintenance off, auth config 200/Google true, 비인가 activity 401, Queue 2개 원상복구, 설정 hash 동일, checksum 70/70을 확인했다. 원인은 확정하지 않고 최초 실패를 보존한다. 다음 백업도 복귀 직후 HTTP 단일 응답을 유일한 판정으로 쓰지 않고 독립 재확인한다.
+- `INC-OPS-064` — 배포 직전 immutable content verifier는 392/392·FK/FTS·R2 0을 통과했지만 복사한 wrapper가 `pending=0`을 요구해 최초 exit 1이었다. 해당 시점에는 정확히 `0029–0030` 두 migration이 예정되어 있었다. 현재 릴리스의 baseline만 `applied=29/latest=0028/pending=[0029,0030]/unknown=0`으로 수정해 재실행 exit 0. 실패한 최초 보고서는 보존했고 DB 결함이나 이미 적용된 migration으로 오진하지 않는다.
+
 - `INC-UX-060` — 새 학습 세션 제출이 기존 스트릭에서 누락될 수 있음. 1차 증거: `/logs/streak`의 `daily_logs` 전용·KST 날짜 집계. 2차 증거: 안내 세션의 수락 결과는 `study_steps`와 `learning_activity_events`에 기록됨. 새 집계는 트랙·프로필 시간대·과거 일지를 함께 검증하며 조회·해설·음성 이벤트는 제외한다.
 - `INC-PUSH-061` — TOPIK 일본어 사용자에게 한국어 고정 알림이 전송되고 KST 밖 시간대가 반영되지 않음. 1차 증거: Worker cron의 한국어 상수·고정 UTC 2회. 2차 증거: 프로필 시간대와 UI 언어 선택이 분리되어 있음. 알림 동의, 발송 중복, 실제 수락된 당일 학습 여부를 회귀 검사한다.
 - `INC-PUSH-062` — 구독 endpoint 충돌 시 다른 계정이 기존 소유자의 알림 설정을 바꿀 수 있었다. 신규 계정 2개로 fail-first `201`(기대 409)을 확인했다. `ON CONFLICT ... WHERE push_subscriptions.user_id=excluded.user_id`와 변경 행수 검사로 다른 계정의 덮어쓰기를 차단했다. 동일 전용 테스트와 API 전체 `190/190`이 통과했다. 새 후보 원격 검증 전까지 종료 판정은 보류한다.
 - 2026-09-25 원격 사전 조회의 D1 검사는 Cloudflare API `7403` 권한 오류로 실패했다. 이후 동일 `ops:status:remote` 재조회는 50 pass/2 warn/1 fail이며 D1 실패는 재현되지 않고 유일한 실패는 미push Git SHA 차이다. 최초 실패를 삭제하지 않으며 이 결과를 새 후보 Preview 검증이나 배포 완료로 확대하지 않는다.
 
-최종 점검: 2026-09-07 KST
-현재 상태: 새 학습 UX·`0028`을 Production Worker `c2901280`/Pages `ce4e5e57`(배포source a7d5d87)에 반영했다. 최신555 Preview에 대한 사용자 양언어 청취 확인을 새 증거로 기록했고 strict gate를 통과했다. Production 실제 Chrome의 onend각1은 확인했지만 Production 사람 가청/native HAR를 별도 수집했다고 표시하지 않는다. 현재 HEAD와 운영 콘텐츠 source3485/manifestd102의 drift는 별도 알려진 문제다.
+최종 점검: 2026-09-25 KST
+현재 상태: 빠른 레슨·보상·알림 `0029–0030`을 Production Worker `aedcbd40`/Pages `f62a8bdb`(배포 source032b50d)에 반영했다. 현 Preview의 사용자 양언어 청취와 실제 Chrome Network/onend를 배포 후보에 연결했으며 Production의 Chrome onend와 사람 가청은 구분한다. 현재 HEAD와 운영 콘텐츠 source3485/manifestd102의 drift는 별도 알려진 문제다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 

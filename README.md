@@ -2,14 +2,14 @@
 
 JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
 
-## Production 기준 — 2026-09-07 배포
+## Production 기준 — 2026-09-25 배포
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| production D1 | `nihongo-n3-prod-v2`, migration `0000–0028` |
-| production Worker | `c2901280-4c10-4671-bc61-dc262c88c692` |
-| production Pages | `https://ce4e5e57.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web/Worker source SHA | `a7d5d87946334fe8c7970b8f124853aaba443955` |
+| production D1 | `nihongo-n3-prod-v2`, migration `0000–0030` |
+| production Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
+| production Pages | `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web/Worker source SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` (재시드 없음) |
 | production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
 
@@ -17,7 +17,11 @@ JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입�
 
 2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
 
-Production Pages ID는 `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`입니다. 배포 SHA와 후속 문서/운영 도구 commit은 구분합니다.
+Production Pages ID는 `f62a8bdb-298e-446a-ab74-7d78ca47efd8`입니다. 배포 SHA와 후속 문서/운영 도구 commit은 구분합니다.
+
+## 2026-09-25 빠른 레슨·개인 보상 — Production 반영
+
+홈에서 3–5분 빠른 레슨을 시작·재개하고, 서버 수락 학습일의 트랙별 스트릭과 안내 세션 XP·성취를 기록합니다. 알림은 동의한 사용자에게 선택 UI 언어와 시간대로 보냅니다. additive `0029–0030`만 적용했고 콘텐츠를 재시드하지 않았습니다. Preview에서 양언어 실제 청취, Chromium/WebKit·모바일 빠른 레슨 8/8을 확인했습니다. 운영은 70-table 백업/복원, 배포 전후 source-pinned 콘텐츠 392/392, FK/FTS·R2 참조 0, Worker 7/7·인증 proxy 3/3을 통과했습니다. Production 실제 Chrome의 PWA 최신 자산·양언어 onend·재생 구간 요청 0을 확인했으며 사람 가청은 별도 판정입니다. 상세 실패 이력과 rollback은 [릴리스 원장](./docs/00_overview/LOCAL_RELEASE_LEDGER.md)을 따릅니다.
 
 ## 2026-09-07 학습 UX — Production 반영
 
@@ -71,7 +75,7 @@ pnpm -F @nihongo-n3/db question:quality
 
 현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
 
-현재 로컬 `verify:fresh`는 새 후보 migration `0000–0028`까지 검사합니다. 위 `0000–0027` 복구 기록은 2026-08-24 당시의 역사적 검증 범위입니다.
+현재 로컬 `verify:fresh`는 migration `0000–0030`까지 검사합니다. 위 `0000–0027` 복구 기록은 2026-08-24 당시의 역사적 검증 범위입니다.
 
 운영 감사, 버그·리팩터링 gate, 로컬 CI/CD와 Cloudflare 상태 추적은 [운영관리 runbook](./docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md)과 프로젝트 전담 `project-operations-steward` Sub Agent가 담당합니다. 작업 전후 `pnpm ops:status`, 전체 로컬 gate는 `pnpm ops:verify`, 원격 read-only 확인은 `pnpm ops:status:remote`를 사용합니다.
 

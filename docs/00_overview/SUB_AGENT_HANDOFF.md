@@ -2,7 +2,7 @@
 
 최종 점검: 2026-09-25 KST
 
-> `0029–0030`/quick lesson/XP/streak/push는 source `f8bb167`로 전용 Preview D1·Worker·Pages에 적용됐으며 [2026-09-25 후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 먼저 보십시오. 아래 `0028`·Worker/Pages·rollback ID는 마지막으로 문서화한 Production 기준선이며 새 후보의 Production 완료 표시가 아닙니다. 새 세션의 XP는 안내 세션에 한정하고, 자유 TOPIK practice의 client activity만으로 서버 확정 스트릭을 만들지 않습니다. 원격 D1 7403 사전 실패는 재조회에서 해소됐으나 당시 실패 증거를 삭제하지 않습니다.
+> `0029–0030`/quick lesson/XP/streak/현지화 Push는 source `032b50d`로 Production D1·Worker·Pages에 반영됐습니다. [2026-09-25 릴리스 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 먼저 보십시오. 새 세션 XP는 안내 세션에 한정하고, 자유 TOPIK practice의 client activity만으로 서버 확정 스트릭을 만들지 않습니다. 원격 D1 7403 단발과 백업 직후 health 실패는 후속 성공으로 덮어쓰지 않습니다.
 
 이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
 
@@ -30,18 +30,20 @@
 
 | 범위 | 현재 사실 |
 | --- | --- |
-| Production DB | D1 migration `0000–0028`(29개); canonical과 TOPIK practice v2 300, N3 practice 120, TOPIK owner Batch 5까지 공개, 재시드 없음 |
+| Production DB | D1 migration `0000–0030`(31개); canonical과 TOPIK practice v2 300, N3 practice 120, TOPIK owner Batch 5까지 공개, 재시드 없음 |
 | Preview 후보 | N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
-| Pages | Production `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, canonical `https://nihongo-n3.pages.dev` |
-| Worker / source | `c2901280-4c10-4671-bc61-dc262c88c692`; Worker·Pages 배포 commit `a7d5d87946334fe8c7970b8f124853aaba443955`, 검증 runtime `793b671a5c7503017041bbaee4e8de7edb492e20`와 apps/packages/lock 동일 |
+| Pages | Production `f62a8bdb-298e-446a-ab74-7d78ca47efd8`, canonical `https://nihongo-n3.pages.dev` |
+| Worker / source | `aedcbd40-6605-44d2-8227-d145a186bef0`; Worker·Pages 배포 commit `032b50ddfea4051309ae95829520e6309e67a6ff`, 검증 Preview runtime `f8bb167`와 앱/패키지/lock 동일 |
 | 콘텐츠 / 결함 | content source `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4` 유지. 031–033 수정은 운영 반영됐으며 상태 판정은 오류 원장의 사후 증거를 따른다. `INC-DATA-024`는 source-pinned verifier로 관리 |
-| rollback | Worker `6bbe4bbd-b02d-42d3-9dfc-ad9187a86872`, Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`; 데이터 손상 없으면0028·학습 기록 보존 |
+| rollback | Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`; 데이터 손상 없으면 additive migration·학습 기록 보존 |
 | CI/CD | GitHub Actions 비활성; 승인된 로컬 gate와 MD 원장이 release evidence |
-| Git 종료 | 앱 이력+문서/ops042fbb2 push 완료, 이후 remote52/1/0·로컬40/1/0. 종료 문서 후속 commit과 배포 a7d5d87을 구분; tip 증거는 final-git artifact |
+| Git 종료 | 새 릴리스 배포 source `032b50d`의 원격 동기화는 릴리스 원장에서 별도 확인. 과거 `042fbb2`/remote52/1/0은 2026-09-07 이력 |
 
 ## 코드·데이터 지도
 
-### 현재 학습 UX — Production 반영
+2026-09-25 현재: `packages/db/drizzle-v2/0029_study_motivation.sql`, `0030_push_notification_deliveries.sql`을 운영에 적용했다. `apps/api/src/routes/learning-experience.ts`의 quick 세션·motivation API와 보상 원장, `apps/web`의 오늘/기록 빠른 레슨 진입, 현지화 Push 경로를 현재 계약으로 본다. 안내 세션의 서버 수락 행동만 XP를 지급한다. 운영 백업 `.artifacts/d1-backups/quick-lesson-2026-09-25-pre0029`는 0028/70-table profile이고 신규 2개 테이블까지 담은 0030 백업이 아니다. 사후 고정 verifier392/392·R2참조0·Chrome 음성 onend/Network 결과는 릴리스 원장을 따른다.
+
+### 2026-09-07 이전 학습 UX — 당시 Production 반영 이력
 
 최종 Preview 기능은181 pass/6 로컬 fixture skip/0 fail이며 시각60개는 별도 제외다. 같은 runtime의 로컬458개·fresh0028·전체 브라우저217/30/0 증거와 구분한다. 사용자가 최신 Preview555fc0c4의 한국어·일본어 가청을 확인해 실제 Network/onend 증거와 함께 strict predeploy를 통과했다. 과거 질문의 답을 옮긴 것이 아니다.
 
@@ -92,7 +94,7 @@ Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·qu
 - 테스트: `learning-experience-migration.test.ts`, API `learning experience contract`, `e2e/learning-experience.spec.ts`, 메모 지연 응답·result 소유권 웹 테스트.
 - 콘텐츠↔개념 approved link는 아직 생성하지 않았다. 새 연상문·이미지·문항 생성/공개 작업이 아니므로 기존 문제를 개념 맞춤 출제로 과장하지 않는다.
 - `최초 응답`은 세션 `practice` 제출 수이지 평생 처음 접한 고유 문항 수가 아니다. 힌트 사용량·홈 진입→시작 시간·재개 성공률은 아직 구현된 운영 지표가 아니며, `revealed`는 개념/복습 해설 열람만 나타낸다.
-- backup/restore는 명시적 0027/65·0028/70 profile이다. 이번 배포 전65개 Production backup의 local0028 restore는 FK0·새5개 테이블0행으로 통과했지만 `coversLocalSchema=false`다. migration 이후 생긴 새 학습 기록까지 포함한 백업은 아니다. 기존 transfer/사용자 정리 도구는 별도0028 검증 전 사용하지 않는다.
+- backup/restore는 명시적 0027/65·0028/70·0030/72 profile이다. 이번 2026-09-25 배포 전 운영 백업은 0028/70이고 local0030 restore에서 새2개 테이블은0행·`coversLocalSchema=false`다. migration 이후 생긴 보상/알림 기록까지 포함한 백업은 아니다. 기존 transfer/사용자 정리 도구는 새 schema 검증 전 사용하지 않는다.
 - 자유 SRS의 시계 차이 결함은 `useSRS.ts`와 `lib/srs-due-snapshot.ts`에서 서버due 스냅샷과 IDB 현재값을 대조해 수정한다. 서버시각을 맞춘다며 FSRS날짜를 덮거나, 늦은due응답이 낙관평가를 덮게 바꾸지 않는다. hook단위와 실제1분clock-skew E2E를 함께 확인한다. 원격에서 발견한 mockrecords 실패는SW interception 문제로 제품 저장 오류와 구분한다.
 - SRSCard 양면 접근성과 전역 키보드 단축키는 `INC-SRS-053`으로 추적한다. 음성 테스트는 실제 뒤집기 이후 재생해야 하고, 카드 준비 전 false를 반환해 skip하면 안 된다. `.artifacts/operations/learning-experience-2026-09-06-srs-final-e2e.log`는209 pass/30 skip/2 fail인 중간 실패 증거이며 최종 통과로 인용하지 않는다.
 - `VITE_LEARNING_EXPERIENCE`는 build-time 화면 플래그이며 Worker 전체 rollback 대체물이 아니다. `0028`은 이전 Worker가 무시하는 additive 테이블이다.
@@ -100,7 +102,7 @@ Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·qu
 - `apps/web`: React PWA, Dexie queue, 퀴즈·TOPIK·FSRS UI, Google 우선 동일 언어 browser speech.
 - `apps/api`: Cloudflare Worker/Hono, 인증·track guard, 학습 API, OpenAPI source.
 - `packages/shared`: Zod API schema, DTO, FSRS와 공통 정책.
-- `packages/db`: Drizzle schema, 로컬·Production migration `0000–0028`, seed, quality/release verifier.
+- `packages/db`: Drizzle schema, 로컬·Production migration `0000–0030`, seed, quality/release verifier.
 - `docs/01_n5`–`docs/07_topik`: 코드가 읽는 학습 source-of-truth가 포함된 영역. 삭제 전에 문자열 참조·manifest source·checksum을 대조한다.
 - `e2e`: Chromium/WebKit 제품 흐름과 발음의 server/R2 요청 0건 검증.
 

@@ -4,9 +4,9 @@
 
 **Frequency:** 작업 시작·종료, 버그 수정, 리팩터링, Preview/Production 전후, 주 1회
 
-**Last Updated:** 2026-09-07 KST
+**Last Updated:** 2026-09-25 KST
 
-**Last Run:** 2026-09-07 학습 UX Production 배포·Git042fbb2 push 후 remote52/1/0 통과; 종료 문서 별도 보존
+**Last Run:** 2026-09-25 빠른 레슨 Production 배포·postdeploy gate 통과; Git 문서 후속 동기화 진행 중
 
 ## 목적
 
@@ -14,7 +14,7 @@
 
 현재 Production 값의 단일 기준은 [현재 상태](CURRENT_STATE.md)입니다. 이 문서는 절차를, [오류 원장](ERROR_LEDGER.md)은 버그 상태를, [로컬 CI/CD 기준](LOCAL_CICD_OPERATIONS.md)은 gate를, [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)은 실행 이력을 관리합니다.
 
-현재 운영은 Worker `c2901280-4c10-4671-bc61-dc262c88c692`·Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`·migration0000–0028입니다. 배포 commit a7d5d87은 검증 runtime793b671과 apps/packages/lock가 동일합니다. 운영 OAuth·기존 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 없습니다. rollback은 Worker6bbe4bbd·Pages9cc58a1f이며 데이터 손상 없이0028·학습 기록을 되돌리지 않습니다. 전체 ID와 증거는 릴리스 원장을 따릅니다.
+현재 운영은 Worker `aedcbd40-6605-44d2-8227-d145a186bef0`·Pages `f62a8bdb-298e-446a-ab74-7d78ca47efd8`·migration0000–0030입니다. 배포 commit `032b50d`와 검증 Preview runtime `f8bb167` 사이에는 문서 여섯 파일만 변경됐습니다. 운영 OAuth·기존 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 없습니다. rollback은 직전 Worker `c2901280`, Pages `ce4e5e57`이며 데이터 손상 없이 additive migration·학습 기록을 되돌리지 않습니다. 전체 ID와 증거는 릴리스 원장을 따릅니다.
 
 ## 책임 구조
 
@@ -110,7 +110,7 @@ pnpm ops:status:remote
 - local HEAD와 origin branch
 - 현재 Production Pages deployment/source
 - Worker 100% traffic version
-- D1 migration `0028` 포함29개 적용 여부와 누락·unknown ledger
+- D1 migration `0030` 포함31개 적용 여부와 누락·unknown ledger
 - canonical Pages, `/audio-qa`, legacy audio `410`
 - auth proxy의 HTTP 200, JSON content-type, `google_enabled=true`, `auth_mode=app-session`
 - 원격 R2 발음 참조 `0`
@@ -194,5 +194,6 @@ clean source commit/tag
 
 | 날짜 | 실행자 | 결과 |
 | --- | --- | --- |
+| 2026-09-25 | Project Operations Steward | 현 세션 승인·Preview 실제 청취·로컬/Preview gate 후 운영70-table 백업·restore, additive0029–0030, Worker/Pages 반영. 사후 pinned392·FK/FTS·R2참조0·Worker7/auth3·Chrome 양언어 onend1/1/Network 요청0. 백업 직후 health 단발 실패와 독립 재확인 성공을 분리; Git 최종 push는 별도 확인 |
 | 2026-09-07 | Project Operations Steward | 승인·최신555 가청·predeploy 통과 후0028/Worker/Pages 반영. 사후 pinned392·R2참조0·기존 학습21테이블 hash 보존, Worker 공개7/auth proxy3, 익명 음성2(mock) 통과. Production 실제 Chrome onend양언어1/1은 새 사람 가청과 구분. Git042fbb2 push 후 remote52/1/0; 종료 기록 별도 문서 commit |
 | 2026-08-24 | Project Operations Steward | 전담 Sub Agent/상태 점검 스크립트 도입. local `37/2/0`, remote read-only `47/2/0`, 전체 gate exit `0`. 문서별 production ID, auth JSON 계약, 로컬 복구 증적, 음성 provenance와 R2 0건을 구조적으로 검사. 독립 재감사 결과 commit 차단 결함 `0` |

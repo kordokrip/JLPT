@@ -2,13 +2,27 @@
 
 최종 점검: 2026-09-25 KST
 
-## 2026-09-25 개인 학습 동기부여 후보 — 미배포
+## 2026-09-25 빠른 레슨·개인 보상 — Production 배포, Git 최종 동기화 전
 
-`0029–0030` additive DB, quick/daily 세션, 서버 학습일 스트릭, 안내 세션 XP·성취, opt-in 현지화 Push를 구현했다. Git 후보 `f8bb1679981844d29cbfdf9283c5343d207b74e8`, 전용 Preview D1 `0030`, Worker `6be32f94-9809-4f16-a1d6-98e21bceac08`, Pages `a2dfacf2.nihongo-n3.pages.dev`까지 적용했다. 직전 Preview Worker `87f8fbf5`/Pages `555fc0c4`, D1 사전 Time Travel bookmark와 보존 비교는 [후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)과 ignored 증적에 있다. **Production Worker/Pages/D1과 Git 원격에는 아직 반영하지 않았다.** 사람 가청·전 급수 Preview 추가 검사·Production 백업/복원/사후 smoke가 남는다. 과거 `0028`/70-table 백업·2026-09-07 가청 결과를 이 후보의 새 검증으로 재사용하지 않는다.
+`0029–0030` additive DB, quick/daily 세션, 서버 학습일 스트릭, 안내 세션 XP·성취, opt-in 현지화 Push를 구현했다. Preview source `f8bb1679981844d29cbfdf9283c5343d207b74e8`, Worker `6be32f94-9809-4f16-a1d6-98e21bceac08`, Pages `a2dfacf2.nihongo-n3.pages.dev`에서 실제 사용자 양언어 가청과 학습을 검증했다. 최종 배포 source `032b50ddfea4051309ae95829520e6309e67a6ff`와 Preview source 사이의 변경은 문서 여섯 파일뿐이다. 콘텐츠 재시드·공개 변경은 없었다.
+
+| 항목 | 2026-09-25 확인 결과 |
+| --- | --- |
+| 승인·음성 | 현 세션의 조건부 Production/push 지시, 동일 Preview 사용자 양언어 청취, Chrome 실제 onend 1/1·재생 중 Network 요청 0, audio predeploy gate exit 0 |
+| 로컬·Preview | `pnpm ops:verify` exit 0(fresh `0000–0030`), Preview 전 급수 22/22(이전 동일 runtime), 빠른 레슨 최신 Chromium/WebKit 데스크톱·모바일 8/8, Preview Worker smoke 21/0·관리자/Google positive 2건 manual-required |
+| 백업 | `.artifacts/d1-backups/quick-lesson-2026-09-25-pre0029`, `0028` profile 70개·checksum 70/70. 점검 직후 health mismatch와 첫 독립 재확인 실패를 보존; 후속 maintenance off·Worker/Queue 원복·OAuth 200·비인가 쓰기 401·설정 hash 동일 확인 |
+| 복원 | 임시 로컬 `0030`에 70개 복원, 기존 행수/FK 0/FTS 일치·신규 보상/알림 2개 테이블 0. `coversLocalSchema=false`인 0028 백업이며 신규 기록의 추후 복구본은 아님 |
+| Production D1 | 승인된 `0029–0030`만 적용, migration 31·pending/unknown 0; content source `3485c6e`/manifest `content-v3-d102868e3d43b9b3c1a4` 유지 |
+| Worker·Pages | Worker `aedcbd40-6605-44d2-8227-d145a186bef0`; Pages `f62a8bdb-298e-446a-ab74-7d78ca47efd8`/main. source `032b50d`; Functions bundle 포함 |
+| 사후 검증 | source-pinned content 392/392, FK/FTS·R2 발음 9표면 0, Worker smoke 7/7, auth proxy 3/3, Pages `/`·`/audio-qa` 200·legacy 410; 실제 Chrome PWA 새 자산 및 양언어 onend 1/1·Network 요청 0. Production 사람 가청은 별도 질문 대기 |
+| rollback | 직전 Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`; D1은 데이터 손상일 때만 백업 복원 |
+| Git | 이 기록 작성 시 아직 원격 push 전. 완료 여부는 아래 후속 기록으로만 확정 |
+
+predeploy/postdeploy gate는 `.artifacts/operations/quick-lesson-production-{predeploy,postdeploy}-result-2026-09-25.json`에서 모두 `passed=true`다. 자동 392개는 운영 원본을 immutable source에 고정했고 current HEAD manifest drift `INC-DATA-024`를 숨기려고 재시드하지 않았다. `pnpm ops:status:remote`의 배포 직후 실패 5건은 문서 기준선 0028/이전 Worker·Pages와 미push SHA의 불일치로, 이 문서 갱신·push 후 재검사해야 한다.
 
 이 문서는 GitHub 유료 CI/CD 기능에 의존하지 않고 JLPT·TOPIK의 형상, 검증, 배포와 rollback을 관리하는 운영 원장이다. 코드·테스트·Cloudflare 원격 결과와 다른 내용이 있으면 실제 명령의 종료 코드와 원격 deployment ID가 우선하며, 같은 변경에서 이 문서를 바로잡는다.
 
-## 최신 릴리스 — 2026-09-07 개인 학습 UX Production
+## 이전 릴리스 — 2026-09-07 개인 학습 UX Production
 
 | 항목 | 실행 결과 |
 | --- | --- |
