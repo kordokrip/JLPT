@@ -16,6 +16,7 @@
 | 모바일 브라우저 | 같은 quick 흐름을 4개 엔진/뷰포트에서 재실행해 8/8 pass. 시작 버튼 44×44px 이상과 첫 화면 가로 넘침 0도 검사했다. | 격리 로컬 DB, 실제 원격 계정 증거 아님 |
 | 전 급수·음성 자동 회귀 | JLPT N5–N1, TOPIK 1–6급 저장·재개 22건과 익명 음성 QA 2건, Chromium/WebKit 총 24/24 pass. | 음성 QA는 mock lifecycle; 물리 가청·새 Preview Network 아님 |
 | 원격 재조회 | `pnpm ops:status:remote` 50 pass/2 warn/1 fail. 이전 D1 `7403`은 재현되지 않았고 남은 실패는 미push 로컬 SHA와 원격 branch 차이. | 읽기 전용 통과 범위만 인정, Preview 검증은 아님 |
+| Preview 쓰기 전 기준선 | 전용 Preview D1의 migration 최신 `0028`, 직전 Worker version `87f8fbf5-97e3-4a99-96cb-3cf607911d48`, Pages deployment `555fc0c4-24cc-49de-b846-38aee2f59b31`를 read-only로 확인했다. 로컬 후보 commit `3d3a8e1`. | Preview 롤백 포인터, Production 기준선과 분리 |
 | 교차검토 보강 | Push 구독 endpoint를 다른 계정이 재등록해 기존 소유자의 언어/알림 설정을 바꾸는 결함을 fail-first `1 fail`로 재현했다. 소유자가 다르면 409를 반환하도록 수정했다. API 전체 `190/190`, 재타입검사·API dry-run build exit 0. | 로컬 회귀 통과 |
 
 ## 제품 계약
