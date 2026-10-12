@@ -1,110 +1,89 @@
 # 로컬 CI/CD 운영 기준
 
-최종 점검: 2026-09-25 KST. 현재 Production은 `0029–0030`/Worker `aedcbd40`/Pages `f62a8bdb`이다. 아래 2026-09-07 릴리스 수치는 과거 증거이며 이번 릴리스 통과 근거가 아니다.
+## 2026-10-13 통합 후보의 추가 절차
 
-## 2026-09-25 빠른 학습 릴리스 gate
+이번 승인된 범위는 V7+160 전체 및 조건부 Production/push다. 새 collector는 `pnpm -C packages/db exec tsx ../../scripts/run-learning-cohort-local-gates.mjs --output=<새 .artifacts 절대경로>`이고 기존 V7 전체 gate를 새로 실행한 뒤 새 합성 기록 DB에서5개 draft/reseed/공개/replay/철회를 검사한다. 기존614/44를 새 후보의 통과로 계산하지 않는다.
 
-이번 릴리스에서 `pnpm ops:verify` exit 0, Preview 빠른 레슨 데스크톱·모바일 Chromium/WebKit 8/8, Preview 사람 양언어 청취·실제 Chrome onend 1/1·Native Network 요청 0, Production 백업70·로컬 복원/FK0/FTS, 배포 직전·직후 운영 콘텐츠 고정 verifier392/392·R2 9표면0, Worker smoke7/7·auth proxy3/3·Production Chrome 양언어 onend 1/1을 기록했다. `production-predeploy`와 `postdeploy` gate checker가 모두 exit0이다. 운영 점검 직후 health 단발 실패는 [오류 원장](ERROR_LEDGER.md)에 보존했다. Production 사람 가청은 Preview의 사용자 답변과 별도로 판정한다. Git 최종 동기화 여부는 릴리스 원장을 따른다.
+원격 `learning-cohort-remote.ts`는 모든 대상/SHA/config/paths/output을 명시하며 쓰기는 clean 후보와 `ALLOW_LEARNING_COHORT_CHANGE=learning-cohort-600-2026-10-13:<scope>:<SHA>`를 요구한다. 기존 Preview-only 명령은 그대로 Production을 거부한다. authorization과 post-operation receipt를 별도로 보존한다. Worker helper는 명시적 `--maintenance-mode=off|read-only`가 필수이고 package script가 env를 고정한다. split/오타/중복 옵션은 실행 전 실패한다.
 
-- DB `0029_study_motivation.sql`과 `0030_push_notification_deliveries.sql`을 fresh와 `0028` 운영형 snapshot의 additive upgrade 양쪽에서 검증한다. 백업 allowlist는 새 후보에서 `0030`/72개 테이블이다. 과거 `0028`/70개 백업을 새 테이블까지 보존한 백업이라고 표시하지 않는다.
-- `pnpm openapi:generate && pnpm openapi:check && pnpm typecheck && pnpm test && pnpm build && pnpm -F @nihongo-n3/db verify:fresh` 및 `pnpm docs:check`, `git diff --check`를 같은 후보에서 실행한다. 실패·skip 수를 그대로 기록한다.
-- 빠른 학습은 생성/재전송/중단/재개/제출, 급수 고정, 공개 콘텐츠, 최초 응답과 재시도 분리, 트랙·프로필 시간대 스트릭, XP 원본 중복·일일 상한을 검사한다. Push는 opt-in, UI 언어, 현지 07/22시, 오늘 학습 시 skip, 같은 endpoint·일자·시간대의 중복 발송 차단을 검사한다.
-- Chromium/WebKit 실제 화면·음성 검증은 단위 테스트와 별개다. 새 Preview 후보의 실제 계정·양언어 가청·R2 요청 0을 확인하기 전에는 2026-09-07 증거를 전용하지 않는다. 원격 D1 `7403`이면 Preview/Production DB gate 미완료로 차단한다.
-- 결과와 차단 사유는 [2026-09-25 후보 기록](PERSONAL_LEARNING_UX_2026-09-25.md)에 최신 실행 시각·명령·종료 코드로 적는다. 전체 gate·Preview·백업/복원·rollback 대상과 현 세션 승인이 모두 있을 때만 Production을 변경한다.
+새 Preview·별도 원격 복귀·같은 배포의 가족/양언어 실제 청취 후에만 운영 점검을 시작한다. 현재72-table 백업은 `d1:restore-drill --input=<보호 백업 경로> --out=<새 report> --exact-schema-upgrade`로0030 원래 schema 복원→0031만 upgrade→모든 기존 regular table 원래 열 hash/FK를 대조한다. [진행 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 먼저 확인한다.
 
-요약 체크리스트는 [LOCAL_CICD_MANAGEMENT.md](LOCAL_CICD_MANAGEMENT.md)에 정리되어 있습니다.
+갱신: 2026-10-12 KST. 현재 배포는 [CURRENT_STATE](CURRENT_STATE.md), 실행 이력은 [LOCAL_RELEASE_LEDGER](LOCAL_RELEASE_LEDGER.md), 5/20분 코드 gate와 2/5분 문서 gate는 [짧은 체크리스트](LOCAL_CICD_MANAGEMENT.md)에 둔다.
 
-이 저장소의 릴리스 gate는 GitHub Actions가 아니라 검증된 로컬 명령과 로컬 원장으로 운영한다. GitHub는 commit·branch·tag 보관과 push에만 사용하며 `.github/workflows/ci.yml`은 `workflow_dispatch`와 `if: false`를 유지하는 비활성 placeholder다.
+GitHub는 commit·branch·tag 보관과 승인된 push에 사용한다. `.github/workflows/ci.yml`은 `workflow_dispatch`와 `if: false`를 유지하는 비활성 placeholder다. 릴리스 판정은 로컬 명령·Cloudflare read-only 결과·MD 원장을 사용한다.
 
-## 진실의 우선순위
+## 기본 파이프라인
 
-현재 명령 결과와 원격 read-only 조회 → 코드·schema·migration·test → [현재 상태](CURRENT_STATE.md) → [오류 원장](ERROR_LEDGER.md) → [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md) → 과거 릴리스 기록 순으로 판단한다. 다른 runtime·배포의 증거를 현재 환경의 통과로 바꾸지 않는다.
+| 단계 | 명령 | 합격 기준 |
+| --- | --- | --- |
+| 시작·종료 | `pnpm ops:status` | 필수 문서·ID·Actions·음성 계약 일치, fail0 |
+| 파일 지도 갱신 | `pnpm docs:catalog` | 현재 Git 관리 대상·새 파일 반영 |
+| 문서 검증 | `pnpm docs:check` | 파일 지도·Markdown 링크·수명주기·직접 DB source 참조 일치 |
+| API 계약 | `pnpm openapi:check` | 코드와 생성 타입 일치 |
+| 전체 로컬 | `pnpm ops:verify` | audio contract·OpenAPI·typecheck·unit·build·fresh D1 exit0 |
+| 신규 레슨 공개 준비 | `pnpm -F @nihongo-n3/db content:learning:candidate` | 현재는 대표12 승인/선정220개념 lookup0만 확인, 전체은행 미완료로 exit1 유지 |
+| 브라우저 | 영향 spec 또는 `pnpm test:e2e` | 실제 실행한 Chromium/WebKit·모바일 pass/skip/fail 기록 |
+| 원격 상태 | `pnpm ops:status:remote` | Git·Pages·Worker·D1·HTTP·TOPIK·CSP·R2 계약 확인 |
 
-## 현재 릴리스 — 2026-09-07
+fresh D1은 disposable local DB에 후보 migration `0000–0031`을 적용하고 기존 seed·FK/FTS·manifest·음성 provenance·quality·content contract/control-plane을 검사한다. 운영은0030이며 신규 레슨이 seed됐다는 뜻이 아니다. 동일 검사를 바로 다시 실행하지 않는다. `CI=true`는 비대화식 실행 설정이며 GitHub Actions 실행을 뜻하지 않는다.
 
-Production Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`, migration0000–0028을 반영했다. 배포 commit은 `a7d5d87946334fe8c7970b8f124853aaba443955`이며 검증 runtime793b671과 apps/packages/lock tree가 동일하고 정적 파일70개는 Preview와 hash가 일치한다. 콘텐츠 source3485c6e/manifest d102는 보존했고 seed/publication은 하지 않았다. 문서/ops 후속042fbb2 push 뒤 remote52/1/0·로컬40/1/0을 확인했다. 종료 기록의 문서 commit은 앱 배포 SHA와 구분한다.
+## 220레슨 후보의 추가 차단 gate
 
-로컬458개·fresh0028·전체 브라우저217/30/0, 최종 Preview181/6/0, 최신555 실제 양언어 가청/onend/Network와 predeploy 통과를 각각 기록했다. Production 사후에는 Worker 공개7·auth proxy3·익명 음성 양 엔진2(mock), pinned392·FK/FTS·R2참조0·기존 학습21테이블 hash 보존을 확인했다. Production 실제 Chrome 양언어 onend1/1은 별도 관측이며 새 사람 가청 확인을 의미하지 않는다.
+V7 정규 출판 후보는 JLPT/TOPIK 두 release의 question/unit/audio/lesson/cue/ref exact JSON을 단일 UPDATE에서 seal한다. mismatch·R2·partial stage·source/quality/G0–G4 부족과 sealed link UPDATE/DELETE/OR REPLACE를 차단하고 기존 NULL을 유지한다. Preview-only target/CLI 외 경로는 거부한다. 10월12일 cohort04에서 단위614·fresh/upgrade/reseed·G0–G4 local workflow·desktop/mobile E2E44가 모두 통과했다. 초기01–03의 portable/D1 depth/Wrangler splitter 실패는 그대로 보존한다.
 
-문서/테스트만 후속 변경되어 runtime tree·lock·배포 파일의 동일성이 입증되면 그 runtime의 통과 증거를 유지하고 변경된 문서/도구 gate만 실행한다. 이를 전체 테스트를 새로 실행했다는 보고로 바꾸지 않는다. 코드·의존성·build 설정·실행 환경이 달라지면 관련 gate를 다시 실행한다. 승인·가청·백업은 실제 대상과 시점에 묶으며 이번에 완료된 승인을 다시 미완료로 취급하지 않는다.
+재실행은 `pnpm -C packages/db exec tsx ../../scripts/run-learning-v7-local-gates.mjs --output=<저장소 .artifacts 안의 새 절대경로>`다. 설치된 DB workspace launcher를 사용하고 기존 증적 폴더를 덮어쓰지 않는다. 공유 build는 한 번만 수행하고 이후 fresh/E2E는 각각 독립 임시 DB에서 실행한다. 중간 `g0-g4-local-preflight.json`은 내부 drill용이고, 실제160 draft/reseed·V7 공개/재실행/철회·12종 합성 기록 hash 불변 뒤 최종 `g0-g4-local.json`을 생성한다. Preview CLI는 완료 표식·같은 cohort/manifest·실제 drill hash를 강제한다. 이번 사용자 범위에는 commit·push·원격·배포가 없다.
 
-## 로컬 파이프라인
+불변 실패 v1/v2를 보존하고 새 버전에서만 작성한다. 대표/공급자 intake 구조 통과를 전체440 승인으로 확대하지 않는다. `learning-path-evidence.test.ts`는 scope·세 hash·정확 ID·두 reviewer 독립 정답·누락/중복·편집된 passed를 검사한다. `learning-path-authoring-structure`는 새 초안의 자동 수량/분포/반복/필드 검사이며 의미 승인과 별개다. 새 full-bank 동결·source·두440/440·red flag0·정확급수 lookup0 이후에만 실제 staging/reseed/fresh/비어 있지 않은 upgrade/11급수 신규 레슨 동선을 검사한다. Preview160은 다른 배치/증적으로 유지한다.
 
-| 단계 | 명령 | 차단 기준 | 기록 |
-| --- | --- | --- | --- |
-| 시작 상태 | `pnpm ops:status` | 실패 1개 이상 | `.artifacts/operations/ops-status-latest.json` |
-| 문서 수명주기 | `pnpm docs:check` | 깨진 링크, 필수 문서 누락, 폐기 경로 재등장 | 종료 코드와 변경 요약 |
-| API 계약 | `pnpm openapi:check` | source와 생성 타입 불일치 | 종료 코드 |
-| 정적·단위·DB | `pnpm typecheck && pnpm test` | 실패·skip 오판 | 종료 코드와 실제 test 수 |
-| 빌드·fresh D1 | `pnpm build && pnpm -F @nihongo-n3/db verify:fresh` | migration, FK/FTS, manifest, 음성·품질 계약 실패 | 종료 코드와 manifest |
-| 통합 로컬 gate | `pnpm ops:verify` | 위 단계 중 하나라도 실패 | 원장에 후보 SHA와 함께 기록 |
-| 브라우저 | `pnpm test:e2e` 또는 영향 spec 명시 | Chromium/WebKit 제품 흐름 실패 | 실행한 project/spec와 pass/skip/fail |
-| 원격 확인 | `pnpm ops:status:remote` | Git·Pages·Worker·D1·HTTP 계약 실패 | read-only artifact |
+구 `content:learning:structure/readiness`는 실패 v1 전용이며 195 red flag·31 lookup·두 불합격을 보존한다. `content:learning:candidate`도 v3 대표와 전체은행 승인을 구분해 exit1이다. `content:learning:authoring:full`은 v4 전량 구조만 검사한다. source04 부족은 API 취득 전 이력이고 source06은 부족 0이다. 실제 v4 전체 readiness는 두 의미 불합격으로 exit1이다. 새 v5에서만 수정하며 `content:learning:freeze:v5 --output=<새 cohort 절대경로>`는 실패 원본·review bytes·같은 bytes로 실행한 patch hash·새 ID/버전 일치를 검사한다. 새 source는 기존 취득 사실을 재사용했다고 명시하며 새 HTTP 성공으로 표시하지 않는다. 저장 fixture와 의미 승인을 구분한다. [구현 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
 
-`CI=true`는 도구의 비대화식 동작과 reporter 선택에만 사용할 수 있다. GitHub Actions 실행을 의미하지 않는다. E2E는 격리된 로컬 Worker와 Vite 서버를 기본으로 사용하며 `E2E_REUSE_EXISTING_SERVER=1`은 호출자가 해당 프로세스의 checkout과 build를 확인한 경우에만 허용한다.
+V7 정식440/220 profile과 전용 G0–G4/publisher/verifier hook은 구현·로컬 검증했다. 기존 Preview160 profile이나 범용 workflow로 대신하지 않는다. 별도160 v3는 다른 hash/리뷰/세 release version·draft 원장으로 관리하고 아직 원격에 반영하지 않았다. local/mock 통과는 실제 가족·소리·Preview 증거가 아니다.
 
-## 변경 유형별 추가 gate
+로컬 도구는 `content:learning:freeze:v4 --source=<complete source 절대경로> --output=<새 cohort 절대경로>`와 `content:learning:readiness:v4 --cohort=<그 cohort> --review-a=<독립 A 절대경로> --review-b=<독립 B 절대경로> --output=<새 report 절대경로>`다. 후자는 v5에도 대응한다. freeze는 DB/remote를 변경하지 않고 로컬의 새 leaf만 작성하며 기존 leaf를 덮어쓰지 않는다. readiness는 같은 세 hash/440 ID/두 literal true·cue/lesson 미해결0을 강제한다. 신규 `stage-learning-path-v4.ts`는 readiness 후에만 시스템 임시 디렉터리의 새 `.sqlite` 파일에 draft를 적재하며 원격 플래그를 받지 않는다. 불합격 실제 리뷰 대신 합성 fixture를 CLI에 제공해 콘텐츠 gate를 우회하지 않는다. audit `approved`는 품질 링크를 위한 상태이고 release·문항·레슨 공개를 뜻하지 않는다.
 
-### 학습 경험 `0028` 회귀 계약
+v5 patch 실행은 읽은 동일 TypeScript bytes를 변환·실행하고 source/payload hash를 함께 기록한다. import·주석 사이 dynamic import·외부 capability AST 반례를 차단한다. 신뢰된 저장소 저작 코드 실행이지 적대적 JavaScript sandbox가 아니다. 버전 라벨만 변경하거나 cache된 patch와 새 file hash를 혼합하는 반례는 거부한다.
 
-- `pnpm -F @nihongo-n3/db exec node --import=tsx --test src/ops/learning-experience-migration.test.ts`: 0000–0027 upgrade 전후 기존 테이블 행 비교, FK, 단계 중복 claim rollback.
-- `pnpm -F @nihongo-n3/api exec vitest run src/__tests__/routes.test.ts`: 전 급수 profile/session, 실패 원자성, 소유권/track, 정답 비노출, 결과 재조회, withdrawn 세션 종료, 메모 CAS.
-- `pnpm -F @nihongo-n3/e2e exec playwright test learning-experience.spec.ts learning-activity.spec.ts topik-owner-curriculum.spec.ts quiz-modes.spec.ts srs-review.spec.ts --project=chromium --project=webkit --reporter=line`: 실제 격리 D1 기반 학습 흐름과 mock speech를 구분한다.
-- 전체 E2E와 시각 baseline도 새 다섯 메뉴에 맞게 검증한다. snapshot 갱신은 UI를 직접 검토한 뒤 수행하며 실패/skip을 통과로 바꾸는 수단으로 쓰지 않는다.
-- 로컬 `VITE_LEARNING_EXPERIENCE=false pnpm -F @nihongo-n3/web build`는 화면 복귀용 별도 build 검증이다. false 빌드를 Preview/Production에 자동 반영하지 않는다.
-- 로컬 자동 E2E는 disposable D1을 사용한다. 승인된 전용 Preview 검증은 Preview에만 별도 합성 QA 계정을 만들 수 있으며 실제 사용자 계정을 사용하거나 Production에 테스트 기록을 만들지 않는다. test DB/snapshot을 Production backup이라고 부르지 않는다. Preview에 있는 미출시 콘텐츠 160개를 UX 배포 목적으로 Production publication하지 않는다.
-- 원격 Preview에서 세션 생성·재개 소요 시간을 별도로 측정한다. 로컬 D1에서 빠르다는 이유로 원격 성능을 통과 처리하지 않으며, 직렬 호출 수 예산 회귀와 실제 동일 환경 재측정을 함께 기록한다. API-only 수정은 검증한 Pages를 재배포하지 않고 Worker source만 갱신할 수 있지만 두 source를 원장에 구분한다.
-- ko/ja full-session 두 테스트는 원격에서만 총90초를 허용한다(`INC-QA-050`). 여러 학습·재시도·FSRS를 합친 전체 실행 예산이며, 개별 UI action/API GET/poll/navigation과 실제 study write 응답5초 검사를 완화하지 않는다. 쓰기 응답의 HTTP status·latency를 attachment로 남기고 실패한 초기30초 실행도 보존한다. 이 예외를 다른 짧은 시나리오에 전역 적용하지 않는다.
-- 기기 간 동시 요청: 완료 후 stale pause/active, abandoned 후 submit, 다른 기기의 먼저 수락된 답과 오프라인 pending, 계정 트랙 변경 후 날짜 메모를 검사한다. expected_track 409는 명시적 reload를 안내하고 미수락 초안을 보존한다.
-- 시계 차이: 기기 시각을 서버보다1분 느리게 고정한 실제 IndexedDB E2E에서 starter10장·평가·reload를 검사한다. 서버due 스냅샷/로컬 변경 보존 hook단위7개와 별개다. SRS 음성 검사는 로딩 상태 때문에 skip하지 않고 카드 준비를 기다린다. mock 기록 화면의 SW차단은 해당파일에만 한정하며 interception counter를 반드시검사한다.
-- 복습 카드 양면: 앞면에서 숨긴 답/발음 버튼이 접근성 tree나 Tab에 노출되면 실패한다. 실제 뒤집기 후 발음 클릭과 포커스된 버튼의 Enter/Space를 검사하며 전역 단축키가 이를 가로채면 차단한다. CSS 회전만으로 조작 차단을 가정하지 않는다(`INC-SRS-053`).
-- backup/restore는 실제 schema로 0027/65와 0028/70 profile을 구분한다. `coversLocalSchema=false`인 구 65개 snapshot을 새 학습 데이터까지 포함한 backup으로 표기하지 않는다. 실제 Miniflare `_cf_METADATA`를 포함한 목록 판정과 과거 65개 backup의 local0028 restore는 통과했다. 기존 transfer·사용자 정리 도구의 65-table 기본 계약은 0028에서 아직 사용할 수 없다.
-- 기존 기능 안정성: authStore 실패/성공·설정 v6 rehydrate, 비어 있지 않은 양 트랙 기록의 upgrade, 실제 UI 설정→profile PUT/GET→reload를 함께 검사한다. 프로필 GET 지연·실패, PUT 실패와 늦은 응답의 계정/트랙 변경도 포함한다. 조회 지연 E2E는 실제 Worker/D1 응답의 전달만 늦추며 payload를 만들지 않는다.
-- Google 버튼의 설정 표시는 `/auth/config`와 href/aria-disabled를 대조한다. 비활성 anchor에 link role이 없는 것은 정상이나, 실제 OAuth start 503은 별도 실패다. OAuth bridge의 Google 응답 mock과 실제 provider 로그인은 별도 gate다. Preview 설정 준비 없이 운영 OAuth secret을 복사하지 않는다. 최신 결과는 학습 경험 계획의 Preview OAuth 후속과 릴리스 원장을 따른다.
+`e2e/learning-lessons.spec.ts`의 빈 공개 목록 검사는 신규220레슨 증거로 쓰지 않는다. 실제 `e2e/reviewed-learning-lessons.spec.ts`의 cohort04 desktop/mobile44/44는 reviewed mode의11급수×20레슨 API 네 단계·제출/재전송·FSRS·records와 각 급수 대표1레슨 UI 시작/저장/중단/재개를 검사했다. 모든220화면 인간 검수·Preview·가족·실제 소리는 아니다. published runtime fixture는 `publication_gate_evidence=false`다. V6 불합격 리뷰로 bootstrap하는 negative 검사도 유지한다. standalone staging SQLite와 Worker `--persist-to` DB는 다른 대상이다.
 
-전용 Preview의 넓은 기능 회귀는 아래처럼 Web과 직접 API 주소를 함께 지정한다. `E2E_API_URL`을 생략하면 메뉴 health 검사가 localhost를 조회한다. 2026-09-06 목록 기준 24개 파일·187개 기능 검사이며 로컬 fixture에만 의존하는 TOPIK 6개는 명시적 원격 skip이다. 시각 baseline suite60개는 이 명령에서 제외되므로 원격 시각 검사를 통과했다고 쓰지 않는다. 검색 입력란 부재의 조건부 skip은 별도로 원인을 검토한다. mock 음성/provider/화면 fixture는 실제 외부 서비스 성공 증거가 아니다.
+source contract 회귀는 `learning-path-full-contract.test.ts`의 급수/읽기/version/URL/hash/value 변조 반례를 포함한다. collector는 성공 record마다 checkpoint하며 최종 intake와 validator 파생 파일도 exclusive-create한다. 기존 취득시각/실패를 보존하고 원래 policy 재사용을 새 HTTP 성공으로 표시하지 않는다. `fullSourceFailures`의 trusted binding은 source 후보 자체의 주장과 별도로 실제 inventory/immutable Git bytes에서 계산한다(`INC-QA-076/077`).
+
+0031의 공개/사용 레슨 불변성, 철회↔claim 원자성, homophone due 우선, 버전 snapshot, nullable 기존 binding을 추가 회귀로 검사한다. 후보 백업은74개 regular tables다. 아래 운영0030/72개 절차와 구 백업 coverage를 혼동하지 않는다.
+
+앱 runtime·설정·의존성 변경이 있으면 영향 검사를 실행한다. 문서만 달라진 동일 runtime의 통과 결과는 source·배포 파일 동일성을 확인해 유지하되 새 테스트 결과로 표시하지 않는다. 증거는 정확한 source/환경/시점에 연결하고 실패·skip·mock·not-run을 구분한다.
+
+## 학습·데이터 회귀
+
+- 계정·트랙·목표 급수·공개 상태·typed content ref를 검사한다. 미공개 노출·다른 급수 fallback·정답 사전 노출을 허용하지 않는다.
+- quick/daily 생성·동시 생성·request ID 재전송·단계 제출·중단/재개·terminal guard·오프라인 pending·기기 충돌을 검사한다. 서버 수락 결과와 미수락 초안을 보존한다.
+- 완료·최초 응답·재시도·FSRS rating·해설 열람을 분리한다. quiz/complete/review와 activity 저장은 동일 transaction에서 실패하거나 성공해야 한다.
+- 프로필 loading/error와 configured:false를 구분하고 늦은 응답은 원래 계정×트랙 cache에 적용한다. annotation revision과 expected_track 충돌은 성공으로 처리하지 않는다.
+- 스트릭은 서버 수락 학습일과 과거 일지·프로필 시간대를 사용한다. XP 원본 중복·일일100 상한, 알림 opt-in·언어·현지07/22·당일 학습 skip·발송 claim을 검사한다.
+- fresh뿐 아니라 기존 기록이 들어 있는 upgrade fixture로 진행률·FSRS·일지·attempt·설정 보존을 검사한다.
+- SRS는 서버due 스냅샷과 로컬 변경을 대조한다. 기기시계 보정으로 FSRS 날짜를 덮지 않는다. 숨긴 카드 면·키보드·발음·rating 접근성을 검사한다.
+
+## 브라우저·음성
+
+로컬 E2E는 실제 격리 Worker/D1과 Vite를 사용하며 음성 mock·provider mock·화면 fixture는 실제 저장·가청 증거와 구분한다. mock route는 interception counter와 요청 계약을 확인하고 SW 차단은 해당 fixture만 적용한다. 실제 학습·PWA·음성 전역에서 SW를 끄거나 오류를 무시하지 않는다.
+
+Preview 검사는 전용 환경과 합성 QA 계정을 사용하며 Production에 테스트용 학습 기록을 만들지 않는다. 실제 Google SSO는 Preview 전용 client/callback/secret으로 검사한다. origin alias와 immutable Pages의 host-only 쿠키를 공유한다고 가정하지 않는다.
+
+음성 계약은 같은 언어 Google 우선 → 같은 언어 설치 음성 fallback, ko/ja 제한, click task 즉시 speak, 실제 onend 이후 성공이다. 현재 Preview source와 deployment에 한국어·일본어 real-page-onend, 사람 가청, Native Network R2/legacy 요청0 증거를 연결한다. mock onend나 이전 배포 청취를 대신 쓰지 않는다.
 
 ```sh
-E2E_BASE_URL=https://555fc0c4.nihongo-n3.pages.dev \
-E2E_API_URL=https://nihongo-n3-api-topik-preview.kordokrip.workers.dev \
-pnpm -F @nihongo-n3/e2e exec playwright test \
-  --grep-invert '핵심 화면 시각 회귀' \
-  --project=chromium --project=webkit \
-  --project=mobile-chromium --project=mobile-webkit \
-  --workers=1 --retries=0 --max-failures=0 \
-  --trace=retain-on-failure --reporter=line \
-  --output=/Users/sunghokang/JLPT/.artifacts/operations/stability-preview-full-functional-results
+pnpm release:verify:audio-contract
+pnpm release:verify:audio-predeploy -- --input <evidence.json>
 ```
 
-기존 메뉴 테스트에는 일부 SW access-control 오류를 조건부 제외하는 코드가 있으므로 메뉴 통과만으로 `INC-PWA-056`을 닫지 않는다. `offline.spec.ts` 이름만으로 실제 네트워크 차단을 검증했다고 쓰지 않으며, 실제 pending/reconnect는 학습 세션 테스트에서 확인한다. 자연 일본어 번역 mock은 해당 nested describe만 SW 제어하고 counter1·POST/body·고정 문구/검색/URL을 함께 검사한다. 실제 AI 응답이 흘러들어온 결과를 mock 통과로 인정하지 않는다. 실패한 SSO를 grep/skip으로 제거한 뒤 전체 gate 통과로 표시하지 않는다.
+시간·성능 오류를 timeout 확대로 숨기지 않는다. suite 총예산과 개별 요청/동작 예산을 구분하고 최초 실패를 보존한다. 시각 baseline 갱신은 실제 화면 검토 후 진행하며 정책 skip을 pass로 집계하지 않는다.
 
-- DB·콘텐츠: `question:quality`, `content:contract:verify`, `content:control-plane:verify`, idempotent fresh/upgrade와 source checksum을 확인한다.
-- API·데이터 바인딩: OpenAPI 생성 전후 diff, track guard, 정답 사전 노출 금지, progress→FSRS→activity transaction을 확인한다.
-- 음성: `pnpm release:verify:audio-contract`, Chromium/WebKit 재생 lifecycle, 실제 배포 Chrome의 한국어·일본어 `onend`, `/api/v1/audio/*` 요청 0건과 Production D1 R2 발음 참조 0건을 서로 분리해 기록한다.
-- Production: 현재 세션 승인, 전용 Preview, D1 backup/restore drill, rollback Worker/Pages, predeploy 증적이 모두 있어야 한다. 이 문서나 `ops:*` 명령은 Production write를 자동 승인하지 않는다.
+## 백업·배포
 
-### Preview OAuth 최종 검증 단위
+현재0030 백업은72개 regular table profile이다. backup/restore의 `schemaProfile`, `localSchemaProfile`, `coversLocalSchema`, `omittedTableCounts`·checksum·행 수·FK·FTS를 대조한다. 이전0028/70개 백업을 새 보상/알림 기록까지 보존한 것으로 표시하지 않는다. blue/green transfer·사용자 정리의 기본65-table 계약은 새 schema 검증 전 사용하지 않는다.
 
-2026-09-06 사용자 승인으로 별도 Google client와 Preview secret 두 개를 연결했습니다. Worker87f8fbf5는 앱source793b671/Pages555fc0c4를 유지합니다. API bridge2+Web proxy/authStore12는 exit0이나 Google provider mock입니다. 실제 Chrome JLPT 로그인·홈 재조회와 TOPIK 재로그인, 별도 D1 identity/FSRS 설정 hash 전후 일치를 분리해 기록했습니다. 최종187개는 `preview-oauth-full-functional-2026-09-06-*`의 새 증적 경로에서181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0으로 종료했습니다. 시각60개는 별도 제외이며 이전178/6/3 결과를 덮어쓰지 않습니다.
+Production 절차는 clean source → local gate → Preview/실제 Chrome → 승인된 maintenance의 backup/restore → rollback → predeploy → 승인된 D1/Worker/Pages 변경 → postdeploy → 문서·Git 동기화다. gate 실패 시 다음 단계로 가지 않는다. 데이터 손상이 없다면 사용자 기록·additive migration을 보존하고 runtime을 복귀한다. `INC-DATA-024`는 운영 release source와 manifest를 고정해 검증하며 HEAD drift를 숨기기 위해 재시드하지 않는다.
 
-같은 Pages의 실제 Network/HAR에서 양언어 onend1/1·R2/legacy0을 확보했습니다. 당시 사람 확인 대기였던 `stability-preview-actual-audio-network.json`의 strict gate2개 누락·exit1은 이력으로 보존합니다. 이후 최신555의 사용자 양언어 가청 답변을 별도 `learning-experience-2026-09-07-preview-audio-confirmed.json`에 연결해 strict gate를 통과했습니다. 운영 점검 승인·새65-table backup/restore·신선도 대조·최종 predeploy도 완료한 뒤 배포했습니다. 65-table 백업을0028 이후70-table 백업으로 표현하지 않습니다.
+## 증적·파일 관리
 
-## 형상관리와 증적
+JSON/log/HAR는 `.artifacts/operations`와 release 디렉터리에 보존한다. 비밀·개인정보를 MD로 복사하지 않는다. 기존 실패는 후속 성공과 별도 파일로 남긴다. migration·학습 source·recovery·backup·quality/reviewer·시각 기준·회귀 테스트는 정리 cache로 취급하지 않는다.
 
-1. 시작과 종료에 branch, HEAD, `git status --short`, origin SHA를 확인한다.
-2. 사용자 변경을 reset·checkout·stash하지 않는다.
-3. 문서·코드·테스트·생성 타입을 하나의 원자적 commit으로 고정한다.
-4. `git diff --check`, `git show --check`, 종료 `ops:status`를 통과한 commit만 push한다.
-5. release tag는 실제 릴리스 기준선에만 `release/YYYY-MM-DD/<scope>`로 만든다. 문서 정리만으로 Production tag를 만들지 않는다.
-6. `.env*`, 사용자 데이터, D1 backup 원문, 인증 정보, `.artifacts` 원문은 push하지 않는다.
-7. push 실패 시 로컬 commit SHA와 실패 원인을 [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)에 남기고 같은 SHA만 재시도한다. force push는 금지한다.
-
-## 문서·파일 수명주기
-
-- 활성 운영 문서는 날짜 없는 영구 경로를 사용한다: `CURRENT_STATE.md`, `ERROR_LEDGER.md`, `OPERATIONS_MANAGEMENT_RUNBOOK.md`, `LOCAL_CICD_OPERATIONS.md`, `LOCAL_RELEASE_LEDGER.md`, `SUB_AGENT_HANDOFF.md`.
-- 날짜가 붙은 문서는 incident·Preview·release·maintenance 증적처럼 완료 시점이 고정된 기록에만 사용한다.
-- `docs/01_n5`–`docs/07_topik`은 seed/parser가 읽을 수 있는 콘텐츠 원본이다. 오래된 버전 번호만으로 삭제하지 않고 코드 참조와 checksum을 먼저 확인한다.
-- Production backup, restore drill, recovery bundle, source intake, reviewer/quality evidence는 보존한다.
-- `.DS_Store`, `dist`, Playwright report/test-results처럼 재생성 가능한 항목만 참조·보존가치를 확인한 뒤 정리한다.
-
-세부 장애 처리와 배포 절차는 [운영 runbook](OPERATIONS_MANAGEMENT_RUNBOOK.md), 실제 실행 이력은 [로컬 릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다.
+재생성 산출물은 참조·증적 가치를 확인해 저장소 밖 휴지통으로 이동하고 [파일 인벤토리](PROJECT_INVENTORY.md)와 정리 기록에 대상·복구 위치를 남긴다. 후속 Agent는 [인수인계](SUB_AGENT_HANDOFF.md)를 따른다.

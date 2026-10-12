@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { learningApi } from "../lib/learning-experience";
@@ -9,11 +9,13 @@ import { useLearningActivitySummary } from "../hooks/useLearningActivity";
 import { useSettingsStore } from "../stores/settings-store";
 import { StudyNote, studyButton } from "../features/study/StudyComponents";
 import { isStudyTrackConflict, StudyRequestError } from "../features/study/StudyRequestError";
+import TopikProgress from "./TopikProgress";
 export default function LearningRecords() {
   const { t } = useTranslation(),
     scope = useDataScope(),
     profile = useLearningProfile();
   const track = useSettingsStore((s) => s.learningTrack);
+  const [searchParams] = useSearchParams();
   const [window, setWindow] = useState<"7d" | "30d">("7d");
   const activity = useLearningActivitySummary(window);
   const query = useQuery({
@@ -39,9 +41,11 @@ export default function LearningRecords() {
   }).format(new Date());
   const data = query.data;
   const today = data?.days.find((day) => day.date === date);
+  const showTopikProgress = track === "topik-ko" && searchParams.get("detail") === "topik-progress";
   return (
     <div className="app-page mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-bold">{t("study.records")}</h1>
+      {showTopikProgress && <TopikProgress />}
       <section className="surface-panel space-y-3 p-4">
         <h2 className="text-xl font-bold">{t("study.motivation")}</h2>
         {motivation.isError ? (
@@ -239,7 +243,7 @@ export default function LearningRecords() {
       </section>
       <Link
         className={studyButton + " inline-flex items-center"}
-        to={track === "jlpt-ja" ? "/stats" : "/track/topik-ko/progress"}
+        to={track === "jlpt-ja" ? "/stats" : "/records?detail=topik-progress"}
       >
         {t("study.legacy")}
       </Link>

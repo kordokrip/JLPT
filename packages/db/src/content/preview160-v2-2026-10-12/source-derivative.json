@@ -1,0 +1,18 @@
+{
+  "schema_version": "preview160-source-derivative-v1",
+  "version": "preview160-v2-2026-10-12",
+  "derivation": "reuse-of-existing-intake-facts",
+  "reused": true,
+  "new_http_acquisition": false,
+  "old_intake_full_bytes_sha256": "ed890daa0e099642a62540cd49fe5803723b755adf066c5486158dd476786201",
+  "audio_policy": {
+    "preferred": "same-language Google browser voice",
+    "fallback": "same-language installed browser/device voice",
+    "allowed_languages": [
+      "ja-*",
+      "ko-*"
+    ],
+    "r2_pronunciation": "prohibited",
+    "actual_playback_validated": false
+  }
+}

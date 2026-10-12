@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ownerPrivateTopikApi } from '../../lib/api';
 import { useDataScope } from '../../hooks/useDataScope';
@@ -9,6 +10,7 @@ import { useOwnerPrivateTopikContent } from './owner-private-content';
  * requires an admin session to claim and the claimed owner session to read.
  */
 export function OwnerPrivateTopikPanel() {
+  const { t } = useTranslation();
   const scope = useDataScope();
   const [releaseId, setReleaseId] = useState('');
   const [manifestSha256, setManifestSha256] = useState('');
@@ -38,7 +40,7 @@ export function OwnerPrivateTopikPanel() {
       </div>
       {status && <p role="status" className="mt-3 text-sm">{status}</p>}
       {content.isError && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">{content.error.message}</p>}
-      {content.data && <ul className="mt-5 grid gap-3">{content.data.items.map((item) => <li key={item.id} className="rounded border border-[var(--border)] p-4"><p className="text-xs font-bold text-[var(--accent)]">{item.section} · {item.skill}</p><p className="mt-2 font-semibold">{item.prompt_ko}</p></li>)}</ul>}
+      {content.data && <ul className="mt-5 grid gap-3">{content.data.items.map((item) => <li key={item.id} className="rounded border border-[var(--border)] p-4"><p className="text-xs font-bold text-[var(--accent)]">{t(`topik.sections.${item.section}`, { defaultValue: item.section })} · {t(`topik.skills.${item.skill}`, { defaultValue: item.skill })}</p><p className="mt-2 font-semibold">{item.prompt_ko}</p></li>)}</ul>}
     </section>
   );
 }

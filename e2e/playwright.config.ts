@@ -4,6 +4,7 @@ const externalBaseURL = process.env.E2E_BASE_URL;
 const e2eWebPort = Number(process.env.E2E_WEB_PORT ?? 4173);
 const e2eApiPort = Number(process.env.E2E_API_PORT ?? 8788);
 const reuseExistingServer = process.env.E2E_REUSE_EXISTING_SERVER === "1";
+const remoteReviewed = !!process.env.E2E_REMOTE_COHORT_RECEIPT;
 
 /**
  * e2e/playwright.config.ts
@@ -20,7 +21,9 @@ const reuseExistingServer = process.env.E2E_REUSE_EXISTING_SERVER === "1";
  */
 export default defineConfig({
   testDir: ".",
-  testMatch: "**/*.spec.ts",
+  testMatch: remoteReviewed ? "**/remote-reviewed-learning-lessons.spec.ts" : process.env.E2E_REVIEWED_COHORT ? "**/reviewed-learning-lessons.spec.ts" : "**/*.spec.ts",
+  // 강성호 2026-10-11: 신규 전수 레슨 검사는 두 실제 승인과 전용 로컬 DB를 준비한 실행에만 포함한다.
+  testIgnore: remoteReviewed || process.env.E2E_REVIEWED_COHORT ? [] : ["**/reviewed-learning-lessons.spec.ts", "**/remote-reviewed-learning-lessons.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -52,12 +55,12 @@ export default defineConfig({
     },
     {
       name: "mobile-chromium",
-      testMatch: /.*(menu-smoke|pwa|learning-experience)\.spec\.ts/,
+      testMatch: remoteReviewed ? "**/remote-reviewed-learning-lessons.spec.ts" : process.env.E2E_REVIEWED_COHORT ? "**/reviewed-learning-lessons.spec.ts" : /.*(menu-smoke|pwa|learning-experience)\.spec\.ts/,
       use: { ...devices["Pixel 5"] },
     },
     {
       name: "mobile-webkit",
-      testMatch: /.*(menu-smoke|pwa|mobile-touch-audit|learning-experience)\.spec\.ts/,
+      testMatch: remoteReviewed ? "**/remote-reviewed-learning-lessons.spec.ts" : process.env.E2E_REVIEWED_COHORT ? "**/reviewed-learning-lessons.spec.ts" : /.*(menu-smoke|pwa|mobile-touch-audit|learning-experience)\.spec\.ts/,
       use: { ...devices["iPhone 13"] },
     },
   ],

@@ -6,6 +6,7 @@ import { learningExperienceEnabled } from './learning-flag';
 
 export type NavigationKey =
   | 'home'
+  | 'today'
   | 'review'
   | 'browse'
   | 'quiz'
@@ -103,9 +104,8 @@ export function navigationForTrack(
   role?: 'user' | 'admin',
 ): readonly TrackNavigationItem[] {
   if (learningExperienceEnabled) return [
-    { to: homePathForTrack(track), key: 'home', icon: 'home', primary: true },
+    { to: homePathForTrack(track), key: 'today', icon: 'home', primary: true },
     { to: '/learn', key: 'learn', icon: 'learn', primary: true },
-    { to: '/questions', key: 'quiz', icon: 'quiz', primary: true },
     { to: track === 'jlpt-ja' ? '/review' : '/track/topik-ko/review', key: 'review', icon: 'review', primary: true },
     { to: '/records', key: 'stats', icon: 'stats', primary: true },
   ];

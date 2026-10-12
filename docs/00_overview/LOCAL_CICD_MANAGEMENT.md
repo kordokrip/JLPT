@@ -1,92 +1,69 @@
-# 로컬 CI/CD 운영 관리 매뉴얼 (서브 Agent 운영용)
+# 커밋 전 로컬 CI/CD 짧은 체크리스트
 
-최종 갱신: 2026-09-11 KST
+갱신: 2026-10-11 KST. 전체 계약은 [로컬 CI/CD 운영 기준](LOCAL_CICD_OPERATIONS.md), 실제 결과는 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다. 아래 시간은 목표 예산이며 완료하지 못한 gate를 통과로 표시하지 않는다.
 
-GitHub Actions는 실질적 배포 gate가 아니며, 운영의 실질 증빙은 **로컬 gate + read-only remote 상태**입니다. 이 문서는 본 저장소 내 모든 릴리스 변경 시 Sub Agent가 사용할 우선 실행 문서입니다.
+## A — 코드 변경 포함
 
-## 1) 실행 우선순위
+### 5분: 커밋 전 최소 검사
 
-1. 현재 명령 결과(`pnpm ops:status`)
-2. 실행 코드/스키마/마이그레이션/테스트
-3. [CURRENT_STATE.md](CURRENT_STATE.md)
-4. [ERROR_LEDGER.md](ERROR_LEDGER.md)
-5. [LOCAL_RELEASE_LEDGER.md](LOCAL_RELEASE_LEDGER.md)
-
-## 2) 문서 연계
-
-- 상태/증적 중심: `docs/README.md`, `CURRENT_STATE.md`
-- 오류/차단: `ERROR_LEDGER.md`
-- 실행 원장: `LOCAL_RELEASE_LEDGER.md`
-- 작업 전용 인수인계: `SUB_AGENT_HANDOFF.md`
-- 배포/운영 절차: `OPERATIONS_MANAGEMENT_RUNBOOK.md`
-- 시계열 변경 요약: [CHANGELOG_TIMELINE_2026-09-11.md](CHANGELOG_TIMELINE_2026-09-11.md)
-
-## 3) 기본 로컬 배포 파이프라인
-
-### 상태 점검
-
-```bash
-pnpm ops:status
-git status --short
-```
-
-- 실패/경고가 있으면 **원인 분해 후 교정**
-- warning `db:manifest-drift`는 `INC-DATA-024`로 추적 중이면 fail-closed 규칙으로 처리
-
-### 코드/스키마 변경 시 게이트
-
-```bash
-pnpm ops:verify
-pnpm -F @nihongo-n3/db content:contract:verify
-pnpm -F @nihongo-n3/db content:control-plane:verify
+```sh
+git status --short --branch
+git diff --check
+pnpm docs:catalog
 pnpm docs:check
+pnpm release:verify:audio-contract
+pnpm openapi:check
+pnpm typecheck
+# 수정한 기능의 실제 단위/계약 테스트를 추가 실행한다.
+pnpm ops:status
 ```
 
-- `fresh 0000–0028`, FK/FTS, migration ledger, release-control contract, question quality, docs 링크 integrity를 모두 한 번에 통과해야 함
+합격: API 생성 타입·정적 타입·문서 지도·음성 계약과 변경 기능 검사가 exit0, diff 오류0. 관련 테스트를 골라 실행했어도 전체 릴리스 gate 통과로 보고하지 않는다.
 
-### 브라우저/시나리오 검증
+### 20분: 전체 로컬 gate와 영향 브라우저
 
-```bash
-pnpm -F @nihongo-n3/e2e exec playwright test --project=chromium --project=webkit
+```sh
+pnpm docs:catalog
+pnpm docs:check
+pnpm ops:verify
+# 예: 실제 변경 표면에 맞춰 spec을 지정
+pnpm -F @nihongo-n3/e2e exec playwright test audio-qa.spec.ts pwa.spec.ts \
+  --project=chromium --project=webkit --workers=1 --retries=0 --reporter=line
+git diff --check
 ```
 
-- 시각 suite는 프로젝트 단위 제외 정책과 동일하게 관리. mock 결과와 실제 가청·네이티브 네트워크는 분리 보관
+합격: 전체 단위·OpenAPI·typecheck·build·후보 fresh D1 `0000–0031`와 해당 브라우저 계약이 exit0(운영은0030 유지). fresh는 음성 provenance·FK/FTS·manifest·content contract/control-plane을 포함한다. 시간 내 종료되지 않으면 완료까지 실행하거나 미완료로 기록한다. 콘텐츠 변경은 source·두 reviewer·validator·G0–G4 gate를 추가한다.
 
-## 4) 릴리스 승인 체크리스트
+신규220레슨/440문항 후보에는 `pnpm -F @nihongo-n3/db content:learning:readiness`도 필수다. 현재 결과는exit1/공개 차단이며 구조 검사 통과·합성 저장 fixture·불합격 차단 회귀의 통과로 대체하지 않는다. 이를 생략하고 Preview/Production 공개 단계로 넘어가지 않는다.
 
-1. `local gate` 통과
-2. preview 또는 대상 환경 E2E 통과
-3. D1 backup·restore drill(미래 rollback 대상) 완료
-4. `pnpm ops:status:remote`에서 remote 상태 확인
-5. production predeploy gate(backup, rollback ID, publish manifest, top-level hash) 통과
-6. 승인 요청/수락 후 배포 실행
+## B — 문서·운영 정리 전용
 
-> 원격 네트워크 장애(예: DNS/연결 불가)로 `ops:status:remote`가 실패하면 무조건 멈춤. 통과로 기록하지 않음.
+### 2분: 문서만 변경
 
-## 5) 증적 저장 규칙
+```sh
+git diff --name-only
+git diff --check
+pnpm docs:catalog
+pnpm docs:check
+pnpm ops:status
+```
 
-- 증적 JSON은 `.artifacts/operations` 및 `.artifacts/releases` 아래에 저장하고 Git에 포함하지 않음
-- rollback 대상은 `Worker/Pages` id, manifest hash, backup/restore 산출물을 한 묶음으로 기록
-- `INC-` 티켓은 해결 전까지 close하지 않음
+합격: 내용 변경이 문서에 한정되고 파일 지도·링크·필수 문서·직접 DB source 참조가 일치한다. Git dirty 경고는 작업 파일과 대조하고 `INC-DATA-024`는 원장과 대조한다.
 
-## 6) 삭제/정리 대상 처리 규칙
+### 5분: 운영 스크립트·삭제 목록 포함
 
-- 삭제는 아래 둘 중 하나가 모두 충족되면 수행
-  - 실제 참조가 0건(직접 참조·스크립트·route·migration에서 확인)
-  - 생산성/가독성에 기여하지 않음이 재현되고 교차검증으로 확인됨
-- 증거 없는 추정 삭제 금지
-- 실사용 인증/DB 증적/배포 증거는 원래 보관 위치로 이동만 허용
+```sh
+pnpm test:ops
+pnpm release:verify:audio-contract
+pnpm docs:check
+pnpm ops:status:remote
+git diff --check
+```
 
-### 이번 실행에서 적용한 삭제 규칙 예시
+합격: 실행 설정·참조를 다시 대조하고 운영 회귀·원격 식별자 검사까지 exit0. 실행 앱 소스·설정·의존성·migration을 삭제하거나 변경했으면 B만으로 끝내지 않고 A를 적용한다. 원격 조회 실패는 별도 실패로 기록하며 로컬 검사 통과와 혼합하지 않는다.
 
-- `scripts/fsrs-optimizer-service.example.mjs`: `scripts/` 하위에서 오직 예시 파일이며 실제 실행 경로·문서·테스트에서 참조되지 않음을 교차검증 후 삭제.
-- 삭제 대상이 `0`개인 상태로 유지된 카테고리: 미참조 SQL/테이블/문서 조각은 운영·재해복구 경로에 직접 사용되는 것으로 판정되어 이번 라운드에서 유지.
+## 커밋·push·배포 판정
 
-## 7) Sub Agent 작업 종료 리포트 기본형
+승인된 커밋은 정확한 변경 파일만 stage하고 `git diff --cached --check`·`git show --check`로 확인한다. push 후에는 원격 branch SHA·로컬 SHA·작업 트리와 `ops:status:remote`를 대조한다. 비밀·백업 원문·사용자 데이터·`.artifacts`를 Git에 넣지 않는다.
 
-- Confirmed: 현재 실행·코드·상태로 확인한 사실
-- Changed: 수정 파일/테이블/API/배포 단위
-- Validation: 실행한 명령·pass/skip/fail
-- Preserved: 백업/rollback/증거 보존 항목
-- Blocked: 현재 미해결 항목
-- Next safe step: 즉시 다음 실행 가능한 최소 작업
+Production에는 전체 로컬 gate → 전용 Preview·현재 후보 실제 Chrome 양언어 lifecycle/가청/Network → D1 backup·restore drill → rollback → predeploy → 승인된 변경 → postdeploy 순서를 적용한다. 짧은 커밋 gate만으로 배포를 판정하지 않는다. Actions는 비활성 placeholder이며 실제 실행 결과는 로컬 MD/ignored JSON 원장으로 관리한다.

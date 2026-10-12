@@ -1,126 +1,78 @@
-# 개인용 JLPT · TOPIK PWA 코드베이스 분석
+# JLPT · TOPIK 코드·DB·API 구조
 
-최종 점검: 2026-09-25 KST. 빠른 레슨·트랙별 스트릭/XP·현지화 Push와 additive `0029–0030`을 Production에 반영했습니다. Preview runtime `f8bb167`과 배포 `032b50d` 사이에는 문서 여섯 파일만 변경됐습니다. 현 세션 로컬 `ops:verify`·Preview 빠른 레슨 8/8·사용자 양언어 청취·70-table 백업/복원·strict predeploy를 확인했습니다. 사후 DB source-pinned392/392·FK/FTS·R2참조0·Worker7/auth proxy3, 실제 Production Chrome onend각1회/재생 중 요청0을 확인했으며 Production 사람 가청은 별도입니다. [현재 상태](docs/00_overview/CURRENT_STATE.md)에 증적과 배포/후속 Git 상태를 기록합니다.
+갱신: 2026-10-12 KST. Production0030과 로컬0031 후보를 분리한다. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
+
+## 신규 레슨 후보
+
+10월12일 로컬 후보는 기존 `content_learning_links`에 세 nullable JSON seal과 publisher trigger를 추가하고, V7 두 release를 단일 UPDATE exact-match 후에만 공개할 수 있게 한다. 새 테이블은 없고0031은74개를 유지한다. Preview-only CLI와 정식 G0–G4 profile을 구현하고 최종 cohort04 단위614·typecheck/build·fresh/upgrade/reseed·E2E44·actual local공개/철회를 통과했다. 12종 합성 학습 표 hash 불변도 확인했지만 실제 사용자 DB 검증이나 원격 출시는 아니다.
+
+`lib/learning-lessons.ts`와 shared 계약은 공개 카탈로그·정확 급수 typed ref·개념 연결 직접 조회를 담당한다. `0031_learning_lessons.sql`은 레슨2테이블·세션 binding과 불변/철회 쓰기 guard를 추가한다. `studyContentVersionInput`은 시각을 제외한 정렬 JSON으로 환경간 row version을 일치시킨다. quick의 예정 homophone 복습도 우선한다.
+
+Web는4메뉴·LearnHub의 추천/자유 연습/자료·TOPIK 단원 URL·일본어 기초 안내로 통합한다. QuestionsHub는 호출자를 통합한 뒤 제거하고 기존 URL은 query를 보존해 redirect한다. feature flag가 꺼지면 기존 TOPIK progress 화면은 유지한다.
+
+보존된 v1 신규440문항은 두 독립 검수/실DB 연결 실패로 미공개다. `seed/learning-path-draft.ts`는 해당 v1 draft만 계획하며 실제 strict lookup이 실패하면 쓰지 않는다. `ops/learning-path-readiness.ts`는 v1 hash의 두 리뷰·lookup·명백한 반복/번역/정답 노출을 차단한다. 후보 backup은74-table profile이며 운영72개를 대체했다고 보고하지 않는다. [구현/차단 기록](docs/00_overview/CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
+
+출판 진입점은 `ops/learning-path-reviewed-release.ts`(exact frozen/review/G0–G4), `learning-path-reviewed-publish.ts`(control/publication/withdraw), `learning-path-preview-target.ts`(전용DB·content-only mirror), `learning-path-preview.ts`(단계·완료drill guard)다. `scripts/run-learning-v7-local-gates.mjs`는 실제 로컬 receipt를 수집하며 중간 preflight를 최종 성공으로 쓰지 않는다. D1 depth100·설치Wrangler splitter 회귀도 유지한다. 별도160 v3의 quality/native draft adapter는 쓰기8/청해8 다국어·대본·speech binding과 release/audit/question version을 연결한다. 음성 코어·운영 OAuth·commit/push·새Preview·Production은 변경하지 않았다.
 
 ## Production 기준선
 
-| 상태 | DB/런타임 | 콘텐츠 |
-| --- | --- | --- |
-| production | D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `https://f62a8bdb.nihongo-n3.pages.dev` | 기존 canonical + TOPIK practice v2 300 + N3 120 + TOPIK owner Batch 5 20 published |
-| 2026-08-23 콘텐츠 Preview 기록 | 당시 Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`; 현재 Preview 배포는 릴리스 원장 참조 | N2 practice 60 + N1 practice 60 + TOPIK owner Batch 6 40 published in Preview only |
+D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `https://f62a8bdb.nihongo-n3.pages.dev` / ID `f62a8bdb-298e-446a-ab74-7d78ca47efd8`다. 앱 source는 `032b50ddfea4051309ae95829520e6309e67a6ff`, 콘텐츠 source는 `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`다. 10월10일 시작 remote52/1/0에서 식별자와 정책을 다시 확인했다. 콘텐츠 전수 검사는 9월25일 pinned392/392 이력이며 이번에 새로 실행한 결과가 아니다.
 
-Worker/Pages source SHA는 `032b50ddfea4051309ae95829520e6309e67a6ff`, Pages ID는 `f62a8bdb-298e-446a-ab74-7d78ca47efd8`입니다. 콘텐츠 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`와 manifest d102를 유지하며 앱 배포 SHA와 혼용하지 않습니다.
+## 실행 계층
 
-## Production 학습 경험
-
-Production에 `0028_learning_experience.sql`로 프로필, 세션, 단계별 결과, revision 기반 메모, 검수된 문제↔개념 링크 다섯 테이블을 추가했습니다. 기존 content/progress/SRS/daily_logs는 보존합니다.
-
-2026-09-25의 `0029_study_motivation.sql`은 기존 세션에 기본 `daily`와 선택적 `quick` mode, 원본 ID 중복 차단 및 하루100 XP 상한을 가진 `study_reward_events`를 추가했습니다. `0030_push_notification_deliveries.sql`은 구독의 알림 언어와 endpoint×현지 날짜×발송 시간대 claim을 추가합니다. 스트릭은 서버에 수락된 학습 행동과 과거 일지를 프로필 시간대로 집계합니다. 조회·해설·음성만으로 학습일/XP를 올리지 않고 자유 TOPIK practice의 client activity만으로 서버 확정 학습일을 만들지 않습니다. 기존 API request/response는 유지하고 quick `mode`만 선택적으로 추가합니다.
-
-| 계층 | 새 구현 진입점 |
+| 계층 | 진입점·역할 |
 | --- | --- |
-| shared 계약 | `packages/shared/src/learning-experience.ts`: ref, profile, session, submission, records, annotations Zod DTO |
-| API | `apps/api/src/routes/learning-experience.ts`: 계정×트랙 소유권, 단계 순서, 정답 비노출, 서버 채점·중복 claim·원자적 저장 |
-| 콘텐츠 바인딩 | `apps/api/src/lib/study-content.ts`: 같은 급수 due → 새 개념 → 문제 → 지연 retry; 유형별 canonical/owner adapter |
-| 공통 저장 | `apps/api/src/lib/learning-effects.ts`: 기존 TOPIK 완료와 JLPT/TOPIK FSRS 효과 재사용. 내부 HTTP 재호출 없음 |
-| Web | `Today`, `LearnHub`, `QuestionsHub`, `StudySession`, `LearningRecords`, `features/study`: 다섯 메뉴·재개·메모·실제 기록 |
-| 결과 재조회 | `GET /api/v1/quiz/attempts/:id`: 소유한 완료 JLPT attempt만 반환; 이전 route state로 계정 검사를 우회하지 않음 |
-| 회귀 | DB upgrade 기존 행 보존, API 계약, 메모 충돌, Chromium/WebKit 전 급수·오프라인·모바일 E2E |
+| Web/PWA | `apps/web/src/main.tsx`·`App.tsx`, React route와 ko/ja/en, TanStack Query·Zustand·Dexie |
+| 학습 UI | `pages/Today`, `StudySession`, `LearningRecords`, `LearnHub`; `features/study`, `features/learning` |
+| API/Worker | `apps/api/src/index.ts`·`app.ts`, Hono/OpenAPI route·인증·track guard·Queue/Workflow/jobs |
+| API 계약 | `packages/shared/src/api-schemas.ts`·`learning-experience.ts`; API export와 web 생성 타입 |
+| DB | `packages/db/src/schema.ts`, `drizzle-v2/0000–0031` 로컬 후보, source parser·seed·fresh verifier |
+| 브라우저 | `e2e/playwright.config.ts`, Chromium/WebKit·모바일 실제 D1/API 흐름과 mock 음성 회귀 |
+| 로컬 운영 | `scripts/project-ops-status.mjs`·`deploy-worker-with-release.mjs`·문서/음성 검사 |
 
-단계 결과와 activity를 합산하지 않고, 최초 응답/재시도/자기평가를 분리합니다. 콘텐츠 문자열 ID를 정수형 FSRS ID로 강제 변환하지 않습니다. `content_learning_links`는 아직 승인 행을 넣지 않았으므로 개념 맞춤 출제를 주장하지 않습니다. 공개 교육 원문·정답·감사 원장을 새 UI 때문에 재시드하지 않았습니다.
+`*-oa.ts` wrapper가 기존 Hono 구현과 OpenAPI 문서를 연결하는 활성 route도 있다. 이름이 legacy라고 삭제하지 않는다. Worker entrypoint·Service Worker·CLI는 일반 import가 없어도 실행 설정이 직접 사용한다.
 
-`VITE_LEARNING_EXPERIENCE=false`는 이전 홈·탐색용 빌드 옵션이며 전체 backend rollback이 아닙니다. 상세 동작·검증 결과·남은 출시 조건은 [학습 경험 구현 계획](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 통합했습니다.
+## 데이터 모델
 
-## 계층과 데이터 흐름
-
-```text
-packages/db source/seed ── fresh D1 / production D1
-                                │
-packages/shared DTO·FSRS ── apps/api Worker
-                                │ JSON API
-                           apps/web PWA
-                         Query + Dexie queue
-```
-
-| 계층 | 주요 책임 |
+| 범위 | 주요 테이블·계약 |
 | --- | --- |
-| `apps/web` | 보호 라우트, 퀴즈/owner 학습, 다음 행동, Google speech, 오프라인 활동 큐 |
-| `apps/api` | 세션·track guard, 콘텐츠/퀴즈, TOPIK progress·FSRS, 활동 수집·집계 |
-| `packages/shared` | 요청/응답 Zod schema, activity event 타입, FSRS 계산 |
-| `packages/db` | D1 schema/migration, source/seed plan, release gate, verifier |
-| `e2e` | 브라우저별 데이터 바인딩·학습 흐름·R2 요청 차단 검증 |
-| 운영 제어 | `AGENTS.md`, `.codex/skills/project-operations-steward`, `scripts/project-ops-status.mjs`, 운영 runbook과 로컬 원장 |
+| 계정·트랙 | `users`, `auth_sessions`, `track_srs_settings`; 계정×트랙 학습 격리 |
+| canonical·문제 | vocab/grammar/kanji/sentences/sysprog, reading passages/questions, `jlpt_practice_questions`, TOPIK placement/practice |
+| TOPIK owner | owner unit/item, stable refs, progress, owner FSRS cards/review logs |
+| 활동 | `learning_activity_events`(0024), 계정×event ID 중복 방지; 원문/개인정보 저장 없이 메타데이터 집계 |
+| 품질·출판 | sources/assets, releases/jobs, G0–G4 evidence, quality audits, requirements/audit links(0026) |
+| 음성 | `content_speech_bindings`(0027), provider google-browser/state ready 또는 unavailable. 실제 binary 저장 없음 |
+| 학습 경험 | `learning_profiles`, `study_sessions`, `study_steps`, `learning_annotations`, `content_learning_links`(0028) |
+| 동기부여 | session mode·`study_reward_events`(0029); 원본 중복 방지·일일100 XP |
+| Push | subscription 언어·`push_notification_deliveries`(0030), endpoint×현지 일자×시간대 claim |
 
-## Production 데이터 모델
+기존 legacy 열·`content_audio_bindings`·`quiz_question_bank`는 migration·백업 호환성 때문에 보존한다. 새 출제나 발음 저장에 사용하지 않는다. 제거하려면 별도 additive/upgrade/fresh·restore 검증이 필요하다. 현재0030 backup profile은72개 regular table이며 FTS·transient metadata는 별도 계약으로 처리한다.
 
-| migration | 모델과 불변 조건 |
+## API와 저장 흐름
+
+| API | 서비스·바인딩 |
 | --- | --- |
-| `0024_learning_activity_events.sql` | `(user_id,event_id)` 고유 이벤트. 원문/개인정보 대신 track, level, section, content ID, 정오답, FSRS rating, speech outcome, 시각만 저장 |
-| `0025_jlpt_practice_questions.sql` | 자체 저작 JLPT 정적 문제은행. 버전, 공개 상태, 3개 언어 prompt/choice/explanation, listening script를 관리하고 기본 미공개 |
-| `0026_release_quality_links.sql` | `content_release_quality_requirements`와 `content_release_quality_audit_links`. 완전하고 승인된 audit 링크 집합 없이는 공개 차단 |
-| `0027_google_speech_contract.sql` | `content_speech_bindings`: provider `google-browser`, state `ready|unavailable`. legacy `content_audio_bindings`는 한 호환 릴리스 동안 보존하되 신규 insert 차단 |
-| `0028_learning_experience.sql` | learning profile·study sessions/steps·annotations·content links. 기존 콘텐츠/학습 이력 보존, 새 백업70-table profile |
-| `0029_study_motivation.sql` | quick/daily 세션 mode와 idempotent `study_reward_events`, 트랙별 일일 XP 100 상한 |
-| `0030_push_notification_deliveries.sql` | 구독 알림 언어와 endpoint·날짜·시간대 중복 발송 claim; 새 백업72-table profile |
+| `/learning/profile` | 계정×트랙 목표·언어·시간대, `expected_track` 충돌 검사 |
+| `/study/sessions` | quick/daily·request ID 재전송·open session 재개·terminal SQL guard |
+| `/study/sessions/:id/steps/:stepId/submit` | typed ref·공개/급수 검증·서버 채점·결과/활동/FSRS/보상 batch |
+| `/learning/records`, `/learning/annotations`, `/learning/motivation` | 실제 기록 분모·annotation revision·서버 학습일·안내 세션 XP |
+| `/quiz/generate`, `/quiz/attempts/:id` | random/weakest·strict-level·세션 선택지 회전·소유권 검사 후 완료 결과 조회 |
+| TOPIK complete/review | `lib/learning-effects.ts` 공통 저장, progress→card→review log→activity |
+| `/activity/events`, `/activity/summary` | 최대100 idempotent client batch·7/30일 집계. client telemetry와 확정 학습 기록을 구분 |
+| `/notifications` | opt-in·구독 소유권·현지화·오늘 학습 skip·발송 중복 차단 |
 
-`0025`는 뒤 migration의 테이블을 참조하지 않습니다. release-link 의존 trigger는 `0026`이 관련 테이블을 만든 뒤 설치하므로 fresh migration 순서가 유효합니다.
+`lib/study-content.ts`는 공개 상태와 같은 급수 typed content adapter를, `lib/learning-effects.ts`는 공통 완료·FSRS 효과를, `lib/motivation.ts`는 서버 기록 집계를 담당한다. 내부 HTTP 재호출로 학습 효과를 중복 처리하지 않는다. 오프라인에서는 pending/초안과 서버 수락 상태를 구분하고 계정·트랙 cache scope를 보존한다.
 
-## 활동·퀴즈·학습 연결
+## 음성·PWA
 
-클라이언트는 Dexie 4의 로컬 schema version 6 큐에 활동 이벤트를 먼저 기록합니다. flush 실패 시 항목을 보존하고, 다음 온라인 전환/앱 재개 때 동일 `event_id`로 재전송합니다. 서버의 `(user_id,event_id)` 고유 키가 중복을 흡수하며 queue는 계정×트랙으로 격리됩니다.
+Web `lib/audio.ts`·`google-browser-speech.ts`와 TOPIK `useKoreanAudio.ts`가 shared audio policy를 사용한다. same-language Google 우선·설치 voice fallback, ko/ja 제한, click task 즉시 speak·onend 뒤 성공을 보존한다. R2/서버 발음 요청은 만들지 않으며 API legacy와 관리자 생성은410, CSP media-src는 none이다.
 
-- `POST /api/v1/activity/events`: 1–100개 batch, 인증 track과 이벤트 track이 다르면 거부, `{accepted, duplicates}` 반환
-- `GET /api/v1/activity/summary?window=7d|30d`: totals와 track/level/section/mode groups 반환
-- 퀴즈 제출은 질문별 `quiz_answered`, TOPIK owner 완료는 `content_completed`, FSRS 평가는 `review_rated`를 해당 데이터 변경과 같은 서버 transaction에서 기록
-- speech playback은 `speech_attempted`와 `played|unavailable|error`만 기록
+활성 Service Worker는 Vite injectManifest의 `src/sw.ts`다. 콘텐츠 API cache·push/notificationclick을 처리하고 `lib/pwa-update.ts`가 기존 client의 새 worker 전환을 관리한다. 최초 방문 reload와 이미 제어되는 client update를 구분한다.
 
-퀴즈 생성의 `strategy`는 선택 사항입니다. `random`은 기존 요청에 필드를 추가하지 않아 호환성을 유지합니다. `weakest`는 최근 30일 오답/복습을 우선하지만 요청한 급수 내부에서만 고르며, 데이터가 없거나 부족해도 다른 급수로 fallback하지 않습니다. N3 `kanji_reading`/`listening`과 N2/N1 네 모드는 공개·검토된 정적 bank를 우선합니다. N2/N1에서 16–20개를 요청하면 정적 15개 뒤를 같은 급수 canonical 항목으로만 채우고, 정답과 listening 정답 번역은 제출 전에 노출하지 않습니다.
+## 콘텐츠·미완료·검증
 
-TOPIK 대시보드는 서버 due, 미완료 owner 목록, 30일 activity summary를 합쳐 `due review → incomplete owner → weakest area`의 고정 순서로 하나의 다음 행동을 만듭니다.
+운영은 canonical N5–N1·TOPIK owner Batch1–5, TOPIK practice v2 300, N3 정적120이다. N2 정적60·N1 정적60·TOPIK Batch6 40은 Preview 후보다. 승인된 문제↔개념 link는 아직 생성하지 않았고 기존 교육 영어 내용의 새 번역·진입/재개 성과 계측도 후속 범위다. [원본 지도](docs/00_overview/00_source_map.md)·[감사](docs/00_overview/CONTENT_AUDIT.md)·[로드맵](docs/ROADMAP.md)을 따른다.
 
-2026-08-30 감사에서 발견한 TOPIK status legacy v1 조회와 quiz activity 부분 성공을 수정했고, 2026-09-07 Worker에 반영했습니다. 결과+activity의 원자성과 완료 attempt 재제출409는 같은 runtime의 로컬/Preview 테스트로 검증했습니다. Production에는 학습 테스트 데이터를 쓰지 않았으며 status의 TOPIK I/II·쓰기 활성은 실제 사후 응답으로 확인했습니다.
+`pnpm ops:verify`는 음성 계약·OpenAPI·타입·전체 단위·build·fresh D1의 FK/FTS·manifest·provenance·release contract/control-plane을 검사한다. 브라우저·실제 청취는 별도 증거다. `ops:status:remote`는 읽기 전용이며 Production 콘텐츠 전수 verifier나 실제 SSO 로그인 대신 사용하지 않는다.
 
-## 콘텐츠와 release control
-
-production은 JLPT N2 Batch 1–5(583행), N1 Batch 1–4(286행), TOPIK owner Batch 1–5(140 unit/140 item), TOPIK practice v2 300문항을 제공합니다. TOPIK Batch 5는 1·2급만 확장합니다.
-
-2026-08-19 콘텐츠 release는 별도 source와 deterministic builder에서 생성되어 production에 반영됐습니다.
-
-- `jlpt-n3-practice-v1-2026-08-19`: 한자 읽기 60 + 듣기 60, 각 모드 정답 위치 `15/15/15/15`, quality link 120개, published
-- `topik-owner-batch5-2026-08-19`: 급수별 10개, 다섯 영역 각 2개, 총 20개, quality link 20개, published. 듣기 4개만 `audio_text_ko`와 Google speech binding을 가짐
-- 두 독립 adversarial review artifact가 140개 전체의 정답·해설을 대조했고 release gate가 이를 실제 publication과 연결
-
-기존 TOPIK v2 300 audit은 historical release `topik-practice-v2-2026-08-17`의 quality link 300개로 production control plane에 연결됐습니다.
-
-2026-08-23 Preview 후보는 별도 source intake와 최종 draft SHA, 서로 독립된 Reviewer A/B 판정, validator 결과를 세 release에 연결합니다.
-
-- `jlpt-n2-practice-v1-2026-08-23`: 60문항, quality link 60
-- `jlpt-n1-practice-v1-2026-08-23`: 60문항, quality link 60
-- `topik-owner-batch6-2026-08-23`: 3–6급 40항목, quality link 40
-- Preview에서는 세 release와 G0–G4, 실제 TOPIK 완료→progress→FSRS→activity transaction을 검증했습니다. 음성 회귀 복구는 2026-08-24 Production Pages에 반영됐지만, 신규 콘텐츠는 새 predeploy·backup/restore·immutable release verifier와 명시적 승인을 다시 확보해야 하므로 Production에는 반영하지 않았습니다.
-
-## 음성 불변 조건
-
-모든 발음은 Google 음성을 우선하고 같은 언어의 브라우저/기기 음성을 사용합니다. click handler는 voice 준비를 `await`하지 않고 같은 task 안에서 즉시 `speak()`를 호출하며, 비동기 voice discovery는 다음 재생을 위해 background에서만 실행합니다. 신규 speech binding에는 R2 key나 URL이 없습니다. legacy `/api/v1/audio/*` 요청은 `410`이며 E2E는 해당 요청이 0인지 감시합니다. report/evidence R2 버킷은 발음과 별도입니다.
-
-## 검증 상태와 다음 관찰
-
-2026-08-19 배포 후 remote DB verifier, TOPIK v2 verifier, question quality 332개/실패 0건, R2 pronunciation 참조 0건을 확인했습니다. 2026-08-24 음성 복구본은 같은 언어 fallback, 첫 클릭의 동기 `speak()`, 기존 controller가 있는 PWA만 1회 갱신, 첫 방문자 무중단과 R2 요청 0건을 회귀 계약으로 고정합니다. 첫 Preview에서 신규 client 강제 reload를 발견해 Production을 중단했고, 수정 뒤 Web `93/93`, 영향 E2E `50 passed / 2 skipped`, 전체 E2E `171 passed / 32 skipped`로 다시 통과했습니다. 최종 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`과 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에서 검증했으며, Production 영향 기능은 Chromium/WebKit `44 passed / 8 skipped / 0 failed`였습니다.
-
-다음 운영 판단은 실제 학습 활동을 기준으로 합니다.
-
-- activity summary의 중복률, track 격리, speech error를 7일/30일 창으로 관찰합니다.
-- release link 수 120/20/300과 published 상태를 원격 verifier에서 계속 고정합니다.
-- Batch 6 Production 반영 뒤 실제 사용량이 N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건에 도달해야 Batch 7을 판단할 수 있습니다. D+30 미달이면 추가 증량보다 진입 UX를 우선합니다.
-
-현재 운영 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md), 후보 배포 재개 순서는 [NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)를 따릅니다.
-
-## 운영관리와 로컬 CI/CD 대체 계층
-
-모든 에이전트는 루트 `AGENTS.md`의 선독 순서와 `.codex/skills/project-operations-steward` 계약을 따릅니다. 운영 상태의 진실 우선순위는 현재 실행/원격 읽기 결과 → 코드·schema·test → `CURRENT_STATE` → 오류·릴리스 원장 → 과거 계획입니다.
-
-- `pnpm ops:status`: 필수 문서, 현재 배포 식별자 5개가 README와 분석 문서 각각에 있는지, package scripts, Actions 비활성, 보존해야 할 로컬 backup/release/recovery 증적, 문서 링크, 음성 계약, Git 상태와 알려진 manifest drift를 확인합니다.
-- `pnpm ops:verify`: 상태 검사 뒤 OpenAPI, typecheck, 전체 unit, build, fresh D1을 순서대로 실행합니다. fresh D1은 음성 provenance와 content contract/control plane을 포함합니다.
-- `pnpm ops:status:remote`: local/origin SHA, Production Pages·Worker·D1 migration, public/audio QA/legacy smoke, auth proxy 계약, TOPIK v2 release status, CSP R2 media 차단과 D1의 9개 R2 발음 surface 참조 0건을 읽기 전용으로 확인합니다.
-- `verify:remote:audio`는 `INC-DATA-024`가 열린 동안 fail-closed입니다. 운영 콘텐츠는 immutable release source/manifest verifier로만 판정하고 R2 부재는 target이 명시된 `verify:remote:audio:r2`로 별도 확인합니다.
-- 결과 JSON은 `.artifacts/operations/`에 보존하고 Git에 커밋하지 않습니다. Production write/deploy는 이 계층의 자동 동작이 아니며 기존 승인·Preview·backup/restore·rollback 절차를 요구합니다.
+이번 정리에서 미사용 API helper3·UI component1·중복SW1을 제거하고 현재 파일 지도 검사를 추가했다. 콘텐츠/마이그레이션·DB 데이터·발음 실행 코어는 보존한다. 변경·검증 결과는 [정리 기록](docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md)에 기록한다.

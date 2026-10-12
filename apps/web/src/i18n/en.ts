@@ -4,6 +4,7 @@
 const en = {
   nav: {
     home:       'Home',
+    today:      'Today',
     review:     'Review',
     browse:     'Browse',
     quiz:       'Quiz',
@@ -123,6 +124,8 @@ const en = {
       markComplete: 'Mark complete',
       markIncomplete: 'Mark incomplete',
       playExpression: 'Play {{text}}',
+      objective: 'Objective',
+      meaning: 'Meaning',
     },
     characters: {
       eyebrow: 'TOPIK Korean · Hangul foundations',
@@ -225,6 +228,7 @@ const en = {
       writing: 'Writing',
       reading: 'Reading',
     },
+    skills: { listening: 'Listening', reading: 'Reading', writing: 'Writing', vocabulary: 'Vocabulary', grammar: 'Grammar' },
   },
 
   common: {

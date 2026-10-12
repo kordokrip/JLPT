@@ -58,6 +58,11 @@ export function studyRefKey(ref: StudyRef): string {
     .map(encodeURIComponent)
     .join(":");
 }
+// 강성호 2026-10-11: 취득 시각과 음성 준비 상태는 내용 버전이 아니므로 환경별 ref 흔들림을 막는다.
+export function studyContentVersionInput(row: Record<string, unknown>): string {
+  return JSON.stringify(Object.fromEntries(Object.entries(row)
+    .filter(([key])=>!['created_at','updated_at','binding_state'].includes(key)).sort(([a],[b])=>a<b?-1:a>b?1:0)));
+}
 export function levelBelongsToTrack(track: string, level: string): boolean {
   return track === "jlpt-ja" ? /^N[1-5]$/.test(level) : /^[1-6]$/.test(level);
 }
@@ -105,6 +110,8 @@ export const studySessionSchema = z.object({
   level: studyLevelSchema,
   daily_minutes: z.number(),
   mode: z.enum(["quick", "daily"]).default("daily"),
+  lesson_id: z.string().optional(),
+  lesson_version: z.string().optional(),
   status: z.enum(["active", "paused", "completed", "abandoned"]),
   created_at: z.number(),
   updated_at: z.number(),
@@ -115,6 +122,16 @@ export type LearningProfile = z.infer<typeof learningProfileSchema>;
 export type StudySession = z.infer<typeof studySessionSchema>;
 export type StudyStep = z.infer<typeof studyStepSchema>;
 export type StudySubmission = z.infer<typeof studySubmissionSchema>;
+// 강성호 2026-10-11: 목록에는 정답/본문 대신 공개 레슨과 수락된 세션 상태만 제공한다.
+export const learningLessonCatalogSchema = z.object({
+  level: studyLevelSchema,
+  lessons: z.array(z.object({
+    id: z.string(), version: z.string(), title: z.string(), ordinal: z.number().int(),
+    completed: z.boolean(), active_session_id: z.string().nullable(),
+  })),
+  next_lesson_id: z.string().nullable(),
+});
+export type LearningLessonCatalog = z.infer<typeof learningLessonCatalogSchema>;
 export const learningMotivationSchema = z.object({
   streak: z.number(),
   longest_streak: z.number(),

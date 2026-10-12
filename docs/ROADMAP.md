@@ -1,80 +1,39 @@
-# 학습 콘텐츠·플랫폼 로드맵
+# 다음 개발·운영 계획
 
-> 2026-09-25 현재: [빠른 학습·개인 보상 릴리스](00_overview/PERSONAL_LEARNING_UX_2026-09-25.md)는 Preview 실학습·사용자 양언어 가청, 운영70-table 백업/복원과 predeploy gate를 거쳐 Production `0029–0030`/Worker `aedcbd40`/Pages `f62a8bdb`에 반영됐다. Production Chrome 양언어 onend·R2/legacy 요청 0을 확인했고 사람 가청은 별도 질문 중이다. 다음 우선순위는 실제 7/30일 사용 기록과 진입/재개 UX를 관찰하는 것이다. 자유 TOPIK practice의 client activity만으로 확정 스트릭을 만들지 않는 서버 채점 경계는 유지한다.
+갱신: 2026-10-12 KST. 현재 운영은 9월25일 quick/daily·개인 보상·알림 릴리스다. 구현·배포 값은 [현재 상태](00_overview/CURRENT_STATE.md), 완료된 날짜별 변경은 [CHANGELOG](00_overview/CHANGELOG.md), 실행 증거는 [릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md)에 둔다.
 
-모든 배포의 선행 차단 조건은 [오류·회귀 차단 원장](00_overview/ERROR_LEDGER.md)을 따릅니다. 음성 P1 회귀는 2026-08-24 복구 배포를 완료했고, 현재 콘텐츠 Production의 운영 차단 항목은 `INC-DATA-024`의 immutable release manifest 검증 경로와 새 predeploy 증적입니다.
+## 운영 안정화
 
-최종 점검: 2026-09-25 KST. 기존 콘텐츠 Preview160개는 Production에 공개하지 않고 이후 사용성 관찰과 분리합니다.
+1. `INC-DATA-024`: 콘텐츠 SHA·manifest·실제 seed run을 명시하는 표준 원격 검증 인터페이스를 정리한다. 현재 immutable source를 고정해 검증하며 운영 재시드로 HEAD 차이를 지우지 않는다.
+2. 현재0030/72-table profile의 새 백업과 restore drill을 마련한다. 9월25일0028/70개 백업은 migration 이후 새 보상/알림 기록을 포함하지 않는다. 운영 export 점검은 해당 작업의 승인·정지 범위를 확인한다.
+3. 실제 사용의7/30일 activity·세션·최초 응답·FSRS·speech 결과를 읽기 전용으로 관찰한다. 자동 lifecycle과 사람 가청은 별도 증거다.
+4. Legacy DB 열·테이블은 source cleanup과 구분해 별도 migration·upgrade/fresh·backup 검증을 설계한다. 현재 문서 정리로 삭제하지 않는다.
 
-이번 릴리스 직전 로컬 `pnpm ops:status`는 `40 pass / 1 known warning / 0 fail`이었고, 배포 직후 원격 상태 명령은 아직 이전 문서 기준선을 비교해 5건 실패했다. 본 문서·원장과 Git 동기화 후 최종 재실행 결과를 기준으로 확정한다. 단발 Cloudflare D1 `7403`은 후속 9표면 참조 0 조회와 분리 보존한다.
+## 개인 학습 UX
 
-## 우선 작업 — 매일 이어지는 개인 학습
+오늘에서 한 번 눌러 quick/daily 시작·재개하고 기록을 이해하는 흐름은 출시했다. 다음 개선은 실제 사용의 이탈·중단·오답을 근거로 선정한다. 자유 TOPIK practice의 client activity를 서버 확정 스트릭으로 승격하려면 채점·저장·재전송 계약을 먼저 설계한다.
 
-[학습 경험 구현 계획](00_overview/LEARNING_EXPERIENCE_PLAN.md)의 `0028` 프로필·세션·단계 기록·메모·연결 메타데이터와 양언어 공통 탐색을 Production에 반영했습니다. 동일 runtime 로컬/Preview gate·최신555 사용자 청취·새 backup/restore·승인 후 배포했고 사후 DB392개와 공개/API/음성 화면을 검증했습니다. 전체 시각 suite는 별도 미실행 범위이며 완료로 확대하지 않습니다. 다음 작업은 실제 학습 기록 관찰과 사용성 개선입니다.
+승인된 문제↔개념 링크와 새 교육 번역·연상 설명은 독립 검수 후 공개한다. 기존 영어 교육 내용을 일본어 조작 UI 번역 완료와 혼동하지 않는다. 학습 진입 시간·실제 재개 성공률·힌트 사용은 아직 추가 계측이 필요한 지표이며 과거 기록에서 추정해 채우지 않는다.
 
-출시 후 7일/30일에는 세션 완료·중단·재개, 최초 응답·재시도, due review를 관찰합니다. `50/10/5`는 운영 참고 지표이며 홈에서 개발 목표처럼 노출하지 않습니다. 시작까지 걸린 시간과 실제 재개 성공률은 현재 schema만으로 확정할 수 없어 계측 정의·검증 후 추가합니다.
+## 콘텐츠 후보
 
-## Production 완료 기준선
+10월12일 V7 정규 publisher/verifier의 최종 local runner(cohort04)는 단위614/E2E44·fresh/upgrade/reseed·local G0–G4 공개/재실행/철회·12종 합성 기록 불변을 통과했다. 별도160 v3도 두160승인·quality·543 draft행/reseed·쓰기8/듣기8 binding을 확인했다. 현재 사용자 범위는 **로컬 검증·문서화뿐**이므로 commit·push·새Preview·Production은 진행하지 않는다.
 
-- D1 `nihongo-n3-prod-v2` migration `0000–0030`
-- Worker `aedcbd40-6605-44d2-8227-d145a186bef0` (rollback `c2901280`)
-- Pages `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`, rollback `ce4e5e57`)
-- Worker/web 배포 source `032b50ddfea4051309ae95829520e6309e67a6ff`; content source `3485c6ef8addda3cd3e209730646c296175cf3c9` 유지
-- JLPT N2 Batch 1–5, N1 Batch 1–4, TOPIK owner Batch 1–5
-- TOPIK practice v2 300문항 공개, v1 28문항 보존·비공개
-- TOPIK v2 선택형 영역별 `15/15/15/15`, JLPT 정적 독해 정답 위치 편향 검사 통과
-- R2 발음 D1 참조 0건, Google 우선 동일 언어 브라우저 음성 사용
-- CI/CD 자동 게이트는 운영 정책상 비활성화했고, 증거는 로컬 MD 원장에서만 채택합니다.
+후속은 별도 승인 범위 확인 → 후보 고정/새Preview에서V7과160의 독립 control-plane/evidence → 실제 계정11급수·가족 동선 → 같은 배포의Chrome ko/ja onend·가청·Network R2/legacy0 → 현schema backup/restore·rollback/predeploy → 현재Production 승인이다. 기존160/v2 및V4–V6의 실패와 cohort01–03 실패는 보존한다. 완전 맹검·가족/가청·실사용자 기록 보존을 local/mock 결과로 주장하지 않는다.
 
-## P1 Worker 교정 — 2026-09-07 Production 반영
+| 후보 | 준비 범위 | 운영 상태 |
+| --- | --- | --- |
+| JLPT N2 정적 practice v1 | 기존60문항, 4모드×15 | 기존Preview에만 존재·재검수실패/승격금지 |
+| JLPT N1 정적 practice v1 | 기존60문항, 같은 계약 | 기존Preview에만 존재·재검수실패/승격금지 |
+| TOPIK owner Batch6 | 기존3–6급40항목 | 기존Preview에만 존재·재검수실패/승격금지 |
+| 별도 Preview160 v3 | 새N2/N1 각60·TOPIK40, 두승인·품질·local binding/reseed | 로컬 draft, 원격control-plane/publication 미실행 |
 
-- TOPIK track status를 비공개 v1이 아니라 공개 v2 300문항으로 판정
-- quiz result와 activity event의 원자성 보장, 부분 성공 fallback 제거
-- TOPIK·source asset·legacy binding을 포함한 R2 참조 전수 gate와 CSP `media-src 'none'`
-- 로컬/Preview 회귀·승인 후 배포 완료; 실제 Production TOPIK status·CSP·R2참조0 확인. quiz 원자성 검사를 위해 운영 학습 데이터를 생성하지 않음
+현재 공개 canonical N2/N1과 이 정적 문제은행 후보를 구분한다. 첫 증량은 확정 정책에 따라 사용량 임계값과 별개로 품질 gate를 적용하지만, 새 source의 Preview·실제 양언어 음성·backup/restore·G0–G4·승인·postdeploy를 다시 확보해야 한다. 과거 Preview 통과를 새 후보 완료로 옮기지 않는다.
 
-2026-08-09와 2026-08-17 배포 ID·백업·rollback 기록은 [현재 상태](00_overview/CURRENT_STATE.md#production-릴리스-기록)에 보존합니다.
+배포 뒤 같은 판정 시점 최근30일 N3 최초 응답50·TOPIK owner 완료10·TOPIK FSRS 복습5를 운영 참고 지표로 집계한다. 미달이 지속되면 Batch7보다 학습 진입·다음 행동 UX를 우선한다. 이 값은 사용자 화면의 개발 목표로 노출하지 않는다. 상세 후보는 [증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따른다.
 
-## 2026-08-19 Production 완료
+## 개발·릴리스 기준
 
-1. `0024`: privacy-minimized `learning_activity_events`와 idempotent batch 계약
-2. `0025`: 자체 저작 JLPT 정적 문제은행 schema
-3. `0026`: quality audit과 `content_releases`의 요구량/링크 및 publication gate
-4. `0027`: `google-browser` 전용 speech binding, legacy audio binding 신규 쓰기 차단
-5. 활동 API·Dexie offline queue·7/30일 summary와 TOPIK 다음 행동
-6. 퀴즈 선택적 `weakest`; 기본 `random` 호환, 요청 급수 밖 fallback 금지
-7. `jlpt-n3-practice-v1-2026-08-19` 120문항과 quality link 120개 published
-8. `topik-owner-batch5-2026-08-19` 20항목과 quality link 20개 published
-9. historical `topik-practice-v2-2026-08-17`과 quality link 300개 published
+코드 정리는 호출자·설정·테스트 참조를 교차검증하고 공개 API·학습 데이터·FSRS·음성 계약을 보존한다. 파일 지도는 `pnpm docs:catalog`로 갱신하고 `docs:check`가 stale 목록을 차단한다. 코드 변경과 문서 전용 gate는 [로컬 체크리스트](00_overview/LOCAL_CICD_MANAGEMENT.md)에 분리했다.
 
-배포 후 remote DB/TOPIK verifier, question quality 332개·실패 0건, R2 pronunciation 참조 0건, Chromium/WebKit production E2E가 통과했습니다.
-
-## 2026-08-23 Preview 완료 후보
-
-- N2 `jlpt-n2-practice-v1` 60문항과 N1 `jlpt-n1-practice-v1` 60문항 구현 완료
-- TOPIK owner Batch 6: 3–6급 각 10개, 총 40항목 구현 완료
-- 두 독립 reviewer 160/160 승인, validator 통과, Preview quality link `60/60/40`
-- Preview 기준 TOPIK owner 전 급수 30개·급수/영역별 6개
-- Preview Worker `4c6846d8-7cde-4c2c-916b-533a2db6d76a`, 원격 smoke 21/21, Chromium/WebKit 각 14/14
-- 음성 회귀 복구는 Pages `9cc58a1f-4772-4129-b90d-c819ca20d700`에 완료했고 Production 영향 기능 Chromium/WebKit `44 passed / 8 skipped / 0 failed`를 확인
-
-이번 첫 증량은 확정 정책에 따라 `50/10/5` 미달과 무관하게 품질 gate로 준비했습니다. 다만 Preview의 과거 증적을 재사용하지 않고 현재 source의 production-predeploy, backup/restore와 source-pinned remote verifier를 새로 통과해야 합니다.
-
-## 다음 실행 순서
-
-1. **운영관리 기준선** — `project-operations-steward`가 작업 전후 local/remote status와 문서 drift를 기록합니다.
-2. **manifest verifier 보강** — `INC-DATA-024`를 해결하도록 immutable release SHA/manifest를 명시하는 remote 검증 인터페이스를 구현합니다.
-3. **7일 안정성 관찰** — activity accepted/duplicate, API error, speech outcome, published link 수를 확인합니다.
-4. **데이터 바인딩 표본 확인** — N3 정답→activity, TOPIK complete→progress/card/activity, review→FSRS/activity를 원격 데이터에서 대조합니다.
-5. **브라우저 회귀 유지** — Chromium/WebKit에서 strict-level weakest, 다음 행동, Google 우선 동일 언어 speech, `/api/v1/audio/` 0건을 재확인합니다.
-6. **조건부 콘텐츠 Production 반영** — 새 backup/restore drill, production-predeploy G4, D1 seed, 호환 Worker, source-pinned postdeploy verifier를 수행합니다. UI 변경이 없으면 Pages는 유지합니다.
-7. **D+1/D+7/D+30 관찰** — N3 응답 50건, TOPIK 완료 10건, FSRS 복습 5건을 재집계합니다. D+30 미달이면 Batch 7을 중단하고 진입 UX를 먼저 개선합니다.
-
-상세 증적, 중단 조건과 재개 순서는 [2026-08-23 증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)에 있습니다.
-
-## 변하지 않는 완료 기준
-
-- source evidence, 자동 validator, 서로 다른 두 reviewer, release-quality link, G0–G4가 모두 있어야 합니다.
-- 다음 release도 fresh/upgrade/preview/production 단계 중 하나라도 실패하면 공개하지 않습니다.
-- 발음은 Google 음성을 우선하고 같은 언어 기기 음성만 fallback하며, R2 저장·생성·재생·fallback은 만들지 않습니다.
-- 공식 JLPT/TOPIK 기출 문항·정답·지문·음원은 저장하지 않습니다.
+새 릴리스는 local gate → Preview → 실제 Chrome·가청·Network → backup/restore → rollback → predeploy → 승인된 변경 → remote verifier/smoke 순서다. 같은 언어 Google 우선·설치 음성 fallback·R2 발음 금지·legacy410을 유지한다. 실패·미실행·skip·mock 결과를 통과로 기록하지 않는다.

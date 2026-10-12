@@ -7,7 +7,6 @@ import { useSettingsStore } from './stores/settings-store';
 import { learningExperienceEnabled } from './lib/learning-experience';
 const Today = lazy(() => import('./pages/Today'));
 const LearnHub = lazy(() => import('./pages/LearnHub'));
-const QuestionsHub = lazy(() => import('./pages/QuestionsHub'));
 const LearningRecords = lazy(() => import('./pages/LearningRecords'));
 const StudySession = lazy(() => import('./pages/StudySession'));
 
@@ -39,7 +38,7 @@ const TopikPlacement  = lazy(() => import('./pages/TopikPlacement'));
 const TopikLearn      = lazy(() => import('./pages/TopikLearn'));
 const TopikCharacterTrainer = lazy(() => import('./pages/TopikCharacterTrainer'));
 const TopikReview     = lazy(() => import('./pages/TopikReview'));
-const TopikProgress   = lazy(() => import('./pages/TopikProgress'));
+const TopikProgress = lazy(() => import('./pages/TopikProgress'));
 const NotFound       = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -48,6 +47,15 @@ function PageLoader() {
       <span className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
     </div>
   );
+}
+
+// 강성호 2026-10-11: 저장된 이전 링크의 급수·영역 query를 버리지 않고 통합 화면으로 이동한다.
+function LegacyLearningRedirect({progress=false}:{progress?:boolean}) {
+  const location=useLocation();
+  const params=new URLSearchParams(location.search);
+  if(progress)params.set('detail','topik-progress');
+  const query=params.toString();
+  return <Navigate to={`${progress?'/records':'/learn'}${query?'?'+query:''}${progress?location.hash:'#free-practice'}`} replace />;
 }
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -93,7 +101,7 @@ export default function App() {
         <Route element={<RequireAuth><RootLayout /></RequireAuth>}>
           {learningExperienceEnabled && <>
             <Route path="learn" element={<LearnHub />} />
-            <Route path="questions" element={<QuestionsHub />} />
+            <Route path="questions" element={<LegacyLearningRedirect />} />
             <Route path="records" element={<LearningRecords />} />
             <Route path="study/:id" element={<StudySession />} />
           </>}
@@ -105,7 +113,7 @@ export default function App() {
             <Route path="track/topik-ko/learn" element={<TopikLearn />} />
             <Route path="track/topik-ko/characters" element={<TopikCharacterTrainer />} />
             <Route path="track/topik-ko/review" element={<TopikReview />} />
-            <Route path="track/topik-ko/progress" element={<TopikProgress />} />
+            <Route path="track/topik-ko/progress" element={learningExperienceEnabled?<LegacyLearningRedirect progress />:<TopikProgress />} />
           </Route>
           <Route element={<RequireJlptTrack />}>
             <Route index          element={learningExperienceEnabled ? <Today /> : <Home />} />

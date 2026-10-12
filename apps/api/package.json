@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "WRANGLER_WRITE_LOGS=0 wrangler dev",
     "build": "WRANGLER_WRITE_LOGS=0 wrangler deploy --dry-run --config wrangler.toml --env=\"\"",
-    "deploy": "node ../../scripts/deploy-worker-with-release.mjs",
+    "deploy": "node ../../scripts/deploy-worker-with-release.mjs --env=production",
     "deploy:preview": "node ../../scripts/deploy-worker-with-release.mjs --env=topik-preview",
     "deploy:observability-receiver": "WRANGLER_WRITE_LOGS=0 wrangler deploy --config wrangler.observability-receiver.toml",
     "typecheck": "tsc --noEmit",

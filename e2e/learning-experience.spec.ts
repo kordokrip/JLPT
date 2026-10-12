@@ -22,7 +22,7 @@ test("Japanese owner explanation is not completion; explicit completion creates 
     .filter({
       has: page.getByRole("heading", { name: unit.title_ja, exact: true }),
     })
-    .getByRole("button", { name: "学習", exact: true })
+    .getByRole("button", { name: "学ぶ", exact: true })
     .click();
   if (item.choices.length) await section.getByRole("radio").first().click();
   const completeRequests: string[] = [];
@@ -447,13 +447,14 @@ test("a stale device track cannot save a day note into the other track", async (
   expect(wrongTrackNotes).toEqual([]);
 });
 
-test("mobile account controls and five menus stay reachable with larger text", async ({
+test("mobile account settings and four menus stay reachable with larger text", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await register(page, "ja");
   const nav = page.getByRole("navigation", { name: "メインナビゲーション" });
-  await expect(nav.getByRole("link")).toHaveCount(5);
+  await expect(nav.getByRole("link")).toHaveCount(4);
+  for(const label of ['今日','学ぶ','復習','記録'])await expect(nav.getByRole('link',{name:label,exact:true})).toBeVisible();
   await page.addStyleTag({ content: ":root { font-size: 20px !important; }" });
   expect(
     await page.evaluate(
@@ -461,7 +462,33 @@ test("mobile account controls and five menus stay reachable with larger text", a
     ),
   ).toBeTruthy();
   await page.getByText("アカウント・設定", { exact: true }).click();
-  await expect(page.getByRole("combobox").first()).toBeVisible();
+  await page.getByRole('link',{name:'設定',exact:true}).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  const main = page.getByRole("main");
+  await expect(main.getByRole("heading", { name: "言語", exact: true })).toBeVisible();
+  const japaneseLanguageControls = main.getByRole("button", { name: "日本語", exact: true });
+  await expect(japaneseLanguageControls).toHaveCount(2);
+  await expect(japaneseLanguageControls.first()).toBeVisible();
+  await expect(japaneseLanguageControls.last()).toBeVisible();
+  await expect(main.getByRole("button", { name: "韓国語・TOPIK", exact: true })).toBeVisible();
+  await expect(main.getByRole("button", { name: "日本語・JLPT", exact: true })).toBeVisible();
+  const installGuide = main.getByRole("region", { name: "ホーム画面への追加案内" });
+  if (test.info().project.name === "mobile-webkit") {
+    await expect(installGuide).toBeVisible();
+    expect(await installGuide.evaluate((element) => getComputedStyle(element).position)).not.toBe("fixed");
+    const close = installGuide.getByRole("button", { name: "閉じる", exact: true });
+    await close.scrollIntoViewIfNeeded();
+    const closeBox = await close.boundingBox();
+    expect(closeBox!.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox!.height).toBeGreaterThanOrEqual(44);
+    await close.click();
+    await expect(installGuide).toHaveCount(0);
+    await page.reload();
+    await expect(installGuide).toHaveCount(0);
+  } else {
+    await expect(installGuide).toHaveCount(0);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   await page.screenshot({
     path: test.info().outputPath("today-ja-mobile.png"),
     fullPage: true,

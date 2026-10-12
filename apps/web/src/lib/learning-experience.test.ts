@@ -24,7 +24,8 @@ it.each(["jlpt-ja", "topik-ko"] as const)(
       timezone: "Asia/Tokyo",
     });
     await learningApi.current();
-    await learningApi.start("request");
+    await learningApi.lessons(track === "jlpt-ja" ? "N3" : "3");
+    await learningApi.start("request", "daily", "lesson-1");
     await learningApi.session("session");
     await learningApi.status("session", "paused");
     await learningApi.reveal("session", "step");
@@ -41,7 +42,7 @@ it.each(["jlpt-ja", "topik-ko"] as const)(
       revision: 0,
     });
     const paths = spies.flatMap((spy) => spy.mock.calls.map(([path]) => path));
-    expect(paths).toHaveLength(11);
+    expect(paths).toHaveLength(12);
     for (const path of paths) {
       expect(
         new URL(path, "https://example.invalid").searchParams.get(
@@ -55,3 +56,11 @@ it.each(["jlpt-ja", "topik-ko"] as const)(
     ).toBe("30d");
   },
 );
+
+it('passes a selected lesson only when starting a recommended lesson', async () => {
+  const post = vi.spyOn(api, 'post').mockResolvedValue({ ok: true, data: {} });
+  await learningApi.start('lesson-request', 'daily', 'lesson-42');
+  expect(post).toHaveBeenCalledWith(expect.stringContaining('/study/sessions?expected_track='), {
+    request_id: 'lesson-request', mode: 'daily', lesson_id: 'lesson-42',
+  });
+});

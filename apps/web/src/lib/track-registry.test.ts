@@ -10,15 +10,19 @@ describe('web track registry', () => {
 
   it('does not expose JLPT content routes in TOPIK navigation', () => {
     const paths = navigationForTrack('topik-ko', 'user').map((item) => item.to);
-    expect(paths).toEqual(['/track/topik-ko', '/learn', '/questions', '/track/topik-ko/review', '/records']);
+    expect(paths).toEqual(['/track/topik-ko', '/learn', '/track/topik-ko/review', '/records']);
     expect(paths).not.toContain('/browse/vocab');
     expect(paths).not.toContain('/quiz');
     expect(paths).not.toContain('/admin/users');
   });
 
-  it('keeps account/admin controls out of the five learning destinations', () => {
+  it('keeps account/admin controls out of the four learning destinations', () => {
     expect(navigationForTrack('jlpt-ja', 'user').some((item) => item.adminOnly)).toBe(false);
     expect(navigationForTrack('jlpt-ja', 'admin').some((item) => item.to === '/admin/users')).toBe(false);
-    expect(navigationForTrack('jlpt-ja', 'admin')).toHaveLength(5);
+    expect(navigationForTrack('jlpt-ja', 'admin')).toHaveLength(4);
+  });
+
+  it.each(['jlpt-ja', 'topik-ko'] as const)('uses Today, Learn, Review, and Records for %s', (track) => {
+    expect(navigationForTrack(track, 'user').map(({ key }) => key)).toEqual(['today', 'learn', 'review', 'stats']);
   });
 });

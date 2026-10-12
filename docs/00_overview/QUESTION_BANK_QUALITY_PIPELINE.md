@@ -1,6 +1,6 @@
 # JLPT·TOPIK 문제은행 품질 파이프라인
 
-최종 점검: 2026-08-30 KST. TOPIK practice v2의 2026-08-17 Production 기록과 이후 JLPT N2/N1·TOPIK Batch 6 확장에 적용한 현재 품질 계약을 함께 기록한다.
+문서 갱신: 2026-10-10 KST. TOPIK practice v2의 2026-08-17 증거와 이후 문제은행의 품질 계약을 보존한다. 현재 운영 schema는0000–0030이며 새 콘텐츠는 해당 릴리스의 gate·승인으로 출판한다. 현재 배포 ID와 실제 결과는 CURRENT_STATE/릴리스 원장을 따른다.
 
 ## 완료한 교정
 
@@ -56,12 +56,14 @@
 
 ## 현재 release gate 순서
 
+0031 레슨/440문항 후보는 structure 검사 뒤 `content:learning:readiness`를 필수로 실행한다. 현 draft+source에440ID를 완전히 다룬 두 독립 승인과 실제 급수별 canonical lookup, placeholder 번역·literal 정답 노출·반복 대본0을 요구한다. 현재 exit1이므로 공개할 수 없다. 합성 저장 fixture의 수량/원자성 통과는 이 gate를 대신하지 않는다. [현재 후보 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)의 불합격 artifact를 보존한다.
+
 1. source intake, 자체 저작, 자동 validator, 서로 다른 두 reviewer artifact를 확인한다.
 2. full fresh D1, API/web test, Chromium·WebKit E2E, 동일 언어 browser-speech/R2=0 검사를 통과한다.
 3. preview D1 verifier를 통과한다.
 4. D1 backup과 restore drill, 이전 Worker/Pages version을 rollback plan에 기록한다.
-5. 현재 migration 기준선 `0000–0027` 위에 승인된 additive migration/seed만 적용하고 release-quality link와 G0–G4를 확인한 뒤 remote verifier·API/Pages smoke를 통과한다.
-6. 하나라도 실패하면 production 반영을 중단하고 직전 D1 backup과 Worker/Pages version으로 되돌린다.
+5. 현재 migration 기준선 `0000–0030` 위에 승인된 additive migration/seed만 적용하고 release-quality link와 G0–G4를 확인한 뒤 remote verifier·API/Pages smoke를 통과한다. 현재 backup profile은72 regular tables이며 과거23/65/70개 백업을 새 schema 전체 백업으로 표시하지 않는다.
+6. 하나라도 실패하면 반영을 중단하고 신규 release를 철회·직전 Worker/Pages로 복귀한다. 데이터 손상이 확인된 경우에만 D1 backup을 복원하며 정상 학습 기록을 보존한다.
 
 ## 2026-08-23 확장 적용
 

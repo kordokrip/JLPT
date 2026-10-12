@@ -4,6 +4,7 @@
 const ja = {
   nav: {
     home:       'ホーム',
+    today:      '今日',
     review:     '復習',
     browse:     'ブラウズ',
     quiz:       'クイズ',
@@ -12,7 +13,7 @@ const ja = {
     curriculum: 'カリキュラム',
     selfCheck:  '自己診断',
     stats:      '統計',
-    learn:      '学習',
+    learn:      '学ぶ',
     placement:  '診断',
     progress:   '進捗',
     adminUsers: '会員管理',
@@ -98,7 +99,7 @@ const ja = {
       playAudio: '韓国語音声を再生',
       playing: '再生中…',
       reviewedAudio: '審査済み固定音声',
-      browserAudio: '音声を準備中',
+      browserAudio: 'ブラウザーの韓国語音声を準備中',
       chooseAnswer: '答えを1つ選んでください',
       previous: '前へ',
       next: '次へ',
@@ -123,6 +124,8 @@ const ja = {
       markComplete: '完了にする',
       markIncomplete: '未完了に戻す',
       playExpression: '{{text}}を再生',
+      objective: '目標',
+      meaning: '意味',
     },
     characters: {
       eyebrow: 'TOPIK韓国語・文字の基礎',
@@ -225,6 +228,7 @@ const ja = {
       writing: '作文',
       reading: '読解',
     },
+    skills: { listening: '聞き取り', reading: '読解', writing: '作文', vocabulary: '語彙', grammar: '文法' },
   },
 
   common: {

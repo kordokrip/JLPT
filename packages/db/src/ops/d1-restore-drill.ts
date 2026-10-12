@@ -22,7 +22,20 @@ const manifest = validateD1BackupManifest(JSON.parse(
 ));
 const restoreTables = tablesForPhase('all', manifest.schemaProfile);
 const persistTo = fs.mkdtempSync(path.join(os.tmpdir(), 'nihongo-n3-restore-'));
-const config = path.join(root, 'apps/api/wrangler.toml');
+// 강성호 2026-10-13: 운영 schema 그대로 복원한 뒤 additive upgrade를 검증하는 별도 경로를 제공한다.
+const exactSchemaUpgrade = process.argv.includes('--exact-schema-upgrade');
+let config = path.join(root, 'apps/api/wrangler.toml');
+if (exactSchemaUpgrade) {
+  const migrationDirectory = path.join(persistTo,'migrations');
+  fs.mkdirSync(migrationDirectory,{mode:0o700});
+  const backupMigration = Number(manifest.schemaProfile);
+  const canonicalDirectory = path.join(root,'packages/db/drizzle-v2');
+  for (const file of fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))<=backupMigration))
+    fs.copyFileSync(path.join(canonicalDirectory,file),path.join(migrationDirectory,file));
+  config=path.join(persistTo,'restore-only.json');
+  fs.writeFileSync(config,JSON.stringify({name:'owned-local-restore-only',compatibility_date:'2026-06-17',
+    d1_databases:[{binding:'DB',database_name:'owned-local-restore-only',database_id:'11111111-1111-4111-8111-111111111111',migrations_dir:migrationDirectory}]}),{flag:'wx',mode:0o600});
+}
 const reportArg = process.argv.find((arg) => arg.startsWith('--out='))?.slice('--out='.length);
 const reportPath = reportArg
   ? (path.isAbsolute(reportArg) ? reportArg : path.resolve(root, reportArg))
@@ -191,6 +204,38 @@ try {
   ], 'checking foreign keys');
   const fk = JSON.parse(fkRaw) as Array<{ results?: unknown[] }>;
   if ((fk[0]?.results?.length ?? 0) > 0) failures.push('foreign_key_check failed');
+  let upgrade: Record<string,unknown> | null = null;
+  if (exactSchemaUpgrade) {
+    if(localSchemaProfile!==manifest.schemaProfile || omittedTables.length) throw new Error('Exact backup-schema restore required before upgrade');
+    if(failures.length) throw new Error('Restore failed; upgrade not attempted');
+    const legacySnapshots = new Map<string,{columns:string[];sha256:string}>();
+    const rowsHash = (table:string,columns:string[]) => {
+      const raw=wrangler(['d1','execute','DB',...localArgs(),'--json','--command',`SELECT ${columns.map(quoteIdentifier).join(',')} FROM ${quoteIdentifier(table)}`], 'hashing protected local legacy rows');
+      const rows=(JSON.parse(raw) as Array<{results:Record<string,unknown>[]}>)[0]!.results;
+      return createHash('sha256').update(JSON.stringify(rows.map(row=>JSON.stringify(row)).sort())).digest('hex');
+    };
+    for(const table of restoreTables) {
+      const raw=wrangler(['d1','execute','DB',...localArgs(),'--json','--command',`PRAGMA table_info(${quoteIdentifier(table.name)})`],'reading local legacy columns');
+      const columns=(JSON.parse(raw) as Array<{results:{name:string}[]}>)[0]!.results.map(row=>row.name);
+      legacySnapshots.set(table.name,{columns,sha256:rowsHash(table.name,columns)});
+    }
+    const canonicalDirectory=path.join(root,'packages/db/drizzle-v2');
+    const pending=fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))>Number(manifest.schemaProfile)).sort();
+    // 승인된0031만 검증하며 미래 migration을 무조건 포함하지 않는다.
+    if(JSON.stringify(pending)!==JSON.stringify(['0031_learning_lessons.sql'])) throw new Error('Exact approved upgrade set [0031] required');
+    fs.copyFileSync(path.join(canonicalDirectory,pending[0]!),path.join(persistTo,'migrations',pending[0]!));
+    wrangler(['d1','migrations','apply','DB',...localArgs()],'upgrading restored local schema');
+    for(const [table,before] of legacySnapshots)
+      if(rowsHash(table,before.columns)!==before.sha256) failures.push(`upgrade changed legacy rows: ${table}`);
+    const upgradedTables=parseD1SchemaTableNames(wrangler(['d1','execute','DB',...localArgs(),'--json','--command',D1_BACKUP_SCHEMA_QUERY],'reading upgraded local schema'));
+    const profile=detectD1BackupSchemaProfile(upgradedTables);
+    if(profile!=='0031') failures.push('Upgraded schema is not 0031');
+    const afterFk=JSON.parse(wrangler(['d1','execute','DB',...localArgs(),'--json','--command','PRAGMA foreign_key_check'],'checking upgraded foreign keys'));
+    if(afterFk[0]?.results?.length) failures.push('upgrade foreign_key_check failed');
+    upgrade={migration:'0031_learning_lessons.sql',schemaProfile:profile,regularTables:tablesForPhase('all',profile).length,
+      legacyTablesCompared:legacySnapshots.size,legacyRowsUnchanged:!failures.length,
+      foreignKeyViolations:afterFk[0]?.results?.length??0};
+  }
   const report = {
     generatedAt: new Date().toISOString(),
     backup: inputDir,
@@ -208,6 +253,8 @@ try {
     },
     foreignKeyViolations: fk[0]?.results?.length ?? 0,
     failures,
+    exactSchemaUpgrade,
+    upgrade,
     passed: failures.length === 0,
   };
   fs.mkdirSync(path.dirname(reportPath), { recursive: true });

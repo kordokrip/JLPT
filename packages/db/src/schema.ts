@@ -21,6 +21,7 @@ import {
   index,
   primaryKey,
   uniqueIndex,
+  foreignKey,
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
@@ -40,6 +41,7 @@ export const studySessions = sqliteTable('study_sessions', {
   learningTrack: text('learning_track').notNull(), level: text('level').notNull(),
   dailyMinutes: integer('daily_minutes').notNull(),
   mode: text('mode', { enum: ['daily', 'quick'] }).notNull().default('daily'),
+  lessonId: text('lesson_id'), lessonVersion: text('lesson_version'),
   status: text('status', { enum: ['active', 'paused', 'completed', 'abandoned'] }).notNull().default('active'),
   requestId: text('request_id').notNull(), noticesJson: text('notices_json').notNull().default('[]'),
   createdAt: integer('created_at').notNull(), updatedAt: integer('updated_at').notNull(),
@@ -80,7 +82,25 @@ export const contentLearningLinks = sqliteTable('content_learning_links', {
   conceptRef: text('concept_ref').notNull(), evidenceSha256: text('evidence_sha256').notNull(),
   reviewerA: text('reviewer_a').notNull(), reviewerB: text('reviewer_b').notNull(),
   status: text('status').notNull().default('draft'), createdAt: integer('created_at').notNull(),
+  // 강성호 2026-10-12: 공개 직전 변조를 같은 SQL에서 차단하는 nullable 원본 seal. 과거 연결은 null로 보존한다.
+  expectedQuestionJson: text('expected_question_json'), expectedLessonJson: text('expected_lesson_json'),
+  expectedEntriesJson: text('expected_entries_json'),
 }, (t) => ({ pk: primaryKey({ columns: [t.learningTrack, t.questionRef, t.conceptRef] }) }));
+
+/** 강성호 2026-10-11: 레슨 완료는 기존 세션에서 계산하며 별도 완료 원장을 만들지 않는다. */
+export const learningLessons = sqliteTable('learning_lessons', {
+  id: text('id').notNull(), version: text('version').notNull(),
+  learningTrack: text('learning_track').notNull(), level: text('level').notNull(), ordinal: integer('ordinal').notNull(),
+  titleKo: text('title_ko').notNull(), titleJa: text('title_ja').notNull(), titleEn: text('title_en').notNull(),
+  releaseId: text('release_id').notNull().references(() => contentReleases.id),
+  isPublished: integer('is_published').notNull().default(0),
+}, (t) => ({ pk: primaryKey({ columns: [t.id, t.version] }) }));
+export const learningLessonEntries = sqliteTable('learning_lesson_entries', {
+  lessonId: text('lesson_id').notNull(), lessonVersion: text('lesson_version').notNull(),
+  ordinal: integer('ordinal').notNull(), phase: text('phase').notNull(), contentRef: text('content_ref').notNull(),
+  cueKo: text('cue_ko').notNull().default(''), cueJa: text('cue_ja').notNull().default(''), cueEn: text('cue_en').notNull().default(''),
+}, (t) => ({ pk: primaryKey({ columns: [t.lessonId, t.lessonVersion, t.ordinal] }),
+  lessonFk:foreignKey({columns:[t.lessonId,t.lessonVersion],foreignColumns:[learningLessons.id,learningLessons.version]}).onDelete('cascade') }));
 
 // ─────────────────────────────────────────────
 // 공통 타임스탬프
@@ -352,6 +372,8 @@ export const contentReleases = sqliteTable(
     parserVersion: text('parser_version').notNull(),
     publishedAt: integer('published_at'),
     withdrawnAt: integer('withdrawn_at'),
+    // 강성호 2026-10-13: nullable cohort로 기존 릴리스를 보존하고 새5개만 원자적으로 공개한다.
+    publicationCohortId: text('publication_cohort_id'),
     ...timestamps,
   },
   (t) => ({
@@ -1424,6 +1446,8 @@ export const contentReleaseQualityAuditLinks = sqliteTable(
   {
     releaseId: text('release_id').notNull().references(() => contentReleases.id, { onDelete: 'cascade' }),
     auditId: text('audit_id').notNull().references(() => contentQualityAudits.id, { onDelete: 'restrict' }),
+    // 강성호 2026-10-13: 검수 원장은 복제하지 않고 원본 문항 의미를 연결 행에 봉인한다.
+    expectedQuestionJson: text('expected_question_json'),
     linkedAt: integer('linked_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   },
   (t) => ({

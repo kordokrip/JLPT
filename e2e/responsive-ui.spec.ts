@@ -84,7 +84,7 @@ test.describe("반응형 UI 안전성", () => {
     });
   }
 
-  test("모바일 하단 메뉴는 스크롤 없이 다섯 학습 탭을 제공한다", async ({
+  test("모바일 하단 메뉴는 스크롤 없이 네 학습 탭을 제공한다", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -94,7 +94,7 @@ test.describe("반응형 UI 안전성", () => {
     const nav = page.getByRole("navigation", { name: /메인|Main|メイン/ });
     await expect(nav).toBeVisible();
     await expect(nav.locator("ul")).toHaveCSS("display", "grid");
-    await expect(nav.getByRole('link')).toHaveCount(5);
+    await expect(nav.getByRole('link')).toHaveCount(4);
 
     const boxes = await nav.locator("li").evaluateAll((items) =>
       items.map((item) => {
@@ -120,7 +120,7 @@ test.describe("반응형 UI 안전성", () => {
     await expect(
       page.getByRole("navigation", { name: /메인|Main|メイン/ }),
     ).toBeVisible();
-    await expect(page.getByRole('navigation',{name:/메인|Main|メイン/}).getByRole('link')).toHaveCount(5);
+    await expect(page.getByRole('navigation',{name:/메인|Main|メイン/}).getByRole('link')).toHaveCount(4);
 
     const metrics = await page.evaluate(() => {
       const root = document.getElementById("root")!;

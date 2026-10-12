@@ -1,129 +1,76 @@
 # Sub Agent 운영 인수인계
 
-최종 점검: 2026-09-25 KST
+## 활성 작업 — 2026-10-13
 
-> `0029–0030`/quick lesson/XP/streak/현지화 Push는 source `032b50d`로 Production D1·Worker·Pages에 반영됐습니다. [2026-09-25 릴리스 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 먼저 보십시오. 새 세션 XP는 안내 세션에 한정하고, 자유 TOPIK practice의 client activity만으로 서버 확정 스트릭을 만들지 않습니다. 원격 D1 7403 단발과 백업 직후 health 실패는 후속 성공으로 덮어쓰지 않습니다.
+사용자 범위는 V7+160 전체 검증/네 메뉴/조건부 Production/최종 push다. 아래10월12일 local-only 금지는 이전 세션 이력이다. 현재 원격은0030/Worker aedcbd40/Pages f62a8bdb·main이며 변경하지 않았다. 현재 gate/실행 순서는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 먼저 읽는다.
 
-이 문서는 새 Sub Agent가 과거 대화의 완료 보고를 신뢰하지 않고 현재 저장소를 재구성하기 위한 짧은 진입점이다. 상세 수치와 배포 식별자는 반드시 [현재 상태](CURRENT_STATE.md)와 `pnpm ops:status:remote`에서 다시 확인한다.
+신규 진입점은 `learning-cohort-release.ts`(5개 원자적 출판/철회), `learning-cohort-target.ts`(정확 대상/clean SHA), `learning-cohort-remote.ts`(stage/publish/verify/withdraw), `run-learning-cohort-local-gates.mjs`(실제 새 전체 gate/합성 보존 drill)이다. 기존 Preview-only 경계는 유지한다. 별도 원격 drill을 최종 Preview와 분리하며 운영 사용자 자료를 복사하지 않는다. family/audio receipt를 AI가 자동 통과로 작성하지 않는다.
+
+helper는 env/점검 모드 필수·오타/중복 거부이고 새 회귀6/6, queue/cron3/3, target3/3을 통과했다. 시각5개는 의도된 UX 확인 후 그5개만 갱신했다. 새 전체 gate/Preview/실제 가족·가청·backup/restore·Production/push는 아직 미실행이다. 코어 음성4파일은 변경하지 않는다.
+
+갱신: 2026-10-12 KST. 운영0030과 로컬0031 후보를 분리한다. iOS 설치 안내는 새 후보 설정의 인라인 region이며 첫 학습을 가리던 배너를 되살리지 않는다(`INC-UI-071`). 과거 순차 실행 내역은 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)과 [과거 상태 스냅샷](../history/CURRENT_STATE_2026-09-25.md)을 따른다.
+
+## 이번 후보의 인수인계 — 공개 금지
+
+10월12일은 **최종 로컬 gate 완료 / 원격 작업 승인 없음**에서 종료했다. cohort04 단위614·4 workspace typecheck·OpenAPI·build·fresh·reviewed E2E44와 실제 fresh/upgrade/reseed·local G0–G4 공개/철회·12종 합성 학습 기록 불변을 확인했다. 두 release의 single UPDATE exact JSON seal과 기존 NULL 보존, D1 depth/Wrangler splitter 회귀를 유지한다. 초기 cohort01–03 실패는 편집하지 않는다. commit·push·Preview·Production은 금지다.
+
+Preview160의 기존17문항 실패와 v2 A/B158/2 실패는 보존한다. 새 v3는 A/B160/160·실제 품질 checker·별도543 draft행/reseed/120 release-audit-question join·쓰기8/듣기8 바인딩을 검사했다. 새160의 원격 공개/control-plane과 가족·가청 검증은 하지 않았다. V7 전용 profile/publisher는 구현됐지만 로컬 통과를 Preview/Production 승인으로 확대하지 않는다.
+
+일반 local ops39/2/0이며 remote51/2/0은10월11일 보존 이력이다. 로컬-only 답변 이후 원격 조회/변경0, HEAD/upstream d626a164 동일·commit/push0이다. 현재 실행 증적은 `.artifacts/learning-v7-release-2026-10-12/cohort04`; 최종 G4는 `g0-g4-local.json`, 중간 preflight는 Preview 진입 근거가 아니다. 비밀 파일/증적 원문은 커밋하지 않는다.
+
+[콘텐츠·가족 UX 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 먼저 읽는다. 네 메뉴·카탈로그 API·0031 snapshot·철회 guard는 로컬 후보다. v1 A289/B302거부·lookup31/red flag195, v2 대표 실패, v3 정적 대표 승인, v4/v5/v6 전체 실패를 모두 보존한다. 운영 SELECT 공개220개념·급수별20·조회0실패/쓰기0은 선택 증거이지 cue 의미 승인이 아니다. 이후 V7 두440/440과 로컬 staging은 완료했다. 불합격 passed/hash 편집 및 합성 fixture를 실제 의미 승인으로 보고하는 것은 금지다.
+
+진입점: API `lib/learning-lessons.ts`, `routes/learning-experience.ts`; Web `features/learning/LearnerLessonLibrary.tsx`, `pages/LearnHub.tsx`; DB `drizzle-v2/0031_learning_lessons.sql`. 구 `seed/learning-path-draft.ts`는 실패v1용이다. `capture-learning-path-v2-baseline.ts`/`learning-path-v2-contract.ts`는 공개 선택/환경별 해석, v2/v3 prototype과 reviews는 보존 정적 증거다. 새 `learning-path-v5-authoring.ts`/`freeze-learning-path-v5.ts`/`learning-content-patch-snapshot.ts`/`learning-path-revision-contract.ts`는 v4 실패 원본과 patch 실행 bytes/hash·새ID/버전을 대조한다. 자동 구조는 의미 승인과 별개다. 공식 API02/source06의 첫반환 sense와 원래 취득시각을 보존하며 새 source derivative를 새 다운로드로 주장하지 않는다.
 
 ## 시작 순서
 
-1. 루트 `AGENTS.md`
-2. `docs/README.md`
-3. `CURRENT_STATE.md`
-4. `ERROR_LEDGER.md`
-5. `OPERATIONS_MANAGEMENT_RUNBOOK.md`
-6. `LOCAL_CICD_OPERATIONS.md`
-7. `LOCAL_RELEASE_LEDGER.md`
-8. 작업과 직접 관련된 schema, migration, route, source, test
+재개 시 현재 사용자의 작업 범위를 먼저 확인한다. 이번에는 로컬 검증·문서화만 승인됐다. 향후 별도 승인된 후보 고정/새 Preview에서 V7과 별도160의 증적을 분리하고11급수 실제 계정 흐름·가족 관찰·Chrome ko/ja onend/사람 가청/Network R2·legacy0을 새 배포에 연결한다. 현 schema backup/restore·rollback·predeploy·현재 Production 승인 전에는 운영 쓰기 금지다. 결함은 새 버전/hash로 수정하고 기존 동결/failed를 편집하지 않는다. 음성 코어를 바꾸거나 mock을 가청으로 보고하지 않는다.
 
-추가 운영 체크리스트:
+`selected-concepts.json`은 공개 선택 증적이며 cue의 교육 승인이 아니다. `learning-path-v4-authoring.ts`는 220 cue를 결합하며 `learning-path-full-contract.ts`는 개념2/문제2·동일급수·구조·trusted Git/source/identity를 검사한다. 의미·상황 차이·난이도는 독립 reviewer 대상이다. v4는 이미 동결됐으므로 원본 수정 금지다. 신규 draft adapter는 `seed/learning-path-v4-draft.ts`, local-only CLI는 `ops/stage-learning-path-v4.ts`다. 합성 메모리 승인 fixture는 adapter 검사일 뿐 실제 의미 승인이나 staging 증거가 아니다. adapter는 readiness 이전 파일 생성 금지, 시스템 임시 디렉터리의 새 파일 독점 생성, 복합키 충돌 검사, transaction rollback, draft 비공개를 강제한다. 구 v1 seed는 신규 v4에 사용하지 않는다.
 
-- [시계열 변경 이력](CHANGELOG_TIMELINE_2026-09-11.md)
-- [로컬 CI/CD 관리 매뉴얼](LOCAL_CICD_MANAGEMENT.md)
-- [프로젝트 폴더 인벤토리](PROJECT_INVENTORY_2026-09-11.md)
-- [프로젝트 파일 지도(전체 파일 분류)](PROJECT_FILE_CATALOG_2026-09-11.md)
+루트 `AGENTS.md` → [문서 색인](../README.md) → [현재 상태](CURRENT_STATE.md) → [오류 원장](ERROR_LEDGER.md) → [운영 runbook](OPERATIONS_MANAGEMENT_RUNBOOK.md) → [로컬 CI/CD](LOCAL_CICD_OPERATIONS.md) → [릴리스 원장](LOCAL_RELEASE_LEDGER.md) → 작업 관련 source/schema/test 순으로 읽는다. 운영·버그·정리에는 `.codex/skills/project-operations-steward`, 콘텐츠 출판에는 `content-release-automation`을 추가로 사용한다.
 
-운영 감사·버그·리팩터링·정리에는 `.codex/skills/project-operations-steward`를 사용한다. 콘텐츠 publication에는 `.codex/skills/content-release-automation`도 읽는다.
+후속 진입점은 `dictionary-web-evidence.ts`, `immutable-learning-content-plan.ts`, `learning-path-v4-source-binding.ts`, `freeze-learning-path-v4.ts`, `report-learning-path-v4-readiness.ts`다. 독립 검토가 검증 우회5경로를 발견해 부모/독립 반례로 교정했다(`INC-QA-078`). 현재 checkout seed로 immutable SHA를 주장하거나 review boolean을 truthiness로 바꾸지 않는다. 새fresh/E2E50개는 기존 학습·미공개 상태/음성mock 검사이며 신규220레슨·실제가청으로 사용하지 않는다.
+
+작업 시작과 종료 `pnpm ops:status`를 실행한다. 현재 배포를 판단할 때는 `pnpm ops:status:remote`를 사용하며, 새 파일·이동·삭제 후 `pnpm docs:catalog && pnpm docs:check`를 실행한다.
 
 ## 현재 기준선
 
-| 범위 | 현재 사실 |
+| 구분 | 사실 |
 | --- | --- |
-| Production DB | D1 migration `0000–0030`(31개); canonical과 TOPIK practice v2 300, N3 practice 120, TOPIK owner Batch 5까지 공개, 재시드 없음 |
-| Preview 후보 | N2 60, N1 60, TOPIK owner Batch 6 40; Production 미반영 |
-| Pages | Production `f62a8bdb-298e-446a-ab74-7d78ca47efd8`, canonical `https://nihongo-n3.pages.dev` |
-| Worker / source | `aedcbd40-6605-44d2-8227-d145a186bef0`; Worker·Pages 배포 commit `032b50ddfea4051309ae95829520e6309e67a6ff`, 검증 Preview runtime `f8bb167`와 앱/패키지/lock 동일 |
-| 콘텐츠 / 결함 | content source `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4` 유지. 031–033 수정은 운영 반영됐으며 상태 판정은 오류 원장의 사후 증거를 따른다. `INC-DATA-024`는 source-pinned verifier로 관리 |
-| rollback | Worker `c2901280-4c10-4671-bc61-dc262c88c692`, Pages `ce4e5e57-c0fa-4fe5-b268-00458d4e0300`; 데이터 손상 없으면 additive migration·학습 기록 보존 |
-| CI/CD | GitHub Actions 비활성; 승인된 로컬 gate와 MD 원장이 release evidence |
-| Git 종료 | 새 릴리스 배포 source `032b50d`의 원격 동기화는 릴리스 원장에서 별도 확인. 과거 `042fbb2`/remote52/1/0은 2026-09-07 이력 |
+| Production | D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `f62a8bdb-298e-446a-ab74-7d78ca47efd8` |
+| 앱 배포 source | `032b50ddfea4051309ae95829520e6309e67a6ff` |
+| 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9`, manifest `content-v3-d102868e3d43b9b3c1a4` |
+| 기능 | 다섯 메뉴, quick/daily 세션, 기록·메모·FSRS, 서버 학습일 스트릭, 안내 세션 XP, 현지화 opt-in Push |
+| 콘텐츠 | N3 정적120·TOPIK practice v2 300·owner Batch5까지 운영 공개; N2 60/N1 60/TOPIK Batch6 40은 Preview만 |
+| 10월 10일 시작 | Git `d626a16`·origin 동일·clean; local40/1/0·remote52/1/0 |
+| 알려진 경고 | `INC-DATA-024` HEAD와 운영 콘텐츠 manifest 차이. 원격 콘텐츠 검증은 immutable source 고정 |
+| 복귀 | 직전 Worker `c2901280`, Pages `ce4e5e57`; 전체 ID는 현재 상태 |
+| 현재 백업 계약 | 0030/72 regular table. 9월25일 배포 전 백업은0028/70이며 새 보상/알림 기록을 포함하지 않음 |
 
-## 코드·데이터 지도
+## 작업별 파일 지도
 
-2026-09-25 현재: `packages/db/drizzle-v2/0029_study_motivation.sql`, `0030_push_notification_deliveries.sql`을 운영에 적용했다. `apps/api/src/routes/learning-experience.ts`의 quick 세션·motivation API와 보상 원장, `apps/web`의 오늘/기록 빠른 레슨 진입, 현지화 Push 경로를 현재 계약으로 본다. 안내 세션의 서버 수락 행동만 XP를 지급한다. 운영 백업 `.artifacts/d1-backups/quick-lesson-2026-09-25-pre0029`는 0028/70-table profile이고 신규 2개 테이블까지 담은 0030 백업이 아니다. 사후 고정 verifier392/392·R2참조0·Chrome 음성 onend/Network 결과는 릴리스 원장을 따른다.
+| 변경 대상 | 먼저 볼 파일 |
+| --- | --- |
+| Web route·네 메뉴 후보 | `apps/web/src/App.tsx`, `pages/Today.tsx`, `LearnHub`, `LearningRecords`; 이전 QuestionsHub는 통합 후 제거 |
+| 학습 세션·메모·재전송 | `pages/StudySession.tsx`, `features/study`, `lib/learning-experience.ts` |
+| 서버 학습·채점·공통 저장 | `apps/api/src/routes/learning-experience.ts`, `lib/study-content.ts`, `lib/learning-effects.ts` |
+| XP·스트릭·Push | `apps/api/src/lib/motivation.ts`, `push-reminders.ts`, `routes/notifications.ts`, `apps/web/src/sw.ts` |
+| 자유 퀴즈·TOPIK | `routes/quiz.ts`, `lib/quiz-questions.ts`, `routes/topik-owner-curriculum.ts`, `routes/topik-practice.ts` |
+| FSRS·기기 시계 차이 | `hooks/useSRS.ts`, `lib/srs-due-snapshot.ts`, API `lib/fsrs.ts` |
+| 발음 | `lib/audio.ts`, `lib/google-browser-speech.ts`, `features/topik/useKoreanAudio.ts`, shared `audio-policy.ts` |
+| DB·migration·backup | `packages/db/src/schema.ts`, `drizzle-v2`, `src/ops/d1-tables.ts`, `d1-backup.ts`, `d1-restore-drill.ts` |
+| 운영·폴더 관리 | `scripts/project-ops-status.mjs`, `generate-file-catalog.mjs`, [인벤토리](PROJECT_INVENTORY.md), [파일 지도](PROJECT_FILE_CATALOG.md) |
 
-### 2026-09-07 이전 학습 UX — 당시 Production 반영 이력
+## 반드시 지킬 경계
 
-최종 Preview 기능은181 pass/6 로컬 fixture skip/0 fail이며 시각60개는 별도 제외다. 같은 runtime의 로컬458개·fresh0028·전체 브라우저217/30/0 증거와 구분한다. 사용자가 최신 Preview555fc0c4의 한국어·일본어 가청을 확인해 실제 Network/onend 증거와 함께 strict predeploy를 통과했다. 과거 질문의 답을 옮긴 것이 아니다.
+- 계정×트랙×원본 ID·버전으로 바인딩한다. 문자열 문제 ID를 정수 FSRS ID로 강제 변환하지 않는다. 다른 급수 fallback·미공개 콘텐츠 노출·정답 사전 노출을 차단한다.
+- 해설 열람·명시적 완료·최초 문제 응답·재시도·FSRS 평가를 별도로 저장한다. 기존 quiz/TOPIK 완료와 안내 세션이 공통 효과 서비스를 쓰며 내부 HTTP 호출로 중복 저장하지 않는다.
+- SQL 종료 상태 guard, idempotent claim, annotation revision, `expected_track`과 오프라인 초안 보존을 유지한다. UI 표시·mock 결과만으로 서버 저장 성공을 보고하지 않는다.
+- XP는 안내 세션의 서버 수락 결과에 연결된다. 자유 TOPIK practice의 client activity를 서버 확정 학습일로 계산하지 않는다.
+- 같은 언어 Google 우선·같은 언어 설치 음성 fallback, ko/ja 제한, click task 즉시 speak·실제 onend 이후 성공을 보존한다. R2 발음 경로는 금지하고 legacy audio는410이다.
+- approved 문제↔개념 link는 아직 생성하지 않았다. 개인 맞춤 출제·운영 재개 성공률·사람 가청을 검증 없이 주장하지 않는다.
+- Production write/deploy는 Preview·backup/restore·rollback·gate와 해당 작업 승인을 따른다. 문서 정리의 실행 범위에는 원격 DB·배포 변경이 포함되지 않는다.
+- migration·학습 source·snapshot·회귀 테스트·백업·quality/reviewer·복구 증적을 보존한다. 삭제는 import 그래프와 전체 참조/실행 설정을 대조한 뒤 수행한다.
 
-Production 사후 Worker 공개 smoke7개·auth proxy3개, 익명 음성 양 엔진2개(mock), release-pinned verifier392개·FK/FTS·R2참조0, 기존 학습21테이블 hash 보존을 확인했다. 실제 Chrome canonical에서 양언어 onend 각1회도 관측했지만 Production의 새 사람 청취 확인으로 쓰지 않는다. 최종 Git push는 아직 미실행이며 문서/운영 상태 동기화 검증 뒤 진행한다. 이미 통과한 동일 runtime의 전체 테스트·Preview OAuth 설정·가청 승인을 처음부터 반복하지 않는다. 새 코드/설정 변경은 영향 gate를 다시 판단한다.
-
-증적은 `.artifacts/operations/learning-production-2026-09-07-*`, `production-postdeploy-pinned-2026-09-07.json`과 릴리스 원장을 따른다. 운영 OAuth는 기존 클라이언트를 유지하고 Preview 전용 자격 증명은 운영으로 복사하지 않았다.
-
-### 배포 전 순차 이력 — 아래 미완료·승인 대기는 당시 상태
-
-**2026-09-07 배포 전 백업 이력:** 운영 점검 승인을 받았고 임시 동일-code Worker232ec50d/Queue정지→65개 백업→원래Worker6bbe4bbd/Queue복귀를 실행했습니다. `.artifacts/operations/production-backup-2026-09-07-{execution,postcheck,restore,ops-remote}.json`을 참조합니다. 첫 wrapper의 health mismatch exit1은 보존했고 후속 off/configtrue·설정동일 확인과 실제 local0028 복원(FK0·FTS일치·새5개0행)은 exit0입니다. 백업은 schema0027이며70-table 백업이 아닙니다. 당시 미완료였던 가청·신선도·predeploy와 배포의 후속 결과는 상단 현재 상태를 따릅니다.
-
-**2026-09-06 OAuth 후속 포인터:** Preview Worker는87f8fbf5로 변경됐습니다(앱source793b671/Pages555fc0c4 불변). 별도 `JLPT Preview` client의 전용 callback과 secret 두 개만 연결했습니다. 실제 Chrome JLPT Google 로그인·홈 재조회, TOPIK 선택 후 재로그인 및 D1 계정 id/role/Google 연결·FSRS 설정 hash 동일을 확인했습니다. 실제 계정의 학습17테이블은 모두0행이라는 한계가 있습니다. provider mock 로컬14개는 별도 통과이며 원격187개 최종 재실행은181 pass/6 로컬 fixture skip/0 fail,23.3분·exit0입니다. 시각60개는 별도 제외입니다.
-
-555fc0c4 실제 native HAR14개HTTPS200/동일origin+UI확장2개, 양언어onend1/1, R2/legacy0, Console경고2·오류0을 확보했습니다. 새 가청/확인자 대기로 strict gate2누락exit1입니다. 조건부 Production·최종push 승인은 받았으나 점검 시간·backup/restore·최종 gate 완료 전에는 실행하지 않습니다. 아래 b02f3674/SSO503/Network 미확인 설명은 이전 이력입니다. 최신 결과는 릴리스 원장의 OAuth 후속과 `preview-oauth-*`, `preview-google-preservation-*`, `stability-preview-actual-audio-network.json`을 확인합니다.
-
-**OAuth 연결 전 기준선(위 OAuth 후속 포인터가 우선):** 앱 source는 로컬 commit `793b671a5c7503017041bbaee4e8de7edb492e20`, Preview Pages `555fc0c4-24cc-49de-b846-38aee2f59b31`, 당시 Worker `b02f3674-6a59-47c8-818a-2397bcd295fd`다. 둘 다 deploy exit0이고 D1 추가 migration/seed는 없다. Preview FK0·migration0028, Worker smoke21 pass/0 fail/관리자1 미실행, 실제 HTTP A중단→B생성→A재전송의 ID 보존을 독립 확인했다. 원격 Git은5311ab7이며 최종 push는 전체 gate 뒤에 한다. 다음 네 문단은 OAuth 연결 전의 실행 이력이다.
-
-새 Preview의 auth/settings14건은11/0/3(exit1): SSO503 두 건과 지연 테스트 WebKit interception0 한 건이다. 후자는 해당 describe에만 `serviceWorkers:block`을 적용해 실제 응답·interception1·PUT/GET/reload 검사를 유지했다. 이후 원격 `settings-preferences.spec.ts`와 `settings-theme.spec.ts` **14 pass / 0 skip / 0 fail**이다. 일반 설정·테마는 SW를 허용하며 앱 runtime은 변경하지 않았다. SSO 실패를 제거/skip하거나 전체 원격 통과로 합산하지 않는다.
-
-555fc0c4의 첫 실제 Chrome 관측은 UI 연결 오류로 중단됐지만 10:06 UTC 새 탭 후속에서 양언어 onend각1회·voice10/10·탭 콘솔0을 확인했다. native Network는 `cgWindowNotFound`로 미확인, 새 URL 가청도 대기다. `stability-preview-actual-audio.json`의 strict gate는4개 누락·exit1이다. 이전 중단 artifact와 구분하며, d51a81ed HAR와 질문 URL a95437fc의 사용자 가청 답변을 새 배포에 재사용하지 않는다.
-
-최신 원격 기능187건은 **178 pass / 6 로컬 fixture skip / 3 fail**,23.6분·exit1이다(`stability-preview-full-functional.log`). 시각60개는 별도 제외다. 실패는 실제 Google start503 양 엔진2건과 WebKit 자연 검색 fixture 우회1건이다. full-session4건은 pending/fail0·최대 write3,428ms이며 전 급수 저장·재개도 검사했다. 후속 부분 재검사와 이 전체 실패를 합쳐 전체 통과로 만들지 않는다.
-
-자연 검색 mock 누락은 counter0 fail-first 후 해당 사례만 SW 제어해 원격 양 엔진4개를 통과했다. 앱/배포 source793b671은 그대로이며 전체178/6/3은 별도 실패 기록으로 유지한다. 남은 순서는 Preview OAuth 전용 설정/실제 로그인 및 최신 음성 증거 확보→원격 gate 재검증→승인된 maintenance의 새 Production backup/restore→릴리스 gate→Production→smoke→최종 push다. 전체 검증 전 파일 삭제·콘텐츠 증량은 하지 않는다. Production read-only48/2/3은 미push SHA와 기존 TOPIK/CSP 두 실패로 Preview187건과 다른 집계다. 최신 실행 파일과 rollback 전체ID는 릴리스 원장에 있다.
-
-#### 이전 검증 이력 (현재 포인터 아님)
-
-**당시 작업 시작점:** HEAD5311ab7 위 미커밋 안정성 수정본에 INC-AUTH-054(트랙 저장 실패), LEARN-055(종료 세션 request_id 재전송), SET-057(프로필 조회 중 설정 저장·늦은 계정/트랙 응답)을 수정했다. 당시 전체 로컬 gate **458개**, 전체 브라우저 **217 pass / 30 시각 정책 skip / 0 fail**, 각각 exit0이다. `settings-final-full-gate.log`와 `settings-final-local-e2e.log`를 보존한다. API의 실제 local OAuth bridge 테스트는 provider 응답 mock이며 실제 SSO로 간주하지 않는다. 이 문단은 원격 반영 전 이력이다.
-
-현재 Preview 원격78건은73/4/1(exit1, SW단발 오류)이다. Google 설정 표시2개는 교정 후 통과, 실제 start2개는503 실패다. Preview callback/secret의 별도 설정 전에는 실제 SSO 검사를 통과시킬 수 없다. 로컬 Google 설정은 Production callback이므로 임의 복사하지 않는다. 새 Production backup은 승인된 maintenance window를 확인한 후에만 실행한다. 목표의 전체 검증 완료 전 삭제·최종 push·Production은 진행하지 않는다.
-
-실제 Chrome Network는 **native App 대상**으로 작업 탭을 선택하고 DevTools를 열어 관측할 수 있었다. d51a81ed의 양언어 onend1/1, R2/legacy 요청0과 sanitized HAR16개를 확보했다(09:39 UTC). Console에는 SW/module preload 경고6개가 있어 과거 dev.logs0과 구분한다. 사람 가청은 아직 a95437fc에만 확인됐고 d51a81ed 질문은 미응답이다. 새 artifact `srs-preview-actual-audio-network.json`은 strict gate2개 누락/exit1이다. 다른 source에 재사용하지 않는다.
-
-**최신 후속:** Pages `d51a81ed-2561-4900-899f-022b99d67679`/source`5311ab7`, Worker `6f0c0e41`/source`0b20e39`. 아래94dfb05 서술은 최초 UX 기록이다. 복습clock-skew·양면 접근성/키보드 후속은로컬440개 gate·전체브라우저211 pass/30 skip/0 fail 통과, commit/push·Pages-only Preview배포 완료다. 최종원격과실제음성증거는최신릴리스원장을확인하며과거a95437fc가청을d51a81ed에재사용하지않는다.
-
-먼저 [LEARNING_EXPERIENCE_PLAN](LEARNING_EXPERIENCE_PLAN.md)의 실제 검증/미실행 표를 읽는다. UX source `94dfb05`는 feature branch에 commit/push하고 전용 Preview에 반영했다. Production 배포로 오인하지 않는다. 원격 세션 시작 지연 `INC-PERF-049`를 추가 수정·재검증 중이다.
-
-별도 Agent 교차검토에서 `INC-LEARN-043`, `INC-DATA-044/046`(다른 기기의 선행 제출·종료·트랙 변경)과 `INC-OPS-045`(진단 식별자 가림), `INC-DATA-047`(0028 backup profile)을 추가해 회귀를 수정했다. 후속 전체 브라우저는 `207 passed / 32 skipped / 0 failed`다. expected_track 불일치 409를 메모 revision 충돌이나 제출 성공으로 바꾸지 않는다. `/audio-qa` 정상 종료 관측 보강(`INC-QA-048`) 이후의 최종 gate는 계획/릴리스 원장의 최신 결과를 확인한다.
-
-Preview D1에 0028만 적용했으며 기존 콘텐츠 집계·공개 상태·quality link가 before/after 일치하고 FK 0이다. Pages `a95437fc-8411-4151-9519-ab0d8fb92905`는 source94dfb05를 유지한다. 현재 Worker는 성능 후속 `6f0c0e41-1978-42a5-8e3a-3276ed3f1c63`/source0b20e39로, 직전1fec0907을 복귀 기준으로 보존한다. 실제 Chrome의 양언어 정상 종료와 사용자 청취 확인은 동일 Pages의 증거지만 전체 network capture는 없다. 초기 Preview E2E는 지연으로 중단했고 후속 검증 결과는 최신 원장을 확인한다. 최초 UX 이전 Worker0d17ba30/Pages885aae1f도 별도 복귀 기준이다. Production에는 어떤 변경도 하지 않았다.
-
-### 현재 코드·데이터 진입점
-
-- shared 계약: `packages/shared/src/learning-experience.ts`.
-- additive DB: `packages/db/drizzle-v2/0028_learning_experience.sql`, Drizzle의 다섯 learning/study 테이블.
-- API: `apps/api/src/routes/learning-experience.ts`; `lib/study-content.ts`의 typed content/publication/strict-level, `lib/learning-effects.ts`의 완료·FSRS 공통 batch, `lib/quiz-questions.ts`의 기존 출제 계약.
-- 웹: `Today`, `StudySession`, `LearningRecords`, `LearnHub`, `QuestionsHub`; `features/study/StudyComponents.tsx`의 메모 CAS·speech; `i18n/study.ts`의 ko/ja/en 조작 문구.
-- 테스트: `learning-experience-migration.test.ts`, API `learning experience contract`, `e2e/learning-experience.spec.ts`, 메모 지연 응답·result 소유권 웹 테스트.
-- 콘텐츠↔개념 approved link는 아직 생성하지 않았다. 새 연상문·이미지·문항 생성/공개 작업이 아니므로 기존 문제를 개념 맞춤 출제로 과장하지 않는다.
-- `최초 응답`은 세션 `practice` 제출 수이지 평생 처음 접한 고유 문항 수가 아니다. 힌트 사용량·홈 진입→시작 시간·재개 성공률은 아직 구현된 운영 지표가 아니며, `revealed`는 개념/복습 해설 열람만 나타낸다.
-- backup/restore는 명시적 0027/65·0028/70·0030/72 profile이다. 이번 2026-09-25 배포 전 운영 백업은 0028/70이고 local0030 restore에서 새2개 테이블은0행·`coversLocalSchema=false`다. migration 이후 생긴 보상/알림 기록까지 포함한 백업은 아니다. 기존 transfer/사용자 정리 도구는 새 schema 검증 전 사용하지 않는다.
-- 자유 SRS의 시계 차이 결함은 `useSRS.ts`와 `lib/srs-due-snapshot.ts`에서 서버due 스냅샷과 IDB 현재값을 대조해 수정한다. 서버시각을 맞춘다며 FSRS날짜를 덮거나, 늦은due응답이 낙관평가를 덮게 바꾸지 않는다. hook단위와 실제1분clock-skew E2E를 함께 확인한다. 원격에서 발견한 mockrecords 실패는SW interception 문제로 제품 저장 오류와 구분한다.
-- SRSCard 양면 접근성과 전역 키보드 단축키는 `INC-SRS-053`으로 추적한다. 음성 테스트는 실제 뒤집기 이후 재생해야 하고, 카드 준비 전 false를 반환해 skip하면 안 된다. `.artifacts/operations/learning-experience-2026-09-06-srs-final-e2e.log`는209 pass/30 skip/2 fail인 중간 실패 증거이며 최종 통과로 인용하지 않는다.
-- `VITE_LEARNING_EXPERIENCE`는 build-time 화면 플래그이며 Worker 전체 rollback 대체물이 아니다. `0028`은 이전 Worker가 무시하는 additive 테이블이다.
-
-- `apps/web`: React PWA, Dexie queue, 퀴즈·TOPIK·FSRS UI, Google 우선 동일 언어 browser speech.
-- `apps/api`: Cloudflare Worker/Hono, 인증·track guard, 학습 API, OpenAPI source.
-- `packages/shared`: Zod API schema, DTO, FSRS와 공통 정책.
-- `packages/db`: Drizzle schema, 로컬·Production migration `0000–0030`, seed, quality/release verifier.
-- `docs/01_n5`–`docs/07_topik`: 코드가 읽는 학습 source-of-truth가 포함된 영역. 삭제 전에 문자열 참조·manifest source·checksum을 대조한다.
-- `e2e`: Chromium/WebKit 제품 흐름과 발음의 server/R2 요청 0건 검증.
-
-핵심 데이터 흐름은 `source → deterministic seed → D1 → Worker API → Query/Dexie → UI`다. 사용자 학습 변경은 `quiz/complete → progress 또는 attempt → FSRS → learning_activity_events`의 track 격리를 유지해야 한다.
-
-## 절대 불변 조건
-
-- 발음은 같은 언어의 Google 음성을 우선하고, 없으면 같은 언어의 설치 음성을 사용한다. 한국어 `ko-*`, 일본어 `ja-*` 외 voice를 사용하지 않는다.
-- R2 발음 수집·생성·저장·조회·재생·fallback은 금지한다. legacy `/api/v1/audio/*`와 관리자 발음 생성 경로는 `410 Gone`을 유지한다.
-- R2 원격 verifier는 9개 표면을 독립 count한다. 이를 compound `UNION ALL`로 합치면 Production legacy view 확장으로 D1 planner 제한을 넘을 수 있으므로 되돌리지 않는다.
-- 다른 JLPT 급수나 학습 track으로 fallback하지 않는다. 정답은 제출 전 노출하지 않는다.
-- Production write/deploy에는 현재 세션 승인과 Preview, backup/restore, rollback, predeploy gate가 필요하다.
-- 실패·미실행·mock 결과를 통과라고 쓰지 않는다. 실제 Chrome lifecycle과 물리 스피커 가청은 별도 증거다.
-
-## 작업 종료 보고 형식
-
-- Confirmed: 현재 명령·코드·원격 조회로 확인한 사실
-- Changed: 수정 파일과 계약 영향
-- Validation: 실제 실행 명령, 종료 코드, pass/skip/fail
-- Preserved: 사용자 변경과 backup/release evidence
-- Blocked: 미실행 또는 외부 조건
-- Next safe unit: 승인 없이 이어갈 수 있는 최소 다음 작업
-
-작업 종료에는 `pnpm ops:status`를 다시 실행하고, 코드·DB·API·배포 상태가 달라졌다면 현재 상태·오류 원장·runbook·릴리스 원장을 같은 commit에서 갱신한다.
+종료 기록에는 변경 파일·참조 대조·실행 명령의 exit/pass/skip/fail·미실행 범위를 적고 `CURRENT_STATE`, 오류·운영·릴리스 원장과 파일 지도를 함께 최신화한다.

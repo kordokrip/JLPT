@@ -14,12 +14,19 @@ const required = [
   'docs/00_overview/LOCAL_CICD_OPERATIONS.md',
   'docs/00_overview/LOCAL_RELEASE_LEDGER.md',
   'docs/00_overview/SUB_AGENT_HANDOFF.md',
+  'docs/00_overview/PROJECT_INVENTORY.md',
+  'docs/00_overview/PROJECT_FILE_CATALOG.md',
+  'docs/00_overview/CHANGELOG.md',
+  'docs/00_overview/CONTENT_LEARNING_UX_UPDATE_PLAN.md',
 ];
 const retired = [
   'docs/00_overview/ERROR_LEDGER_2026-08-23.md',
   'docs/00_overview/GIT_FREE_MODE_OPERATING_MANUAL_2026-08-23.md',
   'docs/00_overview/LOCAL_VERSION_CONTROL_AND_RELEASE_LEDGER_2026-08-23.md',
   'docs/00_overview/QUESTION_BANK_QUALITY_PIPELINE_2026-08-17.md',
+  'docs/00_overview/PROJECT_INVENTORY_2026-09-11.md',
+  'docs/00_overview/PROJECT_FILE_CATALOG_2026-09-11.md',
+  'docs/00_overview/CHANGELOG_TIMELINE_2026-09-11.md',
 ];
 
 const failures = [];

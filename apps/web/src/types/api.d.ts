@@ -709,6 +709,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learning/lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GET /learning/lessons */
+        get: {
+            parameters: {
+                query?: {
+                    expected_track?: "jlpt-ja" | "topik-ko";
+                    level?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and track scoped data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                level: "N5" | "N4" | "N3" | "N2" | "N1" | "1" | "2" | "3" | "4" | "5" | "6";
+                                lessons: {
+                                    id: string;
+                                    version: string;
+                                    title: string;
+                                    ordinal: number;
+                                    completed: boolean;
+                                    active_session_id: string | null;
+                                }[];
+                                next_lesson_id: string | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Conflicting state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description Study content withdrawn; saved history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/study/sessions": {
         parameters: {
             query?: never;
@@ -747,6 +845,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -860,6 +960,7 @@ export interface paths {
                          * @enum {string}
                          */
                         mode?: "quick" | "daily";
+                        lesson_id?: string;
                     };
                 };
             };
@@ -883,6 +984,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1019,6 +1122,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1154,6 +1259,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1288,6 +1395,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;
@@ -1438,6 +1547,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 mode: "quick" | "daily";
+                                lesson_id?: string;
+                                lesson_version?: string;
                                 /** @enum {string} */
                                 status: "active" | "paused" | "completed" | "abandoned";
                                 created_at: number;

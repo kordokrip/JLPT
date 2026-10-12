@@ -1,10 +1,22 @@
 # 콘텐츠·출처 현재 감사
 
-최종 점검: 2026-08-30 KST. Production 수량과 2026-08-23 Preview 후보를 seed plan/schema/원격 verifier로 교차 대조했습니다.
+## 2026-10-12 Preview160 v3 후보 — 비공개
+
+v2 A/B158/2 실패를 보존하고 새 v3에서 두 결함만 수정해 A/B160/160 승인했다. draft `4934aa390878bd6ac2becd9ec4e930eafb7e72423b98b492430a83b1747ffd6f`, source `c5e2548381420c785909d787e9a316a1cc6057e0fc777702aa4ebfe33db73c66`, manifest `de8b459e06474fc1454b46139e4ab3a65c9692a8ee54a23ea26e702e87b61a9b`다. 실제 generic 품질·120 release/audit/question join·쓰기8/듣기8 binding·별도543 draft행/reseed/FK/기존 합성 기록 보존을 확인했다. 새160의 원격 G0–G4/publication은 미실행이다. 완전 맹검·새 license 연구·Preview 공개를 주장하지 않는다.
+
+문서 갱신: 2026-10-12 KST. 운영 source와 공개 상태는 유지한다. V7 A/B440/440은 같은 동결 hash로 재검증했다. 최종 cohort04 단위614/E2E44/fresh·upgrade·reseed/local G0–G4 공개·철회는 통과했으나 원격 공개는 아니다. 기존 v1/v4/v5/v6와 기존160/v2 실패는 보존한다. 사용자 지시에 따라 이번 작업은 로컬 검증·문서화뿐이다.
+
+## 2026-10-11 신규 초안 — 당시 비공개 보존 이력
+
+공개 개념 220개(급수별 20개)는 실제 운영 SELECT로 확정했다. v3 대표 12문항/6개념/3레슨의 두 정적 승인은 보존한다. 공식 API에서 봉지·변경(變更)·민원실·분리·배출(排出)을 확보해 source06은 86 records, source 실패 0, 정확급수 lookup 실패 0이다. 웹 10개는 URL+facts projection hash, API 5개는 실제 응답 bytes hash로 구분한다. API 정의는 첫 반환 sense이며 전체 의미 검수 승인이 아니다.
+
+v4/v5/v6 실패를 보존한다. V7은 question/choices/index/sample/cue를 유지한 채 rubric2건과 현지화 해설만 교정했고 A/B 각각440/440 승인·readiness exit0·local 비공개 staging을 완료했다. Preview160은 union17개 지적으로 A143/17·B144/16, 모두 실패했으므로 현재 배치 승격 금지이며 새 버전 재작성이 필요하다.
+
+JLPT200·TOPIK240, 개념220·목표 레슨220이다. 문항 구조/분포는 통과했지만 A151승인/289거부·B138승인/302거부, 개념 지적189씩으로 실패했다. 실제 canonical lookup31개·자동 red flag195개와 v2 intake 재검수 누락을 `content:learning:readiness` exit1로 차단한다. 실제220레슨 적재/공개를 하지 않았으며 합성 저장 테스트 수량은 콘텐츠 승인으로 계산하지 않는다. source v1(54/236)과 동형어 분리 v2(54/240), 불합격 두 reviewer 원본을 보존한다. [구현·재작성 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
 
 ## Production 콘텐츠 감사
 
-production 기준선은 D1 migration `0000–0027`, source SHA `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다. 기존 canonical manifest는 `content-v3-d102868e3d43b9b3c1a4`입니다.
+운영 DB 기준선은 D1 migration `0000–0030`이며 콘텐츠 source SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다. 기존 canonical manifest는 `content-v3-d102868e3d43b9b3c1a4`입니다. 앱 릴리스 SHA `032b50d`와 콘텐츠 source를 구분합니다.
 
 | source | 범위 | expected rows/항목 | 상태 |
 | --- | --- | ---: | --- |
@@ -74,4 +86,4 @@ pnpm -F @nihongo-n3/db content:control-plane:verify
 pnpm -F @nihongo-n3/db test
 ```
 
-`verify:fresh`는 로컬 schema/운영 seed 재현을 검사합니다. 배포 후에는 remote DB/TOPIK verifier, question quality 332개·실패 0건, R2 pronunciation 참조 0건, Chromium/WebKit production E2E도 통과했습니다.
+`verify:fresh`는 후보 `0000–0031`의 로컬 schema/기존 seed 재현을 검사합니다. 신규440문항/220레슨의 의미 품질이나 공개를 승인하는 검사가 아니며 Production은0030을 유지합니다. 과거 2026-08-19 question quality332개·실패0, Production E2E와 2026-09-25 source-pinned392/392·R20은 각각 당시 릴리스 증적입니다. current HEAD manifest drift를 운영 재시드로 숨기지 않으며 새 릴리스 검사는 해당 source에 별도로 연결합니다.

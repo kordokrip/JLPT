@@ -1,0 +1,31 @@
+{
+  "schema_version": "preview160-correction-ledger-v1",
+  "version": "preview160-v2-2026-10-12",
+  "union_count": 17,
+  "corrected_origin_ids": [
+    "jlpt-n1-practice-v1:grammar_fill:04",
+    "jlpt-n1-practice-v1:listening:10",
+    "topik-owner-batch6-grade3-reading-2",
+    "topik-owner-batch6-grade3-listening-2",
+    "topik-owner-batch6-grade3-writing-1",
+    "topik-owner-batch6-grade3-writing-2",
+    "topik-owner-batch6-grade4-grammar-2",
+    "topik-owner-batch6-grade4-reading-1",
+    "topik-owner-batch6-grade4-writing-1",
+    "topik-owner-batch6-grade4-writing-2",
+    "topik-owner-batch6-grade5-grammar-2",
+    "topik-owner-batch6-grade5-reading-2",
+    "topik-owner-batch6-grade5-writing-1",
+    "topik-owner-batch6-grade5-writing-2",
+    "topik-owner-batch6-grade6-grammar-2",
+    "topik-owner-batch6-grade6-writing-1",
+    "topik-owner-batch6-grade6-writing-2"
+  ],
+  "preserved": [
+    "answer_index",
+    "choices",
+    "difficulty",
+    "non-defective content"
+  ],
+  "approvals": []
+}

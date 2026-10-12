@@ -21,7 +21,6 @@ export default defineConfig({
         'apple-touch-icon.png',
         'masked-icon.svg',
         'brand-mark.png',
-        'brand-hero.png',
         'brand-hero-eastasia-v2.png',
         'page-bg-unified.png',
       ],

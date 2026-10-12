@@ -21,6 +21,12 @@ export default {
   fetch: app.fetch,
 
   async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
+    // 강성호 2026-10-13: 점검 중 메시지를 소비/승인하지 않고 큐에 남겨 DB 쓰기를 차단한다.
+    // 실제 백업은 기존 실행 중 Workflow 종료 확인과 Queue 원격 pause를 추가로 요구한다.
+    if (isReadOnlyMaintenance(env)) {
+      batch.retryAll({ delaySeconds: 900 });
+      return;
+    }
     await handleContentReleaseQueueBatch(batch, env);
   },
 

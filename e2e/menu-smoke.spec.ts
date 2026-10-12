@@ -194,7 +194,7 @@ test.describe("운영 메뉴 smoke", () => {
       await assertNoRuntimeFailures(page, async () => {
         await gotoAppRoute(page, "/");
 
-        for (const route of ROUTES.filter(r=>['/','/learn','/questions','/review','/records'].includes(r.path))) {
+        for (const route of ROUTES.filter(r=>['/','/learn','/review','/records'].includes(r.path))) {
           await expectVisibleHref(page, route.path, route.label);
         }
 

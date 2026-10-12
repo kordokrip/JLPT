@@ -3,6 +3,7 @@ import type {
   LearningProfile,
   LearningRecords,
   LearningMotivation,
+  LearningLessonCatalog,
   StudySession,
   StudySubmission,
 } from "@nihongo-n3/shared";
@@ -39,9 +40,11 @@ export const learningApi = {
     value(api.get<StudySession | null>(scopedPath("/study/sessions"))),
   motivation: () =>
     value(api.get<LearningMotivation>(scopedPath("/learning/motivation"))),
-  start: (request_id: string, mode: "quick" | "daily" = "daily") =>
+  lessons: (level: string) =>
+    value(api.get<LearningLessonCatalog>(scopedPath("/learning/lessons") + "&level=" + encodeURIComponent(level))),
+  start: (request_id: string, mode: "quick" | "daily" = "daily", lesson_id?: string) =>
     value(
-      api.post<StudySession>(scopedPath("/study/sessions"), { request_id, mode }),
+      api.post<StudySession>(scopedPath("/study/sessions"), { request_id, mode, ...(lesson_id ? { lesson_id } : {}) }),
     ),
   session: (id: string) =>
     value(

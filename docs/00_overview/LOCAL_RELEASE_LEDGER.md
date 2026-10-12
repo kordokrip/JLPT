@@ -1,6 +1,198 @@
 # 로컬 형상관리·릴리스 원장
 
-최종 점검: 2026-09-25 KST
+## 2026-10-13 V7+160 통합 후보 — 구현/검증 진행 중
+
+현재 세션 사용자는 전체 검증·조건부 Production·최종 push를 승인했다. 이전191개 변경과 failed/frozen artifact를 보존했다. 시작 ops39/2/0. 운영 및 Preview ledger31/latest0030/0031=0을 실제 SELECT로 확인(쓰기0), Worker aedcbd40/Pages f62a8bdb/source032b50dd/Production branch main을 재조회했다.
+
+- 유지보수 helper: 필수 검증 함수 부재의 fail-first1실패→초기5/5. 독립 probe의 잘못된 env가 Production 기본값으로 향하는 P1을 교정한 최신6/6이며 split/unknown/duplicate/constructor 거부다.
+- background guard: queue의 점검 무시를 최초1실패/2통과로 재현, 교정 후3/3. 실제 queue pause/workflow 종료는 별도다.
+- strict target: Node3/3, 실제TOML Production/Preview 및 cross-target 반례 독립 검증. 최초 잘못된 Vitest 명령은 exit1이며 제품 테스트 실패와 구별한다.
+- 시각5개: 네 메뉴/빠른 학습/계정 설정 통합을 실제 이미지와 대조한 뒤 Chromium 해당5개만 baseline 재생성,5/5·44.3초·exit0. 비교 허용값·마스킹·전역 skip 변경0. 이전 실패 스크린샷을 보존하며 전체295 gate는 아직 아니다.
+- 운영 backup helper에 exact schema restore→0031 upgrade→원래 열의 행 hash 대조를 추가했다. 새 운영 백업/실제 복원은 아직 미실행이다.
+
+통합 native 후속: 신규23/23·기존V719/19·API208/208, 실제 새 로컬Wrangler의 bound final SQL 변조 거절/공개0→정상600/220 공개→5개 철회/FK0을 확인했다. 독립 두P1(candidate/phase/DB 변조·NULL draft 부분 적재)의 원래 반례 재검증도 exit0/공개0이다. 해당 로컬 operator gate는 합성 회귀이며 원격 공개 허가로 재사용하지 않는다. 최신0031 SHA는 `9dbbc23715c4fd78454ef712b8dc67ae84af511aa15b4182b5a0ae3068c65d33`다. 원격 CLI는 현재 candidate의 complete600/220 local summary/drill을 추가 검증하며 과거/부분/변조 증적 차단1/1, 실제TOML을 포함한 target4/4다.
+
+5개 통합 의미 봉인/출판/철회와 CLI는 구현 중이며 전체 새 gate·commit/Preview·가족/실제 Chrome·원격 복귀·현 backup/restore·Production·push는 아직 완료하지 않았다. 상태와 실패 대응은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)에 기록한다. 음성 코어4파일 diff0, 운영 OAuth 변경0.
+
+최종 문서 점검: 2026-10-12 KST
+
+## 2026-10-12 정식 V7 출판 경계·Preview160 v3 — 로컬 검증·문서화만
+
+현재 사용자 지시는 **로컬 검증·문서화까지만**이다. 안전 커밋, push, 새 Preview, 운영 migration/seed, Worker/Pages 배포를 실행하지 않는다. 음성 코어는 변경하지 않고 Google 우선·동일 언어 설치 음성 fallback·ko/ja·R2 발음 금지를 유지한다.
+
+| 시계열 | 확인 결과 |
+| --- | --- |
+| V7 정식 계약 | 기존 실제 V7 동결본·두440승인을 다시 바이트/hash 검증하는 전용 profile, G0–G4 연결, 상태·수량 검증기, 전용 Preview-only adapter를 구현했다. Preview 명령 자체는 실행하지 않았다. |
+| publish race 교정 | 적재/제어 상태 준비 후 문항을 바꾸어도 최종 공개가 진행되는 P1을 독립 검토에서 재현했다. 기존 `content_learning_links`에 nullable 원본 JSON seal 3열을 추가하고 UPDATE/DELETE/REPLACE 보호·최종 공개 SQL 재검사를 적용했다. 첫 실패 증적을 보존하고 9종 콘텐츠 변조·두 release 원자성 회귀18/18과 독립 재현 차단을 확인했다. 적용 대상0031은 아직 원격 미적용 후보다. |
+| 별도160 새 버전 | 기존 불합격과 새 v2 A/B 각158승인·2반려를 보존했다. 별도 v3에서 쓰기 과제/rubric 불일치와 문법 계산의 누락 전제 2문항만 고쳤고 실제 A/B 각160/160 승인·finding0이다. N2/N1/TOPIK의 release/audit/question version을 각각 suffix로 분리해 DB 고유키·join을 맞췄다. 전수 맹검·실제 가청·외부 공개의 증거는 아니다. |
+| cohort01 실패 | 루트 tsx 의존성이 없는 실행은 artifact 생성 전 실패했다. 설치된 DB workspace launcher로 전환한 첫 수집에서 generic 품질 JSON이 `reviews`를 내보내 `reviewers` 정확2 계약에160건 실패했다. 원본 log/receipt/summary-failed 보존. |
+|160 어댑터 교정 | 쓰기8건을 실제 API의 다국어 rubric/sample key로 연결하고 듣기8건의 `audio_text_ko` 누락과 stable ref 급수 tag를 수정했다. 동결본/의미 리뷰는 편집하지 않았다. 실제 Python checker 포함 회귀5/5 및 독립 실제0031 메모리 DB의120 join·쓰기8/듣기8·reseed/rollback/기존 사용자 보존/FK0을 확인했다. |
+| cohort02 실패 | 전체 검사 중 D1 API3/205가 expression depth100 초과로 실패했다. 네이티브 SQLite depth1000 통과만으로 D1 적합성을 입증하지 못했다. 조건 비교를 보존하면서 AND 그룹을 분리한 뒤 실제 API205/205와 출판 회귀18/18을 재확인했다. |
+| cohort03 실패 | 단위613/0/0(Ops29/DB224/Web155/API205), OpenAPI/typecheck/build/음성 source 계약은 통과했다. 그러나 Wrangler의0031 SQL 분리에서 `incomplete input`으로 fresh와 E2E 서버 시작이 실패했다. 브라우저0이며 전체 gate 통과가 아니다. 실패 격리 DB `nihongo-n3-db-verify-pfTKww`와 원본 로그를 보존한다. |
+| 수집기 경계 | 중간 G4 뒤 공개/철회 drill이 실패해도 Preview가 중간 report를 수락하는 경계를 교정했다. `g0-g4-local-preflight.json`은 내부 drill 전용이다. 최종 G4는 실제 공개/재시드/철회·12종 합성 기록 hash 불변 후에만 생성하고, Preview CLI가 완료 표식·동일 cohort/manifest hash·543 draft행·결과를 강제한다. 전용2/2와 독립 재검토 통과. |
+| Wrangler 교정 | 설치4.103 splitter가 `=CASE`/`<>CASE`를 놓쳐 trigger의 END를 분리하는 원인을 확인했다. SELECT RAISE WHERE·IIF·정적 job 매핑으로 조건을 보존해 수정했다. fail-first 분할 회귀1실패를 보존하고 수정 후19/19, 실제 API205/205, 새 로컬 Wrangler32개 migration/latest0031/FK0을 확인했다. |
+| 최종 cohort04 | 실제 runner exit0. 전체 단위 **614/0/0**(Ops29/DB225/Web155/API205), OpenAPI·typecheck4 workspace·build(dry-run)·음성 source 계약·fresh D1·local gate checker 모두 exit0. 새로운 격리 Worker의 desktop/mobile Chromium/WebKit **44/44, skipped/flaky/failed0**이며11급수×20레슨 API 제출/재전송/FSRS/기록과 급수별 대표1레슨 UI 저장 제출·중단·재개다. 전체220화면 인간 검수나 실제 소리 증거는 아니다. |
+| 실제 local release drill | 신규 격리 SQLite에서 V7 440문항/220레슨/880entries/440links·audits/48speech를 정식 local G0–G4 공개→idempotent replay→withdraw 했다. 별도160 v3는120JLPT+40TOPIK/160audits·links/8speech 등543행을 draft로 두 번 적재했다. 12종 합성 학습 표 전체 행 hash는 그대로다. 실제 사용자의 DB·원격에는 적용하지 않았다. |
+
+현재 로컬 전체 gate는 **cohort04**로 통과했다. `summary.json`, `g0-g4-local.json`, `actual-fresh-upgrade-reseed.json`, `actual-local-release-and-withdraw.json`, 실제 command receipt/log·E2E JSON을 `.artifacts/learning-v7-release-2026-10-12/cohort04`에 보존한다. 이 G4는 local phase만 증명한다. `.artifacts/learning-v7-release-2026-10-12/cohort01–03` 실패 원본은 덮어쓰지 않는다. 이번 read-only Preview ledger 조회는0030까지31건·0031=0·rows_written0이었으며 사용자 로컬-only 답변 이후에는 원격 명령을 실행하지 않았다. 로컬 일반 ops는 catalog 갱신 후39/2/0이다. **새 Preview·가족·실제 Chrome onend/사람 가청/Network·현 schema backup/restore·Production은 미실행**이다. 별도160의 신규 원격 control-plane/publication도 미실행이다. commit/push 없이 HEAD/upstream `d626a16425a9a09a63b0af65928b51fd564c2834`를 유지한다.
+
+종료 점검: 파일 지도887paths·Markdown72/relative1045·lifecycle13active/7retired/36DBrefs·diff check 통과. 일반 ops39pass/2warning/0fail이며 dirty191개 보존과 기존 `INC-DATA-024`만 경고다. 저장소 관리 대상+이번 증적959파일의 실제KRdict key 문자열 일치0/비밀 출력0, 기존160 v2 두 raw review SHA/`passed=false`도 재확인했다. 음성 코어4파일 diff0이다. 보조 문서 실행은 모델 capacity로 시작하지 못해 주 에이전트가 직접 갱신했다. 다른 모델로 바꿨다고 주장하지 않는다.
+
+## 2026-10-11 보존 이력 — v7 두 독립 의미 승인·실제 로컬 검증 완료
+
+v5 최종 A426/14·B432/8(합집합14문항/8cue), v6 최종 A438/2·B439/1(합집합2문항/0cue)은 불합격으로 보존한다. 실제 v6 readiness exit1/4차단. 새 v7에서 해당 쓰기2문항의 rubric/해설만 교정하고 새 동결 CLI exit0을 확인했다. 공개220개념·86 source 사실·원문·선택지·답 위치·예시는 보존했다.
+
+| 최신 입력 | SHA-256 / 상태 |
+| --- | --- |
+| draft | `b1c7dda3b31d4bac030348f882c1786826588df83485a0f5573063a0a41b5871` |
+| source | `f7f130d0322271ce5c264d728f423212fc3a37dfaf98d8169ffe7844d7cde2a7` — 기존86 취득 사실 재사용, 새 HTTP 취득 아님 |
+| inventory | `85515cb49ac8462875c4863c38083880f426939e8f681d20d26a7e88b5989027` — cue 변경0으로 v6와 같은 bytes/SHA, 승인 상속 아님 |
+| 의미 검수 | 같은3hash의 실제440문항/220cue/220레슨을 A/B가 독립 전수 검수해 각각440/440 승인, 미검독·finding0. A rawSHA `db1f4a0f9f174b48a02d730aeb93a2241cd9889770f6bf090e067d2a0a8ff52a`, B `ac0697d587f71816333a1931c181fa254477d72758731e85b150c88781d1d554`. 실제 readiness exit0/failures0/full_bank_ready=true |
+| 최신 로컬 검사 | **unit-cohort03.log**의 실제 명령 exit0, 전체 단위588/0/0(Ops29/DB199/Web155/API205). typecheck-cohort04.log의 전체4workspace exit0, OpenAPI83public/12admin·음성 source계약 exit0. Worker dry-run/Web PWA build는 앞선 cohort01 exit0(실제 배포 아님). 별도 reviewed preflight sentinel1/1·shell문법·신규 E2E explicit tsc 통과 |
+| 실제 local verifier | actual-local-db-cohort02.json exit0: fresh440/220/880entries/440links·audits/48speech, 재시드 불변/FK0. `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/learning-path-reviewed-9nLPRL` 새 격리 SQLite에서 기존12종 합성 기록 각1행의0030→0031 원래 열 값과 null lesson binding을 보존했다. users·session/step·annotation/activity·JLPT FSRS/review/daily log·TOPIK progress/FSRS/review·reward 포함. 실제 사용자 DB를 열거나 모든 실제 기록 보존을 입증한 것은 아니다. 앞선 cohort01(6종)도 보존 |
+| 실제 staging CLI | stage-learning-path-v4.ts에 실제V7+A/B를 제공, exit0/200JLPT+240TOPIK/220lessons/440links/2draftreleases/440approved audits. 새 시스템 임시 `jlpt-reviewed-v7-20261011-cohort01.sqlite`; 원격0·미공개 유지 |
+| reviewed E2E 준비 실패 | cohort01 metadata.sqlite를 사용자 D1로 잘못 합산, cohort02 migration0002의 기본owner를 실제 계정으로 오인, cohort04 migration0008의 기본 빈 track_srs_settings를 학습 기록으로 오인해 각exit1/browser0. 실패 DB bzOACZ/kuWFZe/Woa6ie 및 로그를 보존했다. 해시 D1 파일1개 선택, 자격 증명 없는 정확한 기본owner/빈JLPT설정1행만 보존 허용, 모든user_id 표와 종속·인증 기록은 거부하도록 교정. 실제0000–0031 migration 회귀 포함helper5/5와 독립 검토 통과. 기존 행 삭제0 |
+| 실제 reviewed E2E | cohort03 desktop22/22 exit0 뒤, 최신helper를 사용한 새 격리 DB의 **cohort05 데스크톱·모바일 Chromium/WebKit44/44 exit0(2.3분)**. 각11급수×20레슨의 실제 Worker 제출·답/해설·재전송·기록·FSRS를 검사하고 급수별 첫1레슨 UI 시작/저장된 제출/중단·재개를 대조했다. 모든20레슨의 화면을 사람이 검토한 증거가 아니며, Preview·가족·실제 음성 재생/가청의 증거도 아니다. 새보고서 e2e-fixture-cohort05.json과 e2e-cohort05.log에 고정 |
+| Preview160 별도 의미 재검수 | 같은 별도draft/source/intake hash에서 실제160건 전수 독립 재검수: A143승인/17반려·B144/16, union17문항. 두 passed/full_bank_approval=false, 미검독0. 자동quality160pass로 의미 실패를 덮지 않는다. A rawSHA `3e5cd4765c24c5197e7a1603f62321d267307a7dcb50d89eaa3b267e308b730e`, B `94b50cdc1992ab5bf3204b828140f8f1a3d506e3b6cdc72a7c0d5d68311b7d78`. 기존 Preview 콘텐츠/리뷰는 편집하지 않으며 새 버전으로 교정/재검수 전 승격 금지 |
+| QA 공개 상태 | 초기 published-state 로컬 runtime fixture는 `publication_gate_evidence=false`, G0–G4 행을 만들지 않음. 실제 Preview/운영 공개 허가가 아님 |
+| 공개 경로 개발 미완료 | V7 두release ID `learning-path-jlpt-lp7-2026-10-11` / `learning-path-topik-lp7-2026-10-11` 전용 profile·G0–G4 증적 연결·guarded Preview seed/publication hook·440/220/880 검증기가 아직 없다. local draft stage·범용 Preview 후보 생성·기존160전용 profile·E2E published fixture로 이를 대체하지 않는다 |
+| 미완료 | Preview160 새 버전 교정/두 의미 승인, V7 정식 공개 경로·G0–G4/새Preview/가족/실제Chrome onend·가청/Network·현schema backup/restore·현재Production 승인·배포·push. 현재 로컬 통과는 출시 완료가 아니다 |
+
+v6 전체 단위576/0/0·typecheck는 해당시점 검사다. 최신 v7 로그는 ignored `.artifacts/learning-path-v7-2026-10-11`에 보존한다. local verifier의 SQL 바인딩·legacy 키·신규열 비교·TOPIK unit 접두사·빈 snapshot 오인을 회귀로 보강했다. E2E는 독립 검토에서 실제 target ref·localized 해설/쓰기 예시·저장된 제출 이후 재개 대조를 추가했다. bare E2E tsc는 tsconfig 없음으로 help/exit1, 다음 시도는 Node types 경로 없음/exit2; 기존 DB의 설치된 typeRoots를 명시한 최종 명령이 exit0이다. 제품 오류나 전체 typecheck 실패로 바꾸어 기록하지 않는다.
+
+최종 보안 검사: 저장소와 후보 증적1925파일에서 실제KRdict key 일치0(비밀값 출력0). `.env.local`/`.artifacts`는 버전관리 제외다. 음성 핵심4파일의Git diff0이고 같은 언어Google우선/설치음성fallback 계약을 유지한다. 최초 remote ops는49pass/2warning/2fail(catalog stale·R2읽기전용조회 Cloudflare7403); 이후catalog861paths·Markdown72/relative1016·lifecycle13active/7retired/36DBrefs가 통과했다. 별도 전체 remote-cohort02는 **51pass/2warning/0fail exit0**, 최종 local은 **39pass/2warning/0fail exit0**다. 최초 실패는 그대로 보존하며 원인을 서비스 장애나 영구 권한 문제로 단정하지 않는다. 원격 일반 상태/발음 참조0 검사이며 새 콘텐츠·Preview·가청·배포 gate가 아니다.
+
+종료 형상: dirty171paths를 보존하고 HEAD와upstream은 `d626a16425a9a09a63b0af65928b51fd564c2834`로 같다. commit/push·운영 migration/seed/deploy·OAuth 변경0. 경고는 미커밋 작업과 기존 `INC-DATA-024` manifest drift이며 `INC-RELEASE-087` 신규 출판 경로 개발 미완료는 ops의 일반 상태 pass로 해소되지 않는다.
+
+## 2026-10-11 v5 새 동결 — 최종 불합격 보존 이력
+
+v4 동결/최종 불합격을 편집하지 않고 새 버전으로 저작했다. v4 합집합 거부137문항/13cue를 모두 수정하고 추가 TOPIK8문항을 정리했다. 새 reviewer는 작성에 참여하지 않았으며 이전 리뷰/상호 판정을 공유하지 않는다.
+
+| 실행 | 실제 결과·범위 |
+| --- | --- |
+| v5 authoring/freeze | 440문항/220개념/220레슨, 구조/정답 위치 red flag0. 공개 정체성·급수·개념·답 위치 보존, 새 lp5 문항/레슨 ID. 실제 `content:learning:freeze:v5` exit0, frozen-cohort-01 새 leaf 독점 생성 |
+| draft SHA | `abb1f01eb13cb3218f5395a7a1d31e54ff56c85c512786bda33fad363bc456d3` |
+| source SHA | `13f6dfe17602b12a53815c41ff55b945739ab656aa367445d77c0f8fc0144583` — source06의86사실 재사용, acquisition_reused=true. 새 HTTP 취득 아님; 실제 동일 bytes 실행 patch/source/payload hash 연결 |
+| inventory SHA | `163ffb9de5b1ba0fb10b25e2e34ec527fce4dc5ed63c2f1fa7cf34eca8c5ab71` |
+| 독립 의미 검수 | 최종 A426승인/14거부·cue7, B432/8·cue1. 합집합14문항/8cue 불합격, 실제 readiness exit1/4차단 |
+| 최신 전체 단위 | `pnpm test` exit0, **574pass/0fail/0skip**: Ops29/DB185/Web155/API205. v5와 snapshot/버전/ordinal/저장·비어 있지 않은 upgrade 회귀 포함. 합성 리뷰 fixture는 실제 의미 승인 아님 |
+| 최신 type/build | `pnpm typecheck` 모든4workspace exit0. `pnpm build` Worker dry-run/Web PWA exit0. 실제 배포 아님. 로그는 `.artifacts/learning-path-v5-2026-10-11`에 분리 보존 |
+| adapter 교차 검토 | 승인 전 파일 생성·충돌 은폐·transaction/counts 교정 후6저장 회귀 통과. 실제 failed v4 리뷰를 준 stage CLI exit1이고 DB 파일 없음 확인. 버전 라벨/patch cache·주석 사이 dynamic import 반례를 독립 검토로 발견·고친 뒤 AST 회귀 통과. 신뢰된 저장소 코드 실행이며 hostile JS sandbox 아님 |
+| E2E 범위 재확인 | 기존50개는 canonical/grade1 fixture와 빈 레슨 목록 검사. 신규220레슨 실행 아님. 실제 승인 bank를 Wrangler temporary persistence에 연결하는 adapter/11급수 레슨 E2E는 후속 |
+| 미실행 | v5 두440/440승인·실제 신규 draft staging/reseed/fresh/nonempty upgrade/11급수 레슨·Preview160별도·G0–G4/새Preview/가족/실제Chrome/가청/Network·현schema backup/restore/현재Production승인·배포·push |
+
+아래 v4 검수/사전 취득과 v5 검사 수는 보존 이력이다. v5 실패는 v6, v6 실패는 v7에서만 수정했다. 정상 학습 기록·음성 코어·운영 OAuth·원격 Git을 변경하지 않았다.
+
+## 2026-10-11 공식 API 취득·v4 동결 — 두 의미 불합격 보존
+
+앞선source04의4개부족을현재상태로재사용하지않는다. 사용자가 `.env.local`의 `krdict_API_KEY` 위치를알려준뒤값을비노출로읽고공식API취득을실행했다. 운영/음성코어/원격Git 변경은없다.
+
+| 실행 | 실제 결과·범위 |
+| --- | --- |
+| 공식API | 봉지59344/변경變更14470/민원실57365/분리21086/배출排出58441, HTTP200·정확표제어/원어entry확인. XML/예문/음원/키는저장하지않고응답SHA+짧은언어사실저장 |
+| provenance 교정 | API01/source05는보존. 독립검토가API표식을일부지워legacy로우회하는반례와첫definition의범위문제를발견했다. 모든API표식에서전체provenance를필수화하고actual sense_order/first-returned-sense를명시한API02/source06을새로취득. 고유sense승인주장없음 |
+| source06 | records86·public concepts220·exact lookup0실패·source failures0·full_bank_source_complete=true. source SHA `850e8fbbfdad827d8db3920bb972f045924819cc3aaa9d7dacb5e0c15426c376`, 스킬구조86/86 exit0. 두의미승인아님 |
+| 실제동결 | `content:learning:freeze:v4` exit0, fresh `frozen-cohort-01`에440문항/220개념/220레슨. draft `b51c2934f9f80f4939f28ab4ca7c3bd5839274250cfd2343ce7cda21560c21c1`, inventory `5489bd9df91d2e097ddd5edd713b7bcab71aaddb09cf84db65b230dbf4a319e0`; unpublished/DBwrites0 |
+| 독립의미검수 | 같은 세 hash의 440/220/220 실제 검독. 최종 A319 승인/121 거부·개념 지적12, B318/122·개념 지적8, 두 passed=false. 합집합 문항137/개념13. A 중간320/120은 최종으로 사용하지 않음. readiness 실제 exit1/4차단. 새 v5 수정 중이며 승인/실제 staging 아님 |
+| API도구교차검증 | API/projection회귀2개와독립우회반례검사exit0. frozen+checkpoint8파일의실제key값match0, `.env.local`/`.artifacts` Gitignore확인. API정상경로키비출력·원문미저장확인 |
+| 마지막통합실패 | `verify:ci`는단위561/typecheck/OpenAPI/build통과후fresh TOPIKpractice local실행에서exit1. Wrangler로그는`other side closed`이며원인미확정. 실패workspace `nihongo-n3-db-verify-WRnNHj`/기존로그보존. 이를통합통과로보고하지않음 |
+| 독립재확인 | 같은실패격리DB에서TOPIKpractice별도재실행33checks/exit0. 이어새격리workspace `nihongo-n3-db-verify-y3s3go`의전체fresh0000–0031/contentcontract/control-plane exit0. 운영DB가아니고실제새440staging도아님; 첫실패를지우지않음 |
+| 초기도구명령오류 | root cwd의tsx미설치로combined출력첫생성이실패하고후속candidate는ENOENT. packages/db cwd에서새출력생성후재실행. 기존source/draft/키파일변경없음 |
+
+아래561 검사는 API 코드 추가 전 범위다. 최종 전체검사/문서 수는 별도로 추가한다. 실제 리뷰 파일 SHA는 A `9598342a7688ee2878c9f6b5ed5cb117b3e1121ee66ccfd68b5f597d511c47ed`, B `f3c7d9a76d8728b53843e5b061e7bf9920d7080da64fa36fb5974ff662e698be`다. 이후는 새 v5 수정/동결/두440 승인→실제 staging·reseed·fresh·nonempty upgrade·11급수 신규 레슨→Preview160 별도→G0–G4/새 Preview/가족·실제 음성→backup/restore/현재 Production 승인 순서다.
+
+## 2026-10-11 사전 웹 증적 보충·동결 도구 — API 취득 전 보존 이력
+
+시작local39/2/0, HEAD/origin `d626a16425a9a09a63b0af65928b51fd564c2834`, 기존121개 변경을 보존했다. 본 후속은 로컬 출처 보충/검증 도구이며 운영 read-only 재조회·음성 코어·OAuth·migration/seed/publication·Worker/Pages·commit/push는 실행하지 않았다. 요청한 순서2–6 전체 완료가 아니다.
+
+| 순서·실행 | 실제 결과·범위 |
+| --- | --- |
+| 공식 사전 증적 | official entry에서 안녕/부모님/공책/아침/맑다/대중교통/연결하다/문제/분석/비평10개 확인. `krdict-web-facts-cohort-01.json`에짧은 표제어/품사/뜻·URL/조건/취득시각/확인reference/transport 저장. SHA는verified-fact-projection-v1이며 원시HTTP응답hash 아님 |
+| 남은 source | 후보03/04에4개 개념/5표제어: 봉지, 변경(變更), 민원실, 분리+배출(排出). timeout과 다른표제어/동형어/예시 검색 결과를 보존하고 누락사실을 추정하지 않음. full_bank_source_complete=false/full_bank_ready=false/의미 승인0 |
+| 최신 candidate04 | 고정Git archive의원래seed로220exact lookup0실패·원본17파일hash 대조, records81/구조검사81/81 exit0. SHA `c598dd60f7a1afdb98e426d5e551d27961e40e65bccd33a54f407742db8705be`. 전체 source gate는exit1. candidate01–03 불변 |
+| 로컬 구현 | 웹fact projection/provenance 검증, immutable seed plan·source binding, full freeze/readiness CLI·원래 public selection identity·세hash·literal true 두review·독점생성. 자동승인/DB write 없음 |
+| 독립 교차검토 | hash 표식삭제/현재seed+과거SHA혼합/leaf경합/selection 뜻+fact+파생hash 동시변조/문자열 false 승인 반례5경로 발견·교정. 부모 관련12회귀 exit0, Astra 최종기존 반례차단 재확인. `INC-QA-078`; 문항 의미검수와 별개 |
+| 실제 negative freeze | source03/04 각각exit1 complete-source 차단. `blocked-freeze-cohort-01/02` 디렉터리 모두없음. 가짜freeze/review/artifact 생성으로 다음단계를통과시키지않음 |
+| 전체 단위/계약 | 최종 `pnpm test` exit0, **561pass/0fail/0skip**: Ops29/DB172/Web155/API205. 별도Web155/API205 요약도확인. 앞선558/555검사는과거중간결과로구분 |
+| typecheck·계약·build | typecheck·OpenAPI83public/12admin·음성source계약 통과, Worker **dry-run**/WebPWA build exit0. 처음freeze/readiness fixture literal widening 타입오류를수정하고재실행한결과이며 실제배포아님 |
+| fresh DB | 새격리tmp에서0000–0031·기존seed/FK/FTS/manifest/contentcontract/control-plane exit0. 기존canonical+합성계약의검사이며 새440/220 실콘텐츠 staging/reseed/nonemptyupgrade가아님 |
+| 영향 E2E | learning-lessons/learning-experience/menu-smoke/audio-qa의Chromium/WebKit **50pass/0fail/0skip**, 기존공개학습11급수·세션/재전송/복습/기록·미공개빈목록·기존링크. 음성은mock이며 실제새220레슨/Chrome/가족/사람청취/Network증거가아님 |
+| 문서·종료 | catalog811paths·Markdown72/relative links970·lifecycle13active/7retired/36DB refs·diff check exit0. 종료local39pass/2warning/0fail, dirty132paths/기존INC-DATA-024. 현재 HEAD/origin 동일; 기존작업/실패review/출처hash 보존 |
+| 미실행 | full-bank 실제freeze/두독립440/440·실제draftstaging/reseed/nonemptyupgrade/11급수새레슨세션·Preview160별도검수·G0–G4·새Preview/가족관찰/실제Chrome onend·가청/Network·현schema backup/restore/rollback/predeploy/현재Production승인·배포·push |
+
+다음은남은5표제어의공식exact 증적→새candidate05 이상→새full-bank3hash 동결→두독립440검수이다. 최신상세/정확hash는 [콘텐츠·가족 UX 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md), 열린source와도구교정은 [오류 원장](ERROR_LEDGER.md)을따른다. 과거자료/실패flag를편집해완료를만들지않는다.
+
+## 2026-10-11 v4 전량 작성 후속 — source14개 부족으로 순서2 중단
+
+시작 local39/2/0, HEAD/origin `d626a16425a9a09a63b0af65928b51fd564c2834`, 기존111개 변경을 보존했다. 이 후속은 로컬 작성/운영 도구 교정이며 Production read-only 재조회도 실행하지 않았다. 음성 코어·운영 DB·Worker·Pages·OAuth·commit/push는 변경하지 않았다. 아래550개는 새 실행이며 이전543개·브라우저116개 결과를 합산하지 않는다.
+
+| 순서·실행 | 실제 결과·범위 |
+| --- | --- |
+| 나머지320 자체 저작 | JLPT N5/N4/N2/N1 및 TOPIK1/2/5/6 각40 완료. 기존N3/TOPIK3/4와 합쳐440문항/220cue. 각 파일 자동 구조/타입 확인은 의미 승인 아님 |
+| 전량 자동 구성 | `content:learning:authoring:full` exit0: 11급수40문항/20개념/20레슨, 총440/220/220; 청해98고유/쓰기48; 답 분포 JLPT각10/10/10/10·TOPIK각8/8/8/8, flags0. snapshot `e2bd4a55…`. 실제DB 적재0·전체은행 동결false·의미 승인0 |
+| KRdict 취득 실패 | 첫전체 민원실조회 실패(exit1, 앞선 성공 record는 메모리 소실로 artifact 아님), checkpoint run02 정책조회 실패/03 안녕조회 실패. 최초 로그·원래policy 재사용 시각/hash 보존. API 접근 권한/앱 장애가 원인이라고 단정하지 않음 |
+| 출처 후보01/02 | 71record/220개념, actual memory canonical lookup0, source gate **exit1**: exact 사전 개념14개 미검증. 후보01 `8b50e47a…` 불변, 새02 `09a5d11c…`에도 full_bank_source_complete=false/full_bank_ready=false/remote_write0 |
+| 출처 구조 검사 | 새02 intake 스킬 검사71/71 exit0. 처음 output URL의 끝 `/` 누락으로 파생 결과가 부모에 생성되어 최초 결과/로그를 보존하고 정규화·불변 output 수정 후 별도 `source-candidate-02-structure-retry/report.json`에서71/71 재확인. 새로운 source 다운로드·source14완성·전체 문항 승인이 아님 |
+| 독립 gate 검토 | source key만 맞는 변조와 최종 output TOCTOU 발견→trusted inventory/source/file/개념identity 대조·exclusive-create 교정→Astra 검토에서 이전6개 변조 반례 모두 차단 확인. 의미440검수와 별개, 파일 수정/DB/remote 없는 독립 검토 |
+| 전체 테스트 | 최종 `pnpm test` **550pass/0fail/0skip**, Ops29/DB161/Web155/API205, exit0. 새로운7개 회귀 포함. 앞선549개 검사와 구 source 실패를 별도 log로 보존 |
+| TypeScript | 첫전체는 source validator의 optional evidence narrowing3개로 exit2. 누락 evidence를 명시적 실패/continue로 고친 뒤 최신 `pnpm typecheck` exit0. 초기 `typecheck-final.log`와 최종 `typecheck-verified.log` 분리 |
+| 음성·보존 | browser audio source contract exit0, 음성 핵심3파일 Git diff0. source01·v3 intake/inventory·기존 intakev2의 SHA 일치, v1/v2리뷰는 false·v3대표만true·first120 snapshot 유지. source 계약 검사≠실제 가청/새 Preview 증거 |
+| 문서·로컬 종료 | catalog799paths·Markdown72/상대링크955·lifecycle13active/7retired/36DB refs·diff check exit0. 최초 문서 검사는 합성 테스트가 존재하지 않는 source 문서를 가리켜 exit1; 실제 존재하는 문서 경로로 fixture만 수정하고 source contract3/3·동일 문서 명령 재실행 exit0. 종료local **39pass/2warning/0fail**, dirty121paths·기존INC-DATA-024 경고이며 HEAD/origin d626a16 유지 |
+| 미실행 | full-bank freeze/두440의미리뷰·실제draft staging/reseed/fresh/nonempty upgrade·11급수 신규레슨 세션/재전송/복습/기록·Preview160재검수·G0–G4·새 Preview/가족/Chrome/가청/Network·현schema backup/restore/rollback/predeploy/현재Production승인·배포·push |
+
+source14목록·정확SHA·다음순서는 [콘텐츠·가족 UX 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md), 오류는 `INC-SOURCE-075`, `INC-QA-076/077`이다. `.artifacts/learning-path-v4-2026-10-11`의 첫120/전체작성/source01/02/수집실패/검증로그를 보존한다. 이 후속으로 v4 의미 전체 통과·전 단계 완료·공개를 보고하지 않는다. 다음은 source14취득→새 candidate03 이상→전체새 hash 동결→두 독립440/440이다.
+
+## 2026-10-11 순서 고정 후속 — 공개 개념·대표 승인·첫120 작성, 전체 공개 차단
+
+시작 local39/2/0, HEAD/origin `d626a16425a9a09a63b0af65928b51fd564c2834`, 이전86개 미커밋 변경을 보존했다. 기존 v1 440초안/불합격, source v1/v2와 v2 대표 실패 JSON의 passed/hash를 편집하지 않았다. 새 대표 v3와 전체은행 작성용 v4를 별도로 만들었다. 원격은 조회만 했으며 migration/seed/공개/Worker/Pages/OAuth/음성 코어/commit/push는 변경하지 않았다.
+
+| 순서·실행 | 실제 결과와 범위 |
+| --- | --- |
+| 공개 개념 확정 | Production SELECT220개·11급수 각20·lookup0실패·쓰기0. 공개 snapshot SHA `40f8d03a…`; 전체 운영 verifier 아님 |
+| 환경별 ID 계약 | 운영/fresh 정수 ID 차이를 확인, 정확 급수·자연키·읽기/뜻 유일 일치로 실제 ref/version 사용. 실제 canonical seed220개 조회0실패·다른 급수/다른 뜻 대체 회귀 통과 |
+| v2 대표 불합격 보존 | 두 reviewer 각 문항12개 정답 승인, 조사/문법 학습 안내 결함으로 전체 `passed=false`. raw file SHA `0bbb01ec…` 동일 보존 |
+| 별도 v3 재검수 | N3/TOPIK3/TOPIK4 각1 대표 레슨·12문항·6개념을 현재 draft/source/inventory hash에서 A/B 독립 승인. 정적 의미/선언 화면 계약이며 실제 화면·전체440·배포 승인 아님 |
+| 스킬 검증 | 대표 intake6개 구조 통과; 동일 두 리뷰를 portable question validator에 연결해 대표12개만 통과. quality report SHA `b4062bf5…`, full_bank_approval=false |
+| 공급자별 수집 | EDRDG 실제27record/177facts·스킬 구조27개 통과. KRdict 정책 URL2회 제한 재취득은 timeout/exit1, 성공 artifact 없음. 원문/외부 예문/기출/음원 저장 없음; 기존 취득시각을 새 HTTP 수집으로 바꾸지 않음 |
+| v4 첫 작성 | N3/TOPIK3/TOPIK4 각40, 총120·cue60·고유 청해26·구체 쓰기16. 자동 구조 flags0, 독립 의미 승인0, 실제 lesson DB0. snapshot SHA `49994420…`; 남은320·전체 intake·220레슨·두440/440 미완료 |
+| 새 차단 gate | `content:learning:candidate` **exit1 유지**: v3 대표 통과/새220조회0과 full-bank-only·440/220/220/source/두전체리뷰 미완료를 구분. 과거 실패 readiness/구조 결과와 합산하지 않음 |
+| 최신 전체 테스트 | `pnpm test` exit0: Ops29/DB154/Web155/API205, **543 pass/0 fail/0 skip**. 새13개 회귀 포함. `pnpm typecheck`·browser audio source contract exit0. 전체 build/fresh/브라우저를 이번 후속 source로 새로 실행하지 않음; 음성 source 계약은 실제 가청 증거 아님 |
+| 문서·로컬 상태 | catalog783paths·Markdown72/상대 링크937·lifecycle13active/7retired/36DB refs·diff check exit0. local39/2/0, 경고는 dirty 형상과INC-DATA-024. 작성 중 catalog stale38/2/1은 재생성으로 교정한 후속 결과와 구분 |
+| 운영 read-only 후속 | 첫 전체 `ops:status:remote`는 **50 pass/2 warning/1 fail·exit1**, D1 R2 발음 참조 검사 요청 Cloudflare7403. 설정/인증 변경 없이 같은 전체 명령을 별도 재실행해 **51 pass/2 warning/0 fail·exit0** 확인. `ops-remote.log`와 `ops-remote-retry.log`를 보존하며 원인은 확정하지 않는다. 기존 Worker/Pages/0030 ledger·TOPIK/CSP/legacy410·D1 R2참조0의 상태 검사이지 신규440/실제 음성/Preview 검증이 아님 |
+| 아직 미실행 | 나머지320작성·전체은행 동결/두440검수·실제 draft staging/reseed/fresh/nonempty upgrade·11급수 신규 레슨 세션/재전송/복습/기록·Preview160 별도 검수·G0–G4·새 Preview/가족/Chrome/가청/Network·현 schema backup/restore/rollback/predeploy/Production 승인·배포·push |
+
+순서/정확 hash/출처 계약은 [콘텐츠·가족 UX 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md), 오류는 `INC-DATA-072`·`INC-CONTENT-073`·`INC-SOURCE-074`다. 중간 ID 비교/타입 테스트 실패와 KRdict timeout 로그, 최신 검사 JSON/log는 `.artifacts/learning-path-v{2,3,4}-2026-10-11`에 보존한다. API/브라우저 테스트의 합성 계정·음성 mock을 실제 신규 콘텐츠 플레이/새 사람 청취로 보고하지 않는다. Production은0030/72-table 기준선이며 새0031/74-table 배포/backup 작업은 실행하지 않았다.
+
+## 2026-10-11 콘텐츠·레슨·가족 UX — 로컬 부분 구현, 공개 차단
+
+시작 HEAD/origin `d626a16425a9a09a63b0af65928b51fd564c2834`, local39/2/0과 이전 정리34개 미커밋 변경을 보존했다. 네 메뉴·학습 내 자유 문제·일본어 기초 표시·단원 URL 복귀·카탈로그/레슨 세션 연결을 구현했다. `0031`은 로컬 후보이며 운영 migration/Worker/Pages/OAuth/기존 공개 콘텐츠는 변경하지 않았다. 신규220레슨을 실제 DB에 적재하거나 공개한 상태가 아니다.
+
+| 실행 | 현재 후보의 실제 결과·범위 |
+| --- | --- |
+| 출처 | v1 54record/236facts 보존, v2 54record/240facts 구조 검사54/54. URL/license/취득 시각/SHA/attribution, 원문·예문·음원 저장 없음. 새 v2 hash에 의미 재검수 필요 |
+| 초안 구조 | JLPT200/TOPIK240·레슨 구성220·대본98, 분포/다국어 필드 구조 통과. 문항 의미 승인 아님 |
+| 콘텐츠 공개 준비 | **exit1**, lookup31·명백한 red flag195·두 reviewer 불합격 및 최신 source hash 불일치. A151/289·B138/302(승인/거부), 각440ID·개념 지적189 |
+| 독립 계약 검토 | 철회 후 저장 효과·homophone due 누락 발견→사전 검사/원자적 SQL guard/동일 급수 homophone 추가→회귀/독립 재검토 통과. `INC-LEARN-067`, `INC-SRS-068` |
+| 전체 단위/계약 | iOS 인라인 수정 후 `pnpm test` exit0: Ops29/DB141/Web155/API205, 총530. 합성 저장 fixture220/880/440과 11급수 합성 API 사례를 실제 콘텐츠 승인으로 쓰지 않음. 앞선524개 통과와 새 iOS 전용6개(최초mock 설정 오류5/1→6/0) 결과도 구분 |
+| 타입·빌드 | `pnpm typecheck`, `pnpm build` exit0. Worker build는 **deploy --dry-run**이며 원격 배포 아님 |
+| fresh/upgrade | fresh0000–0031·기존 seed/FK/FTS/manifest/contract/control-plane exit0. 기존 기록 upgrade·재시드/불변성/트랙 격리/오류 원자성은 로컬 회귀 통과. 신규 초안 전량 seed/fresh는 미실행 |
+| OpenAPI·음성 소스 | generate/check exit0(공개83/admin12 paths); browser audio contract exit0. 음성 코어 미변경, 실제 가청 증거 아님 |
+| 브라우저 | iOS 수정 후 동일6spec/4project 전체 **116 pass/0 skip/0 fail**,3.0분·exit0, `.last-run.json`의 passed/실패 빈 목록을 대조. 11급수 기존 실제 로컬 시작/저장/재개·양언어 전체 세션/FSRS·오프라인/충돌·네 메뉴/기존URL·반응형·iOS 인라인/44px/닫기·음성mock. 신규220레슨 플레이·실제 가청 검증 아님. 앞선72/0/0·mobile14/2/0은 각각 보존 |
+| 문서·상태 | iOS 수정 후 catalog748paths·Markdown72/상대 링크899·lifecycle13active/7retired/36DB refs·diff check exit0. 종료 local39/2/0(exit0), remote read-only51/2/0(exit0). 알려진 경고는 미커밋 형상과INC-DATA-024 |
+| 새 릴리스 gate | Preview160 별도 승격 검수·실제220레슨 E2E·G0–G4·새 Preview/가족 관찰/Chrome 양언어 lifecycle·사람 가청/Network·현 schema 백업/복원·predeploy **미실행** |
+| 외부 변경 | 신규 migration/seed/publication, Preview/Production deploy, commit/push 없음. 기존 운영0030/72tables·Worker aedcbd40·Pages f62a8bdb 유지 |
+
+중간 브라우저 실패 screenshot/DOM은 ignored `.artifacts/learning-path-2026-10-11/e2e-{first,second,third}-failure`에 따로 보존했다. 옛5메뉴·계정 언어 select·`学習` 버튼 계약을 실제 네 메뉴/설정 언어 button 그룹·양 트랙 선택으로 고정했고 timeout/채점/저장 기준은 낮추지 않았다. 구조 보고/실제 canonical readiness는 같은 ignored 경로의 `quality.json`, `readiness.json`이다. fresh 증적은 `/var/folders/5z/xfvw93_d0pn3v7b13f_wn3dm0000gn/T/nihongo-n3-db-verify-Vc4YgB/artifacts`에 있다.
+
+mobile 최초 실패는 `e2e-mobile-first-failure`에 별도 보존했다. `INC-UI-071`: iPhone Safari의 설치 banner pointer interception이 JLPT 첫 저장을 차단했다. 새 UX는 설치 안내를 설정 안의 정상 문서 흐름으로 이동하며,44px 닫기·dismissal 보존·standalone 제외·flag-off legacy는 유지한다. 테스트에서 미리dismiss/storage를 주입하거나 강제click으로 저장을 우회하지 않았다.
+
+최초 원격 상태 검사는50/2/1로 catalog stale 한 건만 실패했다. catalog 재생성 뒤 정확한 전체 원격 명령을 다시 실행해51/2/0을 확인했다. 원격 read-only 상태 검사를 새 후보 배포/기능 전수/가청 증거로 확대하지 않는다. 로컬 확대 글자390px 일본어 설정 screenshot에서는 네 탭·언어/해설 분리와 설정 조작을 직접 확인했으며 가족 관찰로 대신 쓰지 않는다.
+
+현재 완료 범위와 순서 고정 재작성은 [구현·품질 차단 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다. **불합격 검수를 승인으로 바꾸거나 다른 급수 fallback/합성 lookup으로 실제 seed gate를 통과시키지 않는다.** 전체 계획 완료·출시 완료로 보고하지 않는다.
+
+## 2026-10-10 로컬 코드·폴더·문서 유지보수
+
+시작 HEAD/origin `d626a16425a9a09a63b0af65928b51fd564c2834`·clean, local40/1/0·remote52/1/0을 확인했다. 미사용 API helper3·Web component1·중복 SW1과 존재하지 않는 PWA asset 등록을 제거하고, 수동 파일 지도·인벤토리·시계열 문서를 영구 경로와 자동 검사로 대체했다. 현재 상태의 과거 순차 기록은 `docs/history/CURRENT_STATE_2026-09-25.md`에 보존했다. 원문·seed95개/migration39개 hash·음성/DB 핵심7파일 동일성, 전체 로컬492개·fresh0030·영향 브라우저18개·문서71/링크861 검사를 통과했다. 재생성 산출물7,050,795 bytes는 저장소 밖 휴지통으로 이동했다. 종료 local39/2/0·remote51/2/0의 경고는 작업 트리/기존 manifest drift다. 실행 범위는 로컬 유지보수이며 새 commit/push·Production 배포/DB write는 하지 않았다. 대상·복구 경로·실행 명령은 [정리 기록](REPOSITORY_MAINTENANCE_2026-10-10.md)을 따른다.
 
 ## 2026-09-25 빠른 레슨·개인 보상 — Production 배포 및 Git 동기화
 

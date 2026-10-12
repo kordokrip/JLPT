@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
-import { JLPT_LEVELS, type JlptLevel } from '@nihongo-n3/shared';
+import { JLPT_LEVELS, studyRefKey, type JlptLevel } from '@nihongo-n3/shared';
 import app, {
   app as honoApp,
   getAdminOpenApiDocument,
@@ -17,7 +17,7 @@ import app, {
 } from '../app.js';
 import { receiver as observabilityReceiver } from '../observability-receiver.js';
 import { isSideEffectingRequest } from '../middleware/maintenance.js';
-import { buildStudySteps, canonicalContent, contentStillPublished, contentsStillPublished } from '../lib/study-content.js';
+import { buildStudySteps, canonicalContent, ownerContent, contentStillPublished, contentsStillPublished } from '../lib/study-content.js';
 import * as quizQuestions from '../lib/quiz-questions.js';
 import { runPushReminder } from '../lib/push-reminders.js';
 
@@ -90,6 +90,8 @@ import rawLearningExperienceMigration from '../../../../packages/db/drizzle-v2/0
 import rawStudyMotivationMigration from '../../../../packages/db/drizzle-v2/0029_study_motivation.sql?raw';
 // @ts-ignore – Vite raw import
 import rawPushNotificationDeliveriesMigration from '../../../../packages/db/drizzle-v2/0030_push_notification_deliveries.sql?raw';
+// @ts-ignore – Vite raw import
+import rawLearningLessonsMigration from '../../../../packages/db/drizzle-v2/0031_learning_lessons.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -99,6 +101,7 @@ beforeAll(async () => {
   // 주석·PRAGMA 제거 후 BEGIN/END 기반 파서로 독립 문장을 분리해
   // 각각 prepare().run() 으로 실행한다.
   const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}\n${rawStudyMotivationMigration}\n${rawPushNotificationDeliveriesMigration}`
+    .concat('\n',rawLearningLessonsMigration)
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -3264,5 +3267,124 @@ describe('learning experience contract', () => {
     const body = await response.json<{ data: { daily_minutes: number; learning_track: string } }>();
     expect(body.data.daily_minutes).toBe(20);
     expect(body.data.learning_track).toBe('jlpt-ja');
+  });
+
+  // 강성호 2026-10-11: 아래 서명은 격리된 테스트 fixture이며 실제 콘텐츠 검수 증적이 아니다.
+  async function publishedTestLesson(level:string) {
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const track=level.startsWith('N')?'jlpt-ja' as const:'topik-ko' as const;
+    const version='test-only-lesson-'+crypto.randomUUID(),release='release-'+version,id='lesson-'+version;
+    const kind=track==='jlpt-ja'?'jlpt-quiz':'topik-owner';
+    await db.prepare(`INSERT INTO content_releases(id,learning_track,content_version,release_state,manifest_sha256,parser_version) VALUES(?,?,?,'published',?,'test-only')`).bind(release,track,version,'f'.repeat(64)).run();
+    await db.prepare('INSERT INTO content_release_quality_requirements(release_id,content_type,expected_audit_count,validator_version) VALUES(?,?,2,?)').bind(release,kind,'test-only').run();
+    const refs:import('@nihongo-n3/shared').StudyRef[]=[];
+    if(track==='jlpt-ja'){
+      const rows=await db.prepare('SELECT id FROM vocab WHERE level=? AND source_id=990001 ORDER BY id LIMIT 2').bind(level).all<{id:number}>();
+      for(const row of rows.results!)refs.push((await canonicalContent(db,'vocab',String(row.id)))!.ref);
+    }else{
+      for(let i=0;i<2;i++){
+        const contentId=`test-concept:${version}:${i}`;
+        await db.prepare(`INSERT INTO topik_owner_authored_curriculum_items(id,unit_id,target_grade,stable_ref,item_type,prompt_ko,prompt_ja,prompt_en,answer_json,explanation_ko,explanation_ja,explanation_en,source_asset_id) VALUES(?,?,?,?,'vocab','테스트 표현','テスト表現','Test expression','{}','뜻','意味','Meaning','study-fixture')`).bind(contentId,'study-unit-'+level,Number(level),contentId).run();
+        refs.push((await ownerContent(db,contentId,'ja'))!.ref);
+      }
+    }
+    for(let i=0;i<2;i++){
+      const questionId=`test-question:${version}:${i}`,auditId='audit:'+questionId;
+      await db.prepare(`INSERT INTO content_quality_audits(id,learning_track,content_type,content_id,content_version,evidence_sha256,validator_version,automated_status,author_review_status,adversarial_review_status,author_reviewer,adversarial_reviewer,release_state,checked_at) VALUES(?,?,?,?,?,?,'test-only','passed','signed','signed','synthetic-test-a','synthetic-test-b','published','2026-10-11')`).bind(auditId,track,kind,questionId,version,'f'.repeat(64)).run();
+      await db.prepare('INSERT INTO content_release_quality_audit_links(release_id,audit_id) VALUES(?,?)').bind(release,auditId).run();
+      if(track==='jlpt-ja'){
+        const choices=['가','나','다','라'].map(ko=>({ko,ja:ko,en:ko}));
+        await db.prepare(`INSERT INTO jlpt_practice_questions(id,level,mode,skill,difficulty,prompt_ko,prompt_ja,prompt_en,choices_json,answer_index,explanation_ko,explanation_ja,explanation_en,source_code,source_evidence_sha256,bank_version,is_published) VALUES(?,?,'vocab_mc','test',1,?,?,?, ?,?,'설명','説明','Explanation','test-only',?,?,1)`).bind(questionId,level,'테스트 문제'+i,'テスト問題'+i,'Test question'+i,JSON.stringify(choices),i,'f'.repeat(64),version).run();
+        refs.push({track,type:'jlpt-practice',id:questionId,version});
+      }else{
+        await db.prepare(`INSERT INTO topik_owner_authored_curriculum_items(id,unit_id,target_grade,stable_ref,item_type,prompt_ko,prompt_ja,prompt_en,answer_json,explanation_ko,explanation_ja,explanation_en,source_asset_id) VALUES(?,?,?,?,'vocab',?,?,?,?,'설명','説明','Explanation','study-fixture')`).bind(questionId,'study-unit-'+level,Number(level),questionId,'테스트 문제'+i,'テスト問題'+i,'Test question'+i,JSON.stringify({choices:['가','나','다','라'],answer_index:i})).run();
+        refs.push((await ownerContent(db,questionId,'ja'))!.ref);
+      }
+    }
+    await db.prepare(`INSERT INTO learning_lessons(id,version,learning_track,level,ordinal,title_ko,title_ja,title_en,release_id) VALUES(?,?,?,?,1,'테스트 레슨','テストレッスン','Test lesson',?)`).bind(id,version,track,level,release).run();
+    for(let i=0;i<4;i++)await db.prepare('INSERT INTO learning_lesson_entries(lesson_id,lesson_version,ordinal,phase,content_ref) VALUES(?,?,?,?,?)').bind(id,version,i,i<2?'learn':'practice',studyRefKey(refs[i]!)).run();
+    for(let i=0;i<2;i++)await db.prepare(`INSERT INTO content_learning_links(learning_track,question_ref,concept_ref,evidence_sha256,reviewer_a,reviewer_b,status,created_at) VALUES(?,?,?,?,'synthetic-test-a','synthetic-test-b','approved',0)`).bind(track,studyRefKey(refs[i+2]!),studyRefKey(refs[i]!),'f'.repeat(64)).run();
+    await db.prepare('UPDATE learning_lessons SET is_published=1 WHERE id=? AND version=?').bind(id,version).run();
+    return {id,version,track,refs};
+  }
+  it.each(['N5','N4','N3','N2','N1','1','2','3','4','5','6'])('published lesson at %s starts, pauses, resumes and records accepted completion',async(level)=>{
+    const fixture=await publishedTestLesson(level),headers=await learner(fixture.track,level),db=(env as typeof env & {DB:D1Database}).DB;
+    const before=await json<{data:import('@nihongo-n3/shared').LearningLessonCatalog}>('/api/v1/learning/lessons?level='+level,{headers});
+    expect(before.data.lessons).toEqual([{id:fixture.id,version:fixture.version,title:fixture.track==='jlpt-ja'?'테스트 레슨':'テストレッスン',ordinal:1,completed:false,active_session_id:null}]);
+    expect(JSON.stringify(before.data)).not.toMatch(/answer|solution|choices|prompt/);
+    const request_id=crypto.randomUUID();
+    const created=await callSession(headers,'',{request_id,mode:'quick',lesson_id:fixture.id});
+    expect(created.response.status).toBe(200);
+    const session=created.body.data;
+    expect(session).toMatchObject({lesson_id:fixture.id,lesson_version:fixture.version,level});
+    expect(session.steps.map(s=>s.phase)).toEqual(['learn','learn','practice','practice']);
+    expect(session.steps.every(s=>s.level===level && s.solution===null)).toBe(true);
+    expect((await callSession(headers,'',{request_id:crypto.randomUUID(),lesson_id:'different-lesson'})).body.data.id).toBe(session.id);
+    expect((await callSession(headers,'/'+session.id,{status:'completed'},'PATCH')).response.status).toBe(409);
+    await callSession(headers,'/'+session.id,{status:'paused'},'PATCH');
+    expect((await callSession(headers,'',{request_id,mode:'quick',lesson_id:fixture.id})).body.data.id).toBe(session.id);
+    for(const step of session.steps){
+      if(step.phase==='learn')await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal');
+      else expect((await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal')).response.status).toBe(409);
+      const solution=JSON.parse((await db.prepare('SELECT solution_json FROM study_steps WHERE id=?').bind(step.id).first<{solution_json:string}>())!.solution_json);
+      const payload={request_id:crypto.randomUUID(),...(step.phase==='learn'?{rating:'good'}:{answer:solution.answer})};
+      expect((await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',payload)).response.status).toBe(200);
+      expect((await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',payload)).response.status).toBe(200);
+    }
+    expect((await callSession(headers,'/'+session.id,{status:'completed'},'PATCH')).response.status).toBe(200);
+    const completed=await json<{data:import('@nihongo-n3/shared').LearningLessonCatalog}>('/api/v1/learning/lessons?level='+level,{headers});
+    expect(completed.data.lessons[0]).toMatchObject({completed:true,active_session_id:null});expect(completed.data.next_lesson_id).toBeNull();
+    const motivation=await json<{data:{xp:number}}>('/api/v1/learning/motivation',{headers});expect(motivation.data.xp).toBe(16);
+    const records=await json<{data:import('@nihongo-n3/shared').LearningRecords}>('/api/v1/learning/records',{headers});expect(records.data.totals).toMatchObject({learned:2,first_answers:2,first_correct:2});
+    const other=await learner(fixture.track,level);expect((await fetch('/api/v1/study/sessions/'+session.id,{headers:other})).status).toBe(404);
+    expect((await json<{data:import('@nihongo-n3/shared').LearningLessonCatalog}>('/api/v1/learning/lessons?level='+level,{headers:other})).data.lessons[0]!.completed).toBe(false);
+  });
+  it('rejects draft/cross-level lessons and preserves the snapshot on later content edits',async()=>{
+    const fixture=await publishedTestLesson('N3'),headers=await learner('jlpt-ja','N3'),db=(env as typeof env & {DB:D1Database}).DB;
+    expect((await fetch('/api/v1/learning/lessons?level=3',{headers})).status).toBe(400);
+    expect((await fetch('/api/v1/learning/lessons?expected_track=topik-ko',{headers})).status).toBe(409);
+    expect((await callSession(headers,'',{request_id:crypto.randomUUID(),mode:'quick',lesson_id:'unpublished-id'})).response.status).toBe(409);
+    const other=await learner('jlpt-ja','N2');expect((await callSession(other,'',{request_id:crypto.randomUUID(),lesson_id:fixture.id})).response.status).toBe(409);
+    const started=await callSession(headers,'',{request_id:crypto.randomUUID(),mode:'quick',lesson_id:fixture.id}),session=started.body.data;
+    const original=session.steps[2]!.prompt;
+    await db.prepare('UPDATE jlpt_practice_questions SET prompt_ko=? WHERE id=?').bind('changed after snapshot',fixture.refs[2]!.id).run();
+    const resumed=await callSession(headers,'/'+session.id,undefined,'GET');expect(resumed.body.data.steps[2]!.prompt).toBe(original);
+    await db.prepare('UPDATE jlpt_practice_questions SET is_published=0 WHERE id=?').bind(fixture.refs[2]!.id).run();
+    expect((await fetch('/api/v1/study/sessions/'+session.id,{headers})).status).toBe(410);
+    expect((await db.prepare('SELECT count(*) n FROM study_steps WHERE session_id=?').bind(session.id).first<{n:number}>())?.n).toBe(4);
+  });
+  it.each(['lesson','release'])('withdrawn %s cannot reveal, accept a step or award progress and XP',async(withdraw)=>{
+    const fixture=await publishedTestLesson('3'),headers=await learner('topik-ko','3'),db=(env as typeof env & {DB:D1Database}).DB;
+    const session=(await callSession(headers,'',{request_id:crypto.randomUUID(),mode:'quick',lesson_id:fixture.id})).body.data;
+    const step=session.steps[0]!;
+    await callSession(headers,'/'+session.id+'/steps/'+step.id+'/reveal');
+    if(withdraw==='lesson')await db.prepare('UPDATE learning_lessons SET is_published=0 WHERE id=?').bind(fixture.id).run();
+    else await db.prepare("UPDATE content_releases SET release_state='withdrawn' WHERE id=(SELECT release_id FROM learning_lessons WHERE id=?)").bind(fixture.id).run();
+    expect((await callSession(headers,'/'+session.id+'/steps/'+step.id+'/submit',{request_id:crypto.randomUUID(),rating:'good'})).response.status).toBe(410);
+    expect((await callSession(headers,'/'+session.id+'/steps/'+session.steps[1]!.id+'/reveal')).response.status).toBe(410);
+    expect((await callSession(headers,'/'+session.id,{status:'paused'},'PATCH')).response.status).toBe(410);
+    expect(await db.prepare('SELECT request_id,revealed FROM study_steps WHERE id=?').bind(step.id).first()).toEqual({request_id:null,revealed:1});
+    const user=(await db.prepare('SELECT user_id FROM study_sessions WHERE id=?').bind(session.id).first<{user_id:string}>())!.user_id;
+    expect((await db.prepare('SELECT count(*) n FROM topik_owner_srs_cards WHERE user_id=?').bind(user).first<{n:number}>())?.n).toBe(0);
+    expect((await db.prepare('SELECT count(*) n FROM learning_activity_events WHERE user_id=?').bind(user).first<{n:number}>())?.n).toBe(0);
+    expect((await json<{data:{xp:number}}>('/api/v1/learning/motivation',{headers})).data.xp).toBe(0);
+    // 공개 검사와 claim 사이 철회를 실제 D1 batch로 재현하며 선행 쓰기도 rollback한다.
+    await expect(db.batch([
+      db.prepare("INSERT INTO learning_activity_events(event_id,user_id,learning_track,event_type,content_type,content_id,occurred_at) VALUES(?,?,'topik-ko','content_completed','topik-owner-item',?,unixepoch())").bind('race:'+session.id,user,step.ref.id),
+      db.prepare('UPDATE study_steps SET request_id=? WHERE id=?').bind(crypto.randomUUID(),step.id),
+    ])).rejects.toThrow(/lesson withdrawn before write/);
+    expect((await db.prepare('SELECT count(*) n FROM learning_activity_events WHERE user_id=?').bind(user).first<{n:number}>())?.n).toBe(0);
+    expect((await callSession(headers,'/'+session.id,{status:'abandoned'},'PATCH')).response.status).toBe(200);
+  });
+  it('due homophone review takes priority over the next published lesson',async()=>{
+    const fixture=await publishedTestLesson('N3'),headers=await learner('jlpt-ja','N3'),db=(env as typeof env & {DB:D1Database}).DB;
+    const user=(await json<{data:{user:{id:string}}}>('/api/v1/auth/me',{headers})).data.user.id;
+    const words=(await db.prepare('SELECT id FROM vocab WHERE level=? AND source_id=990001 ORDER BY id LIMIT 2').bind('N3').all<{id:number}>()).results!;
+    const pair=await db.prepare("INSERT INTO homophone_pairs(level,word_a_id,word_b_id) VALUES('N3',?,?) RETURNING id").bind(words[0]!.id,words[1]!.id).first<{id:number}>();
+    await db.prepare("INSERT INTO srs_cards(user_id,learning_track,item_type,item_id,due_at) VALUES(?,'jlpt-ja','homophone',?,?)").bind(user,pair!.id,new Date(Date.now()-60000).toISOString()).run();
+    const started=await callSession(headers,'',{request_id:crypto.randomUUID(),mode:'quick'});
+    expect(started.response.status).toBe(200);
+    expect(started.body.data.lesson_id).not.toBe(fixture.id);
+    expect(started.body.data.steps[0]).toMatchObject({phase:'review',ref:{type:'homophone',id:String(pair!.id)},level:'N3'});
   });
 });

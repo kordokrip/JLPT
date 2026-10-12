@@ -1,5 +1,5 @@
 import type { LearningProfile, StudyRef, StudyStep } from "@nihongo-n3/shared";
-import { studyRefKey } from "@nihongo-n3/shared";
+import { studyRefKey, studyContentVersionInput } from "@nihongo-n3/shared";
 import type { AppEnv } from "../types.js";
 import { publishedOwnerItem } from "./owner-publication.js";
 import { generateQuizQuestions, QuizPoolError } from "./quiz-questions.js";
@@ -49,7 +49,7 @@ const localized = (row: Row, field: string, language: string) =>
 async function versionOf(row: Row): Promise<string> {
   const bytes = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(JSON.stringify(row)),
+    new TextEncoder().encode(studyContentVersionInput(row)),
   );
   return Array.from(new Uint8Array(bytes), (b) =>
     b.toString(16).padStart(2, "0"),
@@ -128,7 +128,7 @@ async function canonicalRowContent(
   };
 }
 
-/** One D1 batch for all represented canonical types; retain full-row hashes. */
+/** One D1 batch per canonical type; content hashes exclude timestamp metadata. */
 async function canonicalContents(
   db: DB,
   refs: readonly ContentIdentity[],
@@ -477,47 +477,21 @@ export async function buildStudySteps(
   }
   const practice: DraftStep[] = [];
   if (topik) {
-    const band = Number(level) <= 2 ? "TOPIK-I" : "TOPIK-II";
     const rows = await db
       .prepare(
-        `SELECT * FROM topik_practice_questions WHERE bank_version='v2' AND is_published=1 AND exam_level=?
+        `SELECT i.id FROM topik_owner_authored_curriculum_items i WHERE i.target_grade=? AND ${publishedOwnerItem('i')}
+      AND NOT EXISTS(SELECT 1 FROM study_steps st JOIN study_sessions s ON s.id=st.session_id WHERE s.user_id=? AND s.learning_track='topik-ko' AND s.status IN ('active','paused') AND st.content_id=i.id)
       ORDER BY RANDOM() LIMIT ?`,
       )
-      .bind(band, count)
-      .all<Row>();
-    for (const row of rows.results ?? []) {
-      const choices = jsonValue<string[]>(row.choices_json, []),
-        section = str(row.section);
-      const answer =
-        typeof row.answer_index === "number"
-          ? (choices[row.answer_index] ?? null)
-          : null;
-      practice.push({
-        ref: {
-          track: "topik-ko",
-          type: "topik-practice",
-          id: str(row.id),
-          version: "v2",
-        },
-        phase: "practice",
-        section,
-        level: band,
-        prompt: localized(row, "prompt", lang),
-        reading: null,
-        choices,
-        audio:
-          section === "listening" && str(row.audio_script_ko)
-            ? { language: "ko", text: str(row.audio_script_ko) }
-            : null,
-        mode: row.question_type === "writing" ? "writing" : "choice",
-        solution: {
-          answer,
-          explanation: localized(row, "explanation", lang),
-          sample: localized(row, "sample_answer", "ko") || null,
-        },
-      });
+      .bind(Number(level),userId,count+newLimit)
+      .all<{id:string}>();
+    const learnedIds=new Set(steps.filter(s=>s.phase==='learn').map(s=>s.ref.id));
+    for(const row of rows.results ?? []) {
+      if(learnedIds.has(row.id) || practice.length>=count)continue;
+      const item=await ownerContent(db,row.id,lang);
+      if(item && (item.section==='writing' || (item.choices.length===4 && new Set(item.choices).size===4 && item.solution.answer)))
+        practice.push({...item,phase:'practice',mode:item.section==='writing'?'writing':'choice'});
     }
-    notices.push("topik-exam-band");
   } else {
     const modes = [
       "vocab_mc",
@@ -621,26 +595,27 @@ export async function buildStudySteps(
       });
     }
   }
-  // Approved links influence order only; drafts never create a pedagogical claim.
+  // 강성호 2026-10-11: 실제 연결 문제를 먼저 조회하고 부족한 수량만 같은 급수 풀로 보충한다.
   const learned = new Set(
     steps.filter((s) => s.phase === "learn").map((s) => studyRefKey(s.ref)),
   );
-  const links = await db
+  const links = learned.size ? await db
     .prepare(
-      "SELECT question_ref,concept_ref FROM content_learning_links WHERE learning_track=? AND status='approved'",
+      `SELECT question_ref,concept_ref FROM content_learning_links WHERE learning_track=? AND status='approved' AND concept_ref IN (${[...learned].map(()=>'?').join(',')}) ORDER BY question_ref LIMIT ?`,
     )
-    .bind(profile.learning_track)
-    .all<{ question_ref: string; concept_ref: string }>();
-  const linked = new Set(
-    (links.results ?? [])
-      .filter((l) => learned.has(l.concept_ref))
-      .map((l) => l.question_ref),
-  );
-  practice.sort(
-    (a, b) =>
-      Number(linked.has(studyRefKey(b.ref))) -
-      Number(linked.has(studyRefKey(a.ref))),
-  );
+    .bind(profile.learning_track,...learned,count)
+    .all<{ question_ref: string; concept_ref: string }>() : {results:[]};
+  const linked=new Set<string>(),hydrated:DraftStep[]=[];
+  if(links.results.length) {
+    const {linkedQuestionContent,parseStudyRefKey}=await import('./learning-lessons.js');
+    for(const link of links.results) {
+      const ref=parseStudyRefKey(link.question_ref);
+      if(!ref || ref.track!==profile.learning_track || linked.has(link.question_ref))continue;
+      const item=await linkedQuestionContent(db,ref,lang);
+      if(item && item.level===level){hydrated.push(item);linked.add(link.question_ref);}
+    }
+  }
+  practice.splice(0,practice.length,...[...hydrated,...practice.filter(s=>!linked.has(studyRefKey(s.ref)))].slice(0,count));
   const offset = cryptoRandomIndex(4);
   practice.forEach((step, i) => {
     if (step.mode === "choice" && step.solution.answer)

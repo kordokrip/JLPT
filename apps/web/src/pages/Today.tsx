@@ -193,7 +193,7 @@ export default function Today() {
         </>
       )}
       <div className="grid grid-cols-2 gap-3">
-        {(["learn", "questions", "records"] as const).map((path) => (
+        {(["learn", "records"] as const).map((path) => (
           <Link
             className={studyButton + " flex items-center"}
             key={path}

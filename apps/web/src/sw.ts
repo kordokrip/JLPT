@@ -4,7 +4,7 @@
  * Service Worker — injectManifest 모드 (vite-plugin-pwa)
  *
  * - Precache: self.__WB_MANIFEST (빌드 시 vite-plugin-pwa가 주입)
- * - Runtime caching: 오디오, 콘텐츠 API
+ * - Runtime caching: 콘텐츠 API. 발음은 브라우저 합성으로 재생하며 캐시하지 않는다.
  * - Push 알림: 아침/저녁 복습 알림
  * - notificationclick: 알림 클릭 → 앱 포커스 또는 새 창
  */

@@ -1,84 +1,53 @@
 # JLPT · TOPIK 개인 학습 PWA
 
-JLPT 일본어와 TOPIK 한국어를 한 계정에서 학습하는 React PWA입니다. 콘텐츠, 진행률, 퀴즈 응답, FSRS 복습, 브라우저 음성 상태를 Cloudflare Worker와 D1에 연결합니다.
+한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 운영의 다섯 메뉴를 오늘 / 학습 / 복습 / 기록 네 메뉴로 통합하는 로컬 후보를 구현했다. 자유 문제·FSRS·개인 메모는 유지한다.
 
-## Production 기준 — 2026-09-25 배포
+문서 기준일: 2026-10-12 KST. [현재 상태](docs/00_overview/CURRENT_STATE.md), [문서 색인](docs/README.md), [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md), [전체 파일 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)에서 시작한다. 신규 v7 440문항/220레슨은 두 독립 의미 승인을 받았으며 정식 출판 계약과 로컬 검증 도구를 추가했다. 기존 Preview160의 실패는 보존하고 별도 v3 160문항이 두 의미 승인을 받았다. 두 후보 모두 원격 출시 완료가 아니며 이번 작업은 사용자 지시에 따라 로컬 검증·문서화로 제한한다. [구현/재작성 기록](docs/00_overview/CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
+
+## Production 기준
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| production D1 | `nihongo-n3-prod-v2`, migration `0000–0030` |
-| production Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
-| production Pages | `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web/Worker source SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
-| content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` (재시드 없음) |
-| production 콘텐츠 | TOPIK practice v2 300, JLPT N3 practice 120, TOPIK owner Batch 5 20 모두 published |
+| D1 | `nihongo-n3-prod-v2`, migration `0000–0030` |
+| Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
+| Pages | `https://f62a8bdb.nihongo-n3.pages.dev`, ID `f62a8bdb-298e-446a-ab74-7d78ca47efd8` |
+| canonical | `https://nihongo-n3.pages.dev` |
+| Worker/web source | `032b50ddfea4051309ae95829520e6309e67a6ff` |
+| 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
-2026-08-19 배포에서 `jlpt-n3-practice-v1-2026-08-19`은 120개 quality link, `topik-owner-batch5-2026-08-19`은 20개, historical `topik-practice-v2-2026-08-17`은 300개 link와 함께 published가 되었습니다. 과거 rollback 기준은 [현재 상태](./docs/00_overview/CURRENT_STATE.md)에 보존합니다.
+2026-10-10 시작 읽기 전용 검사는 local40/1/0·remote52/1/0이다. 현재 릴리스는 2026-09-25 배포이며 이번 폴더·문서 정리에서 재배포하거나 DB를 변경하지 않는다. 실제 gate와 실패 이력은 [릴리스 원장](docs/00_overview/LOCAL_RELEASE_LEDGER.md)에 있다.
 
-2026-08-23 후보인 N2 60문항, N1 60문항, TOPIK owner Batch 6 40항목은 구현·독립 리뷰·Preview 검증까지 완료했습니다. 음성 회귀 복구는 2026-08-24 Production에 반영됐으며, 신규 콘텐츠는 새 production-predeploy 증적과 `INC-DATA-024`의 immutable manifest 검증 경로를 확보한 뒤 별도 승인으로 배포합니다. 상세 상태는 [증량 릴리스 기록](./docs/00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따릅니다.
+## 현재 기능과 콘텐츠
 
-Production Pages ID는 `f62a8bdb-298e-446a-ab74-7d78ca47efd8`입니다. 배포 SHA와 후속 문서/운영 도구 commit은 구분합니다.
+목표 급수·안내 언어·시간대를 저장하고 3–5분 quick 또는 기본20분 daily 세션을 시작·중단·재개한다. 서버 수락 학습일의 스트릭과 안내 세션 XP·성취를 기록하고 opt-in 알림을 선택 언어·현지 시간에 보낸다. 해설 열람·완료·최초 응답·재시도·FSRS 평가는 구분한다.
 
-## 2026-09-25 빠른 레슨·개인 보상 — Production 반영
+JLPT N5–N1 canonical, N3 정적120, TOPIK owner Batch1–5와 practice v2 300이 운영 공개다. N2 정적60·N1 정적60·TOPIK Batch6 40은 Preview 후보이며 별도 콘텐츠 릴리스 대상이다. 수량과 원본 대응은 [콘텐츠 감사](docs/00_overview/CONTENT_AUDIT.md)와 [원본 지도](docs/00_overview/00_source_map.md)를 따른다.
 
-홈에서 3–5분 빠른 레슨을 시작·재개하고, 서버 수락 학습일의 트랙별 스트릭과 안내 세션 XP·성취를 기록합니다. 알림은 동의한 사용자에게 선택 UI 언어와 시간대로 보냅니다. additive `0029–0030`만 적용했고 콘텐츠를 재시드하지 않았습니다. Preview에서 양언어 실제 청취, Chromium/WebKit·모바일 빠른 레슨 8/8을 확인했습니다. 운영은 70-table 백업/복원, 배포 전후 source-pinned 콘텐츠 392/392, FK/FTS·R2 참조 0, Worker 7/7·인증 proxy 3/3을 통과했습니다. Production 실제 Chrome의 PWA 최신 자산·양언어 onend·재생 구간 요청 0을 확인했으며 사람 가청은 별도 판정입니다. 상세 실패 이력과 rollback은 [릴리스 원장](./docs/00_overview/LOCAL_RELEASE_LEDGER.md)을 따릅니다.
+## 구조·실행
 
-## 2026-09-07 학습 UX — Production 반영
+`학습 원본 → deterministic seed → D1 → Hono Worker API → React Query/Dexie → UI`로 연결된다. 소스는 `apps/web`, `apps/api`, `packages/db`, `packages/shared`로 나뉜다. 상세 모델·API 진입점은 [코드 분석](PROJECT_CODEBASE_ANALYSIS.md)을 본다.
 
-오늘 / 학습 / 문제 / 복습 / 기록, 계정·트랙별 목표, 기본 20분 세션, 중단·재개, 자동 기록과 개인 메모를 구현했습니다. 한국어 JLPT와 일본어 TOPIK에 같은 흐름을 적용하고, 해설 열람·명시적 완료·첫 정답·재시도·FSRS 평가를 분리합니다.
-
-- 새 additive migration `0028_learning_experience.sql`을 Production에 적용했습니다. 공개 콘텐츠·기존 학습 기록을 재시드하지 않았습니다.
-- 새 계약은 `/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`와 소유권 검사 후 퀴즈 결과 재조회입니다. 기존 quiz/TOPIK/FSRS/activity API는 유지합니다.
-- 동일 runtime의 로컬458개·E2E217 pass/30 skip/0 fail, Preview181 pass/6 fixture skip/0 fail(시각60개 제외), 실제 Preview 로그인·양언어 사용자 청취를 확인했습니다. 백업/복원·strict predeploy 후 배포했고 사후 DB392/392·기존21개 테이블 보존·공개 Worker7·인증 proxy3·정적70개 hash가 통과했습니다. Production Chrome의 양언어 정상 종료와 익명 speech-mock 양 엔진2개도 별도 확인했습니다. 운영 OAuth와 기존 콘텐츠를 유지하며 [구현·검증 기록](./docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)에 증거 범위를 분리합니다.
-- 화면 복귀용 `VITE_LEARNING_EXPERIENCE=false` 빌드를 지원합니다. 기존 Worker/Pages 복귀 절차나 D1 복원과 같은 동작은 아닙니다.
-
-## 구조
-
-```text
-자체 저작 원본/seed → packages/db → Cloudflare D1
-                                      ↓
-apps/web React PWA ← apps/api Hono Worker ← packages/shared DTO·FSRS
-```
-
-- `apps/web`: TanStack Query, Zustand, Dexie 기반 학습 UI와 오프라인 활동 큐
-- `apps/api`: 인증, 트랙 격리, 콘텐츠·진도·FSRS·활동 집계 API
-- `packages/shared`: Zod DTO, FSRS, 학습 활동과 퀴즈 계약
-- `packages/db`: Drizzle schema, migration, deterministic seed, fresh verifier
-- `e2e`: Chromium/WebKit 핵심 학습 흐름과 음성 정책 회귀 검사
-
-## 2026-08-19 production 계약
-
-- `POST /api/v1/activity/events`: 최대 100개 이벤트를 idempotent batch로 수신합니다. 브라우저는 Dexie에 먼저 저장한 뒤 계정×트랙 범위에서 재전송합니다.
-- `GET /api/v1/activity/summary?window=7d|30d`: 완료·정답·복습·음성 결과를 트랙/급수/영역/모드별로 집계합니다.
-- 퀴즈 생성은 선택적 `strategy: "random" | "weakest"`를 받습니다. 기본 `random` 요청은 기존 wire shape를 유지하며, `weakest`도 요청 JLPT 급수 밖으로 fallback하지 않습니다.
-- TOPIK 다음 학습은 `복습 예정 → 미완료 owner 항목 → 최근 30일 취약 영역` 순서입니다.
-- `0026`은 문제별 quality audit을 `content_releases`에 연결합니다. 정확한 승인 링크 집합이 없으면 publication trigger가 공개를 차단합니다.
-
-## 오디오 정책
-
-발음은 브라우저 음성을 사용합니다. 같은 언어의 Google 음성을 우선하고, 없으면 기기에 설치된 같은 언어 음성으로 재생합니다. R2 발음의 수집·생성·저장·조회·재생·fallback은 금지합니다. 기존 `/api/v1/audio/*`와 관리자 생성 경로는 호환 목적으로 `410 Gone`을 유지합니다. `0027`의 provider `google-browser`는 호환용 식별자이며 실제 계약은 `Google 우선 browser speech`입니다. 상태는 `ready|unavailable`만 허용하고 R2 asset/key 필드를 두지 않습니다.
-
-## 로컬 실행과 검증
-
-```bash
+```sh
 CI=true pnpm install --frozen-lockfile
 pnpm dev:api
 pnpm dev:web
 
+pnpm docs:catalog
+pnpm docs:check
 pnpm ops:verify
-pnpm -F @nihongo-n3/db question:quality
 ```
 
-`ops:verify`의 fresh D1 단계는 음성 provenance, content contract/control plane까지 포함합니다. 운영 콘텐츠는 `INC-DATA-024`가 열린 동안 일반 `verify:remote:audio`로 판정하지 않고 immutable release source에 고정한 verifier와 별도의 `verify:remote:audio:r2` 차단 검사만 사용합니다.
+fresh D1은 disposable local DB에 로컬 후보 `0000–0031`을 적용하고 기존 seed·음성 provenance·FK/FTS·manifest·content contract/control-plane을 검사한다. 운영은0030이며 신규 레슨 공개 증거가 아니다. 과거 `content:learning:readiness` 대상 초안은 불합격으로 보존한다. 새 `content:learning:readiness:v4`에 실제 v7 동결본과 두 전체 리뷰를 명시한 실행은 exit0이다. 버전별 SHA·검증 명령·실제 레슨 E2E 결과는 릴리스 원장에서 구분한다. 운영 콘텐츠는 `INC-DATA-024`의 HEAD drift 때문에 immutable release source에 고정해 검증한다.
 
-2026-08-24 추가 조사에서 TOPIK/JLPT 첫 클릭이 voice 준비 Promise를 기다리며 사용자 활성화를 잃는 문제와 설치형 PWA가 이전 JS를 계속 실행하는 문제를 확인했습니다. 복구본은 click task 안에서 즉시 `speak()`를 호출하고, voice는 background에서 준비하며, 배포 전부터 기존 worker가 제어하던 PWA만 controller 교체 때 한 번 갱신합니다. 첫 방문자는 reload하지 않습니다. 이 복구본은 Preview `d53c3b4f-0c51-4a2b-9cc8-e5f35edcf5a0`을 거쳐 Production `9cc58a1f-4772-4129-b90d-c819ca20d700`에 배포됐습니다. 실제 Chrome에서 한국어·일본어 모두 `재생 중 → onend 정상 종료`, 경고·콘솔 오류 0건을 확인했으며, 물리 스피커 가청 여부는 자동 증거와 구분합니다. 성공은 실제 `onend` 이후에만 기록하고 R2 요청은 만들지 않습니다. 운영 증거는 [음성 장애 기록](./docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)을 확인하십시오. `verify:fresh`는 로컬 disposable D1을 `0000–0027`까지 재구성하며 원격 write는 수행하지 않습니다.
+검수 V7 전용 로컬 전체 게이트는 설치된 DB workspace의 tsx로 `pnpm -C packages/db exec tsx ../../scripts/run-learning-v7-local-gates.mjs --output=/절대경로/JLPT/.artifacts/새-증적-폴더`를 실행한다. 기존 증적 폴더는 덮어쓰지 않는다. 중간 `g0-g4-local-preflight.json`은 Preview 진입 증거가 아니며, 실제 격리 DB 공개·재전송·철회와 합성 학습 기록 보존까지 성공한 최종 `g0-g4-local.json`만 사용한다. 이 명령에는 원격·커밋·배포 기능이 없다.
 
-현재 오류 전체와 배포를 강제로 중단시키는 기준은 [오류·회귀 차단 원장](./docs/00_overview/ERROR_LEDGER.md)에 기록합니다. 미실행·인프라 실패·mock 재생은 통과로 보고하지 않습니다.
+2026-10-12 cohort04는 단위614·desktop/mobile Chromium/WebKit44·fresh/upgrade/reseed·정식 local 공개/철회를 통과했다. 음성은 mock이고 실제 가족·Chrome 가청·새 Preview·현 schema backup/restore·Production 검증은 아니다. 초기 실패와 최종 로그를 함께 보존한다.
 
-현재 로컬 `verify:fresh`는 migration `0000–0030`까지 검사합니다. 위 `0000–0027` 복구 기록은 2026-08-24 당시의 역사적 검증 범위입니다.
+## 음성·운영 관리
 
-운영 감사, 버그·리팩터링 gate, 로컬 CI/CD와 Cloudflare 상태 추적은 [운영관리 runbook](./docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md)과 프로젝트 전담 `project-operations-steward` Sub Agent가 담당합니다. 작업 전후 `pnpm ops:status`, 전체 로컬 gate는 `pnpm ops:verify`, 원격 read-only 확인은 `pnpm ops:status:remote`를 사용합니다.
+발음은 같은 언어 Google 브라우저 음성을 우선하고 없으면 같은 언어 설치 음성을 사용한다. 한국어 `ko-*`, 일본어 `ja-*`만 허용한다. 첫 click task에서 즉시 speak하고 실제 onend 이후 성공을 기록한다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지하며 legacy `/api/v1/audio/*`와 관리자 생성은410이다.
 
-GitHub는 공개 원격 형상 보관에만 사용하고 Actions 자동 실행은 비활성화했습니다. 로컬 gate는 [로컬 CI/CD 운영 기준](./docs/00_overview/LOCAL_CICD_OPERATIONS.md), commit/tag·Cloudflare deployment·rollback 이력은 [로컬 형상관리·릴리스 원장](./docs/00_overview/LOCAL_RELEASE_LEDGER.md)을 따릅니다.
+9월25일 Preview 사용자 양언어 청취와 Production Chrome lifecycle/Network를 각각 기록했다. Production 사람 가청의 추가 확인은 기록되지 않았으며 이번 정리의 자동 검사로 대신하지 않는다. [음성 장애 기록](docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)과 [오류 원장](docs/00_overview/ERROR_LEDGER.md)이 회귀 계약이다.
 
-문서 탐색은 [docs/README.md](./docs/README.md), 코드 구조는 [PROJECT_CODEBASE_ANALYSIS.md](./PROJECT_CODEBASE_ANALYSIS.md), 실제 상태는 [CURRENT_STATE.md](./docs/00_overview/CURRENT_STATE.md)를 기준으로 합니다.
+GitHub Actions는 비활성이고 로컬 gate·MD 원장으로 CI/CD를 관리한다. [운영 runbook](docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md), [CI/CD 기준](docs/00_overview/LOCAL_CICD_OPERATIONS.md), [A/B 짧은 gate](docs/00_overview/LOCAL_CICD_MANAGEMENT.md), [Agent 인수인계](docs/00_overview/SUB_AGENT_HANDOFF.md)를 따른다. 변경·삭제 목록은 [10월10일 정리 기록](docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md), 날짜별 변경은 [CHANGELOG](docs/00_overview/CHANGELOG.md)에 둔다.

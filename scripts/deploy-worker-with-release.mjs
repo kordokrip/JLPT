@@ -14,13 +14,21 @@ export function validateReleaseSha(value) {
   return null;
 }
 
-export function buildWranglerArgs({ releaseSha, environment, dryRun = false }) {
+// 강성호 2026-10-13: 배포가 백업 점검을 암묵 해제하지 않도록 모드를 필수 입력으로 고정한다.
+export function validateMaintenanceMode(value) {
+  return ['off', 'read-only'].includes(value) ? null : 'explicit maintenance mode off|read-only is required';
+}
+
+export function buildWranglerArgs({ releaseSha, environment, maintenanceMode, dryRun = false }) {
+  const error = validateMaintenanceMode(maintenanceMode);
+  if (error) throw new Error(error);
   const args = [
     'exec',
     'wrangler',
     'deploy',
     '--config=wrangler.toml',
     `--var=RELEASE_SHA:${releaseSha}`,
+    `--var=MAINTENANCE_MODE:${maintenanceMode}`,
     `--message=release ${releaseSha}`,
   ];
   if (environment) args.push(`--env=${environment}`);
@@ -28,9 +36,35 @@ export function buildWranglerArgs({ releaseSha, environment, dryRun = false }) {
   return args;
 }
 
-function valueFromArg(argv, name) {
-  const prefix = `${name}=`;
-  return argv.find((entry) => entry.startsWith(prefix))?.slice(prefix.length);
+const HEALTH_ORIGINS = {
+  production: 'https://nihongo-n3-api.kordokrip.workers.dev',
+  'topik-preview': 'https://nihongo-n3-api-topik-preview.kordokrip.workers.dev',
+  'observability-preview': 'https://nihongo-n3-api-observability-preview.kordokrip.workers.dev',
+};
+
+export async function verifyDeploymentHealth(url, { releaseSha, maintenanceMode, attempts = 6 }, fetcher = fetch) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await fetcher(url, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+      const health = response.ok ? await response.json() : null;
+      if (health?.status === 'ok' && health.release === releaseSha && health.maintenanceMode === maintenanceMode) return;
+    } catch { /* 전파 중 응답을 성공으로 기록하지 않고 제한된 횟수만 재조회한다. */ }
+    if (attempt + 1 < attempts) await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+  throw new Error('post-deployment health did not match the exact release SHA and maintenance mode');
+}
+
+export function parseDeploymentArgs(argv, env = process.env) {
+  const names = ['--release-sha', '--env', '--maintenance-mode'];
+  if (argv.some(arg => arg !== '--dry-run' && !names.some(name => arg.startsWith(`${name}=`))) ||
+      names.some(name => argv.filter(arg => arg.startsWith(`${name}=`)).length > 1) ||
+      argv.filter(arg => arg === '--dry-run').length > 1) throw new Error('Unknown, split or duplicate deployment options are prohibited');
+  const value = name => argv.find(arg => arg.startsWith(`${name}=`))?.slice(name.length + 1);
+  const selected = value('--env');
+  if (!['production', 'topik-preview', 'observability-preview'].includes(selected)) throw new Error('Explicit --env=production|topik-preview|observability-preview is required');
+  return { releaseSha: value('--release-sha') ?? env.RELEASE_SHA,
+    environment: selected === 'production' ? undefined : selected,
+    maintenanceMode: value('--maintenance-mode'), dryRun: argv.includes('--dry-run') };
 }
 
 function readGit(args) {
@@ -54,13 +88,15 @@ function verifyImmutableCheckout(releaseSha) {
 }
 
 export async function main(argv, env = process.env) {
-  const releaseSha = valueFromArg(argv, '--release-sha') ?? env.RELEASE_SHA;
-  const environment = valueFromArg(argv, '--env');
-  const dryRun = argv.includes('--dry-run');
-  const validationError = validateReleaseSha(releaseSha);
+  let options;
+  try { options = parseDeploymentArgs(argv, env); }
+  catch (error) { console.error(`worker deployment blocked: ${error.message}`); return 2; }
+  const { releaseSha, environment, dryRun, maintenanceMode } = options;
+  const healthOrigin = HEALTH_ORIGINS[environment ?? 'production'];
+  const validationError = validateReleaseSha(releaseSha) ?? validateMaintenanceMode(maintenanceMode) ?? (!healthOrigin ? 'unsupported Worker environment' : null);
   if (validationError) {
     console.error(`worker deployment blocked: ${validationError}`);
-    console.error('usage: RELEASE_SHA=<current-git-sha> pnpm -F @nihongo-n3/api run deploy');
+    console.error('usage: RELEASE_SHA=<current-git-sha> pnpm -F @nihongo-n3/api run deploy --maintenance-mode=off|read-only (package script pins --env=production)');
     return 2;
   }
 
@@ -74,7 +110,7 @@ export async function main(argv, env = process.env) {
   const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   const result = spawnSync(
     command,
-    buildWranglerArgs({ releaseSha, environment, dryRun }),
+    buildWranglerArgs({ releaseSha, environment, maintenanceMode, dryRun }),
     {
       cwd: API_DIRECTORY,
       env: { ...env, WRANGLER_WRITE_LOGS: '0' },
@@ -85,7 +121,12 @@ export async function main(argv, env = process.env) {
     console.error(`worker deployment failed to start: ${result.error.message}`);
     return 1;
   }
-  return result.status ?? 1;
+  if (result.status !== 0) return result.status ?? 1;
+  if (!dryRun) {
+    try { await verifyDeploymentHealth(`${healthOrigin}/health`, { releaseSha, maintenanceMode }); }
+    catch (error) { console.error(`worker deployment verification failed: ${error.message}`); return 1; }
+  }
+  return 0;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

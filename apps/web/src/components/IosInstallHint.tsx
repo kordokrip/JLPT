@@ -49,18 +49,18 @@ function setDismissed(): void {
   }
 }
 
-export function IosInstallHint() {
+export function IosInstallHint({ inline = false }: { inline?: boolean }) {
   const [visible, setVisible] = useState(false);
   const { t } = useTranslation();
   const { pathname } = useLocation();
 
   useEffect(() => {
-    if (pathname === '/' && !getDismissed() && isIosSafari() && !isStandalone()) {
+    if ((inline ? pathname === '/settings' : pathname === '/') && !getDismissed() && isIosSafari() && !isStandalone()) {
       setVisible(true);
     } else {
       setVisible(false);
     }
-  }, [pathname]);
+  }, [pathname, inline]);
 
   function dismiss() {
     setDismissed();
@@ -71,10 +71,10 @@ export function IosInstallHint() {
 
   return (
     <div
-      role="dialog"
+      role={inline ? 'region' : 'dialog'}
       aria-label={t('pwa.installDialogLabel')}
-      className="fixed z-50 min-w-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
-      style={{
+      className={inline ? 'mb-8 min-w-0 overflow-hidden' : 'fixed z-50 min-w-0 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300'}
+      style={inline ? undefined : {
         left: 'max(0.75rem, env(safe-area-inset-left))',
         right: 'max(0.75rem, env(safe-area-inset-right))',
         bottom: 'calc(var(--nav-height, 4rem) + env(safe-area-inset-bottom) + 0.75rem)',
@@ -109,7 +109,7 @@ export function IosInstallHint() {
           <button
             onClick={dismiss}
             aria-label={t('common.close')}
-            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+            className="min-h-11 min-w-11 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
             style={{ background: 'var(--color-border)' }}
           >
             <svg
@@ -183,7 +183,7 @@ export function IosInstallHint() {
       </div>
 
       {/* 말풍선 꼬리 (Safari 툴바 방향 → 아래) */}
-      <div
+      {!inline && <div
         className="mx-auto w-0 h-0"
         style={{
           borderLeft:  '8px solid transparent',
@@ -194,7 +194,7 @@ export function IosInstallHint() {
           marginLeft: '50%',
           transform: 'translateX(-50%)',
         }}
-      />
+      />}
     </div>
   );
 }

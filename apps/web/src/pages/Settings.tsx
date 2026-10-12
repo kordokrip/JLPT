@@ -15,6 +15,7 @@ import { useAuthStore } from '../stores/auth-store';
 import { audioPlayer } from '../lib/audio';
 import type { PlaybackRate } from '../lib/audio';
 import type { ReactNode } from 'react';
+import { IosInstallHint } from '../components/IosInstallHint';
 import type { LearningProfile, LearningTrackId } from '@nihongo-n3/shared';
 import i18n, { SUPPORTED_LANGS, type SupportedLang } from '../i18n';
 import {
@@ -231,6 +232,9 @@ export default function Settings() {
           </Link>
         </SettingRow>
       </SettingSection>
+
+      {/* 강성호 2026-10-11: PWA 설치 안내를 설정의 문서 흐름에 둬 학습/설정 버튼을 가리지 않는다. */}
+      {learningExperienceEnabled && <IosInstallHint inline />}
 
       {/* 데이터 관리 */}
       <SettingSection title={t('settings.dataManagement')} subtitle="" danger>

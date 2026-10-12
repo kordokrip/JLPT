@@ -1,6 +1,8 @@
 # 매일 이어지는 개인 학습 경험
 
-> 2026-09-25 후속 후보: 기존 `0028` 계약 위에 quick 세션, 안내 세션 XP, 실제 저장 결과 기반 스트릭, 현지화 Push를 additive `0029–0030`으로 추가 중이다. 현재 후보 계약·테스트·배포 판정은 [개인 학습 UX 변경 기록](PERSONAL_LEARNING_UX_2026-09-25.md)을 우선한다. 아래 `POST /study/sessions`의 기존 `{request_id}`는 호환성을 유지하며 선택적 `mode`의 기본값은 `daily`다. 이 문서의 2026-09-06/07 배포 수치는 새 후보의 통과 증거가 아니다.
+> 2026-10-11 로컬 후속 후보: 네 메뉴와0031 레슨/API 연결은 [콘텐츠·가족 UX 구현/차단 기록](CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다. 신규 콘텐츠 검수 실패로 공개·배포하지 않았으며 아래 Production/과거 검증은 그대로 보존한다.
+
+> 2026-10-10 현재 계약: 기존 `0028` 위에 quick 세션, 안내 세션 XP, 서버 수락 학습일 스트릭과 현지화 Push를 `0029–0030`으로 추가해 2026-09-25 Production에 반영했다. 최신 릴리스 계약·증거는 [개인 학습 UX 변경 기록](PERSONAL_LEARNING_UX_2026-09-25.md)과 [현재 상태](CURRENT_STATE.md)를 따른다. 아래 `{request_id}`는 호환성을 유지하며 선택적 `mode` 기본값은 `daily`다. 2026-09-06/07의 검증중·미배포 서술은 당시 이력이다.
 
 기준일: 2026-09-07 KST. 상태: 학습 UX Production 배포 완료. Worker c2901280·Pages ce4e5e57·schema0028이며 source a7d5d87은 검증 runtime793b671과 동일하다. 아래 날짜별 검증중/미배포 표시는 배포 전 이력이다. 현재 판정과 rollback은 [현재 상태](CURRENT_STATE.md)와 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)을 따른다.
 

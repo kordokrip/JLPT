@@ -1,5 +1,5 @@
 import { Check, Circle, FileText, Headphones, Volume2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TOPIK_FOUNDATION_UNITS } from '../features/topik/learning/content';
 import { useTopikLearningProgress } from '../features/topik/learning/useTopikLearningProgress';
 import { useKoreanAudio } from '../features/topik/useKoreanAudio';
@@ -17,15 +17,19 @@ import { recordLearningActivity } from '../lib/activity-events';
 import { useSearchParams } from 'react-router-dom';
 
 export default function TopikLearn() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedView=searchParams.get('view') ?? (searchParams.has('section')||window.location.hash==='#topik-practice'?'practice':'owner');
   const view=['owner','foundation','practice'].includes(requestedView)?requestedView:'owner';
-  const [foundationIndex,setFoundationIndex]=useState(0);
+  const requestedUnit = searchParams.get('unit');
+  const initialFoundationIndex = foundationUnitIndex(requestedUnit);
+  const [foundationIndex,setFoundationIndex]=useState(initialFoundationIndex);
   const [questionIndex, setQuestionIndex] = useState(0);
   const progress = useTopikLearningProgress();
   const authUser = useAuthStore((state) => state.user);
   const audio = useKoreanAudio();
+  useEffect(()=>{setFoundationIndex(foundationUnitIndex(requestedUnit));audio.stop();},[requestedUnit,audio.stop]);
+  useEffect(()=>{audio.stop();},[view,audio.stop]);
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
   const [examLevel, setExamLevel] = useState<'TOPIK-I' | 'TOPIK-II'>('TOPIK-I');
@@ -75,6 +79,23 @@ export default function TopikLearn() {
     configuredInstructionLanguage === 'ko' ? item.explanation_ko : configuredInstructionLanguage === 'ja' ? item.explanation_ja : item.explanation_en;
   const sampleText = (item: { sample_answer_ko: string | null; sample_answer_ja: string | null; sample_answer_en: string | null }) =>
     configuredInstructionLanguage === 'ko' ? item.sample_answer_ko : configuredInstructionLanguage === 'ja' ? item.sample_answer_ja : item.sample_answer_en;
+  // 강성호 2026-10-11: URL의 foundation unit을 보존해 새로고침과 공유 링크에서도 같은 단원을 연다.
+  const chooseFoundation = (index: number) => {
+    const unit = TOPIK_FOUNDATION_UNITS[index];
+    if (!unit) return;
+    audio.stop();
+    setFoundationIndex(index);
+    const next = new URLSearchParams(searchParams);
+    next.set('view', 'foundation');
+    next.set('unit', unit.id);
+    setSearchParams(next);
+  };
+  const chooseView = (nextView: 'owner' | 'foundation' | 'practice') => {
+    const next = new URLSearchParams(searchParams);
+    next.set('view', nextView);
+    if (nextView !== 'foundation') next.delete('unit');
+    setSearchParams(next);
+  };
 
   return (
     <div className="app-page">
@@ -83,27 +104,27 @@ export default function TopikLearn() {
         <h1 className="mt-2 text-3xl font-black">{t(view==='foundation'?'topik.learn.title':view==='owner'?'study.learn':'study.questions')}</h1>
         <p className="mt-3 leading-7 text-[var(--muted-foreground)]">{t(view==='foundation'?'topik.learn.description':'study.free')}</p>
       </header>
-      <nav className="mb-6 flex flex-wrap gap-3">{([["owner", "study.owner"], ["foundation", "study.foundation"], ["practice", "study.practice"]] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={view === id} className="touch-target rounded-xl border px-4" onClick={() => setSearchParams({ view: id })}>{t(label)}</button>)}</nav>
-      {view === 'foundation' && <label className="mb-4 block">{t('study.foundation')}<select className="study-select ml-3 min-h-12 max-w-full rounded-xl border bg-[var(--card)] p-2" value={foundationIndex} onChange={e=>{audio.stop();setFoundationIndex(Number(e.target.value));}}>{TOPIK_FOUNDATION_UNITS.map((unit,index)=><option key={unit.id} value={index}>{index+1} · {unit.titleKo}</option>)}</select></label>}
+      <nav className="mb-6 flex flex-wrap gap-3">{([["owner", "study.owner"], ["foundation", "study.foundation"], ["practice", "study.practice"]] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={view === id} className="touch-target rounded-xl border px-4" onClick={() => chooseView(id)}>{t(label)}</button>)}</nav>
+      {view === 'foundation' && <label className="mb-4 block">{t('study.foundation')}<select className="study-select ml-3 min-h-12 max-w-full rounded-xl border bg-[var(--card)] p-2" value={foundationIndex} onChange={e=>chooseFoundation(Number(e.target.value))}>{TOPIK_FOUNDATION_UNITS.map((unit,index)=><option key={unit.id} value={index}>{index+1} · {i18n.language === 'ja' ? foundationJa(unit.id).title : unit.titleKo}</option>)}</select></label>}
       {view === 'foundation' && <div className="grid max-w-3xl gap-4">
         {TOPIK_FOUNDATION_UNITS.slice(foundationIndex,foundationIndex+1).map((unit) => {
           const complete = progress.completed.has(unit.id);
           return (
             <article key={unit.id} className="surface-panel p-5 sm:p-6">
               <div className="flex items-start justify-between gap-4">
-                <div><p className="text-xs font-bold text-[var(--accent)]">{t('topik.learn.unit', { order: unit.order })}</p><h2 className="mt-1 text-xl font-black">{unit.titleKo}</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">{unit.titleEn}</p></div>
+                <div><p className="text-xs font-bold text-[var(--accent)]">{t('topik.learn.unit', { order: unit.order })}</p><h2 className="mt-1 text-xl font-black">{i18n.language === 'ja' ? foundationJa(unit.id).title : unit.titleKo}</h2><p className="mt-1 text-sm text-[var(--muted-foreground)]">{i18n.language === 'ja' ? unit.titleKo : unit.titleEn}</p></div>
                 <button type="button" aria-pressed={complete} onClick={() => void progress.toggle(unit.id)} className={`touch-target inline-flex items-center justify-center rounded-[var(--radius-md)] border ${complete ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--border)]'}`} title={complete ? t('topik.learn.markIncomplete') : t('topik.learn.markComplete')} aria-label={complete ? t('topik.learn.markIncomplete') : t('topik.learn.markComplete')}>
                   {complete ? <Check aria-hidden="true" size={19} /> : <Circle aria-hidden="true" size={19} />}
                 </button>
               </div>
-              <p className="mt-4 text-sm leading-6 text-[var(--muted-foreground)]">{unit.objectiveEn}</p>
+              <p className="mt-4 text-sm leading-6 text-[var(--muted-foreground)]"><span className="font-semibold">{t('topik.learn.objective')}: </span>{i18n.language === 'ja' ? foundationJa(unit.id).objective : unit.objectiveEn}</p>
               <ul className="mt-4 divide-y divide-[var(--border)] border-y border-[var(--border)]">
                 {unit.expressions.map((expression) => (
                   <li key={expression.ko} className="flex items-center gap-3 py-3">
                     <button type="button" onClick={() => void audio.speakText(expression.ko)} className="touch-target inline-flex shrink-0 items-center justify-center rounded-full text-[var(--accent)]" aria-label={t('topik.learn.playExpression', { text: expression.ko })}>
                       <Volume2 aria-hidden="true" size={18} />
                     </button>
-                    <span className="min-w-0"><span lang="ko" className="block font-bold">{expression.ko}</span><span className="mt-0.5 block text-sm text-[var(--muted-foreground)]">{expression.en}</span></span>
+                    <span className="min-w-0"><span lang="ko" className="block font-bold">{expression.ko}</span><span className="mt-0.5 block text-sm text-[var(--muted-foreground)]">{i18n.language === 'ja' ? foundationJa(unit.id).meanings[unit.expressions.indexOf(expression)] : expression.en}</span></span>
                   </li>
                 ))}
               </ul>
@@ -171,4 +192,19 @@ export default function TopikLearn() {
       {authUser?.role === 'admin' && <OwnerPrivateTopikPanel />}
     </div>
   );
+}
+
+const FOUNDATION_JA: Record<string, { title: string; objective: string; meanings: string[] }> = {
+  'identity-greetings': { title: 'あいさつと自己紹介', objective: '自己紹介をし、基本的なあいさつを聞き取ります。', meanings: ['こんにちは。', '私はミンジです。', 'お会いできてうれしいです。'] },
+  'places-movement': { title: '場所と移動', objective: '行き先と行動する場所を伝えます。', meanings: ['学校へ行きます。', '図書館で勉強します。', '家に帰ってきました。'] },
+  'time-schedule': { title: '時間と予定', objective: '基本的な日付、時刻、約束を理解します。', meanings: ['今は2時です。', '金曜日に会いましょう。', '授業は9時に始まります。'] },
+  'shopping-food': { title: '買い物と食事', objective: '食べ物を注文し、価格と数量を尋ねます。', meanings: ['コーヒーを一杯ください。', 'これはいくらですか。', 'キンパを二つ買いました。'] },
+  'reasons-conditions': { title: '理由と条件', objective: '簡単な理由と条件付きの予定をつなげます。', meanings: ['雨が降ったので家にいました。', '時間があれば一緒に行きましょう。', '疲れていましたが運動しました。'] },
+  'notices-sequence': { title: '案内と順序', objective: '短い案内と順番どおりの指示に従います。', meanings: ['先に番号札を取ってください。', '次に申込書を書いてください。', '今日は閉店します。'] },
+};
+
+function foundationJa(id: string) { return FOUNDATION_JA[id] ?? { title: id, objective: '', meanings: [] }; }
+
+export function foundationUnitIndex(unitId: string | null): number {
+  return Math.max(0, TOPIK_FOUNDATION_UNITS.findIndex((unit) => unit.id === unitId));
 }

@@ -12,8 +12,7 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useDataScope } from '../../hooks/useDataScope';
 import { learningExperienceEnabled } from '../../lib/learning-flag';
-import { LanguageSelect, studyButton } from '../../features/study/StudyComponents';
-import { LearningTrackSwitch } from '../feature/LearningTrackSwitch';
+import { studyButton } from '../../features/study/StudyComponents';
 import { useLearningProfile } from '../../hooks/useLearningProfile';
 
 export function RootLayout() {
@@ -79,7 +78,8 @@ export function RootLayout() {
         {learningExperienceEnabled && <header className="flex justify-end border-b border-[var(--border)] px-4 py-2">
           <details className="w-full max-w-xl">
             <summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary>
-            <div className="space-y-4 py-4"><LanguageSelect /><LearningTrackSwitch />
+            {/* 강성호 2026-10-11: 언어·트랙 변경은 설정으로 모아 중복 조작을 없앤다. */}
+            <div className="space-y-4 py-4">
               <Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>
               {user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}
               <button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button>
@@ -93,7 +93,8 @@ export function RootLayout() {
       <BottomTabBar />
 
       {/* iOS Safari 홈 화면 추가 안내 (1회만) */}
-      <IosInstallHint />
+      {/* 강성호 2026-10-11: 새 학습 홈을 가리는 iOS 설치 팝업은 설정 안의 인라인 안내로 이동한다. */}
+      {!learningExperienceEnabled && <IosInstallHint />}
     </div>
   );
 }

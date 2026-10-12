@@ -1,5 +1,5 @@
 export type D1TableGroup = 'content' | 'mutable';
-export type D1BackupSchemaProfile = '0027' | '0028' | '0029' | '0030';
+export type D1BackupSchemaProfile = '0027' | '0028' | '0029' | '0030' | '0031';
 
 export type D1TableSpec = {
   name: string;
@@ -104,6 +104,10 @@ export const D1_REWARD_TRANSFER_TABLES: readonly D1TableSpec[] = [
 export const D1_NOTIFICATION_TRANSFER_TABLES: readonly D1TableSpec[] = [
   { name: 'push_notification_deliveries', group: 'mutable', primaryKey: 'id', checksum: true },
 ];
+export const D1_LESSON_TRANSFER_TABLES: readonly D1TableSpec[] = [
+  { name:'learning_lessons',group:'content',primaryKey:'id,version',checksum:true },
+  { name:'learning_lesson_entries',group:'content',primaryKey:'lesson_id,lesson_version,ordinal',checksum:true },
+];
 
 // Preserve the legacy constant/default for existing transfer/cleanup consumers.
 // Backup and restore must choose an explicit profile, never the default.
@@ -111,14 +115,15 @@ export function tablesForPhase(
   phase: 'content' | 'mutable' | 'all',
   schemaProfile: D1BackupSchemaProfile = '0027',
 ): D1TableSpec[] {
-  if (!['0027', '0028', '0029', '0030'].includes(schemaProfile)) {
+  if (!['0027', '0028', '0029', '0030', '0031'].includes(schemaProfile)) {
     throw new Error('Unknown D1 backup schema profile');
   }
   const tables = [
     ...D1_TRANSFER_TABLES,
     ...(schemaProfile === '0027' ? [] : D1_LEARNING_TRANSFER_TABLES),
-    ...(['0029', '0030'].includes(schemaProfile) ? D1_REWARD_TRANSFER_TABLES : []),
-    ...(schemaProfile === '0030' ? D1_NOTIFICATION_TRANSFER_TABLES : []),
+    ...(['0029', '0030', '0031'].includes(schemaProfile) ? D1_REWARD_TRANSFER_TABLES : []),
+    ...(['0030','0031'].includes(schemaProfile) ? D1_NOTIFICATION_TRANSFER_TABLES : []),
+    ...(schemaProfile === '0031' ? D1_LESSON_TRANSFER_TABLES : []),
   ];
   return phase === 'all' ? tables : tables.filter((table) => table.group === phase);
 }
@@ -154,10 +159,12 @@ export function detectD1BackupSchemaProfile(tableNames: readonly string[]): D1Ba
   }
   const rewardCount = D1_REWARD_TRANSFER_TABLES.filter((table) => names.includes(table.name)).length;
   const notificationCount = D1_NOTIFICATION_TRANSFER_TABLES.filter((table) => names.includes(table.name)).length;
+  const lessonCount=D1_LESSON_TRANSFER_TABLES.filter(table=>names.includes(table.name)).length;
+  if(lessonCount && (lessonCount!==2 || !notificationCount))throw new Error('Partial 0031 lesson schema cannot be backed up');
   if ((rewardCount && learningCount !== D1_LEARNING_TRANSFER_TABLES.length) || (notificationCount && !rewardCount)) {
     throw new Error('Partial 0029/0030 learning schema cannot be backed up');
   }
-  const profile: D1BackupSchemaProfile = notificationCount ? '0030' : rewardCount ? '0029' : learningCount ? '0028' : '0027';
+  const profile: D1BackupSchemaProfile = lessonCount ? '0031' : notificationCount ? '0030' : rewardCount ? '0029' : learningCount ? '0028' : '0027';
   const expected = tablesForPhase('all', profile).map((table) => table.name).sort();
   if (JSON.stringify([...names].sort()) !== JSON.stringify(expected)) {
     const missing = expected.filter((name) => !names.includes(name));

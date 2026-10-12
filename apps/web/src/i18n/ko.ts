@@ -5,6 +5,7 @@ const ko = {
   // ── 네비게이션 ──
   nav: {
     home:       '홈',
+    today:      '오늘',
     review:     '복습',
     browse:     '찾아보기',
     quiz:       '퀴즈',
@@ -124,6 +125,8 @@ const ko = {
       markComplete: '완료로 표시',
       markIncomplete: '미완료로 변경',
       playExpression: '{{text}} 재생',
+      objective: '학습 목표',
+      meaning: '뜻',
     },
     characters: {
       eyebrow: 'TOPIK 한국어 · 문자 기초',
@@ -226,6 +229,7 @@ const ko = {
       writing: '쓰기',
       reading: '읽기',
     },
+    skills: { listening: '듣기', reading: '읽기', writing: '쓰기', vocabulary: '어휘', grammar: '문법' },
   },
 
   // ── 공통 ──

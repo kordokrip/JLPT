@@ -9,6 +9,7 @@ import {
   studySessionSchema,
   learningRecordsSchema,
   learningMotivationSchema,
+  learningLessonCatalogSchema,
   levelBelongsToTrack,
   studyRefKey,
   type LearningProfile,
@@ -29,6 +30,7 @@ import {
   type DB,
   type DraftStep,
 } from "../lib/study-content.js";
+import { buildLessonSteps, hasDueAtLevel, lessonCatalog, lessonIsPublished } from '../lib/learning-lessons.js';
 import {
   reviewStatements,
   topikCompletionStatements,
@@ -41,15 +43,17 @@ import {
 
 const routes = new Hono<AppEnv>();
 routes.onError((error, c) => {
-  if (error instanceof HTTPException && error.status === 410)
+  if (String(error).includes('lesson withdrawn before write'))
+    return c.json({type:'about:blank',title:'Gone',status:410,detail:'Lesson is no longer published; saved history is retained'},410);
+  if (error instanceof HTTPException && (error.status === 410 || error.status === 409))
     return c.json(
       {
         type: "about:blank",
-        title: "Gone",
-        status: 410,
+        title: error.status === 410 ? "Gone" : "Conflict",
+        status: error.status,
         detail: error.message,
       },
-      410,
+      error.status,
     );
   throw error;
 });
@@ -73,6 +77,8 @@ type SessionRow = {
   level: LearningProfile["target_level"];
   daily_minutes: number;
   mode: "quick" | "daily";
+  lesson_id: string | null;
+  lesson_version: string | null;
   status: StudySession["status"];
   created_at: number;
   updated_at: number;
@@ -129,7 +135,12 @@ async function ownedSession(db: DB, id: string, userId: string, track: string) {
     .bind(id, userId, track)
     .first<SessionRow>();
 }
+async function assertLessonAvailable(db: DB, row: SessionRow): Promise<void> {
+  if (row.lesson_id && row.lesson_version && row.status !== 'abandoned' && !await lessonIsPublished(db,row.lesson_id,row.lesson_version,row.learning_track))
+    throw new HTTPException(410,{message:'Lesson is no longer published; saved history is retained'});
+}
 async function sessionDto(db: DB, row: SessionRow): Promise<StudySession> {
+  await assertLessonAvailable(db,row);
   const stored = await db
     .prepare("SELECT * FROM study_steps WHERE session_id=? ORDER BY ordinal")
     .bind(row.id)
@@ -181,6 +192,7 @@ async function sessionDto(db: DB, row: SessionRow): Promise<StudySession> {
     level: row.level,
     daily_minutes: row.daily_minutes,
     mode: row.mode,
+    ...(row.lesson_id && row.lesson_version ? {lesson_id:row.lesson_id,lesson_version:row.lesson_version} : {}),
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -194,6 +206,12 @@ routes.get("/learning/profile", async (c) =>
 routes.get("/learning/motivation", async (c) =>
   ok(c, await learningMotivation(c.env.DB, c.get("userId"), c.get("learningTrack"))),
 );
+routes.get('/learning/lessons', async(c)=>{
+  const track=c.get('learningTrack'),profile=await profileFor(c.env.DB,c.get('userId'),track);
+  const level=c.req.query('level') ?? profile.target_level;
+  if(!levelBelongsToTrack(track,level))return badRequest(c,'Level does not belong to this track');
+  return ok(c,await lessonCatalog(c.env.DB,c.get('userId'),profile,level as LearningProfile['target_level']));
+});
 routes.put("/learning/profile", async (c) => {
   const parsed = learningProfileInputSchema.safeParse(
     await c.req.json().catch(() => null),
@@ -230,7 +248,7 @@ routes.get("/study/sessions", async (c) => {
 });
 routes.post("/study/sessions", async (c) => {
   const parsed = z
-    .object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily") })
+    .object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily"), lesson_id:z.string().min(1).max(160).optional() })
     .safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return badRequest(c, "Invalid request ID");
   const db = c.env.DB,
@@ -249,7 +267,11 @@ routes.post("/study/sessions", async (c) => {
   const profile = await profileFor(db, user, track);
   if (!profile.configured)
     return conflict(c, "Configure your learning profile first");
-  const draft = await buildStudySteps(db, user, profile, parsed.data.mode);
+  // 강성호 2026-10-11: 열린 세션 재개를 우선하고, 자동 quick은 예정 복습이 없을 때만 다음 레슨을 선택한다.
+  let lessonId=parsed.data.lesson_id;
+  if(!lessonId && parsed.data.mode==='quick' && !await hasDueAtLevel(db,user,profile))
+    lessonId=(await lessonCatalog(db,user,profile)).next_lesson_id ?? undefined;
+  const draft = lessonId ? await buildLessonSteps(db,profile,lessonId) : await buildStudySteps(db, user, profile, parsed.data.mode);
   if (parsed.data.mode === "quick" && draft.steps.length < 2)
     return conflict(c, "Not enough published content for a quick lesson at this level");
   if (!draft.steps.length)
@@ -259,8 +281,8 @@ routes.post("/study/sessions", async (c) => {
   const statements = [
     db
       .prepare(
-        `INSERT INTO study_sessions(id,user_id,learning_track,level,daily_minutes,status,request_id,notices_json,created_at,updated_at,mode)
-    VALUES(?,?,?,?,?,'active',?,?,?,?,?)`,
+        `INSERT INTO study_sessions(id,user_id,learning_track,level,daily_minutes,status,request_id,notices_json,created_at,updated_at,mode,lesson_id,lesson_version)
+    VALUES(?,?,?,?,?,'active',?,?,?,?,?,?,?)`,
       )
       .bind(
         id,
@@ -273,6 +295,8 @@ routes.post("/study/sessions", async (c) => {
         now,
         now,
         parsed.data.mode,
+        'lesson_id' in draft ? draft.lesson_id : null,
+        'lesson_version' in draft ? draft.lesson_version : null,
       ),
   ];
   draft.steps.forEach((step, i) => {
@@ -341,6 +365,7 @@ routes.patch("/study/sessions/:id", async (c) => {
             c.get("learningTrack"),
           );
   if (!row) return notFound(c);
+  if (parsed.data.status !== 'abandoned') await assertLessonAvailable(db,row);
   if (row.status === "completed" || row.status === "abandoned")
     return parsed.data.status === row.status
       ? ok(c, await sessionDto(db, row))
@@ -377,6 +402,7 @@ routes.post("/study/sessions/:id/steps/:stepId/reveal", async (c) => {
       c.get("learningTrack"),
     );
   if (!row) return notFound(c);
+  await assertLessonAvailable(db,row);
   const step = await db
     .prepare("SELECT * FROM study_steps WHERE id=? AND session_id=?")
     .bind(c.req.param("stepId"), row.id)
@@ -401,6 +427,7 @@ routes.post("/study/sessions/:id/steps/:stepId/submit", async (c) => {
     track = c.get("learningTrack");
   const row = await ownedSession(db, c.req.param("id"), user, track);
   if (!row) return notFound(c);
+  await assertLessonAvailable(db,row);
   const step = await db
     .prepare("SELECT * FROM study_steps WHERE id=? AND session_id=?")
     .bind(c.req.param("stepId"), row.id)
@@ -794,6 +821,7 @@ const expectedTrackQuery = z.object({
 const definitions = [
   ["get", "/learning/profile"],
   ["get", "/learning/motivation"],
+  ["get", "/learning/lessons"],
   ["put", "/learning/profile"],
   ["get", "/study/sessions"],
   ["post", "/study/sessions"],
@@ -820,7 +848,7 @@ mountLegacyRouteWithOpenApiDocs(
           ? expectedTrackQuery.extend({
               window: z.enum(["7d", "30d"]).optional(),
             })
-          : expectedTrackQuery,
+          : path === '/learning/lessons' ? expectedTrackQuery.extend({level:z.string().optional()}) : expectedTrackQuery,
     },
     ...(method === "put" && path === "/learning/profile"
       ? {
@@ -841,7 +869,7 @@ mountLegacyRouteWithOpenApiDocs(
             body: {
               content: {
                 "application/json": {
-                  schema: z.object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily") }),
+                  schema: z.object({ request_id: z.string().uuid(), mode: z.enum(["quick", "daily"]).default("daily"),lesson_id:z.string().min(1).max(160).optional() }),
                 },
               },
             },
@@ -901,6 +929,7 @@ mountLegacyRouteWithOpenApiDocs(
             schema:
               path === "/learning/profile"
                 ? z.object({ data: learningProfileSchema })
+                : path === '/learning/lessons' ? z.object({data:learningLessonCatalogSchema})
                 : path.startsWith("/study/")
                   ? z.object({
                       data:

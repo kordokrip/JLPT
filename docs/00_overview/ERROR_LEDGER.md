@@ -1,6 +1,66 @@
 # 오류·회귀 차단 원장
 
-## 2026-09-25 개인 학습 UX 후보
+## 2026-10-13 통합 배포 보강 — 구현 중, 운영 미반영
+
+- `INC-OPS-094` — Worker 배포 helper가 `MAINTENANCE_MODE`를 전달하지 않아 config의 `off`로 점검을 암묵 해제할 수 있다. 소스와 유지보수 HTTP/cron 경로를 교차 확인했고 신규 회귀는 필수 검증 함수 부재로 실패했다. 명시적 `off|read-only` 전달과 배포 후 SHA/모드 확인을 추가해 helper5/5를 통과했다. queue handler도 점검을 무시해 최초 회귀1실패/2통과였다. 점검 중 batch 전체를 defer하는 guard를 추가했다. 실행 중 workflow 종료와 원격 queue pause는 별도 확인하며 HTTP 점검만으로 백업 안전을 주장하지 않는다.
+- `INC-RELEASE-095` — 기존 정식 출판은 V7 두 release만 다루며 별도160 v3는 draft adapter뿐이다. 5개 통합 출판·의미 봉인·철회 및 실제 원격 복귀 검증이 없으므로 현재 Production 공개는 차단한다. 기존 실패 리뷰/원장은 수정하지 않는다.
+- `INC-RELEASE-095` 구현 후속 — 독립 검토가 준비 후 candidate SHA/phase/대상 DB 변경과 기존 NULL-cohort V7 draft의 부분 적재 후 구 publisher 우회를 재현했다. 최종 UPDATE에 실제 검증한 source5/gate25/job30/preview5를 고정하고 stage 첫 문장에서 기존 draft를 opt-in했다. 같은 두 반례의 독립 재검증은 모두 차단/문항·레슨·감사 공개0이며, 정상5개 공개600/220→철회0도 통과했다. 동일 버전의 미감사 추가 문항 수량도 차단했다. 신규23·기존V719·API208 및 실제 새 로컬Wrangler의 공개 거부/성공/철회/FK0을 확인했다. 합성 operator gate를 사용한 회귀이며 실제 원격·Production 증거는 아니다.
+- `INC-OPS-096` — 독립 검토가 Worker helper에서 split `--env topik-preview` 또는 오타 옵션이 무시되어 기본 Production으로 향하는 P1을 무쓰기 probe로 재현했다. unknown/split/duplicate 거부와 필수 명시적 env를 추가하고 package deploy script는 `--env=production`을 고정했다. 실제 원격 오배포가 발생한 증거는 아니다.
+
+이번 사용자는 V7+160 전체 검증·Production·최종 push를 조건부 승인했다. 새 후보의 실제 가족 관찰·Chrome 양언어 종료/가청/Network0 및 전체 게이트 전에는 운영 쓰기를 하지 않는다.
+
+## 2026-10-12 출판 계약 후보 — 로컬 교정·검증 완료, 운영 미반영
+
+- `INC-RELEASE-089` — 독립 검토가 마지막 두 release의 stage/publish 사이 race로 불완전 콘텐츠가 공개될 수 있는 P1을 발견했다. 단일 UPDATE exact JSON seal로 교정했고 같은 반례 거부·공개0, JLPT mirror 포함 actual440 roundtrip3/3을 확인했다. 최종 cohort04 단위614/E2E44·정식local 공개/재실행/철회까지 통과했다. 운영에는 미반영이다.
+- `INC-CONTENT-090` — Preview160 v2는 A/B 각각158/2·`passed=false`로 보존한다. 별도 v3는 두 결함만 수정해 A/B 각각160/160 승인했지만 완전 맹검은 주장하지 않는다. 새 버전/hash/review를 유지하고 이전 실패를 편집하지 않는다.
+- `INC-DATA-091` — 별도160 v3 portable export가 `reviewers` 대신 `reviews`를 내보내 cohort01 자동 검사160건 실패했다. 또 DB adapter가 쓰기8건의 다국어 rubric/sample key와 듣기8건 `audio_text_ko`를 누락했다. 실제 Python validator 회귀·항목별 API 필드/대본/grade-X/speech binding 검사를 추가해 교정했다. 독립 실제0031 DB join120·쓰기8/듣기8·reseed/FK/rollback·기존 사용자 보존 통과. 동결본·리뷰는 편집하지 않았고 원격 반영하지 않았다.
+- `INC-DB-092` — cohort02 실제 D1 API3건이 expression depth100 초과로 실패했다(native SQLite 한도1000). AND 그룹을 나눈 뒤 API205통과했으나 cohort03 Wrangler0031 import는 `=CASE`/`<>CASE` splitter 누락으로 trigger END가 분리되어 `incomplete input`·fresh/E2E 시작 실패했다. 비교/봉인/원자성을 보존한 IIF·정적 job 매핑·RAISE WHERE와 설치Wrangler splitter 회귀로 교정했다. 실제 새 로컬32migrations·FK0, 최종 cohort04 fresh·DB225/API205·E2E44 통과. 실패01–03/임시 DB를 보존하고 native 통과만으로 D1/CLI 적합성을 주장하지 않는다.
+- `INC-QA-093` — 중간 local G4 이후 공개/철회 drill 실패 시 앞선 G4가 Preview 진입 근거로 남는 P1을 독립 검토에서 발견했다. preflight와 최종 report를 분리하고, 실제160 draft543행/reseed·V7 공개/재실행/철회·12종 합성 학습 표 hash 불변 뒤에만 complete G4를 생성한다. Preview CLI가 exact cohort/manifest·drill artifact hash·완료 상태를 원격 접근 전에 강제한다. preflight/잘못된 cohort/실패 표식 차단 회귀2/2·독립 재검토와 최종 실제 local drill 통과. operator attestation을 암호학적 실행 증명으로 확대하지 않는다.
+
+최종 증적은 `.artifacts/learning-v7-release-2026-10-12/cohort04`이고 **로컬 phase만** 통과다. 음성 핵심4파일 diff0·mock 범위를 유지한다. 새 Preview·실제 Chrome/가족/사람 가청·현 schema backup/restore·Production·commit/push는 이번 사용자 범위 밖이며 실행하지 않았다.
+
+## 2026-10-11 레슨 후보 — 당시 판정 보존 이력, 운영 미반영
+
+- `INC-OPS-088` — 최종 remote 첫 실행은 stale catalog와 Cloudflare7403 R2 read-only 조회로49/2/2·exit1이었다. catalog 갱신 뒤 전체 재실행51/2/0·exit0을 확인했다. 최초 실패를 삭제하지 않으며 원격 mutation·배포·push는0이다. local은39/2/0이며 dirty171과 알려진 manifest drift만 경고다.
+- `INC-CONTENT-083` — v6 실패를 보존하고 V7 A/B 각각440/440 승인·readiness exit0/failures0을 확인했다. local staging200/240문항·220레슨은 비공개이며 Production 공개 승인이 아니다.
+- `INC-CONTENT-085` — Preview160 별도 독립 검수는 A143/17, B144/16(승인/반려), 모두 `passed=false`다. 자동 quality160/160과 혼합하지 않고 원본 보존·공개 금지한다.
+- `INC-QA-086` — bootstrap 실패01 metadata, 02 owner, 04 track_srs_settings 기본 owner/jlpt/null1행을 보존한다. 교정 뒤 E2E05 desktop/mobile Chromium/WebKit44/44·exit0이다. 실제 가족·음성·Preview 증거가 아니다.
+- `INC-RELEASE-087` — 10월11일에는 V7 정식440/220 profile/G0–G4/publisher/verifier가 없었다. 10월12일 guarded path를 구현했고 cohort04로 정식local 공개/철회까지 검증했다. 개발·로컬 검증의 누락은 해소했으나 새 Preview·가족/실제 음성·현schema backup/restore·Production 승인/배포는 미완료다. test-only published fixture는 여전히 출판 증거가 아니다.
+- `INC-QA-084` — reviewed local verifier/E2E 준비에서 SQL bind·legacy PK·잘못된 column·TOPIK unit prefix와 빈 배열을 보존으로 잘못 판정할 수 있는 경로를 교정했다. verifier는 DB 전체 review/preflight를 먼저 수행하고 새 임시 SQLite에서 fresh0031 및 non-empty0030→0031+legacy records reseed를 검사한다. E2E launcher도 reviewed env preflight를 `rm`보다 먼저 실행한다. test-only `INITIAL` published fixture와 `publication_gate_evidence:false`는 G0–G4 또는 Production 공개 증거가 아니다.
+- `INC-CONTENT-082` — v5 전체 의미 검수 최종 A426승인/14거부·cue7, B432/8·cue1, 합집합14문항/8cue로 실패했다. 과제에 없는 쓰기 조건·문법의 복수 해석·학습실 예약/개장 시각 충돌·한국어 cue와 접속 설명을 별도 v6에서 교정했다. v5 failed/draft/source/inventory는 보존하고 실제 readiness exit1/4차단을 기록했다. 당시 v6 검수로 넘겼으며 후속 v6 실패와 V7 상태는 `INC-CONTENT-083`에 별도로 보존한다.
+- `INC-QA-081` 버전 후속 — v6 확장 과정에서 shared v5 실패 문구가 달라져 기존 회귀1개가 실패했다. 기존 v5 문구를 보존하고 v6만 분기한 뒤 v4/v5/v6/snapshot 전용10/10과 독립6/6을 확인했다. 버전 라벨/동일 bytes 실행/patch provenance/EEXIST 반례는 차단한다. 저장소 저작 코드 실행이지 적대적 JS sandbox는 아니다.
+
+- `INC-CONTENT-080` — v4 동결 전체 의미 검수 불합격. 최종 A319/121, B318/122(승인/거부), 합집합 137문항·13개념. 정답 번호 해설·모호성·청해 근거·쓰기 숨은 채점 조건·고급 오답·개념 번역/문법 결함을 기록했다. readiness 실제 exit1이며 실패 원본을 보존하고 새 v5로 수정한다. 구조0·사전 부족0을 의미 통과로 보고하지 않는다.
+- `INC-QA-081` — draft adapter 독립 검토가 승인 전 DB 파일 쓰기, 복합키 INSERT OR IGNORE의 충돌 은폐, transaction 밖 대조·counts 덮어쓰기를 발견했다. preflight를 파일 생성 전으로 옮기고 tmpdir/new/wx·복합키 정확 비교·BEGIN IMMEDIATE·counts 병합으로 수정했다. 합성 fixture로 실패/비공개/rollback을 검증하며 실제 불합격 콘텐츠 staging은 금지한다.
+- `INC-SOURCE-075` 후속 — `.env.local`의key 위치안내후공식API에서남은5표제어취득, source06의86record/lookup0/source failures0을확인해 **출처부족해소**. 이로써새440/220/220 동결은완료했지만두의미검수/실제DB공개는아니다. 아래14→4개부족과timeout은과거실패로보존한다.
+- `INC-QA-078` API후속 — API ID/basis/transport를삭제해도잔여api_request가legacy로통과하고expected_origin삭제도허용하는반례를독립검토에서발견. API표식하나라도남으면전체provenance필수,원어/locator검사·actualsense_order/first-returned-sense범위를명시해교정했다. API01/source05를편집하지않고API02/source06으로새증적생성. 부모API2회귀와독립반례차단통과,rawHTTP SHA와웹projection SHA구분/키비출력보존.
+- `INC-OPS-079` — 최종통합fresh의TOPIKpractice local Wrangler실행이`other side closed`로exit1(원인미확정). 기존workspace/log를보존한뒤동일격리DB의별도33checks exit0과새격리DB의전체fresh0000–0031 exit0을확인했다. 운영오류/권한문제로단정하거나첫실패를통합통과로고치지않는다.
+
+- `INC-SOURCE-075` 취득 전 이력 — KRdict bounded HTML 취득 실패와 source01/02의 14개 부족, 웹 보충 후 source04의 4개 개념/5표제어 부족은 원본 보존한다. native HTTP timeout을 API 권한 문제나 표제어 부재로 단정하지 않는다. 후속 공식 API 취득으로 source06 부족 0은 별도 증적이며 과거 실패를 수정하지 않는다.
+- `INC-QA-076` — 독립 검토가 source gate에서 key/locator만 맞추면 개념 급수·읽기·canonical version·owned URL/hash/value 변조가 통과하는 반례와 최종 수집 파일 TOCTOU 덮어쓰기를 재현했다. trusted inventory SHA·개념→원본 파일·immutable release SHA/file hash·정확 structured identity/value/locator를 대조하고 최종 저장에도 `flag:wx`를 적용했다. 부모 회귀와 독립 재검토에서 이전6개 identity 반례 차단을 확인했다. 기존 후보01/failed artifact는 그대로 보존, 새 후보02 역시 source14부족으로 차단한다. 이는 로컬 gate 교정이며 전체 문항 의미 승인이나 운영 수정/배포가 아니다.
+- `INC-QA-077` — intake 구조 validator에 끝 `/` 없는 output을 주면 URL 상대 경로가 부모 디렉터리로 해석되어 파생 record/report가 지정 폴더 밖에 생성됐다. 기존 실패/동결 원본은 변경하지 않았고 최초 파생 결과/로그를 보존했다. output을 directory URL로 정규화·기존 디렉터리 재사용 차단·exclusive record/report 저장으로 교정했으며 경로 회귀와 새 구조 검사를 별도 실행했다. 내부 증적 도구의 문제를 앱/Production 장애로 보고하지 않는다.
+- `INC-QA-078` — 새 source/freeze/readiness 도구의 독립 검토에서5경로를 재현했다: 웹 증적 hash_basis를 삭제해 검증 우회, 현재 seed와 과거 SHA 혼합, leaf 디렉터리 생성 경합, 원래 selection을 둔 채 뜻/fact/파생hash 동시 변조, 문자열 `"false"`를 승인으로 취급. 웹 provenance 표식 보존 검사·Git archive의 고정 seed 실행·non-recursive leaf mkdir+wx·selectedConceptIdentity 정확 대조·literal true/정규 reviewer ID 검사로 교정했다. 관련 부모12개 회귀와 독립 반례 재검토를 통과했다. 후보04는 source미완성으로 실제freeze exit1·출력폴더0이다. 이는 로컬 검증 도구의 교정이며 신규440의 의미 승인/운영 장애/배포 완료가 아니다.
+- `INC-DATA-072` — 운영 canonical 정수 ID와 fresh parser seed ID가 달라 실제 개념을 ID만으로 대조하면 실패했다(N3 確認1605/1573). 새 계약은 정확 급수/자연키/읽기·뜻을 유일하게 대조하고 환경별 실제 row ID/version을 사용한다. 공개220개념 운영 SELECT0실패·0쓰기와 canonical seed 대조0실패, 다른 급수/다른 뜻 대체 차단 회귀를 통과했다. 실제 신규 레슨 전체 staging/upgrade 완료를 뜻하지 않는다.
+- `INC-CONTENT-073` — 새 대표 v2의 `확인를`·`습관를` 조사 오류와 문법 접속 학습 안내 부족을 독립 검수에서 발견했다. A/B 모두 문항12개 정답은 승인했으나 대표 전체 `passed=false`로 보존했다. 별도 v3의 삼언어 개념 안내 교정 후 A/B 각각12/12·개념 지적0으로 **정적 대표 계약만** 승인했다. 전체440/실제 화면/배포는 아직 차단한다.
+- `INC-SOURCE-074` — 새 수집에서 `準備する`를 사전 명사 `準備`와 구별하지 못한 실패, `맑음` 학습형/`맑다` 표제어·무일본어 표제어 처리와 한국어기초사전 시간 초과를 확인했다. 명시적 lemma alias·suru-noun 제약·exact 표제어·동형어 읽기/무번역 보존 회귀4개를 통과하고 공급자별 bounded 수집을 분리했다. EDRDG27/177 수집·구조 검증27개는 통과, KRdict 재취득은 미완료이며 해당 실패 로그/기존 취득시각을 보존한다. 출처 범위를 대표/공급자/전체은행으로 구분하며 전체 intake로 확대하지 않는다.
+- `INC-OPS-041` 후속 재발 — 10월11일 새 전체 read-only는 R2 발음 D1 참조 조회의 Cloudflare7403으로50/2/1·exit1이었다. 설정/인증 변경 없이 동일 전체 명령 재실행은51/2/0·exit0, 참조0을 확인했다. 두 로그를 따로 보존하며 원인은 미확정이다. 영구 권한 부족이나 학습 앱 장애로 단정하지 않고, 재실행 성공을 첫 실패 삭제/새 콘텐츠 공개/가청 증거로 확대하지 않는다.
+
+- `INC-CONTENT-066` — 440문항 초안에서 정답 노출·청해 반복·복수 정답·급수/쓰기/교육 번역 결함. 독립 A151/289·B138/302(승인/거부), 각440ID와 개념 지적189로 실패했다. 31개 실제 canonical lookup과 자동 red flag195개도 확인했다. 초안/불합격 artifact를 보존하고 새 버전 재작성·두 재검수 전 DB 공개를 차단한다. 저장 계약용 합성 fixture의220레슨 결과는 의미 연결 승인 증거가 아니다.
+- `INC-LEARN-067` — 레슨/release 철회 후 개별 문제는 공개인 경우, 제출 효과 저장 뒤 session DTO가410을 반환할 수 있었다. 독립 소스 검토와 실제 D1 회귀로 교정했다. 쓰기 전 검사·claim/reveal/status trigger로 검사↔claim 경합의 batch 전체를 취소한다. 철회 후 쓰기/XP/FSRS/activity0·abandoned 허용 테스트 및 독립 재검토를 통과했다. 로컬 후보 수정이며 운영 사건으로 단정하지 않는다.
+- `INC-SRS-068` — 새 quick의 due 존재 검사에서 homophone이 누락되어 공개 레슨이 예정 복습을 대신할 수 있었다. 기존 세션 due SQL과 대조해 homophone_pairs/동일 급수 조건을 추가했다. 공개 레슨+유일 due homophone의 실제 API 회귀와 독립 재검토를 통과했다.
+- `INC-SOURCE-069` — source intake v1이 `先生` 첫 동형어(シーサン/man)를 학습 의도로 잘못 선택할 위험. v1/해당 리뷰는 실패 증적으로 보존하고 읽기별 locator를 갖는 v2(せんせい/teacher 포함)로 분리했다. 54 record 구조 검사는 통과하지만 새 evidence hash에 재검수가 필요하다.
+- `INC-QA-070` — 네 메뉴/설정 통합 이후 브라우저 계약이 과거5메뉴·`学習` 버튼·계정 메뉴의 언어 combobox를 계속 요구했다. 세 번째 확장72건은68 pass/4 fail/0 skip으로 보존했다. 실패 DOM과 설정 소스를 대조해 실제 두 언어 선택 button 그룹과 양 트랙 button, 정확 메뉴 이름·화면 폭을 검사하도록 고정했다. 기능 검사를 삭제하거나 timeout을 늘리지 않았고 같은 확장6spec의 최종 양 엔진72 pass/0 skip/0 fail·exit0을 별도 확인했다.
+- `INC-UI-071` — 실제 iPhone UA 프로젝트에서 첫 JLPT 프로필 저장을 iOS 설치 팝업이 가렸다. mobile16건14 pass/2 fail/0 skip, 두 실패의 pointer interception/screenshot을 보존했다. 새 UX에서는 설치 기능을 삭제하지 않고 설정의 인라인 region으로 옮기며44px 닫기·1회 보존/standalone·legacy flag-off를 회귀로 고정했다. 설정 button 검사나 학습 저장을 우회하지 않았다. iOS 전용6개·전체 로컬530개와 최신 동일6spec/4project **116 pass/0 skip/0 fail**을 확인했다. 운영에는 미반영이며 콘텐츠 품질 차단과는 별개다.
+
+브라우저 첫50건은48 pass/2 fail/0 skip이었다. 두 실패는 승인된4메뉴와 달리 과거 테스트가5개 링크를 요구한 것이라4개 **정확한 일본어 이름**·설정 진입 계약으로 교정한다. screenshot/오류 문서는 ignored `learning-path-2026-10-11/e2e-first-failure`에 보존한다. 새 재실행 결과는 릴리스 원장에 따로 기록한다.
+
+같은50건의 두 번째 실행도48 pass/2 fail/0 skip이었다. 이번에는 일본어 메뉴의 실제 `学習`과 승인 문구 `学ぶ` 불일치였다. 문구를 수정한 뒤 해당2건만 재검사해2 pass/0 skip/0 fail을 확인했다. 두 번째 screenshot/오류 문서는 `e2e-second-failure`에 보존한다. 부분2건과 이전48건을 합쳐 전체50건 통과로 기록하지 않는다. 최종 별도 실행은 릴리스 원장에 기록한다.
+
+## 2026-10-10 문서·파일 관리 교정
+
+- `INC-DOC-065` — 현재 상태/인수인계에 종료된 배포 전 미완료 지시가 중복되고 CI/CD·수동 파일 지도는0028 기준이었다. 기존 시계열 요약은8월9일 migration을0000–0001로, 8월19일에0028을 포함한 것으로 잘못 기록했다. 코드의0000–0030·릴리스 원장·10월10일 remote52/1/0을 대조해 현재 안내를 재작성하고 과거 상태를 history에 보존했다. 날짜별 migration과 가청 증거 경계를 교정하고 자동 파일 지도·stale 검사를 추가했다. 누락 probe에서 expected/actual exit1, 복구 후 문서71/링크861·전체 로컬492·브라우저18·remote51/2/0을 통과해 로컬 문서 교정을 완료했다. 삭제/후속 검사 결과는 [정리 기록](REPOSITORY_MAINTENANCE_2026-10-10.md)을 따른다.
+
+## 2026-09-25 개인 학습 UX 릴리스 이력
 
 2026-09-25 Production 후속: `0029–0030`, Worker `aedcbd40`, Pages `f62a8bdb`를 반영했다. Preview `a2dfacf2`의 사용자 양언어 실제 청취와 Production Chrome 양언어 onend 1/1·재생 중 Network 요청 0을 구분한다. Production 사람 가청 질문은 별도 대기다. 운영 콘텐츠 고정 verifier 392/392·R2 발음 9표면 0·Worker 7/7·auth proxy 3/3·legacy 410을 사후 확인했다. 기존 콘텐츠는 재시드하지 않았고 `INC-DATA-024`는 계속 열려 있다.
 
@@ -12,12 +72,12 @@
 - `INC-PUSH-062` — 구독 endpoint 충돌 시 다른 계정이 기존 소유자의 알림 설정을 바꿀 수 있었다. 신규 계정 2개로 fail-first `201`(기대 409)을 확인했다. `ON CONFLICT ... WHERE push_subscriptions.user_id=excluded.user_id`와 변경 행수 검사로 다른 계정의 덮어쓰기를 차단했다. 동일 전용 테스트와 API 전체 `190/190`이 통과했다. 새 후보 원격 검증 전까지 종료 판정은 보류한다.
 - 2026-09-25 원격 사전 조회의 D1 검사는 Cloudflare API `7403` 권한 오류로 실패했다. 이후 동일 `ops:status:remote` 재조회는 50 pass/2 warn/1 fail이며 D1 실패는 재현되지 않고 유일한 실패는 미push Git SHA 차이다. 최초 실패를 삭제하지 않으며 이 결과를 새 후보 Preview 검증이나 배포 완료로 확대하지 않는다.
 
-최종 점검: 2026-09-25 KST
+문서 점검: 2026-10-10 KST. 원격 read-only52/1/0에서 기존 배포·정책을 재확인했다. 아래9월25일 가청/전수 결과는 과거 릴리스의 증거이며 이번 정리에서 새로 실행한 결과가 아니다.
 현재 상태: 빠른 레슨·보상·알림 `0029–0030`을 Production Worker `aedcbd40`/Pages `f62a8bdb`(배포 source032b50d)에 반영했다. 현 Preview의 사용자 양언어 청취와 실제 Chrome Network/onend를 배포 후보에 연결했으며 Production의 Chrome onend와 사람 가청은 구분한다. 현재 HEAD와 운영 콘텐츠 source3485/manifestd102의 drift는 별도 알려진 문제다.
 
 이 문서는 JLPT·TOPIK 현재 오류, 잘못된 이전 판정, 복구 증적과 재발 방지 gate의 단일 원장이다. `통과`는 실제로 실행해 종료 코드와 결과를 확보한 항목에만 사용한다. mock 재생, 실행하지 못한 테스트, 로컬 build, 과거 배포의 증적은 현재 Production 가청 동작을 증명하지 않는다.
 
-현재 알려진 미해결은 manifest drift `INC-DATA-024`이며 immutable source로 고정한 사후392개 검사는 통과했습니다. `INC-TOPIK-031`과 `INC-AUD-033`은 새 Worker 배포 후 실제 status/CSP/R2/legacy 검사를 통과했습니다. `INC-ACT-032`는 같은 runtime의 로컬/Preview 원자성 회귀를 통과해 배포했고, Production에 합성 학습 데이터를 쓰는 검사는 실행하지 않았습니다. `INC-LEGACY-034`의 legacy DB 제거와 승인된 콘텐츠↔개념 연결/새 교육 번역은 후속 범위입니다. 아래 날짜별 후보/실패 기록은 삭제하거나 현재 통과로 덮어쓰지 않습니다.
+운영의 알려진 미해결은 manifest drift `INC-DATA-024`이며 immutable source로 고정한 과거 사후392개 검사는 통과했습니다. 신규 로컬 레슨 후보의 미해결은 위 `INC-CONTENT-066`과 v2 출처 재검수이며 이를 운영 해결 완료로 표시하지 않습니다. `INC-TOPIK-031`과 `INC-AUD-033`은 기존 Worker 배포 후 실제 status/CSP/R2/legacy 검사를 통과했습니다. `INC-ACT-032`는 같은 runtime의 로컬/Preview 원자성 회귀를 통과해 배포했고, Production에 합성 학습 데이터를 쓰는 검사는 실행하지 않았습니다. `INC-LEGACY-034`의 legacy DB 제거와 승인된 콘텐츠↔개념 연결/새 교육 번역은 후속 범위입니다. 아래 날짜별 후보/실패 기록은 삭제하거나 현재 통과로 덮어쓰지 않습니다.
 
 ## 오류 원장
 

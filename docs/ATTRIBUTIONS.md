@@ -1,6 +1,6 @@
 # 라이선스와 콘텐츠 출처
 
-최종 점검: 2026-08-30 KST. 이 문서는 현재 seed와 external source 후보의 경계를 기록한다. source asset의 실제 승인 값은 D1의 `content_source_assets`, intake artifact와 해당 manifest가 최종 기준이다.
+최종 점검: 2026-10-11 KST. 이 문서는 현재 seed와 external source 후보의 경계를 기록한다. source asset의 실제 승인 값은 D1의 `content_source_assets`, intake artifact와 해당 manifest가 최종 기준이다.
 
 ## 기본 원칙
 
@@ -12,6 +12,8 @@
 ## 학습 콘텐츠와 provenance
 
 ### 현재 자체 저작 콘텐츠
+
+10월 11일 v4 440문항·220개념·220레슨은 자체 저작 비공개 동결 후보다. 외부 자료는 표기·읽기·뜻·교육과정 metadata 검증에만 사용한다. EDRDG 정책 및 [한국어기초사전 저작권 정책](https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo)을 공식 페이지에서 재확인했다. 과거 26개 KRdict record의 원래 취득 시각·응답 hash는 보존한다. 새 공식 웹 entry 10개는 `verified-fact-projection-v1`의 URL+facts SHA이며 **원시 HTTP 응답 hash가 아니다**. 공식 API로 추가한 5개는 실제 응답 bytes SHA를 사용하고 정확 표제어·원어·entry ID·첫 반환 sense를 기록한다. source06의 사전 증적 부족은 0이나 문항 의미 승인과 출판 승인은 별개다. 키·원문 XML·공식 문항·지문·정답·음원은 저장하지 않는다. 상세 목록·hash는 [콘텐츠 계획](00_overview/CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
 
 N5~N3 원본, N2 Batch 1~5, N1 Batch 1~4, TOPIK owner curriculum Batch 1~5, TOPIK placement/practice bank의 예문·지문·대본·문제·보기·정답·해설은 프로젝트의 교육용 자체 저작이다. source manifest는 각 파일 SHA-256과 source provenance를 저장한다.
 
