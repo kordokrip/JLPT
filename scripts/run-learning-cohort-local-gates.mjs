@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { commandArtifactGate } from './lib/release-evidence.mjs';
 import { verifyLearningPathReviewedLocal } from '../packages/db/src/ops/verify-learning-path-reviewed-local.ts';
 import { defaultPreview160V3Paths, validatePreview160V3 } from '../packages/db/src/ops/preview160-v3-quality.ts';
 import { REVIEWED_V7 } from '../packages/db/src/ops/learning-path-reviewed-release.ts';
@@ -41,7 +42,6 @@ try {
   const audioReceipt=JSON.parse(readFileSync(join(v7Output,'audio-contract-receipt.json'),'utf8'));
   const summary=join(v7Output,'summary.json');
   if(JSON.parse(readFileSync(summary,'utf8')).passed!==true) throw new Error('Full gate summary not passed');
-  const logGate=(path,command)=>({passed:true,exit_code:0,command,...artifact(path)});
   paths.authorization=write('local-publication-authorization.json',{
     schema:'learning-cohort-publication-authorization-v1',kind:'publication-authorization',
     cohort_id:LEARNING_COHORT_ID,release_ids:LEARNING_COHORT_RELEASE_IDS,phase:'local',target:paths.v7Target,
@@ -49,7 +49,7 @@ try {
     prerequisites:{v7_local:artifact(paths.v7.releaseReport),v3_quality:artifact(paths.v3Quality),v3_reviews:artifact(paths.v3Reviews)},
     operator_attestation:{operator:'Codex local release steward; not a family/hearing observer',recorded_at:new Date().toISOString(),exact_cohort_and_logs_verified:true},
     proof_scopes:{audio:'mock',family:'not-observed',human_audible:false},
-    gates:{local_gates:logGate(summary,'new actual full local gate collector'),audio_guard:{...audioReceipt,provider:'google-browser',r2_pronunciation_references:0,legacy_audio_requests:0}},
+    gates:{local_gates:commandArtifactGate(summary,'new actual full local gate collector'),audio_guard:{...audioReceipt,provider:'google-browser',r2_pronunciation_references:0,legacy_audio_requests:0}},
   });
   const local=verifyLearningPathReviewedLocal(paths.v7.cohort,paths.v7.reviewA,paths.v7.reviewB,join(out,'cohort-fresh-upgrade.json'));
   const db=new DatabaseSync(join(local.workspace,'upgrade.sqlite'));

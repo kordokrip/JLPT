@@ -2,6 +2,8 @@
 
 ## 2026-10-13 통합 배포 보강 — 구현 중, 운영 미반영
 
+- `INC-QA-097` — clean worktree 첫 실행은 `/tmp`/`/private/tmp` 출력 경로 차이로 테스트 전 거부됐다. 다음 실행의 단위는 과거 TOPIK v2 증적 미연결로 Ops32·DB252통과/1실패·나머지 미실행이었다. 역사 증적 경로만 연결한 후 전체648·typecheck/OpenAPI/build/fresh D1·44레슨 E2E·V7 local drill은 통과했다. 그러나 통합 collector가 command gate에 `artifact` 대신 `path`를 써600 공개 전에 exit1로 차단됐다. prerequisite와 command gate를 분리하는 helper/회귀를 추가해 수정한다. 첫 실패·후속 실패를 보존하며 새 전체 게이트 완료 전 원격 반영하지 않는다.
+
 - `INC-OPS-094` — Worker 배포 helper가 `MAINTENANCE_MODE`를 전달하지 않아 config의 `off`로 점검을 암묵 해제할 수 있다. 소스와 유지보수 HTTP/cron 경로를 교차 확인했고 신규 회귀는 필수 검증 함수 부재로 실패했다. 명시적 `off|read-only` 전달과 배포 후 SHA/모드 확인을 추가해 helper5/5를 통과했다. queue handler도 점검을 무시해 최초 회귀1실패/2통과였다. 점검 중 batch 전체를 defer하는 guard를 추가했다. 실행 중 workflow 종료와 원격 queue pause는 별도 확인하며 HTTP 점검만으로 백업 안전을 주장하지 않는다.
 - `INC-RELEASE-095` — 기존 정식 출판은 V7 두 release만 다루며 별도160 v3는 draft adapter뿐이다. 5개 통합 출판·의미 봉인·철회 및 실제 원격 복귀 검증이 없으므로 현재 Production 공개는 차단한다. 기존 실패 리뷰/원장은 수정하지 않는다.
 - `INC-RELEASE-095` 구현 후속 — 독립 검토가 준비 후 candidate SHA/phase/대상 DB 변경과 기존 NULL-cohort V7 draft의 부분 적재 후 구 publisher 우회를 재현했다. 최종 UPDATE에 실제 검증한 source5/gate25/job30/preview5를 고정하고 stage 첫 문장에서 기존 draft를 opt-in했다. 같은 두 반례의 독립 재검증은 모두 차단/문항·레슨·감사 공개0이며, 정상5개 공개600/220→철회0도 통과했다. 동일 버전의 미감사 추가 문항 수량도 차단했다. 신규23·기존V719·API208 및 실제 새 로컬Wrangler의 공개 거부/성공/철회/FK0을 확인했다. 합성 operator gate를 사용한 회귀이며 실제 원격·Production 증거는 아니다.

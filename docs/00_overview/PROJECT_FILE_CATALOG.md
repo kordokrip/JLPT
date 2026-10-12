@@ -2,7 +2,7 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **898개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **900개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
@@ -17,7 +17,7 @@
 | UI 컴포넌트 | 20 |
 | Worker 진입점 및 설정 | 21 |
 | 공통 API 및 학습 계약 | 21 |
-| 로컬 운영 스크립트 및 테스트 | 27 |
+| 로컬 운영 스크립트 및 테스트 | 29 |
 | 루트 실행 및 정책 | 13 |
 | 문서 이력 | 1 |
 | 문서 진입점 | 3 |
@@ -482,6 +482,7 @@
 - [scripts/__tests__/browser-audio-contract.test.mjs](../../scripts/__tests__/browser-audio-contract.test.mjs)
 - [scripts/__tests__/observability-core.test.mjs](../../scripts/__tests__/observability-core.test.mjs)
 - [scripts/__tests__/project-ops-status.test.mjs](../../scripts/__tests__/project-ops-status.test.mjs)
+- [scripts/__tests__/release-evidence.test.mjs](../../scripts/__tests__/release-evidence.test.mjs)
 - [scripts/__tests__/worker-release-deploy.test.mjs](../../scripts/__tests__/worker-release-deploy.test.mjs)
 - [scripts/capture-learning-release-baseline.mjs](../../scripts/capture-learning-release-baseline.mjs)
 - [scripts/check-doc-lifecycle.mjs](../../scripts/check-doc-lifecycle.mjs)
@@ -493,6 +494,7 @@
 - [scripts/gen-vapid.mjs](../../scripts/gen-vapid.mjs)
 - [scripts/generate-file-catalog.mjs](../../scripts/generate-file-catalog.mjs)
 - [scripts/lib/cloudflare-response.mjs](../../scripts/lib/cloudflare-response.mjs)
+- [scripts/lib/release-evidence.mjs](../../scripts/lib/release-evidence.mjs)
 - [scripts/post-deploy-observe.mjs](../../scripts/post-deploy-observe.mjs)
 - [scripts/project-ops-status.mjs](../../scripts/project-ops-status.mjs)
 - [scripts/purge-r2-pronunciation.mjs](../../scripts/purge-r2-pronunciation.mjs)
