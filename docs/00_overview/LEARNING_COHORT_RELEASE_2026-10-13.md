@@ -1,8 +1,12 @@
 # V7·별도160 통합 릴리스 — 2026-10-13
 
-상태: **Production 차단**. 새 Preview의 콘텐츠 공개·실제 음성 확인은 완료했지만 원격 전체 E2E 미완료, 실제 복귀 P1, 가족 동선 미확인이다. Production 배포·원격 push는 실행하지 않았다. 갱신: 2026-10-13 KST.
+상태: **Production 차단**. 철회 P1은 수정·제한된 격리 회귀 확인을 완료했다. 아직 새 후보 전체 Preview E2E·전체 복귀·가족 동선·backup/predeploy는 미완료다. 기존a49 Preview 가청은 확인했지만 새 후보 가청으로 확대하지 않는다. Production 배포·원격 push는 실행하지 않았다. 갱신: 2026-10-13 KST.
 
 ## 승인 후속 — 호환 Worker 수정·격리 회귀 확인 완료
+
+최종 코드 후보 **`0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214`**를 clean 로컬 커밋으로 고정했다. 같은SHA의 새 cohort02에서 OpenAPI·typecheck·전체단위 **675(Ops33/DB272/Web155/API215)**·build·음성 소스·fresh0032가 모두exit0이다. 기존 퀴즈·FSRS의 Chromium/WebKit **26/26, skip/fail/flaky0, retries0**도 새로 실행했다. 이26개 음성은mock이며 물리청취가 아니다. 전체 기존295와 신규 레슨44·새Preview는 이번C에서 재실행하지 않았다. 원본은 `.artifacts/operations/quiz-compat-2026-10-13/cohort02`와 `affected-e2e-cohort01`이다. 이 summary는6개 local command 결과이지 정식5-release publication profile/G0–G4 또는 production-predeploy가 아니다.
+
+종료 문서 검사는904paths/73Markdown/1075relative links/lifecycle/DB refs·diffcheck를 통과했다. 코드커밋 직후 local ops40/1/0, remote ops51/1/1·exit1이며 유일한실패는 의도적미push(localsource0adb/origind626)다. 후속read-only baseline에서도 운영Worker/Pages/source/설정과 a49Preview는동일하다. 이번 결과 문서화는 코드SHA와 별도 후속 변경으로 남긴다.
 
 사용자가 **수정하지 않은 직전 Worker 대신 철회 차단을 추가한 호환 Worker로 복귀**하도록 승인했다. 직전032b50dd 기반의 별도 clean 소스 `f3caa61a3160dd5f69f56b17ae0a3c55a0211807`을 로컬 branch `release/quiz-compat-2026-10-13`에 보존했다. 런타임 변경은 quiz·내부 version snapshot·publication helper와 read-only queue defer뿐이며 음성/학습 세션 코어는 유지했다. 현재 개발 후보에도 같은 quiz 수정과 후속0032를 반영했다. 운영/현재96c8594a Preview는 변경하지 않았다.
 
@@ -61,7 +65,7 @@ canonical 6,501행·TOPIK practice v2·기존 학습/FSRS/XP/메모와 운영 OA
 | 최종 전체 gate·fresh/upgrade/reseed | a49 후보 local-cohort03: 단위649·OpenAPI/typecheck/build/fresh·reviewed E2E44/44·합성 기존12종 보존·600/220 공개/철회 통과 |
 | 새 Preview600/220 | 실제0031·stage/reseed/publish/verify 통과. 5 release,600문항/220레슨/880entries/600quality links/56ko speech |
 | 새 Preview 원격 전체 E2E | **실패/미완료**: cohort03 31 pass/13 미실행·suite timeout; cohort04 18 pass/1 fail/25 미실행·suite timeout。전체44 통과 아님 |
-| 별도 원격 복귀 연습 | **실패**: 실제5개 철회/공개0→구 Worker→구 Pages 후 철회 JLPT 퀴즈 제출/정답 조회200 재현(INC-QUIZ-098) |
+| 별도 원격 복귀 연습 | 최초bare old Worker 실패 보존. 호환f3caa61 제한회귀409/410·보존은통과; **새0adb 전체 복귀 gate는미완료** |
 | 같은 Preview 실제 Chrome/가청/Network0 | 통과: native Chrome ko/ja 각2 onend·현재 사용자 두 언어 가청 확인·재생 구간 HAR0건·audio predeploy exit0 |
 | 같은 Preview 실제 가족 | **미실행**: 현재 사용자 답변 ‘아직 확인하지 않았습니다’ |
 | 현 schema backup/restore·predeploy | 미실행 |

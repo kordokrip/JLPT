@@ -2,6 +2,8 @@
 
 ## 2026-10-13 통합 후보의 추가 절차
 
+마지막코드후보0adbfc0 clean 기준cohort02는675단위/타입/OpenAPI/build/음성source/fresh0032·exit0이며affected UI26/26을확인했다. **이는6local명령/일부기존E2E 결과**이고정식5-release local collector·전체295/레슨44·새Preview/전체복귀/가족/실청취/backup/predeploy는아직이다. 같은SHA/품질hash의새완전gate를다음단계에서생성한다. local40/1/0,remote51/1/1의실패는미push다.
+
 호환 복귀 변경 승인 후 현재API215/호환API200/DB19 및 작업트리 전체674·OpenAPI/typecheck/build/fresh를 확인했다. 동시성 회귀는 별도 추가 실행이며 sourceclean 최종 gate는 새로 실행한다. 호환f3caa61/0032의 fd38 재검증409/410·기존200·13표 hash보존은 **제한된 회귀PASS**, 전체Productionpredeploy는blocked다. migration0031은수정하지않았고 exact restore 승인 pending set은0031+0032, table coverage는74개다. 실패·pending·기존44 timeout은 그대로보존한다.
 
 현재 판정: a49 local649/reviewed44/기존265pass+30policy skip은 통과했고 실제 Preview600/220도 공개/verifier 통과다. 하지만 실제 구 Worker/Pages 복귀에서 철회 퀴즈 submit/detail200이 재현되어 INC-QUIZ-098 실패다. Preview 전체44 run은 최신18pass/1fail/25미실행으로 exit1이다(INC-QA-099). 같은 Preview 실제 Chrome/현재 사용자 가청·재생구간 R2/legacy0은 완료지만 가족 미확인이다. **운영 점검·백업·전체predeploy·Production·원격push를 시작하지 않는다.**

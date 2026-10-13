@@ -2,6 +2,8 @@
 
 ## 활성 작업 — 2026-10-13
 
+최신C=`0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214` clean코드커밋. 새cohort02 675단위/6local명령exit0·fresh0032, affected26/26 Chromium/WebKit(음성mock)이다. R=`f3caa61`는old032+보호만이며격리철회회귀PASS/read-only. codeC후속문서에는최근결과만추가한다. 이부분검사를정식publicationprofile/G0–G4/newPreview44/fullrollback으로사용하지않는다. 운영0030/032와Preview0031/a49는현재도유지된다. 다음은cleanC의새전체releasegate/Preview·메타데이터분리검증이며family현재not-run·가청증거는a49에만유효하다.
+
 **승인 후속 우선:** 호환복귀정책 변경은 승인돼 수정/격리 회귀까지 완료했다. R=old032기반 f3caa61/별도 local branch/worktree, runtime변경 quiz3+queue defer. C=root 현재quiz수정+0032+backupupgrade+OpenAPI이며 아직 최종source고정이필요하다. API215/R200/DB19, 초기작업트리674·fresh 등통과. fd38에서0032·13표 hash보존·retired409/410·기존N3/records/history/FSRS200·기존card/review보존·public0/FK0이며R read-only다. 제한회귀PASS를새C전체rollback게이트로사용하지않는다.0031 불변/032SHA7cecb1f…/74tablecoverage profile31·ledger32 구별. 이전‘사용자선택대기’는초기이력이다. 새cleanC local/Preview44/별도새전체drill/가족/같은C음성/현backup/predeploy전Production/push금지. 원본a49publishauthorization를새SHA로편집하지않는다.
 
 **최신 인수인계: Production 차단**. a49 최종local649·reviewed44·기존265pass/30policy skip/0fail과 Preview600/220 공개/verifier는 완료다. Preview는0031/Worker b1fd8bdf/Pages96c8594a이며 Production0030/aedcbd40/f62a8bdb/main은 변경하지 않았다. 같은 배포 native Chrome 양언어 종료·현재 사용자 가청·재생구간 R2/legacy0은 통과했고 가족 N3/TOPIK3·4는 미확인이다. 원격44 suite 최신18pass/1fail/25미실행·timeout exit1이다.

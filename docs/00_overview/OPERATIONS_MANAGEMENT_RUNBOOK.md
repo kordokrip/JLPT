@@ -1,6 +1,6 @@
 # 운영관리·버그·정리·릴리스 runbook
 
-현재 실행: 2026-10-13 사용자 승인 통합 후보(V7+160/네 메뉴/조건부 Production·push). Preview600/220·0031·음성/현재 가청은 확인했으나 **INC-QUIZ-098 실제 복귀 실패·INC-QA-099 원격 전수 미완료·가족 미확인으로 Production/push 차단**이다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 gate 상태를 우선한다. 실제 Production Worker/Pages·0030는 보존 중이다. 기존10월12일 local-only는 과거 범위다.
+현재 실행: 2026-10-13 사용자 승인 통합 후보(V7+160/네 메뉴/조건부 Production·push). INC-QUIZ-098은호환R의제한회귀확인까지완료했다. cleanC0adb의675단위/affected26은통과했지만 **신규전체Preview/복귀·가족·새후보실청취·현backup/predeploy 미완료로 Production/push 차단**이다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 gate 상태를 우선한다. 실제 Production Worker/Pages·0030와 기존Previewa49는보존중이다. 기존10월12일 local-only는과거범위다.
 
 후속 승인: bare old Worker 대신 직전032+철회 guard+queue점검의 호환f3caa61을 준비했고 fd38/0032의 제한된회귀는 통과했다. **복귀는5release 철회→문항/레슨 공개0→검증된 호환Worker→직전Pages→기존기능/기록**이다. full 새후보 rollback 증거가 아직이므로 운영에 실행하지 않는다.0032는5trigger/테이블0·행변경0이며 backup table coverage0031/74와 실제 ledger0032를 구별한다. 새로운 source/증적은불변기존authorization와별도로연결한다.
 

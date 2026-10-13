@@ -2,6 +2,8 @@
 
 ## 2026-10-13 활성 후보 — Preview 공개·음성 확인, Production 차단
 
+코드 후보 `0adbfc0`를 clean 커밋으로 고정하고 같은SHA의 새 검사에서 전체단위675·OpenAPI/typecheck/build/음성source/fresh0032 및 Chromium/WebKit 기존퀴즈·FSRS26/26을통과했다. 음성mock/부분E2E이며 새후보전체295/레슨44·Preview·가족/실청취/전체복귀·backup/predeploy는미완료다. local40/1/0, remote51/1/1의1실패는미push만이다. 호환복귀R=`f3caa61`이며 운영/source032·기존Preview/a49는변경하지않았다. 정식G0–G4/Production 통과로 확대하지않는다.
+
 후속 사용자 승인을 받아 직전032 기반 호환 Worker `f3caa61`과 trigger-only0032를 구현했다. 현재 API215/호환 API200/DB19 통과, fd38 격리환경의 retired submit409/detail410·canonical/기록/FSRS조회200·13표 거부요청 hash불변 및 기존card/review 보존을 확인했다. 격리만0032/호환Worker 적용 후read-only로 잠갔다. 운영0030과 Preview0031/a49는 그대로다. **이 제한된 회귀 확인은 새후보 전체 rollback/Preview44/가족/backup/predeploy 완료가 아니다.** 정확한 최신 증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 ‘승인 후속’이다. 아래 P1 실패/정책 변경 제안은 최초 이력으로 보존한다.
 
 사용자 승인 범위는 V7 440문항/220레슨 + 별도160 v3 + 네 메뉴 UX의 검증·조건부 Production·최종 일반 push다. 아래10월12일 로컬-only는 보존 이력이다. Production은0030/Worker `aedcbd40`/Pages `f62a8bdb`/source032b50dd/branch `main`을 유지한다. 운영 OAuth·canonical·기존 학습 기록에는 쓰지 않았다. Preview만0031/Worker `b1fd8bdf`/Pages `96c8594a`/sourcea49b076으로 갱신하고600문항/220레슨을 공개·검증했다. 구 실패160은 원본을 보존하면서 Preview 공개에서 제외했다.

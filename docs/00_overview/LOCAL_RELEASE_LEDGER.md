@@ -2,6 +2,8 @@
 
 ## 2026-10-13 V7+160 통합 후보 — Preview 완료, 복귀 실패로 Production 차단
 
+최종후속: 코드/문서21파일을 관련범위만 안전커밋 `0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214`으로고정했다(사전staged경로/비밀실제값일치0·diffcheck). 같은cleanSHA의 cohort02 단위675(OpenAPI/typecheck/build/음성source/fresh0032 포함6명령exit0), 기존퀴즈·FSRS Chromium/WebKit26/26·skip/fail/flaky0·retries0. 26개음성은mock이다. local40/1/0, remote51/1/1·exit1은원격branch미push만이며운영장애가아니다. 현코드의전체295/레슨44/Preview/가족/실청취/전체rollback/backup/predeploy는아직이다. Production·원격push0,음성코어변경0. 후속결과문서는코드후보와별도로기록한다.
+
 후속 승인/실행: 직전032 source에 quiz출판guard/내부version/queue점검을 추가한 별도 clean `f3caa61a3160dd5f69f56b17ae0a3c55a0211807`과 local branch `release/quiz-compat-2026-10-13`을 고정했다. 호환API200/typecheck/build 통과. root에는 동일quiz수정/0032/정확backupupgrade를 적용했고 초기dirty전체674·fresh 등6gateexit0, 동시회귀추가뒤API215·DB19를 확인했다. root의 성공200/철회409·410 OpenAPI 및 생성 타입도 실제계약에맞췄다.
 
 격리fd38에만0032 적용→13표 기존행 hash불변→호환Worker read-only/off→retired submit409×2/detail410×2·canonical/기록/FSRS200·기존card/review보존·FK0→직접public0→호환Worker read-only 순으로 확인했다. 구Pages88ec97bd를 유지했다. 이는 terminal-withdrawn 원장의 제한회귀이며 신규전체복귀gate가아니다. 새candidate전체Preview/가족/backup/predeploy/Production/원격push는아직이다. 실패원본과 현재a49Preview/운영032source를 유지한다.

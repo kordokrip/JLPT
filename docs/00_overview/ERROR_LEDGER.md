@@ -2,6 +2,8 @@
 
 ## 2026-10-13 통합 배포 — Preview 반영, Production 차단
 
+0adbfc0 후속확인: clean675단위와existingquiz/FSRS E2E26/26을새로통과했다. 호환f3caa61의격리409/410·기존200·보존회귀도통과다. 미push외운영변경은없다. 신규전체Preview/복귀gate·가족·실제새후보가청·backup/predeploy를아직통과하지않았으므로아래failed원본과운영미반영상태를보존한다.
+
 - `INC-QUIZ-098` 승인 후속 — **수정·격리 회귀 확인 완료/운영 미반영**. version snapshot·typed ID·정확 급수/모드·공개 판정과0032 snapshot/완료/REPLACE/write guards를 추가했다. API precheck후철회는 D1 batch 전체 취소/409, 상세410·NULL legacy summary보존이다. 동시서로다른답변은1claim/1activity set이다. 현재API215/호환API200/DB19 통과. old032 기반 호환f3caa61을 fd38에 적용해 retired409×2/410×2·13표 hash보존·canonical/기록/FSRS200·FK0을 재확인했다. 원래 실패를 편집하지 않았다. 새후보 전체 복귀/Preview·가족·backup/Production은 아직이며 이 제한된회귀를전체P1운영closed로 표시하지 않는다.
 
 - `INC-QUIZ-098` — **P1/미해결**. 실제 별도 원격5 release 철회/공개0→구 Worker032b50dd→구 Pages88ec97bd→격리 점검off에서, 철회된 pending JLPT 퀴즈 submit200·활동3→6과 completed detail200·정답 반환을 재현했다. canonical N3 submit200/records200/quiz3행 유지/FK0은 확인했으나 전체 학습 기록 보존 통과는 아니다. 원인은 generic quiz가 저장된 questions_json의 공개 여부를 다시 검사하지 않는 것이다. 현재a49와 구032의 해당 코드가 같고0031 study_steps guard는 quiz_attempts에 적용되지 않는다. 정확 구 Worker SELECT를 DB trigger만으로 막을 수 없어 호환 복귀 정책 변경을 요청했다. 후보 API 수정/0032·재검증 전 Production 차단. 재현 원본 `drill-rollback-quiz-result-cohort01.json`은 passed=false로 보존하고 격리 Worker는 read-only로 다시 잠갔다. 독립 Astra 검토도 실패 판정을 확인했다. 운영 장애나 운영 쓰기 발생을 뜻하지 않는다.
