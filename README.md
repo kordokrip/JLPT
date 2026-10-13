@@ -10,13 +10,14 @@
 | --- | --- |
 | D1 | `nihongo-n3-prod-v2`, migration `0000–0032` |
 | Worker | `71e71638-aff1-44c5-a242-f1e276052413` |
-| Pages | `https://6b8b8a19.nihongo-n3.pages.dev`, ID `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4` |
+| Pages | `https://2c0fea8d.nihongo-n3.pages.dev`, ID `2c0fea8d-a995-4ceb-9106-a7ba444ace82` |
 | canonical | `https://nihongo-n3.pages.dev` |
-| Worker/web source | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
+| Worker source | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
+| Web source | `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2` |
 | 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
-2026-10-13 16:20:53 KST 배포·smoke7/7·점검 해제·queue 원복 완료. 동일 후보 단위718, 기존 E2E265통과/정책30제외/실패0, Preview44/44, 실제 빌드 PWA24/24와 운영 Chrome ko/ja onend·R2/legacy0을 확인했다. 한국어·일본어 업데이트 모달을 제공하며 구 버전 최초 전환은 앱 창을 모두 닫고 다시 열어야 할 수 있다. 실제 gate와 실패 이력은 [릴리스 원장](docs/00_overview/LOCAL_RELEASE_LEDGER.md)에 있다.
+2026-10-14 01:00:27 KST 지도 UI를 배포했다. 단위772, 기존 E2E287통과/정책30제외/실패0, Preview44/44, 실제 빌드 PWA24/24, 운영 asset/route79/79·Worker smoke7/7을 확인했다. Worker·DB·콘텐츠는 유지하고 점검 해제·queue 원복을 확인했다. 실제 Chrome 양언어 종료는 운영에서 확인했으며 사람 가청과 전체 Network 증거는 동일 빌드 Preview의 확인이다. 한국어·일본어 업데이트 모달을 유지한다. 실패 이력과 증거 범위는 [지도 릴리스 기록](docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)에 있다.
 
 ## 현재 기능과 콘텐츠
 

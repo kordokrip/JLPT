@@ -1,6 +1,6 @@
 # JLPT · TOPIK 코드·DB·API 구조
 
-갱신: 2026-10-13 KST. Production0032·네 메뉴·신규600문항/220레슨 배포 완료. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
+갱신: 2026-10-14 KST. Production0032·네 메뉴·600문항/220레슨을 유지하고 지도·레슨·완료 UI를 배포했다. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 지도 변경과 검증 범위는 [지도 릴리스 기록](docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
 
 현행 출판은 `learning-cohort-remote.ts`의 정확 대상 `stage/publish/verify/withdraw`,5개 release 원자적 공개/철회와0032 퀴즈 guard를 사용한다. 기존 Preview-only 도구는 운영 우회 진입점으로 쓰지 않는다. 퀴즈 버전 snapshot·철회 차단, 세션/FSRS 보존, 한국어·일본어 PWA 모달을 검증했다. 운영 proxy는 canonical host 기본 Worker 연결과 immutable API503을 구분한다. 운영 단위718·기존265/정책30제외·Preview44·PWA24·13표 보존·canonical392·smoke7의 증거는 [최종 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)을 따른다. 아래 신규 후보 절은10월12일 설계/검증 이력이다.
 
@@ -18,7 +18,7 @@ Web는4메뉴·LearnHub의 추천/자유 연습/자료·TOPIK 단원 URL·일본
 
 ## Production 기준선
 
-D1 `0000–0032`, Worker `71e71638-aff1-44c5-a242-f1e276052413`, Pages `https://6b8b8a19.nihongo-n3.pages.dev` / ID `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4`다. 앱 source는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`, canonical 콘텐츠 source는 `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`다.10월13일 새로 pinned392/392와 별도600문항/220레슨 verifier를 실행했다.16:20:53 KST 점검off·queue원복 완료다.
+D1 `0000–0032`, Worker `71e71638-aff1-44c5-a242-f1e276052413`, Pages `https://2c0fea8d.nihongo-n3.pages.dev` / ID `2c0fea8d-a995-4ceb-9106-a7ba444ace82`다. Worker source는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`, web source는 `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2`, canonical 콘텐츠 source는 `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`다. 10월14일 지도 UI 배포 전후 canonical392/392를 확인했다. 운영74개 테이블 백업·복원 검증 후 기존 Worker·queue와 점검off를 복구했다. 아래 과거 후보 검증 수치는 해당 시점의 이력이며 최신 지도 릴리스 증거와 구분한다.
 
 ## 실행 계층
 
