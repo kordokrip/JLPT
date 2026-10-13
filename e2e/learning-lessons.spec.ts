@@ -54,7 +54,7 @@ test("old questions links preserve parameters and enter integrated practice", as
     const body = request.postDataJSON() as { mode?: string; level?: string };
     return body.mode === "listening" && body.level === "N3";
   });
-  await page.getByRole("link", { name: /연습|練習|Practice/ }).first().click();
+  await page.getByRole("link", { name: /^(영역별 문제 풀이|分野別の問題|Practice by area)$/ }).click();
   await expect(page).toHaveURL(/\/quiz\/listening\?level=N3$/);
   await generated;
 });
