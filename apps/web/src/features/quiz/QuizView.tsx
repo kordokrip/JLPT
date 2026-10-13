@@ -92,6 +92,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
               <button
                 key={level}
                 type="button"
+                aria-pressed={quiz.level === level}
                 onClick={() => quiz.selectLevel(level)}
                 className={[
                   'min-h-11 px-4 rounded-full text-sm font-medium border transition-colors',

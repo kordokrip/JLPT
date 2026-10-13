@@ -113,7 +113,7 @@ export function BottomTabBar() {
           height: 'calc(var(--nav-height, 64px) + env(safe-area-inset-bottom))',
         }}
       >
-        <ul className={`grid ${moreTabs.length ? 'grid-cols-6' : 'grid-cols-5'} px-1`} style={{ height: 'var(--nav-height, 64px)' }}>
+        <ul className="grid px-1" style={{ height: 'var(--nav-height, 64px)', gridTemplateColumns: `repeat(${primaryTabs.length + (moreTabs.length ? 1 : 0)}, minmax(0, 1fr))` }}>
           {primaryTabs.map(({ to, key, icon }) => {
             const Icon = ICONS[icon];
             return (

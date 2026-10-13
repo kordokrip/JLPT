@@ -56,3 +56,8 @@ pnpm-debug.log*
 # TypeScript
 # ─────────────────────────────────────────────
 *.tsbuildinfo
+
+# Superdesign 재생성 가능한 분석·미리보기 파일 (승인/설계 상태는 별도 보존)
+.superdesign/init/
+.superdesign/tmp/
+.superdesign/website/

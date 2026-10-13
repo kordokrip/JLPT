@@ -1,5 +1,15 @@
 # 현재 구현 상태
 
+## 지도 UI Production 준비 — 2026-10-13 현재 작업
+
+사용자의 조건부 배포 지시에 따라 기존 기능·데이터 바인딩·이벤트를 독립 검증 중이다. [지도 기록](LEARNING_MAP_UX_2026-10-13.md)의 최신 통합 검증 절을 따른다. 오프라인 재개/일반 quick 누락, 계정 전환 중 대기 저장, 이전 링크 필터 전달을 회귀 테스트로 보강한다. 아래 운영37486f8 기준선은 유지하며 새로운 Production 배포 완료를 뜻하지 않는다. DB/콘텐츠/음성 코어는 변경하지 않는다.
+
+## 로컬 구현·검증 완료 — 학습 지도·레슨·완료 UI, 미배포
+
+2026-10-13 사용자가 지도 이미지 개선과 레슨·완료 화면 구현을 요청했다. Superdesign 기존 방향을 유지하고 한국·일본 건축과 책의 자체 제작 장식을 추가한다. [작업 계약과 실제 검증 결과](LEARNING_MAP_UX_2026-10-13.md)를 따른다. 프런트엔드만 `VITE_LEARNING_MAP_ENABLED`로 전환하며 API·DB·음성 코어는 변경하지 않는다. 로컬 구현/검사와 새 Preview·실사용·가청·Production 검사를 구분한다. 아래 Production 기준선은 이번 작업으로 변경하지 않았다.
+
+새 로컬 검사: 단위751(ops33/DB296/API215/web207), Chromium/WebKit66/66, 모바일8/8 및 최종 완료 보정4/4, N3/TOPIK3·4 지도 보정6/6, typecheck/build/fresh/audio contract/docs 통과. 지도22개는 합성 catalog 렌더링/요청 바인딩이며 실제 공개 레슨 전수 실행을 대신하지 않는다. 새 Preview·실제 사용자 사용성·가청 및 배포/push는 미실행이다.
+
 ## 최신 상태 — 2026-10-13 Production 배포 완료
 
 운영 runtime source는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`이다. 운영 D1은0032까지 적용됐고 신규5개 release600문항·220레슨을 공개·검증했다. 기존 학습13표 보존·FK/FTS·고정 canonical392검사 통과. 07:20:53 UTC(16:20:53 KST) 사후 smoke7/7·점검 해제·두 queue 원복을 완료했다. Production은 `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4`이며 Worker는 `71e71638-aff1-44c5-a242-f1e276052413`다. 이후 문서 전용 Git 커밋은 runtime source와 구분한다. 전체 증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다.

@@ -13,11 +13,22 @@ import {
 import StudySession from "../StudySession";
 
 const scope = "session-test:jlpt-ja";
+const featureFlag = vi.hoisted(() => ({ enabled: true }));
+let liveScope = scope;
 vi.mock("../../hooks/useDataScope", () => ({
   useDataScope: () => "session-test:jlpt-ja",
 }));
+vi.mock("../../lib/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/db")>()),
+  localUserIdFor: () => liveScope,
+}));
 vi.mock("../../hooks/useLearningProfile", () => ({
-  useLearningProfile: () => ({ data: { timezone: "Asia/Seoul" } }),
+  useLearningProfile: () => ({ data: { timezone: "Asia/Seoul", target_level: "N1", instruction_language: "ko", configured: true } }),
+}));
+vi.mock("../../lib/features", () => ({
+  get LEARNING_MAP_ENABLED() {
+    return featureFlag.enabled;
+  },
 }));
 vi.mock("../../features/study/StudyComponents", () => ({
   ContentNote: () => null,
@@ -73,7 +84,7 @@ function mount() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
+  return { client, ...render(
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={["/study/session-test"]}>
@@ -83,14 +94,40 @@ function mount() {
         </MemoryRouter>
       </QueryClientProvider>
     </I18nextProvider>,
-  );
+  ) };
 }
 beforeEach(async () => {
   vi.restoreAllMocks();
+  featureFlag.enabled = true;
+  liveScope = scope;
   localStorage.clear();
   await i18n.changeLanguage("ko");
   writeStudyLocal(scope, "session:session-test", session());
   writeStudyLocal(scope, "pending:session-test", pending);
+});
+
+it("does not start a session request from a stale scope", async () => {
+  liveScope = "other-user:topik-ko";
+  const load = vi.spyOn(learningApi, "session").mockResolvedValue(session());
+  mount();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(load).not.toHaveBeenCalled();
+});
+
+it("keeps a pending response when its submit succeeds after the scope changes", async () => {
+  let resolveSubmit: (value: Session) => void = () => undefined;
+  const delayedSubmit = new Promise<Session>((resolve) => {
+    resolveSubmit = resolve;
+  });
+  vi.spyOn(learningApi, "session").mockResolvedValue(session());
+  vi.spyOn(learningApi, "submit").mockReturnValue(delayedSubmit);
+  mount();
+  await waitFor(() => expect(learningApi.submit).toHaveBeenCalledTimes(1));
+  liveScope = "other-user:topik-ko";
+  resolveSubmit({ ...session(), status: "completed" });
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(readStudyLocal(scope, "pending:session-test")).toEqual(pending);
 });
 
 it("reconciles a different device's accepted step without discarding the local response or blocking the next step", async () => {
@@ -175,4 +212,62 @@ it("shows first answers, retries and the next review after a saved quick lesson"
   expect(screen.getByText(/재시도.*1\/1/)).toBeVisible();
   expect(await screen.findByText(/다음 복습.*2027/)).toBeVisible();
   expect(screen.getByText("빠른 학습 · 3~5분")).toBeVisible();
+});
+
+it("uses a catalog title only when both the session lesson id and version match", async () => {
+  const active = session();
+  active.lesson_id = "n3-lesson-1";
+  active.lesson_version = "v2";
+  vi.spyOn(learningApi, "session").mockResolvedValue(active);
+  vi.spyOn(learningApi, "lessons").mockResolvedValue({
+    level: "N3",
+    next_lesson_id: "n3-lesson-1",
+    lessons: [{ id: "n3-lesson-1", version: "v1", title: "Stale lesson title", ordinal: 1, completed: false, active_session_id: active.id }],
+  });
+  writeStudyLocal(scope, "pending:session-test", null);
+  mount();
+  await screen.findByText("이어서 공부");
+  expect(screen.queryByText("Stale lesson title")).not.toBeInTheDocument();
+});
+
+it("looks up a lesson at the session level rather than the profile level", async () => {
+  const active = session();
+  active.lesson_id = "n3-lesson-1";
+  active.lesson_version = "v1";
+  vi.spyOn(learningApi, "session").mockResolvedValue(active);
+  const lessons = vi.spyOn(learningApi, "lessons").mockResolvedValue({
+    level: "N3",
+    next_lesson_id: "n3-lesson-1",
+    lessons: [{ id: "n3-lesson-1", version: "v1", title: "Session N3 title", ordinal: 1, completed: false, active_session_id: active.id }],
+  });
+  writeStudyLocal(scope, "pending:session-test", null);
+  const { client } = mount();
+  expect(await screen.findByText("Session N3 title")).toBeVisible();
+  expect(lessons).toHaveBeenCalledWith("N3");
+  expect(client.getQueryState(["learning-lessons", scope, "N3", "ko"])).toBeDefined();
+});
+
+it("does not present an unavailable next review as no review", async () => {
+  const completed = session();
+  completed.status = "completed";
+  completed.steps = completed.steps.map((step) => ({ ...step, submitted: true }));
+  writeStudyLocal(scope, "pending:session-test", null);
+  vi.spyOn(learningApi, "session").mockResolvedValue(completed);
+  vi.spyOn(learningApi, "records").mockRejectedValue(new Error("Unavailable"));
+  mount();
+  await waitFor(() => expect(learningApi.records).toHaveBeenCalledWith("7d"));
+  expect(await screen.findByText(/저장하지 못했습니다/, {}, { timeout: 3_500 })).toBeVisible();
+  expect(screen.queryByText(/예약된 복습이 없습니다/)).not.toBeInTheDocument();
+});
+
+it("keeps the existing records destination when the learning map flag is off", async () => {
+  featureFlag.enabled = false;
+  const completed = session();
+  completed.status = "completed";
+  completed.steps = completed.steps.map((step) => ({ ...step, submitted: true }));
+  writeStudyLocal(scope, "pending:session-test", null);
+  vi.spyOn(learningApi, "session").mockResolvedValue(completed);
+  vi.spyOn(learningApi, "records").mockResolvedValue({ next_review_at: null } as never);
+  mount();
+  expect((await screen.findByRole("link", { name: "기록" })).getAttribute("href")).toBe("/records");
 });

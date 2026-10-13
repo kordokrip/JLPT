@@ -15,11 +15,19 @@ import {
 } from "../../lib/learning-experience";
 import { useDataScope } from "../../hooks/useDataScope";
 import { useSettingsStore } from "../../stores/settings-store";
+import { useAuthStore } from "../../stores/auth-store";
+import { localUserIdFor } from "../../lib/db";
 import { audioPlayer } from "../../lib/audio";
 import { useKoreanAudio } from "../topik/useKoreanAudio";
 import { recordLearningActivity } from "../../lib/activity-events";
 import { SUPPORTED_LANGS } from "../../i18n";
 import { isStudyTrackConflict, StudyRequestError } from "./StudyRequestError";
+function isCurrentStudyScope(expectedScope: string): boolean {
+  return expectedScope === localUserIdFor(
+    useAuthStore.getState().user?.id,
+    useSettingsStore.getState().learningTrack,
+  );
+}
 export const studyButton =
   "study-select min-h-12 rounded-xl border border-[var(--border)] px-4 py-2 font-semibold disabled:opacity-50";
 export const studyPrimary = studyButton + " bg-[var(--accent)] text-white";
@@ -70,9 +78,13 @@ export function ProfileForm({
       : instruction,
   });
   const save = useMutation({
-    mutationFn: () => learningApi.saveProfile(value),
-    onSuccess: (p) => {
-      qc.setQueryData(["learning-profile", scope], p);
+    mutationFn: ({ profile: submittedProfile, expectedScope }: { profile: LearningProfile; expectedScope: string }) => {
+      if (!isCurrentStudyScope(expectedScope)) throw new Error("Learning scope changed before saving profile");
+      return learningApi.saveProfile(submittedProfile);
+    },
+    onSuccess: (p, { expectedScope }) => {
+      if (!isCurrentStudyScope(expectedScope)) return;
+      qc.setQueryData(["learning-profile", expectedScope], p);
       useSettingsStore
         .getState()
         .setInstructionLanguage(p.learning_track, p.instruction_language);
@@ -88,7 +100,7 @@ export function ProfileForm({
       className="surface-panel space-y-4 p-5"
       onSubmit={(e) => {
         e.preventDefault();
-        save.mutate();
+        save.mutate({ profile: { ...value }, expectedScope: scope });
       }}
     >
       <h2 className="text-xl font-bold">{t("study.setup")}</h2>
@@ -196,8 +208,12 @@ export function StudyNote({
   const [storageOk, setStorageOk] = useState(true),
     [saved, setSaved] = useState(false);
   const mutation = useMutation({
-    mutationFn: (n: LearningAnnotation) => learningApi.saveNote(n),
-    onSuccess: (n, sent) => {
+    mutationFn: ({ note, expectedScope }: { note: LearningAnnotation; expectedScope: string }) => {
+      if (!isCurrentStudyScope(expectedScope)) throw new Error("Learning scope changed before saving note");
+      return learningApi.saveNote(note);
+    },
+    onSuccess: (n, { note: sent, expectedScope }) => {
+      if (!isCurrentStudyScope(expectedScope)) return;
       const current = draftRef.current;
       // A late save response must never erase text typed while the request was pending.
       const next =
@@ -214,12 +230,12 @@ export function StudyNote({
   const text = draft?.text ?? existing?.text ?? "";
   const save = () => {
     if (draft && navigator.onLine && !mutation.isPending && !conflictingNote)
-      mutation.mutate(draft);
+      mutation.mutate({ note: draft, expectedScope: scope });
   };
   useEffect(() => {
     const online = () => {
       if (draftRef.current && !mutation.isPending && !mutation.isError)
-        mutation.mutate(draftRef.current);
+        mutation.mutate({ note: draftRef.current, expectedScope: scope });
     };
     window.addEventListener("online", online);
     return () => window.removeEventListener("online", online);

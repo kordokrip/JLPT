@@ -1,5 +1,13 @@
 # Sub Agent 운영 인수인계
 
+## 최신 요청 — 지도 통합 검증 후 조건부 Production
+
+사용자가 서브에이전트를 활용한 기능·바인딩·이벤트 교차검증과 통과 후 배포를 요청했다. [지도 통합 기록](LEARNING_MAP_UX_2026-10-13.md)의 INC-UI-107–109와 최종 후보 결과부터 확인한다. 초기 실패를 지우지 않는다. UI 변경을 이유로 기존0031/0032·600문항/220레슨의 migration/공개를 재실행하지 않는다. 새 Preview의 가족/가청은 이전494f4ff9 확인과 별개다. Pages-only 회귀는 직전 정상 Pages로 복귀하며 현재 정상 Worker·DB는 보존한다.
+
+## 현재 작업 — 승인 방향의 지도·레슨·완료 구현
+
+[학습 지도 기록](LEARNING_MAP_UX_2026-10-13.md), `.superdesign/design-system.md`, `.superdesign/resume.json`을 먼저 읽는다. 사용자는 이미지 개선 후 레슨·완료 화면 구현을 요청했다. 같은 Superdesign 프로젝트/방향을 이어 쓰며 전체 초기화/기준 시안 유료 재생성을 반복하지 않는다. 네 메뉴·기존 API/DB/학습 기록·음성 코어를 보존하고 UI flag false로 기존 화면에 복귀한다. 아래 운영 릴리스 완료와 새 UI의 로컬 검사/미배포 상태는 별개다.
+
 ## 최신 인수인계 — 2026-10-13
 
 **최종 배포 완료:**16:20:53 KST, Pages6b8b8a19/Worker71e71638/source37486f8/D10032. 점검off·두queue원복·smoke7/7·실제 운영Chrome ko/ja onend/HAR0 확인. `production-37486f8-runtime-runtime-20261013-01/result.json`이 최종 성공이며 원래W03failed는 그대로 보존한다. 다음 작업은 재배포가 아니라 D+1/7/30 관찰과 문서 최신 상태 조회다.

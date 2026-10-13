@@ -58,11 +58,12 @@ test("Japanese owner explanation is not completion; explicit completion creates 
 });
 
 for (const language of ["ko", "ja"] as const) {
-  test("quick lesson starts, resumes, and records one accepted step " + language, async ({ page }) => {
+  test("quick session resumes from the map and records one accepted step " + language, async ({ page }) => {
     const copy = locale[language];
     await register(page, language);
     await page.getByRole("button", { name: copy.save, exact: true }).click();
-    const quickStart = page.getByRole("button", { name: language === "ko" ? "3~5분 빠르게 시작" : "3〜5分で始める" });
+    // 강성호 2026-10-13: API 직접 생성으로 UI 진입 누락을 숨기지 않고 실제 quick 버튼을 누른다.
+    const quickStart = page.getByRole("button", { name: language === "ko" ? "3~5분 빠르게 시작" : "3〜5分で始める", exact: true });
     await expect(quickStart).toBeVisible();
     const target = await quickStart.boundingBox();
     expect(target?.height ?? 0).toBeGreaterThanOrEqual(44);
@@ -143,6 +144,7 @@ for (const language of ["ko", "ja"] as const) {
           .data;
       let session = await get(),
         loop = 0;
+      await page.screenshot({ path: test.info().outputPath(`lesson-${language}.png`), fullPage: false });
       while (session.status !== "completed" && loop++ < 30) {
         const step = session.steps.find((s: any) => !s.submitted);
         if (step.phase === "learn" || step.phase === "review") {
@@ -201,6 +203,7 @@ for (const language of ["ko", "ja"] as const) {
               : "今日の学習を終えました",
         }),
       ).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath(`completion-${language}.png`), fullPage: false });
       await page.goto(language === "ko" ? "/" : "/track/topik-ko");
       await page.getByRole("button", { name: copy.start }).click();
       await expect(

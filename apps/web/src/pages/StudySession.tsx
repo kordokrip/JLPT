@@ -21,12 +21,16 @@ import {
   studyPrimary,
 } from "../features/study/StudyComponents";
 import { useSettingsStore } from "../stores/settings-store";
+import { useAuthStore } from "../stores/auth-store";
 import { useLearningProfile } from "../hooks/useLearningProfile";
 import { homePathForTrack } from "../lib/track-registry";
+import { localUserIdFor } from "../lib/db";
 import {
   StudyRequestError,
   isStudyTrackConflict,
 } from "../features/study/StudyRequestError";
+import { LEARNING_MAP_ENABLED } from "../lib/features";
+import "../features/study/learning-session.css";
 type Pending = { step: string; body: StudySubmission };
 export default function StudySession() {
   const scope = useDataScope(),
@@ -38,10 +42,25 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
     qc = useQueryClient(),
     navigate = useNavigate();
   const profile = useLearningProfile();
-  const home = homePathForTrack(useSettingsStore((s) => s.learningTrack));
+  const learningTrack = useSettingsStore((s) => s.learningTrack);
+  const home = homePathForTrack(learningTrack);
+  const scopeIsCurrent = () =>
+    scope ===
+    localUserIdFor(
+      useAuthStore.getState().user?.id ?? null,
+      useSettingsStore.getState().learningTrack,
+    );
+  const requireCurrentScope = () => {
+    if (!scopeIsCurrent()) throw new Error("Learning scope changed");
+  };
   const query = useQuery({
     queryKey: ["study-session", scope, id],
-    queryFn: () => learningApi.session(id),
+    queryFn: async () => {
+      requireCurrentScope();
+      const result = await learningApi.session(id);
+      requireCurrentScope();
+      return result;
+    },
     retry: 1,
   });
   const [cache, setCache] = useState<Session | null>(() =>
@@ -60,36 +79,84 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
   const serverStatus = (query.error as { status?: number } | null)?.status;
   const denied = !!serverStatus && serverStatus >= 400 && serverStatus < 500;
   const session = denied ? null : (query.data ?? cache);
+  // Lesson titles are display-only. They are never inferred from the learner's
+  // current profile: an open session is bound to its own level and version.
+  const lessonCatalog = useQuery({
+    queryKey: [
+      "learning-lessons",
+      scope,
+      session?.level,
+      profile.data?.instruction_language,
+    ],
+    queryFn: async () => {
+      requireCurrentScope();
+      const result = await learningApi.lessons(session!.level);
+      requireCurrentScope();
+      return result;
+    },
+    enabled:
+      LEARNING_MAP_ENABLED &&
+      Boolean(session?.lesson_id) &&
+      Boolean(profile.data?.instruction_language) &&
+      session?.learning_track === learningTrack &&
+      scopeIsCurrent(),
+    retry: 1,
+  });
+  const lesson = lessonCatalog.data?.lessons.find(
+    (candidate) =>
+      candidate.id === session?.lesson_id &&
+      candidate.version === session?.lesson_version,
+  );
   const completedRecords = useQuery({
     queryKey: ["study-records", scope, "7d"],
-    queryFn: () => learningApi.records("7d"),
-    enabled: session?.status === "completed",
+    queryFn: async () => {
+      requireCurrentScope();
+      const result = await learningApi.records("7d");
+      requireCurrentScope();
+      return result;
+    },
+    enabled:
+      session?.status === "completed" &&
+      !pending &&
+      !submissionConflict &&
+      scopeIsCurrent(),
     retry: 1,
   });
   const accept = (s: Session) => {
+    if (!scopeIsCurrent()) return false;
     qc.setQueryData(["study-session", scope, id], s);
     setCache(s);
     setStorageOk(writeStudyLocal(scope, "session:" + id, s));
     void qc.invalidateQueries({ queryKey: ["study-current", scope] });
     void qc.invalidateQueries({ queryKey: ["study-records", scope] });
+    void qc.invalidateQueries({ queryKey: ["learning-lessons", scope] });
+    void qc.invalidateQueries({ queryKey: ["learning-motivation", scope] });
+    return true;
   };
   useEffect(() => {
-    if (query.data) {
+    if (query.data && scopeIsCurrent()) {
       setCache(query.data);
       setStorageOk(writeStudyLocal(scope, "session:" + id, query.data));
     }
   }, [query.data]);
   const submit = useMutation({
-    mutationFn: (p: Pending) => learningApi.submit(id, p.step, p.body),
+    mutationFn: async (p: Pending) => {
+      requireCurrentScope();
+      const result = await learningApi.submit(id, p.step, p.body);
+      requireCurrentScope();
+      return result;
+    },
     onSuccess: (s) => {
-      accept(s);
+      if (!accept(s)) return;
       setPending(null);
       writeStudyLocal(scope, "pending:" + id, null);
     },
     onError: async (error, p) => {
+      if (!scopeIsCurrent()) return;
       if ((error as { status?: number }).status !== 409) return;
       if (isStudyTrackConflict(error)) return;
       const latest = await query.refetch();
+      if (!scopeIsCurrent()) return;
       if (latest.error || !latest.data) return;
       // A different accepted request must never be overwritten or counted again.
       // Keep the unaccepted local response until the learner acknowledges it.
@@ -104,27 +171,44 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
   });
   useEffect(() => {
     const sync = () => {
-      if (pending && !submissionConflict) submit.mutate(pending);
+      if (scopeIsCurrent() && pending && !submissionConflict) submit.mutate(pending);
     };
     window.addEventListener("online", sync);
     if (navigator.onLine && pending && !submissionConflict) sync();
     return () => window.removeEventListener("online", sync);
   }, [pending, submissionConflict]);
   const reveal = useMutation({
-    mutationFn: (step: string) => learningApi.reveal(id, step),
-    onSuccess: accept,
-  });
-  const pause = useMutation({
-    mutationFn: () => learningApi.status(id, "paused"),
+    mutationFn: async (step: string) => {
+      requireCurrentScope();
+      const result = await learningApi.reveal(id, step);
+      requireCurrentScope();
+      return result;
+    },
     onSuccess: (s) => {
       accept(s);
+    },
+  });
+  const pause = useMutation({
+    mutationFn: async () => {
+      requireCurrentScope();
+      const result = await learningApi.status(id, "paused");
+      requireCurrentScope();
+      return result;
+    },
+    onSuccess: (s) => {
+      if (!accept(s)) return;
       navigate(home);
     },
   });
   const abandon = useMutation({
-    mutationFn: () => learningApi.status(id, "abandoned"),
+    mutationFn: async () => {
+      requireCurrentScope();
+      const result = await learningApi.status(id, "abandoned");
+      requireCurrentScope();
+      return result;
+    },
     onSuccess: (s) => {
-      accept(s);
+      if (!accept(s)) return;
       writeStudyLocal(scope, "pending:" + id, null);
       navigate(home);
     },
@@ -180,11 +264,12 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
       ? selected
       : next;
   const move = (s: StudyStep | undefined) => {
+    if (!scopeIsCurrent()) return;
     setCursor(s?.id ?? null);
     writeStudyLocal(scope, "cursor:" + id, s?.id ?? null);
   };
   const submitStep = (body: Omit<StudySubmission, "request_id">) => {
-    if (!step || pending) return;
+    if (!scopeIsCurrent() || !step || pending) return;
     const p = {
       step: step.id,
       body: { ...body, request_id: crypto.randomUUID() },
@@ -193,36 +278,56 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
     setStorageOk(writeStudyLocal(scope, "pending:" + id, p));
     move(step);
   };
+  const done = session.steps.filter((s) => s.submitted).length;
+  const isCompleted =
+    session.status === "completed" && !pending && !submissionConflict;
+  const copy = sessionCopy(i18n.language);
   return (
-    <div className="app-page mx-auto max-w-3xl space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-[var(--accent)]">
+    <div
+      data-learning-track={LEARNING_MAP_ENABLED ? session.learning_track : undefined}
+      className={
+        LEARNING_MAP_ENABLED
+          ? "app-page learning-session mx-auto max-w-3xl space-y-5"
+          : "app-page mx-auto max-w-3xl space-y-5"
+      }
+    >
+      <header
+        className={
+          LEARNING_MAP_ENABLED
+            ? "learning-session__header"
+            : "flex flex-wrap items-center justify-between gap-3"
+        }
+      >
+        <div className={LEARNING_MAP_ENABLED ? "learning-session__heading" : ""}>
+          {!(LEARNING_MAP_ENABLED && isCompleted) && <p className="text-sm font-semibold text-[var(--accent)]">
             {t(session.mode === "quick" ? "study.quickLesson" : "study.dailyLesson")}
-          </p>
-          <h1 className="text-xl font-bold">{t("study.resume")}</h1>
+          </p>}
+          <h1 className="text-xl font-bold">
+            {LEARNING_MAP_ENABLED && lesson ? lesson.title : LEARNING_MAP_ENABLED && isCompleted ? t(session.mode === "quick" ? "study.quickLesson" : "study.dailyLesson") : t("study.resume")}
+          </h1>
         </div>
-        <button
-          className={studyButton}
+        {!(LEARNING_MAP_ENABLED && isCompleted) && <button
+          className={LEARNING_MAP_ENABLED ? studyButton + " learning-session__pause" : studyButton}
           disabled={pause.isPending || !!pending}
-          onClick={() => (navigator.onLine ? pause.mutate() : navigate(home))}
+          onClick={() => {
+            if (!scopeIsCurrent()) return;
+            navigator.onLine ? pause.mutate() : navigate(home);
+          }}
         >
           {t("study.pause")}
-        </button>
+        </button>}
       </header>
-      <p role="status">
-        {t("study.step", {
-          done: session.steps.filter((s) => s.submitted).length,
-          total: session.steps.length,
-        })}{" "}
-        · {session.level}
-      </p>
-      <progress
-        className="h-2 w-full"
-        value={session.steps.filter((s) => s.submitted).length}
-        max={session.steps.length}
-      />
-      {session.notices.map((n) => (
+      {!(LEARNING_MAP_ENABLED && isCompleted) && <div className={LEARNING_MAP_ENABLED ? "learning-session__progress" : ""} aria-label={LEARNING_MAP_ENABLED ? t("study.step", { done, total: session.steps.length }) : undefined}>
+        <p role="status">
+          {t("study.step", { done, total: session.steps.length })} · {session.level}
+        </p>
+        <progress
+          className={LEARNING_MAP_ENABLED ? "learning-session__progress-bar" : "h-2 w-full"}
+          value={done}
+          max={session.steps.length}
+        />
+      </div>}
+      {!(LEARNING_MAP_ENABLED && isCompleted) && session.notices.map((n) => (
         <p className="text-sm text-[var(--text-secondary)]" key={n}>
           {t(
             n.startsWith("unavailable:")
@@ -242,6 +347,7 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
           <button
             className={studyButton}
             onClick={() => {
+              if (!scopeIsCurrent()) return;
               const stored = writeStudyLocal(
                 scope,
                 "unaccepted:" + id + ":" + submissionConflict.step,
@@ -288,53 +394,113 @@ function SessionView({ scope, id }: { scope: string; id: string }) {
             onSubmit={submitStep}
           />
           {step.submitted && (
+            <div className={LEARNING_MAP_ENABLED ? "learning-session__action-dock" : ""}>
             <button
               className={studyPrimary + " w-full"}
               onClick={() => move(next)}
             >
               {t(next ? "study.next" : "study.done")}
             </button>
+            </div>
           )}
-          <ContentNote step={step} />
+          {LEARNING_MAP_ENABLED ? (
+            <details className="learning-session__note">
+              <summary>{copy.note}</summary>
+              <ContentNote step={step} />
+            </details>
+          ) : (
+            <ContentNote step={step} />
+          )}
         </>
-      ) : (
-        <section className="surface-panel space-y-4 p-6">
+      ) : isCompleted ? (
+        <section
+          className={
+            LEARNING_MAP_ENABLED
+              ? "learning-session__completion"
+              : "surface-panel space-y-4 p-6"
+          }
+        >
+          {LEARNING_MAP_ENABLED && <div className="learning-session__check" aria-hidden="true">✓</div>}
           <h2 className="text-2xl font-bold">{t("study.done")}</h2>
+          {LEARNING_MAP_ENABLED && <p className="learning-session__warm-copy">{copy.complete}</p>}
           <p>
             {t("study.completionSummary", {
-              done: session.steps.filter((s) => s.submitted).length,
+              done,
               total: session.steps.length,
             })}
           </p>
-          <p>
-            {t("study.first")}: {session.steps.filter((s) => s.phase === "practice" && s.correct === true).length}/
-            {session.steps.filter((s) => s.phase === "practice" && s.correct !== null).length}
-            {" · "}
-            {t("study.retryMetric")}: {session.steps.filter((s) => s.phase === "retry" && s.correct === true).length}/
-            {session.steps.filter((s) => s.phase === "retry" && s.correct !== null).length}
-          </p>
-          <p>
+          <div className={LEARNING_MAP_ENABLED ? "learning-session__metrics" : ""}>
+            <p>
+              {t("study.first")}: {session.steps.filter((s) => s.phase === "practice" && s.correct === true).length}/
+              {session.steps.filter((s) => s.phase === "practice" && s.correct !== null).length}
+            </p>
+            <p>
+              {t("study.retryMetric")}: {session.steps.filter((s) => s.phase === "retry" && s.correct === true).length}/
+              {session.steps.filter((s) => s.phase === "retry" && s.correct !== null).length}
+            </p>
+          </div>
+          <p className={LEARNING_MAP_ENABLED ? "learning-session__review" : ""}>
             {t("study.nextReview")}: {completedRecords.data?.next_review_at
               ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short", timeZone: profile.data?.timezone ?? (session.learning_track === "topik-ko" ? "Asia/Tokyo" : "Asia/Seoul") }).format(new Date(completedRecords.data.next_review_at * 1000))
-              : completedRecords.isPending ? t("study.loading") : t("study.noReview")}
+              : completedRecords.isPending ? t("study.loading")
+                : completedRecords.isError ? t("study.error")
+                  : t("study.noReview")}
           </p>
-          <p>{t("study.summary")}</p>
+          {!LEARNING_MAP_ENABLED && <p>{t("study.summary")}</p>}
           <Link
-            className={studyPrimary + " inline-flex items-center"}
-            to="/records"
+            className={LEARNING_MAP_ENABLED ? "learning-session__primary-action" : studyPrimary + " inline-flex items-center"}
+            to={LEARNING_MAP_ENABLED ? home : "/records"}
           >
-            {t("study.records")}
+            {LEARNING_MAP_ENABLED ? copy.backToMap : t("study.records")}
           </Link>
           <Link
-            className={studyButton + " ml-3 inline-flex items-center"}
-            to={home}
+            className={LEARNING_MAP_ENABLED ? "learning-session__secondary-action" : studyButton + " ml-3 inline-flex items-center"}
+            to={LEARNING_MAP_ENABLED ? "/records" : home}
           >
-            {t("study.back")}
+            {LEARNING_MAP_ENABLED ? copy.records : t("study.back")}
           </Link>
+          {LEARNING_MAP_ENABLED && session.steps.some((s) => s.phase === "learn" && s.submitted) && (
+            <details className="learning-session__concepts">
+              <summary>{copy.concepts} ({session.steps.filter((s) => s.phase === "learn" && s.submitted).length})</summary>
+              <ul>{session.steps.filter((s) => s.phase === "learn" && s.submitted).map((s) => <li key={s.id}>{s.prompt}</li>)}</ul>
+            </details>
+          )}
+        </section>
+      ) : (
+        <section className="surface-panel space-y-4 p-6" role="status">
+          <p>{t("study.pending")}</p>
+          <button className={studyButton} onClick={() => void query.refetch()}>
+            {t("study.retry")}
+          </button>
         </section>
       )}
     </div>
   );
+}
+function sessionCopy(language: string) {
+  if (language.startsWith("ja"))
+    return {
+      note: "メモを開く",
+      complete: "お疲れ様でした！",
+      concepts: "学習した内容",
+      backToMap: "学習マップに戻る",
+      records: "学習記録を見る",
+    };
+  if (language.startsWith("ko"))
+    return {
+      note: "메모 열기",
+      complete: "참 잘했어요!",
+      concepts: "학습한 내용",
+      backToMap: "학습 지도로 돌아가기",
+      records: "학습 기록 보기",
+    };
+  return {
+    note: "Open notes",
+    complete: "Well done!",
+    concepts: "What you studied",
+    backToMap: "Back to learning map",
+    records: "View learning records",
+  };
 }
 function StepCard({
   step,
@@ -375,7 +541,13 @@ function StepCard({
   };
   return (
     <article className="surface-panel space-y-5 p-5 sm:p-7">
-      <p className="text-sm font-semibold text-[var(--accent)]">
+      <p
+        className={
+          LEARNING_MAP_ENABLED
+            ? "learning-session__phase-guide"
+            : "text-sm font-semibold text-[var(--accent)]"
+        }
+      >
         {t("study.phase." + step.phase)}
       </p>
       <h2
@@ -434,7 +606,11 @@ function StepCard({
             />
           )}
           <button
-            className={studyPrimary + " w-full"}
+            className={
+              studyPrimary +
+              " w-full" +
+              (LEARNING_MAP_ENABLED ? " learning-session__action-dock" : "")
+            }
             disabled={!answer.trim() || busy}
             onClick={() =>
               onSubmit({ answer, active_ms: Math.min(active.current, 1800000) })
@@ -445,7 +621,13 @@ function StepCard({
         </fieldset>
       )}
       {!question && !step.revealed && (
-        <button className={studyPrimary} disabled={busy} onClick={onReveal}>
+        <button
+          className={
+            studyPrimary + (LEARNING_MAP_ENABLED ? " learning-session__action-dock" : "")
+          }
+          disabled={busy}
+          onClick={onReveal}
+        >
           {t("study.reveal")}
         </button>
       )}
@@ -494,7 +676,12 @@ function StepCard({
             </div>
           )}
           {!question && !step.submitted && (
-            <div className="grid grid-cols-2 gap-3">
+            <div
+              className={
+                "grid grid-cols-2 gap-3" +
+                (LEARNING_MAP_ENABLED ? " learning-session__rating-dock" : "")
+              }
+            >
               {(["again", "hard", "good", "easy"] as const).map((rating) => (
                 <button
                   key={rating}

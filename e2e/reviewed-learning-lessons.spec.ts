@@ -8,8 +8,8 @@ if (!cohort || process.env.E2E_BASE_URL || process.env.E2E_REUSE_EXISTING_SERVER
   throw new Error("Reviewed lessons require approved local fixture, not remote/reused runtime");
 const bank = JSON.parse(readFileSync(join(cohort, "bundle.json"), "utf8"));
 const copies = {
-  ko: { name: "이름", email: "이메일", password: "비밀번호", create: "계정 만들기", target: "목표 급수", save: "저장", start: "추천 레슨 시작", pause: "저장하고 중단", resume: "이어서 공부", records: "기록" },
-  ja: { name: "名前", email: "メールアドレス", password: "パスワード", create: "アカウント作成", target: "目標レベル", save: "保存", start: "おすすめレッスンを開始", pause: "保存して中断", resume: "続きから学習", records: "記録" },
+  ko: { name: "이름", email: "이메일", password: "비밀번호", create: "계정 만들기", target: "목표 급수", save: "저장", pause: "저장하고 중단", resume: "이어서 공부", records: "기록", current: "현재 위치", complete: "완료" },
+  ja: { name: "名前", email: "メールアドレス", password: "パスワード", create: "アカウント作成", target: "目標レベル", save: "保存", pause: "保存して中断", resume: "続きから学習", records: "記録", current: "現在地", complete: "完了" },
 };
 async function data(response: APIResponse) {
   expect(response.ok(), `${response.status()} ${response.url()} ${await response.text()}`).toBe(true);
@@ -49,15 +49,20 @@ for (const level of ["N5", "N4", "N3", "N2", "N1", "1", "2", "3", "4", "5", "6"]
     const catalog = await get(catalogPath), expected = bank.lessons.filter((lesson: any) => lesson.track === track && lesson.level === level);
     expect(catalog.lessons.map((lesson: any) => lesson.id)).toEqual(expected.map((lesson: any) => lesson.id));
     expect(expected).toHaveLength(20);
+    const firstTitle = catalog.lessons[0]?.title;
+    expect(typeof firstTitle).toBe("string");
+    expect(firstTitle.trim()).not.toBe("");
     expect(catalog.lessons.every((lesson: any) => lesson.version === bank.version && !lesson.completed && !('answer_index' in lesson))).toBe(true);
     expect((await get("/api/v1/learning/records")).totals.learned).toBe(0);
     let choiceAnswers = 0;
     for (const [index, lesson] of expected.entries()) {
       let session: any;
       if (index === 0) {
-        await page.goto("/learn");
-        await expect(page.locator('[aria-labelledby="lesson-library-title"] article')).toHaveCount(20);
-        await page.getByRole("button", { name: copy.start, exact: true }).click();
+        await page.goto("/");
+        await expect(page.locator(".learning-map__node")).toHaveCount(20);
+        const firstNode = page.getByRole("button", { name: `${firstTitle}: ${copy.current}`, exact: true });
+        await expect(firstNode).toBeEnabled();
+        await firstNode.click();
         await expect(page).toHaveURL(/\/study\/[\w-]+$/);
         const sessionURL = page.url(), id = sessionURL.split("/").pop()!;
         session = await get(`/api/v1/study/sessions/${id}`);
@@ -126,6 +131,9 @@ for (const level of ["N5", "N4", "N3", "N2", "N1", "1", "2", "3", "4", "5", "6"]
       expect(session.status).toBe("completed");
     }
     expect((await get(catalogPath)).lessons.every((lesson: any) => lesson.completed)).toBe(true);
+    await page.goto("/");
+    await expect(page.locator(".learning-map__node")).toHaveCount(20);
+    await expect(page.getByRole("button", { name: `${firstTitle}: ${copy.complete}`, exact: true })).toBeVisible();
     const records = await get("/api/v1/learning/records");
     expect(records.totals.learned).toBe(40);
     expect(records.totals.first_answers).toBe(choiceAnswers);

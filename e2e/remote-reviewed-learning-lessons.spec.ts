@@ -24,8 +24,8 @@ const bankBytes=readFileSync(resolve(process.cwd(),'../packages/db/src/content/l
 if(createHash('sha256').update(bankBytes).digest('hex')!==receipt.cohort_hashes?.v7?.bundle || receipt.target.worker!=='nihongo-n3-api-topik-preview') throw new Error('Exact immutable bank and dedicated Worker binding required');
 const bank=JSON.parse(bankBytes.toString('utf8'));
 const copy={
-  ko:{name:'이름',email:'이메일',password:'비밀번호',create:'계정 만들기',target:'목표 급수',save:'저장',start:'추천 레슨 시작',pause:'저장하고 중단',resume:'이어서 공부',records:'기록'},
-  ja:{name:'名前',email:'メールアドレス',password:'パスワード',create:'アカウント作成',target:'目標レベル',save:'保存',start:'おすすめレッスンを開始',pause:'保存して中断',resume:'続きから学習',records:'記録'},
+  ko:{name:'이름',email:'이메일',password:'비밀번호',create:'계정 만들기',target:'목표 급수',save:'저장',pause:'저장하고 중단',resume:'이어서 공부',records:'기록',current:'현재 위치',complete:'완료'},
+  ja:{name:'名前',email:'メールアドレス',password:'パスワード',create:'アカウント作成',target:'目標レベル',save:'保存',pause:'保存して中断',resume:'続きから学習',records:'記録',current:'現在地',complete:'完了'},
 };
 async function data(response:APIResponse) {
   expect(response.ok(),`HTTP${response.status()} ${response.url()}`).toBe(true);
@@ -63,10 +63,15 @@ for(const level of ['N5','N4','N3','N2','N1','1','2','3','4','5','6']) {
     const catalog=await get(`/api/v1/learning/lessons?expected_track=${track}&level=${level}`);
     expect(catalog.lessons.map((lesson:any)=>lesson.id)).toEqual(expected.map((lesson:any)=>lesson.id));
     expect(catalog.lessons).toHaveLength(20);
+    const firstTitle=catalog.lessons[0]?.title;
+    expect(typeof firstTitle).toBe('string');
+    expect(firstTitle.trim()).not.toBe('');
     expect(catalog.lessons.every((lesson:any)=>!lesson.completed&&!('answer_index' in lesson))).toBe(true);
-    await page.goto('/learn');
-    await expect(page.locator('[aria-labelledby="lesson-library-title"] article')).toHaveCount(20);
-    await page.getByRole('button',{name:labels.start,exact:true}).click();
+    await page.goto('/');
+    await expect(page.locator('.learning-map__node')).toHaveCount(20);
+    const firstNode=page.getByRole('button',{name:`${firstTitle}: ${labels.current}`,exact:true});
+    await expect(firstNode).toBeEnabled();
+    await firstNode.click();
     await expect(page).toHaveURL(/\/study\/[\w-]+$/);
     const sessionURL=page.url(),id=sessionURL.split('/').pop()!;
     let session=await get(`/api/v1/study/sessions/${id}`);
@@ -102,6 +107,9 @@ for(const level of ['N5','N4','N3','N2','N1','1','2','3','4','5','6']) {
       }
     }
     expect(session.status).toBe('completed');
+    await page.goto('/');
+    await expect(page.locator('.learning-map__node')).toHaveCount(20);
+    await expect(page.getByRole('button',{name:`${firstTitle}: ${labels.complete}`,exact:true})).toBeVisible();
     const records=await get('/api/v1/learning/records');
     expect(records.totals.learned).toBe(2);
     expect(records.totals.first_answers).toBe(2);

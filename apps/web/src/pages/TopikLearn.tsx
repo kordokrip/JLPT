@@ -32,7 +32,7 @@ export default function TopikLearn() {
   useEffect(()=>{audio.stop();},[view,audio.stop]);
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
-  const [examLevel, setExamLevel] = useState<'TOPIK-I' | 'TOPIK-II'>('TOPIK-I');
+  const [examLevel, setExamLevel] = useState<'TOPIK-I' | 'TOPIK-II'>(() => searchParams.get('section') === 'writing' ? 'TOPIK-II' : 'TOPIK-I');
   const requestedSection = searchParams.get('section');
   const initialSection = requestedSection === 'writing' || requestedSection === 'reading'
     ? requestedSection

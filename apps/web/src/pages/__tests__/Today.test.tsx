@@ -10,6 +10,8 @@ import { useAuthStore } from "../../stores/auth-store";
 import { useSettingsStore } from "../../stores/settings-store";
 import Today from "../Today";
 
+vi.mock("../../lib/features", () => ({ LEARNING_MAP_ENABLED: false }));
+
 vi.mock("../../features/study/StudyComponents", () => ({
   ProfileForm: () => null,
   studyButton: "",

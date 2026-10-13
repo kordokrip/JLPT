@@ -16,7 +16,14 @@ import {
   studyPrimary,
 } from "../features/study/StudyComponents";
 import { isStudyTrackConflict, StudyRequestError } from "../features/study/StudyRequestError";
+import { LEARNING_MAP_ENABLED } from "../lib/features";
+import { LearningMap } from "../features/learning/LearningMap";
+
 export default function Today() {
+  return LEARNING_MAP_ENABLED ? <MapToday /> : <LegacyToday />;
+}
+
+function LegacyToday() {
   const { t } = useTranslation(),
     navigate = useNavigate(),
     scope = useDataScope(),
@@ -205,4 +212,19 @@ export default function Today() {
       </div>
     </div>
   );
+}
+
+function MapToday() {
+  const { t } = useTranslation();
+  const scope = useDataScope();
+  const profile = useLearningProfile();
+  const [editing, setEditing] = useState(false);
+  const profileData = profile.data ?? (!navigator.onLine ? readStudyLocal<LearningProfile>(scope, "profile") : null);
+  useEffect(() => {
+    if (profile.data) writeStudyLocal(scope, "profile", profile.data);
+  }, [profile.data, scope]);
+  if (profile.isPending && !profileData) return <div className="app-page" role="status">{t("study.loading")}</div>;
+  if (!profileData) return <div className="app-page"><StudyRequestError error={profile.error} />{!isStudyTrackConflict(profile.error) && <button className={studyButton} onClick={() => void profile.refetch()}>{t("study.retry")}</button>}</div>;
+  if (!profileData.configured || editing) return <div className="app-page mx-auto max-w-3xl space-y-6"><header><p className="text-sm font-semibold text-[var(--accent)]">{profileData.learning_track === "jlpt-ja" ? "JLPT" : "TOPIK"} · {profileData.target_level}</p><h1 className="mt-2 text-3xl font-bold">{t("study.title")}</h1><p className="mt-2 text-[var(--text-secondary)]">{t("study.subtitle")}</p></header><ProfileForm key={scope} profile={profileData} onSaved={() => setEditing(false)} /><div className="grid grid-cols-2 gap-3">{(["learn", "records"] as const).map(path => <Link className={studyButton + " flex items-center"} key={path} to={"/" + path}>{t("study." + path)}</Link>)}</div></div>;
+  return <LearningMap profile={profileData} onSetup={() => setEditing(true)} />;
 }

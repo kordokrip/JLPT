@@ -47,18 +47,21 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
         class="flex gap-2 flex-wrap"
       >
         <button
+          aria-pressed="true"
           class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
           type="button"
         >
           N5
         </button>
         <button
+          aria-pressed="false"
           class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
           type="button"
         >
           N4
         </button>
         <button
+          aria-pressed="false"
           class="min-h-11 px-4 rounded-full text-sm font-medium border transition-colors border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--accent)]"
           type="button"
         >

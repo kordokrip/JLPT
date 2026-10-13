@@ -1,5 +1,13 @@
 # 로컬 CI/CD 운영 기준
 
+## 지도 배포 후보의 후속 gate
+
+2026-10-13 기능 연결 전수 검증·조건부 배포가 승인됐다. [지도 통합 검증](LEARNING_MAP_UX_2026-10-13.md)에 초기 실패와 수정 후 최종 후보 검사를 분리한다. 새 공개 콘텐츠는 없으므로 운영 migration/stage/publish를 반복하지 않는다. Preview의 앱 후보와 Worker 코드는 대조하고, Production 변경은 필요한 프런트엔드로 제한한다. 기존37486f8 Pages를 새 UI의 복귀 대상으로 실제 조회한다. UI 회귀 때문에 기존600문항/220레슨을 철회하거나 정상 학습 DB를 복원하지 않는다.
+
+## 학습 지도 프런트엔드 gate — 2026-10-13
+
+현재 [학습 지도 개편](LEARNING_MAP_UX_2026-10-13.md)은 사용자 요청에 따른 로컬 프런트엔드 구현이다. 지도 우선순위·오류/빈 목록·intent 재전송·네 열 메뉴·버전 일치 제목·완료 기록을 검사한다. `VITE_LEARNING_MAP_ENABLED=false` 빌드는 기존 화면 복귀 수단이며 DB 복원/재시드를 하지 않는다. typecheck·전체 단위·build·영향 E2E·음성 계약·docs:catalog·docs:check·diff check·ops:status 결과를 구분해 기록한다. `.superdesign/tmp`, init, website는 Git에서 제외하며 디자인 계약·재개 상태·최종 장식 이미지는 보존한다. 새 Preview와 실제 두 학습자/가청 확인은 로컬 mock으로 대체하지 않는다.
+
 ## 현행 gate — 2026-10-13 후보37486f8
 
 동일 clean 후보의 단위718·OpenAPI/typecheck/build/fresh0032·reviewed44, 기존 E2E265통과/기존정책30제외/실패0, 실제 빌드 PWA24/24, 최종 Preview44/44를 확인했다. Preview494f4ff9의 두 학습자 동선·ko/ja 사용자 가청과 실제 Chrome onend/HAR의 R2·legacy0도 연결했다. 정확한 출판·배포 상태는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다. 아래 이전 후보의 미완료 수치를 현재 gate로 읽지 않는다.

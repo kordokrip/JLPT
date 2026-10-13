@@ -5,20 +5,22 @@ import { api } from '../../lib/api';
 import { useTrackStatus } from '../../hooks/useTrackStatus';
 import { isQuizMode, toQuizAnswers } from './logic';
 import type { JlptLevel, QuizGenerateResponse, QuizMode, QuizQuestion, QuizStrategy, QuizSubmitResponse } from './types';
-import { DEFAULT_JLPT_LEVEL } from '@nihongo-n3/shared';
+import { DEFAULT_JLPT_LEVEL, isJlptLevel } from '@nihongo-n3/shared';
 import { useLearningProfile } from '../../hooks/useLearningProfile';
 
 export function useQuizRoute() {
   const { mode: rawMode } = useParams<{ mode?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const mode = isQuizMode(rawMode) ? rawMode : undefined;
 
   return {
     rawMode,
     mode,
     selectMode: useCallback((nextMode: QuizMode) => {
-      navigate(`/quiz/${nextMode}`);
-    }, [navigate]),
+      const level = searchParams.get('level');
+      navigate(`/quiz/${nextMode}${isJlptLevel(level) ? `?level=${encodeURIComponent(level)}` : ''}`);
+    }, [navigate, searchParams]),
   };
 }
 
@@ -32,7 +34,12 @@ export function useQuizSession(mode: QuizMode) {
   const { levels } = useTrackStatus();
   const profile = useLearningProfile();
   const target = profile.data?.target_level;
-  const defaultLevel: JlptLevel = target?.startsWith('N') ? target as JlptLevel : 'N5';
+  const profileLevel: JlptLevel = target?.startsWith('N') ? target as JlptLevel : 'N5';
+  const requestedLevel = searchParams.get('level');
+  // A valid explicit level remains explicit even when this client has no published
+  // status for it; the server must reject unavailable content rather than silently
+  // changing the learner's requested grade.
+  const defaultLevel: JlptLevel = isJlptLevel(requestedLevel) ? requestedLevel : profileLevel;
   const [chosenLevel, setLevel] = useState<JlptLevel | null>(null);
   const level = chosenLevel ?? defaultLevel;
   const [count, setCount] = useState(5);

@@ -2,7 +2,7 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **915개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **930개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
@@ -18,18 +18,18 @@
 | Worker 진입점 및 설정 | 21 |
 | 공통 API 및 학습 계약 | 21 |
 | 로컬 운영 스크립트 및 테스트 | 31 |
-| 루트 실행 및 정책 | 13 |
+| 루트 실행 및 정책 | 15 |
 | 문서 이력 | 1 |
 | 문서 진입점 | 3 |
 | 브라우저 시각 기준 | 60 |
-| 브라우저 테스트 및 설정 | 34 |
-| 브랜드 및 PWA 자산 | 12 |
-| 앱 회귀 테스트 | 62 |
-| 운영 문서 | 25 |
-| 웹 공통 상태·계약·음성 | 45 |
+| 브라우저 테스트 및 설정 | 35 |
+| 브랜드 및 PWA 자산 | 13 |
+| 앱 회귀 테스트 | 67 |
+| 운영 문서 | 26 |
+| 웹 공통 상태·계약·음성 | 46 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
-| 학습 기능 | 57 |
+| 학습 기능 | 61 |
 | 학습 콘텐츠 원본 | 34 |
 | 학습 화면 | 31 |
 
@@ -523,6 +523,8 @@
 - [.env.example](../../.env.example)
 - [.gitignore](../../.gitignore)
 - [.node-version](../../.node-version)
+- [.superdesign/design-system.md](../../.superdesign/design-system.md)
+- [.superdesign/resume.json](../../.superdesign/resume.json)
 - [AGENTS.md](../../AGENTS.md)
 - [LICENSE](../../LICENSE)
 - [PROJECT_CODEBASE_ANALYSIS.md](../../PROJECT_CODEBASE_ANALYSIS.md)
@@ -616,6 +618,7 @@
 - [e2e/learning-activity.spec.ts](../../e2e/learning-activity.spec.ts)
 - [e2e/learning-experience.spec.ts](../../e2e/learning-experience.spec.ts)
 - [e2e/learning-lessons.spec.ts](../../e2e/learning-lessons.spec.ts)
+- [e2e/learning-map.spec.ts](../../e2e/learning-map.spec.ts)
 - [e2e/learning-track-isolation.spec.ts](../../e2e/learning-track-isolation.spec.ts)
 - [e2e/menu-smoke.spec.ts](../../e2e/menu-smoke.spec.ts)
 - [e2e/mobile-touch-audit.spec.ts](../../e2e/mobile-touch-audit.spec.ts)
@@ -651,6 +654,7 @@
 - [apps/web/public/brand-mark.png](../../apps/web/public/brand-mark.png)
 - [apps/web/public/favicon-16.png](../../apps/web/public/favicon-16.png)
 - [apps/web/public/favicon-32.png](../../apps/web/public/favicon-32.png)
+- [apps/web/public/learning-journey.png](../../apps/web/public/learning-journey.png)
 - [apps/web/public/masked-icon.svg](../../apps/web/public/masked-icon.svg)
 - [apps/web/public/page-bg-unified.png](../../apps/web/public/page-bg-unified.png)
 - [apps/web/public/pwa-192x192.png](../../apps/web/public/pwa-192x192.png)
@@ -675,8 +679,11 @@
 - [apps/web/src/components/PwaUpdatePrompt.test.tsx](../../apps/web/src/components/PwaUpdatePrompt.test.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.test.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.test.tsx)
 - [apps/web/src/components/feature/SRSCard.test.tsx](../../apps/web/src/components/feature/SRSCard.test.tsx)
+- [apps/web/src/components/layout/BottomTabBar.test.tsx](../../apps/web/src/components/layout/BottomTabBar.test.tsx)
 - [apps/web/src/features/browse/types.test.ts](../../apps/web/src/features/browse/types.test.ts)
 - [apps/web/src/features/learning/LearnerLessonLibrary.test.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.test.tsx)
+- [apps/web/src/features/learning/LearningMap.helpers.test.ts](../../apps/web/src/features/learning/LearningMap.helpers.test.ts)
+- [apps/web/src/features/learning/LearningMap.test.tsx](../../apps/web/src/features/learning/LearningMap.test.tsx)
 - [apps/web/src/features/learning/next-action.test.ts](../../apps/web/src/features/learning/next-action.test.ts)
 - [apps/web/src/features/quiz/logic.test.ts](../../apps/web/src/features/quiz/logic.test.ts)
 - [apps/web/src/features/review/logic.test.ts](../../apps/web/src/features/review/logic.test.ts)
@@ -689,6 +696,7 @@
 - [apps/web/src/features/topik/owner-private-content.test.ts](../../apps/web/src/features/topik/owner-private-content.test.ts)
 - [apps/web/src/features/topik/useKoreanAudio.test.tsx](../../apps/web/src/features/topik/useKoreanAudio.test.tsx)
 - [apps/web/src/hooks/useLearningActivity.test.tsx](../../apps/web/src/hooks/useLearningActivity.test.tsx)
+- [apps/web/src/hooks/useLearningProfile.test.tsx](../../apps/web/src/hooks/useLearningProfile.test.tsx)
 - [apps/web/src/hooks/useSRS.test.tsx](../../apps/web/src/hooks/useSRS.test.tsx)
 - [apps/web/src/lib/__tests__/activity-events.test.ts](../../apps/web/src/lib/__tests__/activity-events.test.ts)
 - [apps/web/src/lib/__tests__/api-normalize.test.ts](../../apps/web/src/lib/__tests__/api-normalize.test.ts)
@@ -706,6 +714,7 @@
 - [apps/web/src/pages/__tests__/AudioQa.test.tsx](../../apps/web/src/pages/__tests__/AudioQa.test.tsx)
 - [apps/web/src/pages/__tests__/CharacterTrainer.test.ts](../../apps/web/src/pages/__tests__/CharacterTrainer.test.ts)
 - [apps/web/src/pages/__tests__/Curriculum.test.ts](../../apps/web/src/pages/__tests__/Curriculum.test.ts)
+- [apps/web/src/pages/__tests__/LearnHub.test.ts](../../apps/web/src/pages/__tests__/LearnHub.test.ts)
 - [apps/web/src/pages/__tests__/Quiz.test.tsx](../../apps/web/src/pages/__tests__/Quiz.test.tsx)
 - [apps/web/src/pages/__tests__/QuizListening.test.ts](../../apps/web/src/pages/__tests__/QuizListening.test.ts)
 - [apps/web/src/pages/__tests__/QuizResult.test.tsx](../../apps/web/src/pages/__tests__/QuizResult.test.tsx)
@@ -737,6 +746,7 @@
 - [docs/00_overview/ERROR_LEDGER.md](../../docs/00_overview/ERROR_LEDGER.md)
 - [docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md](../../docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)
 - [docs/00_overview/LEARNING_EXPERIENCE_PLAN.md](../../docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)
+- [docs/00_overview/LEARNING_MAP_UX_2026-10-13.md](../../docs/00_overview/LEARNING_MAP_UX_2026-10-13.md)
 - [docs/00_overview/LOCAL_CICD_MANAGEMENT.md](../../docs/00_overview/LOCAL_CICD_MANAGEMENT.md)
 - [docs/00_overview/LOCAL_CICD_OPERATIONS.md](../../docs/00_overview/LOCAL_CICD_OPERATIONS.md)
 - [docs/00_overview/LOCAL_RELEASE_LEDGER.md](../../docs/00_overview/LOCAL_RELEASE_LEDGER.md)
@@ -778,6 +788,7 @@
 - [apps/web/src/lib/content-cache.ts](../../apps/web/src/lib/content-cache.ts)
 - [apps/web/src/lib/db.ts](../../apps/web/src/lib/db.ts)
 - [apps/web/src/lib/device-profile.ts](../../apps/web/src/lib/device-profile.ts)
+- [apps/web/src/lib/features.ts](../../apps/web/src/lib/features.ts)
 - [apps/web/src/lib/fsrs-client.ts](../../apps/web/src/lib/fsrs-client.ts)
 - [apps/web/src/lib/google-browser-speech.ts](../../apps/web/src/lib/google-browser-speech.ts)
 - [apps/web/src/lib/learning-experience.ts](../../apps/web/src/lib/learning-experience.ts)
@@ -909,6 +920,9 @@
 - [apps/web/src/features/character-trainer/types.ts](../../apps/web/src/features/character-trainer/types.ts)
 - [apps/web/src/features/character-trainer/useCharacterTrainer.ts](../../apps/web/src/features/character-trainer/useCharacterTrainer.ts)
 - [apps/web/src/features/learning/LearnerLessonLibrary.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.tsx)
+- [apps/web/src/features/learning/LearningMap.css](../../apps/web/src/features/learning/LearningMap.css)
+- [apps/web/src/features/learning/LearningMap.helpers.ts](../../apps/web/src/features/learning/LearningMap.helpers.ts)
+- [apps/web/src/features/learning/LearningMap.tsx](../../apps/web/src/features/learning/LearningMap.tsx)
 - [apps/web/src/features/learning/next-action.ts](../../apps/web/src/features/learning/next-action.ts)
 - [apps/web/src/features/quiz-listening/ListeningAudioPlayer.tsx](../../apps/web/src/features/quiz-listening/ListeningAudioPlayer.tsx)
 - [apps/web/src/features/quiz-listening/QuizListeningView.tsx](../../apps/web/src/features/quiz-listening/QuizListeningView.tsx)
@@ -935,6 +949,7 @@
 - [apps/web/src/features/stats/useStats.ts](../../apps/web/src/features/stats/useStats.ts)
 - [apps/web/src/features/study/StudyComponents.tsx](../../apps/web/src/features/study/StudyComponents.tsx)
 - [apps/web/src/features/study/StudyRequestError.tsx](../../apps/web/src/features/study/StudyRequestError.tsx)
+- [apps/web/src/features/study/learning-session.css](../../apps/web/src/features/study/learning-session.css)
 - [apps/web/src/features/study/study.css](../../apps/web/src/features/study/study.css)
 - [apps/web/src/features/topik/OwnerPrivateTopikPanel.tsx](../../apps/web/src/features/topik/OwnerPrivateTopikPanel.tsx)
 - [apps/web/src/features/topik/character-trainer/HangulTrainerView.tsx](../../apps/web/src/features/topik/character-trainer/HangulTrainerView.tsx)
