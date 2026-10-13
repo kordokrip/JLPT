@@ -12,6 +12,10 @@ export type CohortRemoteTarget = D1TargetOptions & {
 };
 const PRODUCTION_DB_ID = '0a22d92a-4af5-486f-8934-84eb1890835c';
 const PREVIEW_DB_ID = '5c8863e9-09ea-4180-adb5-e097f4b8de34';
+const ROLLBACK_TARGETS = [
+  { database: 'nihongo-n3-learning-rollback-20261013', worker: 'nihongo-n3-learning-rollback-20261013', pagesProject: 'nihongo-n3-learning-rollback' },
+  { database: 'nihongo-n3-learning-rollback-20261013-r2', worker: 'nihongo-n3-learning-rollback-20261013-r2', pagesProject: 'nihongo-n3-learning-rollback-r2' },
+] as const;
 export const COHORT_CHANGE_TOKEN = 'learning-cohort-600-2026-10-13';
 
 export function validateCohortIdentity(target: CohortRemoteTarget, binding: {database:string; id:string; worker:string}): void {
@@ -22,7 +26,10 @@ export function validateCohortIdentity(target: CohortRemoteTarget, binding: {dat
   } else if (target.scope === 'preview') {
     if (target.env !== 'topik-preview' || target.database !== 'nihongo-n3-topik-preview' || binding.id !== PREVIEW_DB_ID || target.worker !== 'nihongo-n3-api-topik-preview' || !/^https:\/\/[a-f0-9]{8}\.nihongo-n3\.pages\.dev$/.test(target.pages)) throw new Error('Preview target mismatch');
   } else if (target.scope === 'rollback-drill') {
-    if (target.env || target.database !== 'nihongo-n3-learning-rollback-20261013' || target.worker !== 'nihongo-n3-learning-rollback-20261013' || !/^[a-f0-9-]{36}$/.test(binding.id) || [PRODUCTION_DB_ID,PREVIEW_DB_ID].includes(binding.id) || !/^https:\/\/[a-f0-9]{8}\.nihongo-n3-learning-rollback\.pages\.dev$/.test(target.pages)) throw new Error('Isolated rollback target mismatch');
+    const allowed = ROLLBACK_TARGETS.find(({ database, worker, pagesProject }) =>
+      target.database === database && target.worker === worker &&
+      new RegExp(`^https://[a-f0-9]{8}\\.${pagesProject}\\.pages\\.dev$`).test(target.pages));
+    if (target.env || !allowed || !/^[a-f0-9-]{36}$/.test(binding.id) || [PRODUCTION_DB_ID,PREVIEW_DB_ID].includes(binding.id)) throw new Error('Isolated rollback target mismatch');
   } else throw new Error('Unsupported target scope');
 }
 
