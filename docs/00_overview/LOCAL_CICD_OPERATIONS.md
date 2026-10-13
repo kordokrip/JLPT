@@ -1,5 +1,11 @@
 # 로컬 CI/CD 운영 기준
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
+2026-10-13 PWA 후속 gate: `node scripts/run-pwa-update-gates.mjs --legacy-root=<직전 실제 clean source worktree>`로 실제 SW가 있는 두 격리 빌드와 직전 실제 빌드를 검사한다. synthetic build SHA/익명 API/합성 IndexedDB 검사이며 콘텐츠·가청·Production 증거가 아니다. 최신22/24·Chrome 최초 전환2실패로 출시는 차단된다. 일반20개만 통과해도 최초 전환 검사를 제외하고 출시하지 않는다. UI 재배포에는 새 Preview의 가족/실제 음성 증거도 다시 연결한다. 상세 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md).
+
+원래 출판과 새 앱 검증은 `learning-cohort-deployment.ts --request=<새 request.json> --output=<새 receipt.json>`의 두 SHA로 분리한다. 실제 GET collector `scripts/capture-learning-cohort-deployment-metadata.mjs --deployment-id=<정확 Preview ID> --output=<존재하지 않는 .artifacts 디렉터리>`는 비밀을 출력하지 않고 DB/Worker/실제 Pages 배포 설정을 봉인한다. request의 currentLocalSummary는 새 all-five collector 요약이며 원래 authorization/failed를 편집하지 않는다. 이 읽기 전용 receipt는 production-predeploy/publication 승인이 아니다.
+
 ## 2026-10-13 통합 후보의 추가 절차
 
 마지막코드후보0adbfc0 clean 기준cohort02는675단위/타입/OpenAPI/build/음성source/fresh0032·exit0이며affected UI26/26을확인했다. **이는6local명령/일부기존E2E 결과**이고정식5-release local collector·전체295/레슨44·새Preview/전체복귀/가족/실청취/backup/predeploy는아직이다. 같은SHA/품질hash의새완전gate를다음단계에서생성한다. local40/1/0,remote51/1/1의실패는미push다.

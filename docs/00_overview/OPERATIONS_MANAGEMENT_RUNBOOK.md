@@ -1,5 +1,9 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
+2026-10-13 후속: PWA 모달 로컬22/24·Chrome 최초 전환2실패(INC-PWA-100)로 운영 배포를 시작하지 않는다. 새 모달은 단일 탭/명시적 동의/직전 경로·mutation 확인을 사용한다. 다른 앱 탭은 닫아야 하며 비-TanStack/background 쓰기의 원자적 안전까지 보장한 것은 아니다. 기존 앱에서 새 안내로의 최초 전환이 검증되기 전 갱신 완료로 공지하지 않는다. 출판 SHA와 앱 SHA는 별도 읽기 전용 검증으로 대조한다. [통합 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 우선한다.
+
 현재 실행: 2026-10-13 사용자 승인 통합 후보(V7+160/네 메뉴/조건부 Production·push). INC-QUIZ-098은호환R의제한회귀확인까지완료했다. cleanC0adb의675단위/affected26은통과했지만 **신규전체Preview/복귀·가족·새후보실청취·현backup/predeploy 미완료로 Production/push 차단**이다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 gate 상태를 우선한다. 실제 Production Worker/Pages·0030와 기존Previewa49는보존중이다. 기존10월12일 local-only는과거범위다.
 
 후속 승인: bare old Worker 대신 직전032+철회 guard+queue점검의 호환f3caa61을 준비했고 fd38/0032의 제한된회귀는 통과했다. **복귀는5release 철회→문항/레슨 공개0→검증된 호환Worker→직전Pages→기존기능/기록**이다. full 새후보 rollback 증거가 아직이므로 운영에 실행하지 않는다.0032는5trigger/테이블0·행변경0이며 backup table coverage0031/74와 실제 ledger0032를 구별한다. 새로운 source/증적은불변기존authorization와별도로연결한다.

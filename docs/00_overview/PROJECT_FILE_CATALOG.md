@@ -2,7 +2,7 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **904개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **915개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
@@ -12,21 +12,21 @@
 | DB migration 및 snapshot | 41 |
 | DB schema 및 설정 | 4 |
 | DB seed 및 parser | 53 |
-| DB 검증 및 운영 | 176 |
+| DB 검증 및 운영 | 179 |
 | GitHub 비활성 설정 | 1 |
-| UI 컴포넌트 | 20 |
+| UI 컴포넌트 | 21 |
 | Worker 진입점 및 설정 | 21 |
 | 공통 API 및 학습 계약 | 21 |
-| 로컬 운영 스크립트 및 테스트 | 29 |
+| 로컬 운영 스크립트 및 테스트 | 31 |
 | 루트 실행 및 정책 | 13 |
 | 문서 이력 | 1 |
 | 문서 진입점 | 3 |
 | 브라우저 시각 기준 | 60 |
-| 브라우저 테스트 및 설정 | 32 |
+| 브라우저 테스트 및 설정 | 34 |
 | 브랜드 및 PWA 자산 | 12 |
-| 앱 회귀 테스트 | 60 |
+| 앱 회귀 테스트 | 62 |
 | 운영 문서 | 25 |
-| 웹 공통 상태·계약·음성 | 44 |
+| 웹 공통 상태·계약·음성 | 45 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
 | 학습 기능 | 57 |
@@ -274,6 +274,9 @@
 - [packages/db/src/ops/immutable-learning-content-plan.ts](../../packages/db/src/ops/immutable-learning-content-plan.ts)
 - [packages/db/src/ops/jlpt-n2-n1-practice-banks-v1.test.ts](../../packages/db/src/ops/jlpt-n2-n1-practice-banks-v1.test.ts)
 - [packages/db/src/ops/jlpt-reading-balance.test.ts](../../packages/db/src/ops/jlpt-reading-balance.test.ts)
+- [packages/db/src/ops/learning-cohort-deployment-contract.ts](../../packages/db/src/ops/learning-cohort-deployment-contract.ts)
+- [packages/db/src/ops/learning-cohort-deployment.test.ts](../../packages/db/src/ops/learning-cohort-deployment.test.ts)
+- [packages/db/src/ops/learning-cohort-deployment.ts](../../packages/db/src/ops/learning-cohort-deployment.ts)
 - [packages/db/src/ops/learning-cohort-release.test.ts](../../packages/db/src/ops/learning-cohort-release.test.ts)
 - [packages/db/src/ops/learning-cohort-release.ts](../../packages/db/src/ops/learning-cohort-release.ts)
 - [packages/db/src/ops/learning-cohort-remote.test.ts](../../packages/db/src/ops/learning-cohort-remote.test.ts)
@@ -411,6 +414,7 @@
 ## UI 컴포넌트
 
 - [apps/web/src/components/IosInstallHint.tsx](../../apps/web/src/components/IosInstallHint.tsx)
+- [apps/web/src/components/PwaUpdatePrompt.tsx](../../apps/web/src/components/PwaUpdatePrompt.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.tsx)
 - [apps/web/src/components/feature/Heatmap.tsx](../../apps/web/src/components/feature/Heatmap.tsx)
 - [apps/web/src/components/feature/LearningTrackSwitch.tsx](../../apps/web/src/components/feature/LearningTrackSwitch.tsx)
@@ -487,6 +491,7 @@
 - [scripts/__tests__/project-ops-status.test.mjs](../../scripts/__tests__/project-ops-status.test.mjs)
 - [scripts/__tests__/release-evidence.test.mjs](../../scripts/__tests__/release-evidence.test.mjs)
 - [scripts/__tests__/worker-release-deploy.test.mjs](../../scripts/__tests__/worker-release-deploy.test.mjs)
+- [scripts/capture-learning-cohort-deployment-metadata.mjs](../../scripts/capture-learning-cohort-deployment-metadata.mjs)
 - [scripts/capture-learning-release-baseline.mjs](../../scripts/capture-learning-release-baseline.mjs)
 - [scripts/check-doc-lifecycle.mjs](../../scripts/check-doc-lifecycle.mjs)
 - [scripts/check-markdown-links.mjs](../../scripts/check-markdown-links.mjs)
@@ -504,6 +509,7 @@
 - [scripts/r1-preview-smoke.mjs](../../scripts/r1-preview-smoke.mjs)
 - [scripts/run-learning-cohort-local-gates.mjs](../../scripts/run-learning-cohort-local-gates.mjs)
 - [scripts/run-learning-v7-local-gates.mjs](../../scripts/run-learning-v7-local-gates.mjs)
+- [scripts/run-pwa-update-gates.mjs](../../scripts/run-pwa-update-gates.mjs)
 - [scripts/setup-alerts.mjs](../../scripts/setup-alerts.mjs)
 - [scripts/setup-logpush.mjs](../../scripts/setup-logpush.mjs)
 - [scripts/verify-actual-browser-audio-evidence.mjs](../../scripts/verify-actual-browser-audio-evidence.mjs)
@@ -618,6 +624,8 @@
 - [e2e/offline.spec.ts](../../e2e/offline.spec.ts)
 - [e2e/package.json](../../e2e/package.json)
 - [e2e/playwright.config.ts](../../e2e/playwright.config.ts)
+- [e2e/playwright.pwa-update.config.ts](../../e2e/playwright.pwa-update.config.ts)
+- [e2e/pwa-update.browser.ts](../../e2e/pwa-update.browser.ts)
 - [e2e/pwa.spec.ts](../../e2e/pwa.spec.ts)
 - [e2e/quiz-modes.spec.ts](../../e2e/quiz-modes.spec.ts)
 - [e2e/remote-reviewed-learning-lessons.spec.ts](../../e2e/remote-reviewed-learning-lessons.spec.ts)
@@ -664,6 +672,7 @@
 - [apps/api/src/lib/quiz-publication.test.ts](../../apps/api/src/lib/quiz-publication.test.ts)
 - [apps/api/src/lib/release-operations.test.ts](../../apps/api/src/lib/release-operations.test.ts)
 - [apps/web/src/components/IosInstallHint.test.tsx](../../apps/web/src/components/IosInstallHint.test.tsx)
+- [apps/web/src/components/PwaUpdatePrompt.test.tsx](../../apps/web/src/components/PwaUpdatePrompt.test.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.test.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.test.tsx)
 - [apps/web/src/components/feature/SRSCard.test.tsx](../../apps/web/src/components/feature/SRSCard.test.tsx)
 - [apps/web/src/features/browse/types.test.ts](../../apps/web/src/features/browse/types.test.ts)
@@ -712,6 +721,7 @@
 - [apps/web/src/pages/__tests__/__snapshots__/Stats.test.tsx.snap](../../apps/web/src/pages/__tests__/__snapshots__/Stats.test.tsx.snap)
 - [apps/web/src/stores/__tests__/authStore.test.ts](../../apps/web/src/stores/__tests__/authStore.test.ts)
 - [apps/web/src/stores/__tests__/settingsStore.test.ts](../../apps/web/src/stores/__tests__/settingsStore.test.ts)
+- [apps/web/src/stores/pwa-update-store.test.ts](../../apps/web/src/stores/pwa-update-store.test.ts)
 
 ## 운영 문서
 
@@ -779,6 +789,7 @@
 - [apps/web/src/lib/track-registry.ts](../../apps/web/src/lib/track-registry.ts)
 - [apps/web/src/main.tsx](../../apps/web/src/main.tsx)
 - [apps/web/src/stores/auth-store.ts](../../apps/web/src/stores/auth-store.ts)
+- [apps/web/src/stores/pwa-update-store.ts](../../apps/web/src/stores/pwa-update-store.ts)
 - [apps/web/src/stores/settings-store.ts](../../apps/web/src/stores/settings-store.ts)
 - [apps/web/src/stores/ui-store.ts](../../apps/web/src/stores/ui-store.ts)
 - [apps/web/src/styles/tokens.css](../../apps/web/src/styles/tokens.css)

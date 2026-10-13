@@ -4,12 +4,21 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { expect, test, type APIResponse } from '@playwright/test';
+import { DEPLOYMENT_RECEIPT_SCHEMA, requireDeploymentReceiptChain, type EvidenceFile } from '../packages/db/src/ops/learning-cohort-deployment-contract';
 
 const input=process.env.E2E_REMOTE_COHORT_RECEIPT;
 const base=process.env.E2E_BASE_URL;
 if(!input || !base || !/^https:\/\/[a-f0-9]{8}\.nihongo-n3\.pages\.dev$/.test(base)) throw new Error('Exact immutable dedicated Preview URL and remote receipt required; Production is prohibited');
 const receipt=JSON.parse(readFileSync(input,'utf8'));
-if(receipt.schema!=='learning-cohort-remote-receipt-v1' || receipt.passed!==true || receipt.target?.scope!=='preview' || receipt.target.pages!==base || receipt.state!=='published' || receipt.questions!==600 || receipt.lessons!==220 || !/^[a-f0-9]{40}$/.test(receipt.candidate_sha)) throw new Error('Passed same-candidate published600/220 remote verification required');
+const deploymentOnly=receipt.schema===DEPLOYMENT_RECEIPT_SCHEMA;
+if(deploymentOnly){
+  const readEvidence=(file:EvidenceFile)=>{
+    const bytes=readFileSync(file.path);
+    if(createHash('sha256').update(bytes).digest('hex')!==file.sha256)throw new Error('Deployment evidence bytes changed');
+    return JSON.parse(bytes.toString('utf8'));
+  };
+  requireDeploymentReceiptChain(receipt,base,readEvidence);
+}else if(receipt.schema!=='learning-cohort-remote-receipt-v1' || receipt.passed!==true || receipt.target?.scope!=='preview' || receipt.target.pages!==base || receipt.state!=='published' || receipt.questions!==600 || receipt.lessons!==220 || !/^[a-f0-9]{40}$/.test(receipt.candidate_sha)) throw new Error('Passed same-candidate published600/220 remote verification required');
 // 강성호 2026-10-13: Playwright의 CJS 검사 로더에서 import.meta 혼용을 피한다. 문항 hash와 모든 검사 조건은 유지한다.
 const bankBytes=readFileSync(resolve(process.cwd(),'../packages/db/src/content/learning-path-v7-2026-10-11/frozen-cohort-01/bundle.json'));
 if(createHash('sha256').update(bankBytes).digest('hex')!==receipt.cohort_hashes?.v7?.bundle || receipt.target.worker!=='nihongo-n3-api-topik-preview') throw new Error('Exact immutable bank and dedicated Worker binding required');
@@ -108,6 +117,6 @@ for(const level of ['N5','N4','N3','N2','N1','1','2','3','4','5','6']) {
     await page.goto('/records');
     await expect(page.getByRole('heading',{name:labels.records,exact:true})).toBeVisible();
     expect(prohibited).toEqual([]);
-    await test.info().attach('actual-remote-scope',{body:JSON.stringify({candidate_sha:receipt.candidate_sha,preview:base,level,lessons_listed:20,representative_completed:1,synthetic_account:true,family_observed:false,audible_audio:false}),contentType:'application/json'});
+    await test.info().attach('actual-remote-scope',{body:JSON.stringify({candidate_sha:receipt.candidate_sha,publication_sha:deploymentOnly?receipt.publication.candidate_sha:receipt.candidate_sha,preview:base,level,lessons_listed:20,representative_completed:1,synthetic_account:true,family_observed:false,audible_audio:false}),contentType:'application/json'});
   });
 }

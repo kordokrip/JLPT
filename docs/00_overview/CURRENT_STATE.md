@@ -1,5 +1,9 @@
 # 현재 구현 상태
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
+2026-10-13 최신 후속: 양언어 PWA 업데이트 모달과 dual-SHA 읽기 전용 Preview 검증을 로컬 구현했다. 실제 빌드 갱신 검사22/24 통과·Chrome 최초 구 버전 전환2실패로 **Production 차단 유지**다. 새 Preview/전체 복귀/가족/backup/predeploy도 미완료다. 운영·현재a49 Preview·콘텐츠·학습 기록은 변경하지 않았다. 상세는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 ‘추가 요청’을 따른다. 아래0adb clean 결과는 이 새 미커밋 후보의 결과가 아니다.
+
 ## 2026-10-13 활성 후보 — Preview 공개·음성 확인, Production 차단
 
 코드 후보 `0adbfc0`를 clean 커밋으로 고정하고 같은SHA의 새 검사에서 전체단위675·OpenAPI/typecheck/build/음성source/fresh0032 및 Chromium/WebKit 기존퀴즈·FSRS26/26을통과했다. 음성mock/부분E2E이며 새후보전체295/레슨44·Preview·가족/실청취/전체복귀·backup/predeploy는미완료다. local40/1/0, remote51/1/1의1실패는미push만이다. 호환복귀R=`f3caa61`이며 운영/source032·기존Preview/a49는변경하지않았다. 정식G0–G4/Production 통과로 확대하지않는다.

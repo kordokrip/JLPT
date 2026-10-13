@@ -1,5 +1,11 @@
 # 로컬 형상관리·릴리스 원장
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
+2026-10-13 추가 후속: 양언어 업데이트 모달·단일 탭/최종 reload guard·실제 빌드 PWA 검사·dual-SHA Preview 읽기 전용 verifier를 로컬 구현했다. 최초20unit/일반12browser 후 독립 반증을 보강했고 최신24browser는22통과/2실패(Chrome 최초032전환)로 보존했다. 운영/Preview 쓰기·원격push·콘텐츠 재시드·음성 코어 변경0. 새 코드는 미커밋 작업 후보이며 이전0adb/145 SHA로 새 검증을 주장하지 않는다. [최신 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md).
+
+종료 실제6명령(cohort04)은 OpenAPI/typecheck/전체716unit/build/음성source/fresh0032 exit0, 문서915paths/73MD/1092links·lifecycle/36DBrefs·diffcheck 통과다. dirty 후보 검사이며 정식clean release gate가 아니다. ops39/2/0과 PWA 최초전환2실패를 함께 기록한다. Git commit/push와 원격 runtime/DB 변경을 하지 않았다.
+
 ## 2026-10-13 V7+160 통합 후보 — Preview 완료, 복귀 실패로 Production 차단
 
 최종후속: 코드/문서21파일을 관련범위만 안전커밋 `0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214`으로고정했다(사전staged경로/비밀실제값일치0·diffcheck). 같은cleanSHA의 cohort02 단위675(OpenAPI/typecheck/build/음성source/fresh0032 포함6명령exit0), 기존퀴즈·FSRS Chromium/WebKit26/26·skip/fail/flaky0·retries0. 26개음성은mock이다. local40/1/0, remote51/1/1·exit1은원격branch미push만이며운영장애가아니다. 현코드의전체295/레슨44/Preview/가족/실청취/전체rollback/backup/predeploy는아직이다. Production·원격push0,음성코어변경0. 후속결과문서는코드후보와별도로기록한다.

@@ -1,5 +1,9 @@
 # Sub Agent 운영 인수인계
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
+2026-10-13 최신 후속: PWA 업데이트 모달/dual-SHA verifier가 미커밋 로컬 후보에 추가됐다. actual built24검사22pass/2fail이며 **INC-PWA-100 Chrome 최초032→새 앱 전환**부터 해결한다. 실패 원본/구·새 캐시를 지우거나 skip/timeout 완화로 성공을 만들지 않는다. 일반20pass는 실제 IndexedDB 합성 큐·활성화 중 이동도 검사했으나 사용자 기록/가청 증거가 아니다. 새 Preview/full rollback/가족/새 실제 Chrome·가청/backup/predeploy는 여전히 필요하고 Production/push 금지다. 음성 코어4파일과0031/0032/content은 이 후속에서 변경0이다. source 진입점은 `lib/pwa-update.ts`, `stores/pwa-update-store.ts`, `components/PwaUpdatePrompt.tsx`, `sw.ts`, `ops/learning-cohort-deployment.ts`. [통합 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 추가 요청을 먼저 읽는다. 아래 이전 후보/이력은 새 후보 완료 근거가 아니다.
+
 ## 활성 작업 — 2026-10-13
 
 최신C=`0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214` clean코드커밋. 새cohort02 675단위/6local명령exit0·fresh0032, affected26/26 Chromium/WebKit(음성mock)이다. R=`f3caa61`는old032+보호만이며격리철회회귀PASS/read-only. codeC후속문서에는최근결과만추가한다. 이부분검사를정식publicationprofile/G0–G4/newPreview44/fullrollback으로사용하지않는다. 운영0030/032와Preview0031/a49는현재도유지된다. 다음은cleanC의새전체releasegate/Preview·메타데이터분리검증이며family현재not-run·가청증거는a49에만유효하다.

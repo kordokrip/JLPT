@@ -709,6 +709,15 @@ const ko = {
 
   // ── PWA 업데이트 ──
   pwa: {
+    updateTitle: '새 버전 업데이트',
+    updateBody: '저장된 학습 기록을 유지한 채 새 버전으로 새로고침합니다. 진행 중인 학습과 메모를 먼저 마무리해 주세요.',
+    updateAction: '업데이트하고 새로고침',
+    updateLater: '나중에',
+    updating: '업데이트 중…',
+    updateWhenHome: '홈에서 앱을 업데이트할 수 있습니다',
+    updateOffline: '온라인 연결 후 업데이트해 주세요.',
+    updateOtherTab: '학습과 저장을 마친 뒤 다른 앱 탭을 모두 닫고, 이 탭의 홈에서 다시 시도해 주세요.',
+    updateFailed: '업데이트하지 않았습니다. 저장된 기록은 그대로입니다. 다시 시도해 주세요.',
     updateAvailable: '새 버전이 있습니다. 지금 업데이트하시겠습니까?',
     offlineReady:    '오프라인 사용 준비 완료',
     installTitle:    '홈 화면에 추가',

@@ -689,6 +689,15 @@ const ja = {
   },
 
   pwa: {
+    updateTitle: '新しいバージョンに更新',
+    updateBody: '保存済みの学習記録を残して、新しいバージョンを読み込みます。学習中の内容やメモを先に保存してください。',
+    updateAction: '更新して再読み込み',
+    updateLater: 'あとで',
+    updating: '更新中…',
+    updateWhenHome: 'ホームでアプリを更新できます',
+    updateOffline: 'オンラインに接続してから更新してください。',
+    updateOtherTab: '学習内容を保存し、ほかのアプリのタブをすべて閉じて、このタブのホームでもう一度お試しください。',
+    updateFailed: '更新していません。保存済みの記録はそのままです。もう一度お試しください。',
     updateAvailable: '新しいバージョンがあります。今すぐ更新しますか？',
     offlineReady:    'オフライン使用の準備が完了しました',
     installTitle:    'ホーム画面に追加',

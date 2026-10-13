@@ -689,6 +689,15 @@ const en = {
   },
 
   pwa: {
+    updateTitle: 'App update available',
+    updateBody: 'Reload the new version without removing saved study records. Finish your current lesson and save any notes first.',
+    updateAction: 'Update and reload',
+    updateLater: 'Later',
+    updating: 'Updating…',
+    updateWhenHome: 'Return home to update the app',
+    updateOffline: 'Connect to the internet before updating.',
+    updateOtherTab: 'Finish studying and saving, close all other app tabs, then try again from this tab’s home screen.',
+    updateFailed: 'The app has not updated. Saved records are unchanged. Please try again.',
     updateAvailable: 'A new version is available. Update now?',
     offlineReady:    'Ready for offline use',
     installTitle:    'Add to Home Screen',

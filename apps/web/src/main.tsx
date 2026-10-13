@@ -1,52 +1,86 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { registerSW } from 'virtual:pwa-register';
-import { initSync } from './lib/sync';
-import { flushActivityEvents } from './lib/activity-events';
-import { initDeviceProfile } from './lib/device-profile';
-import { audioPlayer } from './lib/audio';
-import { reloadWhenControlledServiceWorkerChanges } from './lib/pwa-update';
-import { db, setActiveLearningTrack } from './lib/db';
-import { useUiStore } from './stores/ui-store';
-import { useSettingsStore } from './stores/settings-store';
-import { useAuthStore } from './stores/auth-store';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { initSync } from "./lib/sync";
+import { flushActivityEvents } from "./lib/activity-events";
+import { initDeviceProfile } from "./lib/device-profile";
+import { audioPlayer } from "./lib/audio";
+import {
+  registerPwaUpdates,
+  applyWaitingPwaUpdate,
+  mayReloadPwa,
+} from "./lib/pwa-update";
+import {
+  usePwaUpdateStore,
+  announceLoadedPwaRelease,
+} from "./stores/pwa-update-store";
+import { PwaUpdatePrompt } from "./components/PwaUpdatePrompt";
+import { db, setActiveLearningTrack } from "./lib/db";
+import { useUiStore } from "./stores/ui-store";
+import { useSettingsStore } from "./stores/settings-store";
+import { useAuthStore } from "./stores/auth-store";
 
-import App from './App';
-import './index.css';
-import './i18n'; // i18n 초기화 (앱 시작 전 로드)
+import App from "./App";
+import "./index.css";
+import "./i18n"; // i18n 초기화 (앱 시작 전 로드)
 
 // ─────────────────────────────────────────────
 // Service Worker 등록 (vite-plugin-pwa 빌드 시 자동 생성)
 // ─────────────────────────────────────────────
-import i18n from './i18n';
-if (import.meta.env.VITE_PWA_DEV_SW !== 'false') {
-  if ('serviceWorker' in navigator) {
-    reloadWhenControlledServiceWorkerChanges(navigator.serviceWorker);
+import i18n from "./i18n";
+if (import.meta.env.VITE_PWA_DEV_SW !== "false") {
+  if ("serviceWorker" in navigator) {
+    const reloadSafely = () => {
+      if (!mayReloadPwa(window.location.pathname, queryClient.isMutating()))
+        throw new Error("active-learning");
+      window.location.reload();
+    };
+    void navigator.serviceWorker
+      .getRegistration("/")
+      .then((previous) => {
+        // 강성호 2026-10-13: 모든 탭을 닫고 재진입하면 controller 지정 전에도 기존 registration을 확인한다.
+        announceLoadedPwaRelease(
+          __APP_RELEASE__,
+          !!previous || navigator.serviceWorker.controller !== null,
+          reloadSafely,
+        );
+        return registerPwaUpdates(
+          navigator.serviceWorker,
+          import.meta.env.DEV ? "/dev-sw.js?dev-sw" : "/sw.js",
+          import.meta.env.DEV ? "module" : "classic",
+          {
+            waiting: (worker) =>
+              usePwaUpdateStore
+                .getState()
+                .show(() => applyWaitingPwaUpdate(worker)),
+            activated: () => {
+              if (
+                usePwaUpdateStore.getState().applying &&
+                mayReloadPwa(window.location.pathname, queryClient.isMutating())
+              )
+                reloadSafely();
+              else usePwaUpdateStore.getState().show(reloadSafely);
+            },
+          },
+        );
+      })
+      .then((registration) => {
+        const checkForUpdate = () => {
+          if (navigator.onLine)
+            void registration.update().catch(() => undefined);
+        };
+        checkForUpdate();
+        window.addEventListener("online", checkForUpdate);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") checkForUpdate();
+        });
+        window.setInterval(() => {
+          if (document.visibilityState === "visible") checkForUpdate();
+        }, 60000);
+      })
+      .catch(() => console.warn("[PWA]", "registration unavailable"));
   }
-  const updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      // Critical runtime fixes must replace a stale installed-PWA bundle.
-      // updateSW(true) activates the waiting worker and reloads the client.
-      void updateSW(true);
-    },
-    onRegisteredSW(_swUrl, registration) {
-      if (!registration) return;
-      const checkForUpdate = () => {
-        if (navigator.onLine) void registration.update().catch(() => undefined);
-      };
-      checkForUpdate();
-      window.addEventListener('online', checkForUpdate);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') checkForUpdate();
-      });
-    },
-    onOfflineReady() {
-      console.info('[PWA]', i18n.t('pwa.offlineReady'));
-    },
-  });
 }
 
 // ─────────────────────────────────────────────
@@ -65,8 +99,8 @@ const queryClient = new QueryClient({
 // ─────────────────────────────────────────────
 // 앱 렌더링
 // ─────────────────────────────────────────────
-const rootEl = document.getElementById('root');
-if (!rootEl) throw new Error('#root element not found');
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("#root element not found");
 
 // ─────────────────────────────────────────────
 // 다크모드 초기화 (렌더 전 적용)
@@ -75,10 +109,11 @@ if (!rootEl) throw new Error('#root element not found');
   const { theme, playbackRate, learningTrack } = useSettingsStore.getState();
   setActiveLearningTrack(learningTrack);
   const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.classList.toggle('dark', isDark);
-  document.documentElement.lang = i18n.language || 'ko';
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.lang = i18n.language || "ko";
   audioPlayer.configure({
     rate: playbackRate,
   });
@@ -87,24 +122,28 @@ if (!rootEl) throw new Error('#root element not found');
 // ─────────────────────────────────────────────
 // 온라인/오프라인 상태 구독
 // ─────────────────────────────────────────────
-window.addEventListener('online',  () => useUiStore.getState().setOnline(true));
-window.addEventListener('offline', () => useUiStore.getState().setOnline(false));
+window.addEventListener("online", () => useUiStore.getState().setOnline(true));
+window.addEventListener("offline", () =>
+  useUiStore.getState().setOnline(false),
+);
 
 // ─────────────────────────────────────────────
 // Offline sync 초기화
 // ─────────────────────────────────────────────
 void db.open().catch((error) => {
-  console.warn('[IDB]', 'failed to open local database', error);
+  console.warn("[IDB]", "failed to open local database", error);
 });
 initSync();
 useSettingsStore.subscribe((state, previous) => {
-  if (state.learningTrack !== previous.learningTrack) setActiveLearningTrack(state.learningTrack);
+  if (state.learningTrack !== previous.learningTrack)
+    setActiveLearningTrack(state.learningTrack);
 });
 useAuthStore.subscribe((state, previous) => {
-  const activated = state.status === 'authenticated'
-    && (previous.status !== 'authenticated'
-      || state.user?.id !== previous.user?.id
-      || state.user?.learning_track !== previous.user?.learning_track);
+  const activated =
+    state.status === "authenticated" &&
+    (previous.status !== "authenticated" ||
+      state.user?.id !== previous.user?.id ||
+      state.user?.learning_track !== previous.user?.learning_track);
   if (activated) void flushActivityEvents();
 });
 initDeviceProfile();
@@ -113,6 +152,7 @@ ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <PwaUpdatePrompt />
         <App />
       </BrowserRouter>
     </QueryClientProvider>

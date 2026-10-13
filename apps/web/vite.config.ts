@@ -1,90 +1,107 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
+import { execFileSync } from "node:child_process";
 
-const enablePwaDevWorker = process.env.VITE_PWA_DEV_SW !== 'false';
+const enablePwaDevWorker = process.env.VITE_PWA_DEV_SW !== "false";
+const sourceRelease = execFileSync("git", ["rev-parse", "HEAD"], {
+  encoding: "utf8",
+}).trim();
+const appRelease =
+  process.env.PWA_TEST_BUILD === "1"
+    ? (process.env.VITE_APP_RELEASE ?? sourceRelease)
+    : sourceRelease;
+if (!/^[a-f0-9]{40}$/.test(appRelease))
+  throw new Error("PWA release must be an exact Git SHA");
 
 export default defineConfig({
+  define: { __APP_RELEASE__: JSON.stringify(appRelease) },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: enablePwaDevWorker ? 'auto' : false,
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.ts',
+      registerType: "prompt",
+      injectRegister: false,
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       includeAssets: [
-        'favicon-16.png',
-        'favicon-32.png',
-        'apple-touch-icon.png',
-        'masked-icon.svg',
-        'brand-mark.png',
-        'brand-hero-eastasia-v2.png',
-        'page-bg-unified.png',
+        "favicon-16.png",
+        "favicon-32.png",
+        "apple-touch-icon.png",
+        "masked-icon.svg",
+        "brand-mark.png",
+        "brand-hero-eastasia-v2.png",
+        "page-bg-unified.png",
       ],
       manifest: {
-        name: 'JLPT · TOPIK Study',
-        short_name: 'JLPT·TOPIK',
-        description: 'JLPT 일본어와 TOPIK 한국어를 트랙별로 학습하는 오프라인 우선 PWA',
-        id: '/',
-        dir: 'ltr',
-        theme_color: '#F7F3EA',
-        background_color: '#F7F3EA',
-        display: 'standalone',
-        display_override: ['standalone', 'minimal-ui'],
-        scope: '/',
-        start_url: '/',
-        orientation: 'portrait-primary',
-        lang: 'ko',
-        categories: ['education', 'productivity'],
+        name: "JLPT · TOPIK Study",
+        short_name: "JLPT·TOPIK",
+        description:
+          "JLPT 일본어와 TOPIK 한국어를 트랙별로 학습하는 오프라인 우선 PWA",
+        id: "/",
+        dir: "ltr",
+        theme_color: "#F7F3EA",
+        background_color: "#F7F3EA",
+        display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
+        scope: "/",
+        start_url: "/",
+        orientation: "portrait-primary",
+        lang: "ko",
+        categories: ["education", "productivity"],
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
         shortcuts: [
           {
-            name: '학습 홈',
-            url: '/',
-            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+            name: "학습 홈",
+            url: "/",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }],
           },
           {
-            name: '학습 설정',
-            url: '/settings',
-            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+            name: "학습 설정",
+            url: "/settings",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192" }],
           },
         ],
         screenshots: [
           {
-            src: 'screenshots/mobile.png',
-            sizes: '540x720',
-            type: 'image/png',
+            src: "screenshots/mobile.png",
+            sizes: "540x720",
+            type: "image/png",
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            form_factor: 'narrow' as any,
-            label: 'JLPT · TOPIK Study 모바일 화면',
+            form_factor: "narrow" as any,
+            label: "JLPT · TOPIK Study 모바일 화면",
           },
           {
-            src: 'screenshots/desktop.png',
-            sizes: '1280x720',
-            type: 'image/png',
+            src: "screenshots/desktop.png",
+            sizes: "1280x720",
+            type: "image/png",
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            form_factor: 'wide' as any,
-            label: 'JLPT · TOPIK Study 데스크톱 화면',
+            form_factor: "wide" as any,
+            label: "JLPT · TOPIK Study 데스크톱 화면",
           },
         ],
         share_target: {
-          action: '/add-word',
-          method: 'GET',
-          enctype: 'application/x-www-form-urlencoded',
-          params: { text: 'text', title: 'title', url: 'url' },
+          action: "/add-word",
+          method: "GET",
+          enctype: "application/x-www-form-urlencoded",
+          params: { text: "text", title: "title", url: "url" },
         },
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
-      devOptions: { enabled: true, type: 'module' },
+      devOptions: { enabled: enablePwaDevWorker, type: "module" },
     }),
   ],
   css: {
@@ -93,28 +110,29 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: process.env.VITE_DEV_API_PROXY_TARGET ?? 'http://localhost:8787',
+      "/api": {
+        target:
+          process.env.VITE_DEV_API_PROXY_TARGET ?? "http://localhost:8787",
         changeOrigin: true,
       },
     },
   },
   resolve: {
-    alias: { '@': '/src' },
+    alias: { "@": "/src" },
   },
   build: {
-    target: 'es2020',
-    cssTarget: 'safari14',
+    target: "es2020",
+    cssTarget: "safari14",
     rollupOptions: {
       treeshake: {
         moduleSideEffects: false,
       },
       output: {
         manualChunks: {
-          'vendor-react':  ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query':  ['@tanstack/react-query'],
-          'vendor-db':     ['dexie', 'dexie-react-hooks'],
-          'vendor-state':  ['zustand'],
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-db": ["dexie", "dexie-react-hooks"],
+          "vendor-state": ["zustand"],
         },
       },
     },

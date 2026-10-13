@@ -1,8 +1,25 @@
 # V7·별도160 통합 릴리스 — 2026-10-13
 
+2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
+
 상태: **Production 차단**. 철회 P1은 수정·제한된 격리 회귀 확인을 완료했다. 아직 새 후보 전체 Preview E2E·전체 복귀·가족 동선·backup/predeploy는 미완료다. 기존a49 Preview 가청은 확인했지만 새 후보 가청으로 확대하지 않는다. Production 배포·원격 push는 실행하지 않았다. 갱신: 2026-10-13 KST.
 
 ## 승인 후속 — 호환 Worker 수정·격리 회귀 확인 완료
+
+### 추가 요청 — 한국어·일본어 업데이트 모달, 아직 로컬 후보
+
+2026-10-13 후속 요청으로 PWA의 자동 활성화/새로고침을 명시적 사용자 선택으로 교체했다. 홈·TOPIK 홈·공개 시작 화면에서 한국어/일본어를 함께 표시한다. 학습·로그인·메모 화면에서는 갱신을 보류하며, 다른 앱 탭이 있으면 위치와 무관하게 먼저 닫아야 한다. 동의 후에도 실제 새로고침 직전에 경로와 현재 탭의 QueryClient mutation을 재확인한다. 음성 코어·학습 API·콘텐츠·migration은 이 UI 변경으로 수정하지 않았다.
+
+- 컴포넌트/스토어/등록 함수의 최초 단위20개와 실제 production 형식 빌드의 일반 갱신12개를 통과했다. 독립 Astra 검토에서 활성화 중 이동 경합과 사후 안내의 직접 reload를 찾아 같은 최종 guard로 보강했다. 버튼 색상·초기 ‘나중에’ 포커스도 실제 화면 확인 뒤 수정했다.
+- 최신 실제 빌드 브라우저 검사 **24개 중22 통과/2 실패·exit1**: 일반 갱신/양언어/보류/키보드/다른 탭/활성화 중 이동/합성 IndexedDB `sync_queue` 행 보존20개와 구 버전 전환 WebKit2개는 통과했다. 구032→신버전 재진입의 Chrome PC/모바일2개는 새 모달 대신 구 bundle이 열려 실패했다. 제한 시간·검사를 약화하거나 실패를 삭제하지 않았다. 저장 요청 전체·실제 사용자 답안·물리 음성 검증으로 확대하지 않는다.
+- 원본 `.artifacts/operations/pwa-update-2026-10-13/cohort-fUjZqk` 및 앞선 실패/성공 cohort를 보존한다. 격리 진단 `debug-legacy-XLgDiG`, `debug-cache-lYBbRR`에서 종료 후 window client0, 새/구 index 캐시가 함께 존재하며 재진입은 구 index를 반환하는 현상을 관찰했다. Chrome 또는 실행기 원인은 미확정이다. **이 최초 전환 검사 실패도 Production 차단 조건**이다.
+- 원래a49 콘텐츠 출판 SHA와 새 앱 SHA를 구분하는 읽기 전용 `learning-cohort-deployment.ts`/계약/22회귀를 추가했다. 출판 원장·기존 승인 hash·failed를 고치지 않는다. 실제 CF GET collector는 Preview DB/Worker/Pages deployment의 API_ORIGIN 필드를 확인했으나, 새로운 앱 배포나 실제 새 deployment receipt를 생성한 것은 아니다.
+
+새 코드가 포함된 정식 clean 5-release gate·새 Preview44·별도 전체 복귀·가족 동선·같은 배포의 실제 Chrome/가청/Network·현 schema backup/predeploy는 여전히 필요하다. 사용자 배포 승인은 이 조건을 통과했을 때만 유효하며 **이번 후속에서 Production·Preview 쓰기·원격 push는0**이다. 현재 변경은 로컬 작업 후보이며 이전0adb/145 커밋을 이 새 후보의 배포 SHA로 보고하지 않는다.
+
+운영 전환 안내: 기존 자동갱신 앱은 새 모달 코드를 갖고 있지 않다. 처음 전환할 때 모든 앱 탭/창을 닫고 재진입해야 할 수 있다. 현재 Chrome 최초 전환 실패가 해결되기 전에는 이를 검증된 복구 절차나 완료된 사용자 업데이트 기능으로 공지하지 않는다.
+
+후속 종료 검사: 미커밋 작업트리의 새 `quiz-compat-2026-10-13/cohort04`에서 OpenAPI·typecheck·단위 **716(Ops33/DB294/Web174/API215)**·build·음성 소스 계약·fresh0032가 모두exit0이다. 이것은 실제6명령 결과이며 clean5-release authorization나 실패한PWA24검사를 대체하지 않는다. 문서915paths/73Markdown/1092relative links/lifecycle/36DBrefs·diffcheck 통과, 종료ops **39pass/2warning/0fail**(미커밋29경로·알려진manifest drift)이다. 코어 음성4파일과migration diff0을 확인했다. 실제 새 Preview·Production·push는 실행하지 않았다.
 
 최종 코드 후보 **`0adbfc07afaa0bfcad87faf2fc6d2306a8fb2214`**를 clean 로컬 커밋으로 고정했다. 같은SHA의 새 cohort02에서 OpenAPI·typecheck·전체단위 **675(Ops33/DB272/Web155/API215)**·build·음성 소스·fresh0032가 모두exit0이다. 기존 퀴즈·FSRS의 Chromium/WebKit **26/26, skip/fail/flaky0, retries0**도 새로 실행했다. 이26개 음성은mock이며 물리청취가 아니다. 전체 기존295와 신규 레슨44·새Preview는 이번C에서 재실행하지 않았다. 원본은 `.artifacts/operations/quiz-compat-2026-10-13/cohort02`와 `affected-e2e-cohort01`이다. 이 summary는6개 local command 결과이지 정식5-release publication profile/G0–G4 또는 production-predeploy가 아니다.
 
@@ -97,9 +114,9 @@ canonical 6,501행·TOPIK practice v2·기존 학습/FSRS/XP/메모와 운영 OA
 
 ## 순서와 실패 대응
 
-최종 scoped commit/clean worktree → 새 local full gate/기존+레슨 E2E → Preview → 별도 합성 원격 복귀 → 새 Preview 가족/실제 Chrome → 원격 branch 일반 push → 승인된 점검/queue·workflow 동결 → 실제72-table backup → exact restore/0031 upgrade → predeploy →0031/호환 Worker →600 draft/검증 →5개 공개 → remote verifier → Pages → smoke → 점검/큐 원상복구 → 문서 후속 push.
+PWA 최초 전환 실패 해결 → 최종 scoped commit/clean worktree → 새 local full gate/기존+레슨 E2E → Preview → 별도 합성 원격 복귀 → 새 Preview 가족/실제 Chrome → 원격 branch 일반 push → 승인된 점검/queue·workflow 동결 → 실제72-table backup → exact restore/0031+0032 upgrade → predeploy →0031+0032/호환 Worker →600 draft/검증 →5개 공개 → remote verifier → Pages → smoke → 점검/큐 원상복구 → 문서 후속 push.
 
-복귀 연습 및 실패 시에는 **5개 철회 → 문항·레슨 공개0 확인 → 직전 실제 Worker source 복귀 → 직전 실제 Pages source 복귀 → 기존 기록/기능 확인** 순서다. 레슨만 숨기거나 화면 flag만 끄는 것은 복귀가 아니다. 공개0 미확인 시 구 Worker로 돌아가지 않는다. 데이터 손상이 없으면 additive schema와 정상 학습 기록을 유지하며 D1 전체 백업을 복원하지 않는다.
+복귀 연습 및 실패 시에는 **5개 철회 → 문항·레슨 공개0 확인 → 승인·검증된 호환 Worker 복귀 → 직전 실제 Pages source 복귀 → 기존 기록/기능 확인** 순서다. 레슨만 숨기거나 화면 flag만 끄는 것은 복귀가 아니다. 공개0 미확인 시 구 Worker로 돌아가지 않는다. 데이터 손상이 없으면 additive schema와 정상 학습 기록을 유지하며 D1 전체 백업을 복원하지 않는다.
 
 철회 환경은 `nihongo-n3-learning-rollback-20261013` 전용 DB/Worker와 `nihongo-n3-learning-rollback` Pages로 분리해 실제 생성·실행했다. 운영 사용자 백업·OAuth secret은 복사하지 않았다. terminal withdrawn 원장을 다시 공개하거나 실패를 성공으로 편집하지 않는다.
 
