@@ -2,7 +2,7 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **930개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **931개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
@@ -25,7 +25,7 @@
 | 브라우저 테스트 및 설정 | 35 |
 | 브랜드 및 PWA 자산 | 13 |
 | 앱 회귀 테스트 | 67 |
-| 운영 문서 | 26 |
+| 운영 문서 | 27 |
 | 웹 공통 상태·계약·음성 | 46 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
@@ -746,6 +746,7 @@
 - [docs/00_overview/ERROR_LEDGER.md](../../docs/00_overview/ERROR_LEDGER.md)
 - [docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md](../../docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)
 - [docs/00_overview/LEARNING_EXPERIENCE_PLAN.md](../../docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)
+- [docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md](../../docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)
 - [docs/00_overview/LEARNING_MAP_UX_2026-10-13.md](../../docs/00_overview/LEARNING_MAP_UX_2026-10-13.md)
 - [docs/00_overview/LOCAL_CICD_MANAGEMENT.md](../../docs/00_overview/LOCAL_CICD_MANAGEMENT.md)
 - [docs/00_overview/LOCAL_CICD_OPERATIONS.md](../../docs/00_overview/LOCAL_CICD_OPERATIONS.md)

@@ -1,5 +1,7 @@
 # JLPT · TOPIK 문서
 
+최신 운영은 [2026-10-14 지도 UI 릴리스](00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)다. web887d2b2/Pages2c0fea8d, Worker·DB·콘텐츠는 기존 기준선을 유지한다. 아래10월13일 이하의 미배포 문장은 보존 이력이며 현재 판정으로 사용하지 않는다.
+
 최신 작업 — 2026-10-13: 운영 V7+160 배포는 완료 상태이며, 아래 미배포 문장은 보존된 이전 이력이다. 새 작업은 [학습 지도 UI/UX 개편](00_overview/LEARNING_MAP_UX_2026-10-13.md)의 이미지 개선과 지도·레슨·완료 화면 로컬 구현이다. **프런트엔드를 변경했고 DB·콘텐츠·음성 코어·Production은 변경하지 않았다.** 새 로컬 검사와 운영 기준선은 [현재 상태](00_overview/CURRENT_STATE.md)에서 구분한다.
 
 2026-10-13 후속: 호환 Worker 복귀 변경 승인 뒤 quiz철회guard/0032를 구현해 currentAPI215·호환API200·DB19와 격리409/410·기존학습200·기록hash보존을 확인했다. 현재 운영·a49Preview는변경하지않았다. 이는제한회귀이며새후보전체Preview/rollback/가족/backup/predeploy전Production·push차단은유지한다. 최신세부사항은 [통합 릴리스 기록](00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)의 승인 후속부터읽는다.

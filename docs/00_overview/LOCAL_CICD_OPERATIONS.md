@@ -1,5 +1,7 @@
 # 로컬 CI/CD 운영 기준
 
+2026-10-14 실제 완료 gate는 [지도 UI 릴리스](LEARNING_MAP_RELEASE_2026-10-14.md)를 따른다. 동일 후보의 통과 결과를 다시 실행하지 않고 SHA·증거 hash로 연결한다. UI-only 배포에는 콘텐츠 재공개·migration을 하지 않는다. D1 provider 내부 테이블 직접 조회 금지, 생성 FTS는 복원 검사로 확인한다. 점검 전환/복귀는 실제 health 반영을 확인하며10220은 증명된 자기 점검 버전 및 변경 secret이 MAINTENANCE_MODE 하나일 때만 복귀 확인한다. GitHub Actions는 계속 비활성이다.
+
 현재 운영처럼 업데이트 동의 UI가 있는 빌드는 PWA collector `--previous-root=<clean 운영 source>`로 검사한다. `--legacy-root`는 동의 UI 이전 자동 업데이트 앱 전용이며 null seen-release 회귀를 유지한다. 둘을 혼용하지 않는다(`INC-OPS-110`). 새 후보 전체 검증은 진행 중이다.
 
 ## 지도 배포 후보의 후속 gate

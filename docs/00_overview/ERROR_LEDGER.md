@@ -1,5 +1,11 @@
 # 오류·회귀 차단 원장
 
+## 2026-10-14 지도 배포 점검기 — INC-OPS-111
+
+앱 회귀/Preview 검증 후 작성한 private 백업 점검기에서 운영 준비 결함을 확인했다. 첫 시도는7403으로, 두 번째는 Cloudflare 내부 `_cf_KV` 직접 조회의7500/SQLITE_AUTH로 운영 변경 전에 중단했다. 세 번째는 점검 전환 직후 health 불일치에 이어 secret 변경 복귀10220을 처리하지 못해 read-only가 잠시 유지됐다. 부모가 API가 제시한 변경 secret이 정확히 `MAINTENANCE_MODE` 하나인 경우에만 복귀 확인을 적용하여 기존Worker71e71638·maintenance off를 실제 확인했다. 큐 변경·D1 데이터 쓰기는0이다.
+
+내부/generated 조회 분리, 제한된 읽기 재시도, 전환 후 health 확인, 복귀10220의 정확한 secret 범위 검증을 보완했다. 실패 attempt01–03과 별도 실제 복구 기록을 보존한다. attempt04의 새74표 백업·0032 복원·기존Worker/queue/off 복귀를 통과한 뒤 UI Pages2c0fea8d 배포와 운영 검사를 완료했다. 최종 결과와 음성 증거의 범위는 [지도 릴리스 기록](LEARNING_MAP_RELEASE_2026-10-14.md)을 따른다.
+
 ## 2026-10-13 지도 배포 전 통합 검증
 
 - `INC-OPS-110` — 현재 운영37486f8은 수동 업데이트·seen-release를 구현했으나 PWA 자동 구버전 회귀에 전달하여 null 기대4개가 실패했다(20개 통과). 기존 자동 구버전 회귀는 보존하고 현재 수동동의 버전 전용 previous-root 전환 검사를 분리한다. 앱 장애로 단정하거나 null 허용 범위를 넓히지 않는다. 새 전수 실행 전 배포 차단.

@@ -1,5 +1,7 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+2026-10-14 지도 UI 운영 기준은 [최종 릴리스 기록](LEARNING_MAP_RELEASE_2026-10-14.md)이다. Pages2c0fea8d/source887d2b2, Worker71e71638/source37486f8, D10032를 구분한다. UI 회귀 복귀 대상은 이전Pages6b8b8a19이며 정상 콘텐츠/학습 기록을 철회하지 않는다. 점검기 오류INC-OPS-111은 실패와 실제 복구를 별도 기록했고, 최종74표 백업/복원/점검 해제 뒤 배포했다. 무관한 추가 리팩터링 없이 확인된 실패 범위만 수정한다.
+
 PWA 현 운영 전환 검사는 `node scripts/run-pwa-update-gates.mjs --previous-root=<현재 운영 clean source>`를 사용한다. `--legacy-root`는 자동 업데이트 구버전용이며 두 경로를 별개로 검사한다. UI-only 복귀는 콘텐츠 철회 없이 직전 Pages 복귀다. 새 후보 gate 완료 전 운영 변경 금지.
 
 ## 지도 UI 배포의 복귀 범위

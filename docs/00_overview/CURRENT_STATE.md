@@ -1,5 +1,9 @@
 # 현재 구현 상태
 
+## 최신 운영 — 2026-10-14 학습 지도 UI
+
+Production은 `2c0fea8d-a995-4ceb-9106-a7ba444ace82`이며 web source는 `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2`다. Worker71e71638/source37486f8·D10032·기존 콘텐츠/학습 기록을 유지했다. 신규 UI는772단위·기존브라우저287(기존정책30제외)·로컬44·새Preview44·PWA24 및 실제 두 학습자/가청 확인을 거쳤다. 새74표 백업·0032 복원과 점검 해제 후 Pages-only 배포, 운영79asset/route·7smoke·392canonical 검사 통과. 자세한 결과와 점검기 실패/복구는 [10월14일 지도 릴리스](LEARNING_MAP_RELEASE_2026-10-14.md)를 따른다. 아래 미배포/진행 중 문장은 이전 시점 이력이다.
+
 지도 후보94a04ff 후 테스트 선택자 보정71f39de. 기존 전체 회귀285통과/30정책 제외/2딥링크 선택자 실패 후 해당4개 재통과. reviewed44는 동일 제목의 완료 노드2개를 단일 locator로 찾는 오류로 실패하여 순서와 정확한 accessible name을 함께 검증하도록 보정했다. 최종 전체 재실행 전이며 Production 변경 없음.
 
 ## 지도 UI Production 준비 — 2026-10-13 현재 작업
@@ -52,8 +56,8 @@
 | --- | --- |
 | D1 migration | `0000–0032` |
 | Worker | `71e71638-aff1-44c5-a242-f1e276052413` (maintenance off) |
-| Pages | `https://6b8b8a19.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
+| Pages | `https://2c0fea8d.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2` |
 | Worker release SHA | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
