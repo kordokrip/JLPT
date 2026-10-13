@@ -248,8 +248,22 @@ test("route change during activation defers reload until a safe screen", async (
   ).toBe(first);
 });
 
-if (process.env.PWA_TEST_LEGACY)
-  test("legacy automatic app requires closing all tabs, then shows the bilingual announcement", async ({
+const priorBuilds = [
+  ...(process.env.PWA_TEST_LEGACY ? [{
+    kind: "legacy automatic",
+    path: process.env.PWA_TEST_LEGACY,
+    release: null,
+  }] : []),
+  ...(process.env.PWA_TEST_PREVIOUS ? [{
+    kind: "previous managed production",
+    path: process.env.PWA_TEST_PREVIOUS,
+    release: process.env.PWA_TEST_PREVIOUS_RELEASE!,
+  }] : []),
+];
+if (process.env.PWA_TEST_PREVIOUS && !/^[a-f0-9]{40}$/.test(process.env.PWA_TEST_PREVIOUS_RELEASE ?? ""))
+  throw new Error("Previous managed build requires its exact source release SHA");
+for (const prior of priorBuilds)
+  test(`${prior.kind} app requires closing all tabs, then shows the bilingual announcement`, async ({
     page,
     context,
     browserName,
@@ -268,9 +282,12 @@ if (process.env.PWA_TEST_LEGACY)
       });
       await protocol.send("ServiceWorker.enable");
     }
-    current = resolve(process.env.PWA_TEST_LEGACY!);
+    current = resolve(prior.path);
     await page.goto(origin + "/welcome");
     await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("pwa-seen-release"))).toBe(prior.release);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const documentOrigin = await page.evaluate(() => performance.timeOrigin);
     let oldVersion: string | undefined;
     if (protocol) {
       await expect
@@ -313,7 +330,18 @@ if (process.env.PWA_TEST_LEGACY)
     }
     expect(
       await page.evaluate(() => localStorage.getItem("pwa-seen-release")),
-    ).toBeNull();
+    ).toBe(prior.release);
+    // A managed client must offer the waiting update without activating/reloading
+    // it. Postponing then closing all app clients exercises natural activation.
+    if (prior.release !== null) {
+      const dialog = page.getByRole("dialog");
+      await expect(dialog.getByText("새 버전 업데이트")).toBeVisible();
+      await expect(dialog.getByText("新しいバージョンに更新")).toBeVisible();
+      await dialog.getByRole("button", { name: /나중에/ }).click();
+      await expect(dialog).not.toBeVisible();
+    }
+    expect(await page.evaluate(() => performance.timeOrigin)).toBe(documentOrigin);
+    expect(await page.evaluate(() => localStorage.getItem("pwa-seen-release"))).toBe(prior.release);
     const workerHandles = context.serviceWorkers();
     await info.attach("legacy-protocol-before-close", {
       contentType: "application/json",

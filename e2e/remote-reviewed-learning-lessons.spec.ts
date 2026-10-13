@@ -109,7 +109,9 @@ for(const level of ['N5','N4','N3','N2','N1','1','2','3','4','5','6']) {
     expect(session.status).toBe('completed');
     await page.goto('/');
     await expect(page.locator('.learning-map__node')).toHaveCount(20);
-    await expect(page.getByRole('button',{name:`${firstTitle}: ${labels.complete}`,exact:true})).toBeVisible();
+    const completedFirstNode=page.locator('.learning-map__node').nth(0);
+    await expect(completedFirstNode).toHaveAccessibleName(`${firstTitle}: ${labels.complete}`);
+    await expect(completedFirstNode).toBeVisible();
     const records=await get('/api/v1/learning/records');
     expect(records.totals.learned).toBe(2);
     expect(records.totals.first_answers).toBe(2);

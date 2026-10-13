@@ -1,5 +1,7 @@
 # Sub Agent 운영 인수인계
 
+지도 후보94a04ff, test71f39de 이후 기존 기능 전체285/30/2와 reviewed44 실패 원본 보존. 딥링크 exact locator 수정 후4/4; reviewed 완료 노드는 같은 제목이 있으므로 첫 노드의 순서+정확한 이름을 검사한다. PWA previous-root/legacy-root 분리(현재운영/구자동). 새 전체 gate·Preview·실제 관찰·배포는 후속이며 과거 증거로 대체하지 않는다.
+
 ## 최신 요청 — 지도 통합 검증 후 조건부 Production
 
 사용자가 서브에이전트를 활용한 기능·바인딩·이벤트 교차검증과 통과 후 배포를 요청했다. [지도 통합 기록](LEARNING_MAP_UX_2026-10-13.md)의 INC-UI-107–109와 최종 후보 결과부터 확인한다. 초기 실패를 지우지 않는다. UI 변경을 이유로 기존0031/0032·600문항/220레슨의 migration/공개를 재실행하지 않는다. 새 Preview의 가족/가청은 이전494f4ff9 확인과 별개다. Pages-only 회귀는 직전 정상 Pages로 복귀하며 현재 정상 Worker·DB는 보존한다.

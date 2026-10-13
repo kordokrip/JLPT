@@ -1,5 +1,7 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+PWA 현 운영 전환 검사는 `node scripts/run-pwa-update-gates.mjs --previous-root=<현재 운영 clean source>`를 사용한다. `--legacy-root`는 자동 업데이트 구버전용이며 두 경로를 별개로 검사한다. UI-only 복귀는 콘텐츠 철회 없이 직전 Pages 복귀다. 새 후보 gate 완료 전 운영 변경 금지.
+
 ## 지도 UI 배포의 복귀 범위
 
 현재 사용자가 기존 기능 전수 연결·독립 검증 후 배포를 조건부 승인했다. 이번에는 DB/schema/콘텐츠/음성 코어 변경이 없다. 새 UI 결함의 기본 복귀는 **실제 조회한 직전 정상 Pages(37486f8 기준선)**이며 운영 Worker와 학습 기록을 유지한다. 아래5개 release 철회 절차는 콘텐츠 공개 결함에 대한 과거 cohort 릴리스 절차로, UI-only 회귀에 기계적으로 적용하지 않는다. 새 Preview·실사용/가청·backup/restore·rollback/predeploy 필수 게이트는 유지한다.

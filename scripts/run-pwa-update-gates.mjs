@@ -16,30 +16,34 @@ mkdirSync(base, { recursive: true });
 const output = mkdtempSync(join(base, "cohort-"));
 console.log(output);
 const results = [];
-const legacyRootArg = process.argv
-  .find((value) => value.startsWith("--legacy-root="))
-  ?.slice(14);
-let legacySource = null;
-if (legacyRootArg) {
-  const legacyRoot = resolve(legacyRootArg);
-  legacySource = execFileSync("git", ["rev-parse", "HEAD"], {
-    cwd: legacyRoot,
+// Keep the pre-prompt automatic client and an already managed production client
+// as distinct cohorts: their initial seen-release contracts are not equivalent.
+function copyPriorBuild(name) {
+  const prefix = `--${name}-root=`;
+  const rootArg = process.argv.find((value) => value.startsWith(prefix))?.slice(prefix.length);
+  if (!rootArg) return null;
+  const priorRoot = resolve(rootArg);
+  const source = execFileSync("git", ["rev-parse", "HEAD"], {
+    cwd: priorRoot,
     encoding: "utf8",
   }).trim();
   if (
-    !/^[a-f0-9]{40}$/.test(legacySource) ||
+    !/^[a-f0-9]{40}$/.test(source) ||
     execFileSync("git", ["status", "--porcelain"], {
-      cwd: legacyRoot,
+      cwd: priorRoot,
       encoding: "utf8",
     }).trim()
   )
-    throw new Error("Legacy source must be a clean Git worktree");
-  cpSync(join(legacyRoot, "apps/web/dist"), join(output, "legacy"), {
+    throw new Error(`${name} source must be a clean Git worktree`);
+  cpSync(join(priorRoot, "apps/web/dist"), join(output, name), {
     recursive: true,
     errorOnExist: true,
     force: false,
   });
+  return source;
 }
+const legacySource = copyPriorBuild("legacy");
+const previousSource = copyPriorBuild("previous");
 function run(name, args, extra = {}) {
   const fd = openSync(join(output, name + ".log"), "wx");
   const result = spawnSync("pnpm", args, {
@@ -89,6 +93,10 @@ try {
       PWA_TEST_V2: join(output, "v2"),
       PWA_TEST_OUTPUT: output,
       ...(legacySource ? { PWA_TEST_LEGACY: join(output, "legacy") } : {}),
+      ...(previousSource ? {
+        PWA_TEST_PREVIOUS: join(output, "previous"),
+        PWA_TEST_PREVIOUS_RELEASE: previousSource,
+      } : {}),
     },
   );
 } catch (error) {
@@ -105,6 +113,7 @@ writeFileSync(
       voice_evidence: false,
       synthetic_build_shas: true,
       legacy_source_sha: legacySource,
+      previous_source_sha: previousSource,
       results,
     },
     null,

@@ -1,5 +1,7 @@
 # 로컬 CI/CD 운영 기준
 
+현재 운영처럼 업데이트 동의 UI가 있는 빌드는 PWA collector `--previous-root=<clean 운영 source>`로 검사한다. `--legacy-root`는 동의 UI 이전 자동 업데이트 앱 전용이며 null seen-release 회귀를 유지한다. 둘을 혼용하지 않는다(`INC-OPS-110`). 새 후보 전체 검증은 진행 중이다.
+
 ## 지도 배포 후보의 후속 gate
 
 2026-10-13 기능 연결 전수 검증·조건부 배포가 승인됐다. [지도 통합 검증](LEARNING_MAP_UX_2026-10-13.md)에 초기 실패와 수정 후 최종 후보 검사를 분리한다. 새 공개 콘텐츠는 없으므로 운영 migration/stage/publish를 반복하지 않는다. Preview의 앱 후보와 Worker 코드는 대조하고, Production 변경은 필요한 프런트엔드로 제한한다. 기존37486f8 Pages를 새 UI의 복귀 대상으로 실제 조회한다. UI 회귀 때문에 기존600문항/220레슨을 철회하거나 정상 학습 DB를 복원하지 않는다.
