@@ -6,6 +6,8 @@
 
 ## 승인 후속 — 호환 Worker 수정·격리 회귀 확인 완료
 
+후속 b773420 local-cohort01은718단위·fresh/upgrade·reviewed44·all-five draft/reseed/공개/철회를 통과했다. 그러나 별도 기존295에서261통과/30기존policy skip/4실패로 차단했다. 실패는 모두 개발 서버 manifest이며(INC-PWA-101), 등록 차단과 manifest 제공 설정을 분리해 수정한다. 이 실패 run을 전체 통과로 기록하지 않으며 Preview/Production 변경은 아직 없다.
+
 새 복귀 연습은 `nihongo-n3-learning-rollback-20261013-r2` DB/Worker와 `nihongo-n3-learning-rollback-r2` Pages의 정확한 조합을 사용한다. suffix r2는 두 번째 연습이며 R2 스토리지 binding을 뜻하지 않는다. 기존 fd38 DB/Worker/Pages 및 실패 증적은 유지한다. 기존/신규 대상 교차 조합을 거부하는6개 회귀를 통과했다. 새 원격 생성·전체 복귀 결과는 실행 후 별도로 기록하며 허용목록 추가만으로 완료 판정하지 않는다.
 
 ### 추가 요청 — 한국어·일본어 업데이트 모달, 아직 로컬 후보

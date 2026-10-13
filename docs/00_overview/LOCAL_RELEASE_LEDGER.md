@@ -1,5 +1,7 @@
 # 로컬 형상관리·릴리스 원장
 
+최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
+
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
 
 2026-10-13 추가 후속: 양언어 업데이트 모달·단일 탭/최종 reload guard·실제 빌드 PWA 검사·dual-SHA Preview 읽기 전용 verifier를 로컬 구현했다. 최초20unit/일반12browser 후 독립 반증을 보강했고 최신24browser는22통과/2실패(Chrome 최초032전환)로 보존했다. 운영/Preview 쓰기·원격push·콘텐츠 재시드·음성 코어 변경0. 새 코드는 미커밋 작업 후보이며 이전0adb/145 SHA로 새 검증을 주장하지 않는다. [최신 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md).

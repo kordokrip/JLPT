@@ -1,5 +1,7 @@
 # 오류·회귀 차단 원장
 
+- `INC-PWA-101` — 전체 기존 E2E에서4개 엔진의 `/manifest.webmanifest`가 JSON 대신 개발 SPA HTML을 반환했다(b773420:261pass/30skip/4fail). `VITE_PWA_DEV_SW=false`를 VitePWA devOptions.enabled에도 연결해 manifest route까지 비활성화한 설정 결함이다. devOptions의 manifest 제공은 유지하고 등록 차단은 기존 main.tsx 조건으로 분리한다. 실제 Production 빌드 manifest 결함이나 음성 장애로 확대하지 않는다. 기존 실패 원본은 final2 clean worktree `.artifacts/existing-e2e01.*`에 보존하며 수정 후 새 후보 전체 gate를 실행한다.
+
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
 
 - `INC-PWA-100` — **로컬 최초 전환 gate 실패/운영 미반영**. 새 양언어 업데이트 모달은 일반 갱신·IDB 합성 큐 보존·다른 탭·활성화 중 이동20개를 통과했다. 독립 검토에서 직접 reload/경합을 찾아 단일 탭·최종 경로/mutation guard로 보강했다. 구032→신버전 재진입 WebKit2개는 통과했으나 Chrome PC/모바일은 구 bundle을 열어2실패(전체22/24·exit1)다. cache에 구/새 index가 있고 종료 후 window client0도 관찰했다. 원인은 미확정이며 실제 사용자 학습 유실 또는 운영 오류를 재현한 것은 아니다. 과거12/12 통과를 최초 전환 통과로 확대하지 않고 새 Preview/Production/push를 차단한다. 원본 `pwa-update-2026-10-13/cohort-fUjZqk`와 모든 최초 실패를 보존한다. [릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md).

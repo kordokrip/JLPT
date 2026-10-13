@@ -5,7 +5,6 @@ import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import { execFileSync } from "node:child_process";
 
-const enablePwaDevWorker = process.env.VITE_PWA_DEV_SW !== "false";
 const sourceRelease = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
@@ -101,7 +100,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
-      devOptions: { enabled: enablePwaDevWorker, type: "module" },
+      // 강성호 2026-10-13: 개발 서버의 manifest 제공은 유지한다.
+      // E2E의 SW 등록 비활성화는 main.tsx에서만 처리하며 설치 메타데이터를 숨기지 않는다.
+      devOptions: { enabled: true, type: "module" },
     }),
   ],
   css: {
