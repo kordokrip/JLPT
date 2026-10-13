@@ -2,6 +2,12 @@
 
 ## 2026-10-13 통합 후보의 추가 절차
 
+호환 복귀 변경 승인 후 현재API215/호환API200/DB19 및 작업트리 전체674·OpenAPI/typecheck/build/fresh를 확인했다. 동시성 회귀는 별도 추가 실행이며 sourceclean 최종 gate는 새로 실행한다. 호환f3caa61/0032의 fd38 재검증409/410·기존200·13표 hash보존은 **제한된 회귀PASS**, 전체Productionpredeploy는blocked다. migration0031은수정하지않았고 exact restore 승인 pending set은0031+0032, table coverage는74개다. 실패·pending·기존44 timeout은 그대로보존한다.
+
+현재 판정: a49 local649/reviewed44/기존265pass+30policy skip은 통과했고 실제 Preview600/220도 공개/verifier 통과다. 하지만 실제 구 Worker/Pages 복귀에서 철회 퀴즈 submit/detail200이 재현되어 INC-QUIZ-098 실패다. Preview 전체44 run은 최신18pass/1fail/25미실행으로 exit1이다(INC-QA-099). 같은 Preview 실제 Chrome/현재 사용자 가청·재생구간 R2/legacy0은 완료지만 가족 미확인이다. **운영 점검·백업·전체predeploy·Production·원격push를 시작하지 않는다.**
+
+구 Worker exact rollback 요구의 변경을 사용자에게 제안했다. 이후 API/DB guard는0032에서 개발하고0031을 고치지 않는다. 새 SHA의 stable-host full Preview, 실제 복귀, 가족과 현재 배포의 음성 gate를 각각 연결한다. 음성 gate exit0을 전체 production-predeploy 통과로 사용하지 않는다. 실제 실행/원본 경로는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 따른다.
+
 이번 승인된 범위는 V7+160 전체 및 조건부 Production/push다. 새 collector는 `pnpm -C packages/db exec tsx ../../scripts/run-learning-cohort-local-gates.mjs --output=<새 .artifacts 절대경로>`이고 기존 V7 전체 gate를 새로 실행한 뒤 새 합성 기록 DB에서5개 draft/reseed/공개/replay/철회를 검사한다. 기존614/44를 새 후보의 통과로 계산하지 않는다.
 
 원격 `learning-cohort-remote.ts`는 모든 대상/SHA/config/paths/output을 명시하며 쓰기는 clean 후보와 `ALLOW_LEARNING_COHORT_CHANGE=learning-cohort-600-2026-10-13:<scope>:<SHA>`를 요구한다. 기존 Preview-only 명령은 그대로 Production을 거부한다. authorization과 post-operation receipt를 별도로 보존한다. Worker helper는 명시적 `--maintenance-mode=off|read-only`가 필수이고 package script가 env를 고정한다. split/오타/중복 옵션은 실행 전 실패한다.

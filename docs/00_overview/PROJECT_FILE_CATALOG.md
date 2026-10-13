@@ -2,17 +2,17 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **900개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **904개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
 | Agent 운영 지침 | 16 |
 | API route | 40 |
-| API 공통 서비스 | 19 |
-| DB migration 및 snapshot | 40 |
+| API 공통 서비스 | 20 |
+| DB migration 및 snapshot | 41 |
 | DB schema 및 설정 | 4 |
 | DB seed 및 parser | 53 |
-| DB 검증 및 운영 | 175 |
+| DB 검증 및 운영 | 176 |
 | GitHub 비활성 설정 | 1 |
 | UI 컴포넌트 | 20 |
 | Worker 진입점 및 설정 | 21 |
@@ -24,7 +24,7 @@
 | 브라우저 시각 기준 | 60 |
 | 브라우저 테스트 및 설정 | 32 |
 | 브랜드 및 PWA 자산 | 12 |
-| 앱 회귀 테스트 | 59 |
+| 앱 회귀 테스트 | 60 |
 | 운영 문서 | 25 |
 | 웹 공통 상태·계약·음성 | 44 |
 | 웹 진입점 및 설정 | 8 |
@@ -110,6 +110,7 @@
 - [apps/api/src/lib/push-reminders.ts](../../apps/api/src/lib/push-reminders.ts)
 - [apps/api/src/lib/push.ts](../../apps/api/src/lib/push.ts)
 - [apps/api/src/lib/quiz-choice-order.ts](../../apps/api/src/lib/quiz-choice-order.ts)
+- [apps/api/src/lib/quiz-publication.ts](../../apps/api/src/lib/quiz-publication.ts)
 - [apps/api/src/lib/quiz-questions.ts](../../apps/api/src/lib/quiz-questions.ts)
 - [apps/api/src/lib/response.ts](../../apps/api/src/lib/response.ts)
 - [apps/api/src/lib/safe-log.ts](../../apps/api/src/lib/safe-log.ts)
@@ -151,6 +152,7 @@
 - [packages/db/drizzle-v2/0029_study_motivation.sql](../../packages/db/drizzle-v2/0029_study_motivation.sql)
 - [packages/db/drizzle-v2/0030_push_notification_deliveries.sql](../../packages/db/drizzle-v2/0030_push_notification_deliveries.sql)
 - [packages/db/drizzle-v2/0031_learning_lessons.sql](../../packages/db/drizzle-v2/0031_learning_lessons.sql)
+- [packages/db/drizzle-v2/0032_quiz_publication_guards.sql](../../packages/db/drizzle-v2/0032_quiz_publication_guards.sql)
 - [packages/db/drizzle-v2/meta/0000_snapshot.json](../../packages/db/drizzle-v2/meta/0000_snapshot.json)
 - [packages/db/drizzle-v2/meta/0001_snapshot.json](../../packages/db/drizzle-v2/meta/0001_snapshot.json)
 - [packages/db/drizzle-v2/meta/0002_snapshot.json](../../packages/db/drizzle-v2/meta/0002_snapshot.json)
@@ -346,6 +348,7 @@
 - [packages/db/src/ops/preview160-v3-quality.ts](../../packages/db/src/ops/preview160-v3-quality.ts)
 - [packages/db/src/ops/question-bank-quality.test.ts](../../packages/db/src/ops/question-bank-quality.test.ts)
 - [packages/db/src/ops/question-bank-quality.ts](../../packages/db/src/ops/question-bank-quality.ts)
+- [packages/db/src/ops/quiz-publication-guards.test.ts](../../packages/db/src/ops/quiz-publication-guards.test.ts)
 - [packages/db/src/ops/report-growth-readiness.ts](../../packages/db/src/ops/report-growth-readiness.ts)
 - [packages/db/src/ops/report-learning-path-authoring.ts](../../packages/db/src/ops/report-learning-path-authoring.ts)
 - [packages/db/src/ops/report-learning-path-current-candidate.ts](../../packages/db/src/ops/report-learning-path-current-candidate.ts)
@@ -658,6 +661,7 @@
 - [apps/api/src/lib/ai-learning-assistance.test.ts](../../apps/api/src/lib/ai-learning-assistance.test.ts)
 - [apps/api/src/lib/content-release-control-plane.test.ts](../../apps/api/src/lib/content-release-control-plane.test.ts)
 - [apps/api/src/lib/quiz-choice-order.test.ts](../../apps/api/src/lib/quiz-choice-order.test.ts)
+- [apps/api/src/lib/quiz-publication.test.ts](../../apps/api/src/lib/quiz-publication.test.ts)
 - [apps/api/src/lib/release-operations.test.ts](../../apps/api/src/lib/release-operations.test.ts)
 - [apps/web/src/components/IosInstallHint.test.tsx](../../apps/web/src/components/IosInstallHint.test.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.test.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.test.tsx)

@@ -1,6 +1,10 @@
 # 운영관리·버그·정리·릴리스 runbook
 
-현재 실행: 2026-10-13 사용자 승인 통합 후보(V7+160/네 메뉴/조건부 Production·push). 기존10월12일 local-only는 과거 범위다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 gate 상태를 우선한다. 실제 Production Worker/Pages·0030는 보존 중이다.
+현재 실행: 2026-10-13 사용자 승인 통합 후보(V7+160/네 메뉴/조건부 Production·push). Preview600/220·0031·음성/현재 가청은 확인했으나 **INC-QUIZ-098 실제 복귀 실패·INC-QA-099 원격 전수 미완료·가족 미확인으로 Production/push 차단**이다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 gate 상태를 우선한다. 실제 Production Worker/Pages·0030는 보존 중이다. 기존10월12일 local-only는 과거 범위다.
+
+후속 승인: bare old Worker 대신 직전032+철회 guard+queue점검의 호환f3caa61을 준비했고 fd38/0032의 제한된회귀는 통과했다. **복귀는5release 철회→문항/레슨 공개0→검증된 호환Worker→직전Pages→기존기능/기록**이다. full 새후보 rollback 증거가 아직이므로 운영에 실행하지 않는다.0032는5trigger/테이블0·행변경0이며 backup table coverage0031/74와 실제 ledger0032를 구별한다. 새로운 source/증적은불변기존authorization와별도로연결한다.
+
+복귀의 공개0 검사는 원본 DB 문항·레슨뿐 아니라 이미 저장된 quiz_attempts의 제출/정답조회에도 적용해야 한다. 정확 구032 Worker는 이 경로를 막지 않으므로 bare old Worker 복귀를 성공으로 기록하지 않는다. 호환 guard Worker/후속0032 또는 동등 보호 경로는 사용자 결정 후 새 후보·실제 drill로 검증한다. Preview에 적용된0031은 수정 금지다. 실패 terminal 원장 재공개·과거 failed 편집 금지이며 drill Worker는 철회/read-only로 보존한다.
 
 배포 helper는 env/maintenance mode를 명시하고 사후 health의 SHA/모드를 대조한다. split/오타/중복 env는 거부한다. HTTP·cron guard와 queue defer만으로 실행 중 workflow 동결을 증명하지 않는다. 원격 queue pause/기존 workflow 종료와 진행 중 쓰기 종료를 확인한 뒤에만 백업한다. 복귀는5개 철회→문항/레슨 공개0→Worker→Pages→기존 기록/기능이며, 데이터 손상이 없으면 D1 전체 복원을 하지 않는다.
 

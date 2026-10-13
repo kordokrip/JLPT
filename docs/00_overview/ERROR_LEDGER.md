@@ -1,6 +1,13 @@
 # 오류·회귀 차단 원장
 
-## 2026-10-13 통합 배포 보강 — 구현 중, 운영 미반영
+## 2026-10-13 통합 배포 — Preview 반영, Production 차단
+
+- `INC-QUIZ-098` 승인 후속 — **수정·격리 회귀 확인 완료/운영 미반영**. version snapshot·typed ID·정확 급수/모드·공개 판정과0032 snapshot/완료/REPLACE/write guards를 추가했다. API precheck후철회는 D1 batch 전체 취소/409, 상세410·NULL legacy summary보존이다. 동시서로다른답변은1claim/1activity set이다. 현재API215/호환API200/DB19 통과. old032 기반 호환f3caa61을 fd38에 적용해 retired409×2/410×2·13표 hash보존·canonical/기록/FSRS200·FK0을 재확인했다. 원래 실패를 편집하지 않았다. 새후보 전체 복귀/Preview·가족·backup/Production은 아직이며 이 제한된회귀를전체P1운영closed로 표시하지 않는다.
+
+- `INC-QUIZ-098` — **P1/미해결**. 실제 별도 원격5 release 철회/공개0→구 Worker032b50dd→구 Pages88ec97bd→격리 점검off에서, 철회된 pending JLPT 퀴즈 submit200·활동3→6과 completed detail200·정답 반환을 재현했다. canonical N3 submit200/records200/quiz3행 유지/FK0은 확인했으나 전체 학습 기록 보존 통과는 아니다. 원인은 generic quiz가 저장된 questions_json의 공개 여부를 다시 검사하지 않는 것이다. 현재a49와 구032의 해당 코드가 같고0031 study_steps guard는 quiz_attempts에 적용되지 않는다. 정확 구 Worker SELECT를 DB trigger만으로 막을 수 없어 호환 복귀 정책 변경을 요청했다. 후보 API 수정/0032·재검증 전 Production 차단. 재현 원본 `drill-rollback-quiz-result-cohort01.json`은 passed=false로 보존하고 격리 Worker는 read-only로 다시 잠갔다. 독립 Astra 검토도 실패 판정을 확인했다. 운영 장애나 운영 쓰기 발생을 뜻하지 않는다.
+- `INC-QA-099` — **원격 전체 gate 미완료**. Preview E2E CJS loader의 import.meta.url 실패를 경로만 교정했다. actual44 후속 cohort03은31pass/13미실행·suite timeout, cohort04는18pass/1fail/25미실행·suite timeout으로 모두 exit1이다. trace에 약993.65초 호출 공백과 응답 미수집 register가 있으나 서버 원인·노트북 sleep은 미확정이다. 미실행/실패를 통과로 바꾸거나 timeout만 확대하지 않는다. 안정된 실행 환경과 최종 새 후보에서 전수 검사를 다시 해야 한다.
+
+현재 Preview600/220 공개/verifier와 같은 배포 Chrome ko/ja onend·재생구간 Network0·현재 사용자 가청 확인은 완료다. **가족 동선은 현재 사용자 답변대로 미확인**이며 현schema backup/restore·전체predeploy·Production·원격push는 미실행이다. 최신 시계열은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md). 아래 구현 중 표기는 최초 실행 이력이다.
 
 - `INC-QA-097` — clean worktree 첫 실행은 `/tmp`/`/private/tmp` 출력 경로 차이로 테스트 전 거부됐다. 다음 실행의 단위는 과거 TOPIK v2 증적 미연결로 Ops32·DB252통과/1실패·나머지 미실행이었다. 역사 증적 경로만 연결한 후 전체648·typecheck/OpenAPI/build/fresh D1·44레슨 E2E·V7 local drill은 통과했다. 그러나 통합 collector가 command gate에 `artifact` 대신 `path`를 써600 공개 전에 exit1로 차단됐다. prerequisite와 command gate를 분리하는 helper/회귀를 추가해 수정한다. 첫 실패·후속 실패를 보존하며 새 전체 게이트 완료 전 원격 반영하지 않는다.
 

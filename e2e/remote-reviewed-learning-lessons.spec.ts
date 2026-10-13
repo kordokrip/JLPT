@@ -1,6 +1,7 @@
 // 강성호 2026-10-13: 실제 공개 검증 receipt가 있는 전용 Preview에서11급수 대표 레슨과 저장을 검사한다.
 // 합성 QA 계정만 생성하며 가족 관찰·물리 가청의 증거로 사용하지 않는다.
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { expect, test, type APIResponse } from '@playwright/test';
 
@@ -9,7 +10,8 @@ const base=process.env.E2E_BASE_URL;
 if(!input || !base || !/^https:\/\/[a-f0-9]{8}\.nihongo-n3\.pages\.dev$/.test(base)) throw new Error('Exact immutable dedicated Preview URL and remote receipt required; Production is prohibited');
 const receipt=JSON.parse(readFileSync(input,'utf8'));
 if(receipt.schema!=='learning-cohort-remote-receipt-v1' || receipt.passed!==true || receipt.target?.scope!=='preview' || receipt.target.pages!==base || receipt.state!=='published' || receipt.questions!==600 || receipt.lessons!==220 || !/^[a-f0-9]{40}$/.test(receipt.candidate_sha)) throw new Error('Passed same-candidate published600/220 remote verification required');
-const bankBytes=readFileSync(new URL('../packages/db/src/content/learning-path-v7-2026-10-11/frozen-cohort-01/bundle.json',import.meta.url));
+// 강성호 2026-10-13: Playwright의 CJS 검사 로더에서 import.meta 혼용을 피한다. 문항 hash와 모든 검사 조건은 유지한다.
+const bankBytes=readFileSync(resolve(process.cwd(),'../packages/db/src/content/learning-path-v7-2026-10-11/frozen-cohort-01/bundle.json'));
 if(createHash('sha256').update(bankBytes).digest('hex')!==receipt.cohort_hashes?.v7?.bundle || receipt.target.worker!=='nihongo-n3-api-topik-preview') throw new Error('Exact immutable bank and dedicated Worker binding required');
 const bank=JSON.parse(bankBytes.toString('utf8'));
 const copy={

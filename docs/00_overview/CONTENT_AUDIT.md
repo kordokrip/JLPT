@@ -1,6 +1,14 @@
 # 콘텐츠·출처 현재 감사
 
-## 2026-10-12 Preview160 v3 후보 — 비공개
+## 2026-10-13 공개 상태 — Preview만600문항/220레슨
+
+후속 철회보호는 원문/의미승인/콘텐츠hash를 변경하지 않았다. old032기반 호환f3caa61·0032는 격리fd38의 철회회귀만 통과했다. 현재96c8594a/Preview0031/a49 공개600/220 및 운영콘텐츠는 그대로다. 새로운 root후보의전체출시증거는아직이며가족/새후보검증없이Production으로승격하지않는다.
+
+새 V7 440 + 별도160 v3를 Preview0031/Pages96c8594a/sourcea49b076에 공개·verify했다. 5 release/600문항/220레슨/600quality links/56ko speech다. 기존 실패160의3 release는 Preview에서 철회하고 원문/감사/학습 기록/실패 artifact는 보존했다. Production canonical·TOPIK practice v2·owner140/N3정적120은 변경하지 않았다. 아래 구160 ‘Preview published’는 당시 기록이다.
+
+콘텐츠의 기존 실제 두 reviewer 승인/원본hash는 유지한다. 하지만 **실제 복귀 P1/원격 전수 미완료/가족 미확인으로 Production 공개 불가**다. 가청 확인은 현재96c8594a에만 연결했고 mock/과거 증거를 쓰지 않았다. [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 현재 상태로 사용한다.
+
+## 2026-10-12 Preview160 v3 후보 — 당시 비공개 이력
 
 v2 A/B158/2 실패를 보존하고 새 v3에서 두 결함만 수정해 A/B160/160 승인했다. draft `4934aa390878bd6ac2becd9ec4e930eafb7e72423b98b492430a83b1747ffd6f`, source `c5e2548381420c785909d787e9a316a1cc6057e0fc777702aa4ebfe33db73c66`, manifest `de8b459e06474fc1454b46139e4ab3a65c9692a8ee54a23ea26e702e87b61a9b`다. 실제 generic 품질·120 release/audit/question join·쓰기8/듣기8 binding·별도543 draft행/reseed/FK/기존 합성 기록 보존을 확인했다. 새160의 원격 G0–G4/publication은 미실행이다. 완전 맹검·새 license 연구·Preview 공개를 주장하지 않는다.
 

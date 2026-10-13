@@ -1,12 +1,18 @@
 # 현재 구현 상태
 
-## 2026-10-13 활성 후보 — 통합 검증·배포 구현 중
+## 2026-10-13 활성 후보 — Preview 공개·음성 확인, Production 차단
 
-사용자 승인 범위는 V7 440문항/220레슨 + 별도160 v3 + 네 메뉴 UX의 검증·조건부 Production·최종 일반 push다. 아래10월12일 로컬-only는 보존 이력이다. 현재 원격 재조회에서도 운영/Preview는 ledger31/latest0030/0031=0·쓰기0이며 Worker `aedcbd40`, Pages `f62a8bdb`, 실제 Production branch `main`을 확인했다. 운영 OAuth와 공개 콘텐츠는 그대로다.
+후속 사용자 승인을 받아 직전032 기반 호환 Worker `f3caa61`과 trigger-only0032를 구현했다. 현재 API215/호환 API200/DB19 통과, fd38 격리환경의 retired submit409/detail410·canonical/기록/FSRS조회200·13표 거부요청 hash불변 및 기존card/review 보존을 확인했다. 격리만0032/호환Worker 적용 후read-only로 잠갔다. 운영0030과 Preview0031/a49는 그대로다. **이 제한된 회귀 확인은 새후보 전체 rollback/Preview44/가족/backup/predeploy 완료가 아니다.** 정확한 최신 증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 ‘승인 후속’이다. 아래 P1 실패/정책 변경 제안은 최초 이력으로 보존한다.
+
+사용자 승인 범위는 V7 440문항/220레슨 + 별도160 v3 + 네 메뉴 UX의 검증·조건부 Production·최종 일반 push다. 아래10월12일 로컬-only는 보존 이력이다. Production은0030/Worker `aedcbd40`/Pages `f62a8bdb`/source032b50dd/branch `main`을 유지한다. 운영 OAuth·canonical·기존 학습 기록에는 쓰지 않았다. Preview만0031/Worker `b1fd8bdf`/Pages `96c8594a`/sourcea49b076으로 갱신하고600문항/220레슨을 공개·검증했다. 구 실패160은 원본을 보존하면서 Preview 공개에서 제외했다.
 
 5개 release coordinator의 statement-atomic 출판/철회·nullable 의미 봉인과 strict-target `stage/publish/verify/withdraw`를 구현 중이다. Worker helper는 env/점검 모드 필수·오타/중복 거부·배포 후 SHA/모드 대조를 추가했고 회귀6/6이다. queue/cron 점검3/3, strict target3/3을 확인했다. 기존5시각 차이는 승인된 네 메뉴/빠른 학습/설정 통합과 화면을 대조해 그5개 baseline만 재생성(5/5)했다. 허용값·마스킹·검사 삭제는 변경하지 않았다. 이는 최종 전체 gate가 아니다.
 
-새 전체 gate·새 Preview·별도 원격 복귀·동일 Preview 가족/실제 Chrome/가청/Network0·운영72-table backup/restore와 Production/push는 아직 미실행이다. 정확한 명령·증거·다음 순서는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 따른다. 음성 코어4파일 diff0이다.
+최종a49 local-cohort03 단위649·fresh/upgrade/reseed·reviewed44/44 및 기존 E2E265pass/30기존시각policy skip/0fail을 확인했다. 하지만 원격44 suite는 두 번 timeout으로 미완료이고 최신18pass/1fail/25미실행이다. 실제 격리 복귀는5개 철회/공개0→구 Worker→구 Pages 후 철회 JLPT 퀴즈 제출200/활동+3/정답조회200이 재현되어 **실패(INC-QUIZ-098)**다. 구 Worker SELECT는 DB trigger만으로 차단할 수 없어 호환 rollback 정책 변경을 제안했다. 기존 학습 전체 무충돌을 입증한 상태가 아니다.
+
+같은96c8594a native Chrome ko/ja 각2 onend, 재생구간 Network R2/legacy0과 **현재 사용자 두 언어 가청 확인**은 완료·audio predeploy exit0이다. 가족 실제 N3/TOPIK3·4 동선은 사용자 답변대로 미확인이다. 실제72-table backup/restore·전체predeploy·Production·원격push는 미실행이다. 로컬 commit c21d39a/a49b076 두 개와 clean 후보를 보존했다. 운영 학습은 정상 기존 릴리스를 유지하며 점검하지 않았다. 상세 시계열은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md). 음성 코어4파일 diff0이다.
+
+최신 갱신: 2026-10-13 KST. Production0030, Preview/격리0031을 분리하며 이미 적용된0031은 수정하지 않는다. 아래10월12일 이하 수치/범위는 당시 이력이며 현재 승인·Preview 상태가 아니다.
 
 갱신: 2026-10-12 KST. Production 기준선과 로컬0031 후보를 분리한다. 과거 배포 전의 미완료·실패 기록은 [릴리스 원장](LOCAL_RELEASE_LEDGER.md), [오류 원장](ERROR_LEDGER.md), [9월 25일 종료 스냅샷](../history/CURRENT_STATE_2026-09-25.md)에 보존한다.
 

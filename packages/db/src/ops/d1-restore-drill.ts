@@ -221,9 +221,10 @@ try {
     }
     const canonicalDirectory=path.join(root,'packages/db/drizzle-v2');
     const pending=fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))>Number(manifest.schemaProfile)).sort();
-    // 승인된0031만 검증하며 미래 migration을 무조건 포함하지 않는다.
-    if(JSON.stringify(pending)!==JSON.stringify(['0031_learning_lessons.sql'])) throw new Error('Exact approved upgrade set [0031] required');
-    fs.copyFileSync(path.join(canonicalDirectory,pending[0]!),path.join(persistTo,'migrations',pending[0]!));
+    // 강성호 2026-10-13: 승인된 레슨0031 + 철회 보호0032만 포함한다.0032는 trigger-only이며74-table coverage는 동일하다.
+    const approved=['0031_learning_lessons.sql','0032_quiz_publication_guards.sql'].filter(file=>Number(file.slice(0,4))>Number(manifest.schemaProfile));
+    if(JSON.stringify(pending)!==JSON.stringify(approved)) throw new Error('Exact approved upgrade set [0031,0032] required');
+    for(const file of pending)fs.copyFileSync(path.join(canonicalDirectory,file),path.join(persistTo,'migrations',file));
     wrangler(['d1','migrations','apply','DB',...localArgs()],'upgrading restored local schema');
     for(const [table,before] of legacySnapshots)
       if(rowsHash(table,before.columns)!==before.sha256) failures.push(`upgrade changed legacy rows: ${table}`);
@@ -232,7 +233,9 @@ try {
     if(profile!=='0031') failures.push('Upgraded schema is not 0031');
     const afterFk=JSON.parse(wrangler(['d1','execute','DB',...localArgs(),'--json','--command','PRAGMA foreign_key_check'],'checking upgraded foreign keys'));
     if(afterFk[0]?.results?.length) failures.push('upgrade foreign_key_check failed');
-    upgrade={migration:'0031_learning_lessons.sql',schemaProfile:profile,regularTables:tablesForPhase('all',profile).length,
+    const guardTriggers=JSON.parse(wrangler(['d1','execute','DB',...localArgs(),'--json','--command',"SELECT name FROM sqlite_schema WHERE type='trigger' AND name IN ('quiz_attempts_no_replace','quiz_attempts_snapshot_immutable','quiz_attempts_finished_immutable','quiz_attempts_publication_insert','quiz_attempts_publication_grade')"],'checking approved quiz guard triggers'));
+    if(guardTriggers[0]?.results?.length!==5)failures.push('0032 quiz guard triggers incomplete');
+    upgrade={migration:pending,migrationLedgerTarget:'0032',schemaProfile:profile,regularTables:tablesForPhase('all',profile).length,
       legacyTablesCompared:legacySnapshots.size,legacyRowsUnchanged:!failures.length,
       foreignKeyViolations:afterFk[0]?.results?.length??0};
   }

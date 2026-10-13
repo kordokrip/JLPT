@@ -16,6 +16,7 @@ import { ok, created, notFound, badRequest, conflict, internalError } from '../l
 import { quizGenerateBodySchema, quizSubmitBodySchema } from '@nihongo-n3/shared';
 import { safeErrorName } from '../lib/safe-log.js';
 import { generateQuizQuestions, QuizPoolError } from '../lib/quiz-questions.js';
+import { parseStoredQuiz, storedQuizAvailable, unavailableQuizSql, isQuizPublicationGuardError } from '../lib/quiz-publication.js';
 
 const quiz = new Hono<AppEnv>();
 quiz.use('*', cfAccessAuth);
@@ -65,9 +66,10 @@ quiz.post('/quiz/generate', async (c) => {
     // `script_ko` on a canonical listening item is the correct translation.
     // Keep it in the stored attempt for post-submit use, but never expose it in
     // the generation response alongside the still-unanswered choices.
-    const clientQuestions = questions.map(({ answer: _answer, script_ko: _translation, ...question }) => question);
+    const clientQuestions = questions.map(({ answer: _answer, script_ko: _translation, bank_version: _internalVersion, ...question }) => question);
     return ok(c, { quiz_id: quizId, mode, level, questions: clientQuestions });
   } catch (error) {
+    if(isQuizPublicationGuardError(error))return conflict(c,'문제 공개 상태가 변경되었습니다. 새 퀴즈를 시작해 주세요.');
     console.error({ event: 'quiz_attempt_create_error', error_name: safeErrorName(error) });
     return internalError(c, '퀴즈 시도를 저장하지 못했습니다');
   }
@@ -109,16 +111,11 @@ quiz.post('/quiz/submit', async (c) => {
     .first<StoredAttempt>();
 
   if (!attempt) return notFound(c, `quiz_id=${quiz_id} 를 찾을 수 없습니다`);
-  if (attempt.finished_at) return conflict(c, '이미 제출된 퀴즈입니다');
-
   const raw = attempt.questions_json ?? attempt.detail_json ?? '[]';
-  type StoredQ = { id: string; type: string; answer: string; item_id: string | number };
-  let storedQuestions: StoredQ[] = [];
-  try {
-    storedQuestions = JSON.parse(raw) as StoredQ[];
-  } catch {
-    return internalError(c, '문제 데이터가 손상되었습니다');
-  }
+  const storedQuestions=parseStoredQuiz(raw,attempt.total,attempt.mode);
+  if(!storedQuestions || !await storedQuizAvailable(db,raw,attempt.level,attempt.mode))
+    return conflict(c,'철회되었거나 확인할 수 없는 퀴즈입니다. 새 퀴즈를 시작해 주세요.');
+  if (attempt.finished_at) return conflict(c, '이미 제출된 퀴즈입니다');
 
   // 채점
   const answerMap = new Map(answers.map((a) => [a.question_id, a.answer]));
@@ -151,7 +148,9 @@ quiz.post('/quiz/submit', async (c) => {
         `INSERT OR IGNORE INTO learning_activity_events
            (event_id, user_id, learning_track, event_type, content_type, content_id,
             level_tag, mode, correct, occurred_at)
-         VALUES (?, ?, ?, 'quiz_answered', ?, ?, ?, ?, ?, unixepoch())`,
+         SELECT ?, ?, ?, 'quiz_answered', ?, ?, ?, ?, ?, unixepoch()
+         WHERE EXISTS(SELECT 1 FROM quiz_attempts claimed WHERE claimed.id=? AND claimed.user_id=?
+           AND claimed.learning_track=? AND claimed.finished_at=? AND claimed.detail_json=?)`,
       ).bind(
         `quiz:${quiz_id}:${question.id}`,
         userId,
@@ -161,6 +160,7 @@ quiz.post('/quiz/submit', async (c) => {
         attempt.level,
         question.type || attempt.mode,
         Number(submitted === question.answer),
+        quiz_id,userId,learningTrack,now,detailJson,
       );
     });
     const results = await db.batch([update, ...activityStatements]);
@@ -168,6 +168,7 @@ quiz.post('/quiz/submit', async (c) => {
       return conflict(c, '이미 제출된 퀴즈입니다');
     }
   } catch (error) {
+    if(isQuizPublicationGuardError(error))return conflict(c,'문제 공개 상태가 변경되어 제출하지 않았습니다.');
     console.error({ event: 'quiz_submission_write_error', error_name: safeErrorName(error) });
     return internalError(c, '퀴즈 결과와 학습 활동을 저장하지 못했습니다');
   }
@@ -227,11 +228,15 @@ quiz.get('/quiz/history', async (c) => {
 quiz.get('/quiz/attempts/:id', async (c) => {
   const track = c.get('learningTrack');
   if (track !== 'jlpt-ja' || !/^\d+$/.test(c.req.param('id'))) return notFound(c);
-  const row = await c.env.DB.prepare(`SELECT id,total,correct,detail_json FROM quiz_attempts
+  // 공개 판정과 상세 원본을 같은 DB 읽기 snapshot에서 취득한다. history 집계/원본 행은 숨기거나 삭제하지 않는다.
+  const row = await c.env.DB.prepare(`SELECT id,total,correct,detail_json,questions_json,mode,level,
+    ${unavailableQuizSql('quiz_attempts')} unavailable FROM quiz_attempts
     WHERE id=? AND user_id=? AND learning_track=? AND finished_at IS NOT NULL`)
-    .bind(Number(c.req.param('id')),c.get('userId'),track).first<{id:number;total:number;correct:number;detail_json:string}>();
+    .bind(Number(c.req.param('id')),c.get('userId'),track).first<{id:number;total:number;correct:number;detail_json:string;questions_json:string|null;mode:string|null;level:string|null;unavailable:number}>();
   if (!row) return notFound(c);
   c.header('Cache-Control', 'private, no-store');
+  if(!parseStoredQuiz(row.questions_json,row.total,row.mode) || row.unavailable!==0)
+    return c.json({type:'quiz-unavailable',title:'Gone',status:410,detail:'철회되었거나 출처를 확인할 수 없는 문제의 정답은 제공하지 않습니다.'},410);
   return ok(c, { quiz_id:row.id,total:row.total,correct:row.correct,
     score:row.total ? Math.round(row.correct/row.total*100):0, detail:JSON.parse(row.detail_json) });
 });

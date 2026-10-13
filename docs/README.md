@@ -1,6 +1,8 @@
 # JLPT · TOPIK 문서
 
-현재 작업 갱신: **2026-10-13**. 사용자가 V7+별도160 전체 검증·조건부 Production·최종 push를 승인했다. [통합 릴리스 기록](00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)이 이번 실행 순서와 실제 진행 상태다. 아래10월12일 local-only는 이전 세션 이력이며 새 승인 범위를 제한하지 않는다. 아직 새 Preview/Production 통과로 보고하지 않는다.
+2026-10-13 후속: 호환 Worker 복귀 변경 승인 뒤 quiz철회guard/0032를 구현해 currentAPI215·호환API200·DB19와 격리409/410·기존학습200·기록hash보존을 확인했다. 현재 운영·a49Preview는변경하지않았다. 이는제한회귀이며새후보전체Preview/rollback/가족/backup/predeploy전Production·push차단은유지한다. 최신세부사항은 [통합 릴리스 기록](00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)의 승인 후속부터읽는다.
+
+현재 작업 갱신: **2026-10-13**. 사용자가 V7+별도160 전체 검증·조건부 Production·최종 push를 승인했다. a49 local649/reviewed44/기존265pass+30policy skip, Preview600문항/220레슨과 같은 배포 실제 음성·현재 사용자 가청 확인은 완료다. **구Worker 복귀의 철회 퀴즈 P1·원격 전수 미완료·가족 동선 미확인으로 Production/push는 차단**이다. 운영0030/기존릴리스를 유지한다. [통합 릴리스 기록](00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)이 이번 실행 순서·실제 증적·다음 결정이다. 아래10월12일 local-only는 이전 세션 이력이며 새 승인 범위를 제한하지 않는다.
 
 갱신: 2026-10-12 KST. 운영은9월25일 `0029–0030` 릴리스와 기존 콘텐츠를 유지한다. V7 440문항/220레슨·정식 출판 계약과 별도160 v3를 로컬에서 검증했다. 최종 cohort04 단위614·desktop/mobile Chromium/WebKit44·fresh/upgrade/reseed·격리 공개/철회가 통과했다. 사용자 지시에 따라 로컬 검증·문서화까지만 진행하며 커밋·push·새 Preview·Production은 실행하지 않았다. 실패 이력과 새 결과는 [릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md)에서 구분한다.
 

@@ -5375,6 +5375,15 @@ export interface paths {
                         "application/json": components["schemas"]["ProblemDetail"];
                     };
                 };
+                /** @description Withdrawn content or unverifiable legacy snapshot; summary history is retained */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
             };
         };
         put?: never;
@@ -5420,13 +5429,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description 생성된 퀴즈 */
-                201: {
+                /** @description 생성된 퀴즈, 정답/내부 버전 미노출 */
+                200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericCreatedResponse"];
+                        "application/json": components["schemas"]["GenericDataResponse"];
                     };
                 };
                 /** @description 잘못된 요청 */
@@ -5440,6 +5449,15 @@ export interface paths {
                 };
                 /** @description 인증 필요 */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 생성 도중 공개 상태 변경 */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -5485,12 +5503,12 @@ export interface paths {
             };
             responses: {
                 /** @description 채점 결과 */
-                201: {
+                200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericCreatedResponse"];
+                        "application/json": components["schemas"]["GenericDataResponse"];
                     };
                 };
                 /** @description 잘못된 요청 */
@@ -5513,6 +5531,15 @@ export interface paths {
                 };
                 /** @description 퀴즈 없음 */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 이미 제출되거나 철회된 퀴즈 또는 제출 중 공개 상태 변경 */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };

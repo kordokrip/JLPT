@@ -1,6 +1,20 @@
 # 로컬 형상관리·릴리스 원장
 
-## 2026-10-13 V7+160 통합 후보 — 구현/검증 진행 중
+## 2026-10-13 V7+160 통합 후보 — Preview 완료, 복귀 실패로 Production 차단
+
+후속 승인/실행: 직전032 source에 quiz출판guard/내부version/queue점검을 추가한 별도 clean `f3caa61a3160dd5f69f56b17ae0a3c55a0211807`과 local branch `release/quiz-compat-2026-10-13`을 고정했다. 호환API200/typecheck/build 통과. root에는 동일quiz수정/0032/정확backupupgrade를 적용했고 초기dirty전체674·fresh 등6gateexit0, 동시회귀추가뒤API215·DB19를 확인했다. root의 성공200/철회409·410 OpenAPI 및 생성 타입도 실제계약에맞췄다.
+
+격리fd38에만0032 적용→13표 기존행 hash불변→호환Worker read-only/off→retired submit409×2/detail410×2·canonical/기록/FSRS200·기존card/review보존·FK0→직접public0→호환Worker read-only 순으로 확인했다. 구Pages88ec97bd를 유지했다. 이는 terminal-withdrawn 원장의 제한회귀이며 신규전체복귀gate가아니다. 새candidate전체Preview/가족/backup/predeploy/Production/원격push는아직이다. 실패원본과 현재a49Preview/운영032source를 유지한다.
+
+후속 실행: 로컬c21d39a/a49b076 두 commit·동일a49 clean worktree를 고정했다. 최종local-cohort03 단위649/OpenAPI/typecheck/build/fresh·reviewed44/44·기존 기록12종 upgrade/reseed/공개/철회 보존 통과, 전체 기존 E2E265pass/30기존policy skip/0fail. 이전 실행 실패를 보존했다.
+
+후속 문서/source10파일은 미커밋이다. 문서900paths/73Markdown/1069relative links/lifecycle/DBrefs·diffcheck 통과. local ops39/2/0; remote ops50/2/1·exit1의 유일한 실패는 승인된 배포 게이트 미충족으로 아직push하지 않은 locala49/origind626 차이다. remote 전체 통과로 기록하지 않는다.
+
+실제 dedicated Preview0031/Worker b1fd8bdf/Pages96c8594a에5개600문항/220레슨/600품질링크/56ko speech를 atomic publish·verify했다. 구 실패160은 문항/기록 보존 후 Preview 비공개다. 원격전체44는 최신18pass/1fail/25미실행·timeout exit1로 미완료다. 같은 배포 native Chrome ko/ja각2 onend·재생구간HAR0·**현재 사용자 두 언어 가청 확인**, audio predeploy exit0. 가족 실제동선은 사용자 답변 ‘아직 확인하지 않았습니다’로 not-run이다.
+
+격리 fd38bf8d DB에 합성 퀴즈를 준비하고5개 철회/공개0→실제 구032Worker→구032Pages88ec97bd→격리off 순으로 복귀했다. 철회된 퀴즈 submit200/활동+3·completed detail200/정답 반환으로 **복귀 실패(INC-QUIZ-098)**다. canonical N3 submit/records200·quiz3행/FK0 범위만 확인했다. 격리 Worker는 다시read-only/5release withdrawn이다. 운영에 쓰거나 운영 학습을 중지하지 않았다. Production source/IDs/settings는 후속read-only 조회에서도 동일하다. 운영 backup/restore/predeploy/배포와 Git 원격push는0이다. 구 Worker 그대로 복귀 요건을 호환guard Worker로 바꾸는 사용자 결정을 요청했다. 상세 시계열/증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)이다.
+
+아래 내용은 이번 세션의 **초기 실행 이력**이며 ‘아직미실행’ 표현을 최신 Preview 상태로 해석하지 않는다.
 
 현재 세션 사용자는 전체 검증·조건부 Production·최종 push를 승인했다. 이전191개 변경과 failed/frozen artifact를 보존했다. 시작 ops39/2/0. 운영 및 Preview ledger31/latest0030/0031=0을 실제 SELECT로 확인(쓰기0), Worker aedcbd40/Pages f62a8bdb/source032b50dd/Production branch main을 재조회했다.
 

@@ -45,6 +45,7 @@ export async function generateQuizQuestions(
     choices: string[];
     answer: string;
     item_id: string | number;
+    bank_version?: string;
     script_ja?: string;
     script_ko?: string;
   };
@@ -114,10 +115,11 @@ export async function generateQuizQuestions(
         choices_json: string;
         answer_index: number;
         audio_script_ja: string | null;
+        bank_version: string;
       }>(
         db,
         `SELECT bank.id, bank.prompt_ko, bank.prompt_ja, bank.choices_json,
-                bank.answer_index, bank.audio_script_ja
+                bank.answer_index, bank.audio_script_ja, bank.bank_version
            FROM jlpt_practice_questions bank
           WHERE bank.learning_track = 'jlpt-ja'
             AND bank.level = ?
@@ -155,6 +157,7 @@ export async function generateQuizQuestions(
             ),
             answer,
             item_id: row.id,
+            bank_version: row.bank_version,
             ...(mode === "listening" && row.audio_script_ja
               ? { script_ja: row.audio_script_ja }
               : {}),

@@ -2,6 +2,14 @@
 
 ## 활성 작업 — 2026-10-13
 
+**승인 후속 우선:** 호환복귀정책 변경은 승인돼 수정/격리 회귀까지 완료했다. R=old032기반 f3caa61/별도 local branch/worktree, runtime변경 quiz3+queue defer. C=root 현재quiz수정+0032+backupupgrade+OpenAPI이며 아직 최종source고정이필요하다. API215/R200/DB19, 초기작업트리674·fresh 등통과. fd38에서0032·13표 hash보존·retired409/410·기존N3/records/history/FSRS200·기존card/review보존·public0/FK0이며R read-only다. 제한회귀PASS를새C전체rollback게이트로사용하지않는다.0031 불변/032SHA7cecb1f…/74tablecoverage profile31·ledger32 구별. 이전‘사용자선택대기’는초기이력이다. 새cleanC local/Preview44/별도새전체drill/가족/같은C음성/현backup/predeploy전Production/push금지. 원본a49publishauthorization를새SHA로편집하지않는다.
+
+**최신 인수인계: Production 차단**. a49 최종local649·reviewed44·기존265pass/30policy skip/0fail과 Preview600/220 공개/verifier는 완료다. Preview는0031/Worker b1fd8bdf/Pages96c8594a이며 Production0030/aedcbd40/f62a8bdb/main은 변경하지 않았다. 같은 배포 native Chrome 양언어 종료·현재 사용자 가청·재생구간 R2/legacy0은 통과했고 가족 N3/TOPIK3·4는 미확인이다. 원격44 suite 최신18pass/1fail/25미실행·timeout exit1이다.
+
+INC-QUIZ-098 실제 격리 복귀는5개 철회/공개0→구032 Worker→구032 Pages88ec97bd 후 withdrawn quiz submit/detail200·활동+3으로 실패했다. generic quiz source는 구/새가 같고0031study_steps guard는 quiz_attempts를 보호하지 않는다. DB trigger만으로 구 SELECT 응답을 막을 수 없다. **구Worker exact 복귀에서 철회-aware 호환Worker 복귀로 바꾸는 사용자 선택을 기다린다.** 선택 전 새 runtime/migration 수정·Production/push를 하지 않는다.0031은 Preview/drill 적용 완료로 수정 금지; 후속0032로 분리한다. 격리환경 fd38bf8d/전용Worker/Pages는철회·read-only이며 terminal ledger 재공개 금지다. 정상 기록 삭제나 운영 백업의 격리 복사도 금지다.
+
+root 미커밋 후속은 E2E CJS 로더 경로 교정과 문서다. 런타임 후보SHA a49 및 원본 local/Preview/음성/failed artifact는 불변이다. 로더 교정은 assertion/hash/대상차단을 바꾸지 않았다. 퀴즈 재현 독립 검토는 실패를 확인했지만 전체 learner 보존 통과를 주장하지 않았다. 정확한 증적·다음 결정은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md). 아래는 최초/과거 실행 이력이다.
+
 사용자 범위는 V7+160 전체 검증/네 메뉴/조건부 Production/최종 push다. 아래10월12일 local-only 금지는 이전 세션 이력이다. 현재 원격은0030/Worker aedcbd40/Pages f62a8bdb·main이며 변경하지 않았다. 현재 gate/실행 순서는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)을 먼저 읽는다.
 
 신규 진입점은 `learning-cohort-release.ts`(5개 원자적 출판/철회), `learning-cohort-target.ts`(정확 대상/clean SHA), `learning-cohort-remote.ts`(stage/publish/verify/withdraw), `run-learning-cohort-local-gates.mjs`(실제 새 전체 gate/합성 보존 drill)이다. 기존 Preview-only 경계는 유지한다. 별도 원격 drill을 최종 Preview와 분리하며 운영 사용자 자료를 복사하지 않는다. family/audio receipt를 AI가 자동 통과로 작성하지 않는다.

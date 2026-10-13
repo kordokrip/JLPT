@@ -92,6 +92,8 @@ import rawStudyMotivationMigration from '../../../../packages/db/drizzle-v2/0029
 import rawPushNotificationDeliveriesMigration from '../../../../packages/db/drizzle-v2/0030_push_notification_deliveries.sql?raw';
 // @ts-ignore – Vite raw import
 import rawLearningLessonsMigration from '../../../../packages/db/drizzle-v2/0031_learning_lessons.sql?raw';
+// @ts-ignore – Vite raw import
+import rawQuizPublicationGuardsMigration from '../../../../packages/db/drizzle-v2/0032_quiz_publication_guards.sql?raw';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -102,6 +104,7 @@ beforeAll(async () => {
   // 각각 prepare().run() 으로 실행한다.
   const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}\n${rawStudyMotivationMigration}\n${rawPushNotificationDeliveriesMigration}`
     .concat('\n',rawLearningLessonsMigration)
+    .concat('\n',rawQuizPublicationGuardsMigration)
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -141,6 +144,70 @@ beforeAll(async () => {
       throw error;
     }
   }
+});
+
+// 강성호 2026-10-13: INC-QUIZ-098 실제 복귀 결함을 합성 D1에서 재현한다. 운영 자료/의미 승인 증거가 아니다.
+describe('quiz withdrawal compatibility', () => {
+  async function fixture(mixed=false) {
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const suffix=crypto.randomUUID(), id=mixed?'123':`withdraw-question-${suffix}`, version=`withdraw-version-${suffix}`, release=`withdraw-release-${suffix}`;
+    await db.prepare(`INSERT INTO content_releases(id,learning_track,content_version,release_state,manifest_sha256,parser_version) VALUES(?,'jlpt-ja',?,'published',?,'test-only')`).bind(release,version,'f'.repeat(64)).run();
+    await db.prepare(`INSERT INTO content_release_quality_requirements(release_id,content_type,expected_audit_count,validator_version) VALUES(?,'jlpt-quiz',1,'test-only')`).bind(release).run();
+    await db.prepare(`INSERT INTO content_quality_audits(id,learning_track,content_type,content_id,content_version,evidence_sha256,validator_version,automated_status,author_review_status,adversarial_review_status,author_reviewer,adversarial_reviewer,release_state,checked_at) VALUES(?,'jlpt-ja','jlpt-quiz',?, ?,?,'test-only','passed','signed','signed','test-a','test-b','published','2026-10-13')`).bind('audit-'+suffix,id,version,'f'.repeat(64)).run();
+    await db.prepare('INSERT INTO content_release_quality_audit_links(release_id,audit_id) VALUES(?,?)').bind(release,'audit-'+suffix).run();
+    const choices=['가','나','다','라'].map(x=>({ko:x,ja:x,en:x}));
+    await db.prepare(`INSERT INTO jlpt_practice_questions(id,level,mode,skill,difficulty,prompt_ko,prompt_ja,prompt_en,choices_json,answer_index,explanation_ko,explanation_ja,explanation_en,source_code,source_evidence_sha256,bank_version,is_published) VALUES(?,'N2','vocab_mc','test',1,?,?,?, ?,0,'설명','説明','Explanation','test-only',?,?,1)`).bind(id,suffix,suffix,suffix,JSON.stringify(choices),'f'.repeat(64),version).run();
+    const questions=[{id:'q_'+id,type:'vocab_mc',answer:'가',item_id:id,bank_version:version},...(mixed?[{id:'q_numeric',type:'vocab_mc',answer:'나',item_id:123}]:[])];
+    const create=async(finished:boolean)=>Number((await db.prepare(`INSERT INTO quiz_attempts(user_id,learning_track,quiz_type,mode,level,total,correct,questions_json,detail_json,finished_at) VALUES('owner','jlpt-ja','vocab_mc','vocab_mc','N2',?,0,?,?,?)`).bind(questions.length,JSON.stringify(questions),finished?JSON.stringify(questions.map(q=>({question_id:q.id,correct:q.answer,is_correct:false,submitted:''}))):null,finished?'2026-10-13T00:00:00Z':null).run()).meta.last_row_id);
+    return {db,id,questions,pending:await create(false),completed:await create(true)};
+  }
+  for(const mixed of [false,true])it(`blocks withdrawn quiz submit and answers without deleting records (mixed=${mixed})`,async()=>{
+    const f=await fixture(mixed);
+    await f.db.prepare('UPDATE jlpt_practice_questions SET is_published=0 WHERE id=?').bind(f.id).run();
+    const before=await f.db.prepare('SELECT * FROM quiz_attempts WHERE id IN (?,?) ORDER BY id').bind(f.pending,f.completed).all();
+    const submit=await fetch('/api/v1/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quiz_id:f.pending,answers:f.questions.map(q=>({question_id:q.id,answer:q.answer}))})});
+    expect(submit.status).toBe(409);
+    const detail=await fetch('/api/v1/quiz/attempts/'+f.completed);
+    expect(detail.status).toBe(410);
+    expect(await detail.text()).not.toContain('"correct":"가"');
+    expect((await f.db.prepare('SELECT * FROM quiz_attempts WHERE id IN (?,?) ORDER BY id').bind(f.pending,f.completed).all()).results).toEqual(before.results);
+    expect((await f.db.prepare("SELECT count(*) n FROM learning_activity_events WHERE event_id LIKE ?").bind(`quiz:${f.pending}:%`).first<{n:number}>())?.n).toBe(0);
+  });
+  it('keeps legacy summary records but does not reveal answers with an unknown snapshot',async()=>{
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const row=await db.prepare(`INSERT INTO quiz_attempts(user_id,learning_track,quiz_type,total,correct,detail_json,finished_at) VALUES('owner','jlpt-ja','practice',1,1,'[{"question_id":"unknown","correct":"secret"}]','2026-10-13T00:00:00Z')`).run();
+    expect((await fetch('/api/v1/quiz/attempts/'+row.meta.last_row_id)).status).toBe(410);
+    expect((await fetch('/api/v1/quiz/history')).status).toBe(200);
+  });
+  it('rolls back grading and events when publication is withdrawn after the API precheck',async()=>{
+    const f=await fixture();
+    const batch=f.db.batch.bind(f.db);
+    const spy=vi.spyOn(f.db,'batch').mockImplementationOnce(async statements=>{
+      await f.db.prepare('UPDATE jlpt_practice_questions SET is_published=0 WHERE id=?').bind(f.id).run();
+      return batch(statements);
+    });
+    try{
+      const r=await fetch('/api/v1/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quiz_id:f.pending,answers:f.questions.map(q=>({question_id:q.id,answer:q.answer}))})});
+      expect(r.status).toBe(409);
+      expect((await f.db.prepare('SELECT finished_at FROM quiz_attempts WHERE id=?').bind(f.pending).first<{finished_at:string|null}>())?.finished_at).toBeNull();
+      expect((await f.db.prepare('SELECT count(*) n FROM learning_activity_events WHERE event_id LIKE ?').bind(`quiz:${f.pending}:%`).first<{n:number}>())?.n).toBe(0);
+    }finally{spy.mockRestore();}
+  });
+  it('accepts one concurrent answer claim and stores only the winning activity set',async()=>{
+    const f=await fixture();
+    const send=(answer:string)=>fetch('/api/v1/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quiz_id:f.pending,answers:[{question_id:f.questions[0]!.id,answer}]})});
+    const responses=await Promise.all([send('가'),send('나')]);
+    expect(responses.map(r=>r.status).sort()).toEqual([200,409]);
+    const winning=await responses.find(r=>r.status===200)!.json<{data:{correct:number;detail:unknown}}>();
+    const row=await f.db.prepare('SELECT correct,detail_json FROM quiz_attempts WHERE id=?').bind(f.pending).first<{correct:number;detail_json:string}>();
+    expect(row?.correct).toBe(winning.data.correct);
+    expect(JSON.parse(row!.detail_json)).toEqual(winning.data.detail);
+    const activity=await f.db.prepare('SELECT correct FROM learning_activity_events WHERE event_id LIKE ?').bind(`quiz:${f.pending}:%`).all<{correct:number}>();
+    expect(activity.results).toEqual([{correct:winning.data.correct}]);
+    expect((await fetch('/api/v1/quiz/attempts/'+f.pending)).status).toBe(200);
+    // 합성 N2 bank를 다음 기존 테스트의 random pool에 남기지 않는다. 원본/기록은 삭제하지 않는다.
+    await f.db.prepare('UPDATE jlpt_practice_questions SET is_published=0 WHERE id=?').bind(f.id).run();
+  });
 });
 
 
