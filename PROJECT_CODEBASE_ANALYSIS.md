@@ -1,6 +1,8 @@
 # JLPT · TOPIK 코드·DB·API 구조
 
-갱신: 2026-10-12 KST. Production0030과 로컬0031 후보를 분리한다. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
+갱신: 2026-10-13 KST. Production0032·네 메뉴·신규600문항/220레슨 배포 완료. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
+
+현행 출판은 `learning-cohort-remote.ts`의 정확 대상 `stage/publish/verify/withdraw`,5개 release 원자적 공개/철회와0032 퀴즈 guard를 사용한다. 기존 Preview-only 도구는 운영 우회 진입점으로 쓰지 않는다. 퀴즈 버전 snapshot·철회 차단, 세션/FSRS 보존, 한국어·일본어 PWA 모달을 검증했다. 운영 proxy는 canonical host 기본 Worker 연결과 immutable API503을 구분한다. 운영 단위718·기존265/정책30제외·Preview44·PWA24·13표 보존·canonical392·smoke7의 증거는 [최종 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)을 따른다. 아래 신규 후보 절은10월12일 설계/검증 이력이다.
 
 ## 신규 레슨 후보
 
@@ -16,7 +18,7 @@ Web는4메뉴·LearnHub의 추천/자유 연습/자료·TOPIK 단원 URL·일본
 
 ## Production 기준선
 
-D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `https://f62a8bdb.nihongo-n3.pages.dev` / ID `f62a8bdb-298e-446a-ab74-7d78ca47efd8`다. 앱 source는 `032b50ddfea4051309ae95829520e6309e67a6ff`, 콘텐츠 source는 `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`다. 10월10일 시작 remote52/1/0에서 식별자와 정책을 다시 확인했다. 콘텐츠 전수 검사는 9월25일 pinned392/392 이력이며 이번에 새로 실행한 결과가 아니다.
+D1 `0000–0032`, Worker `71e71638-aff1-44c5-a242-f1e276052413`, Pages `https://6b8b8a19.nihongo-n3.pages.dev` / ID `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4`다. 앱 source는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`, canonical 콘텐츠 source는 `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`다.10월13일 새로 pinned392/392와 별도600문항/220레슨 verifier를 실행했다.16:20:53 KST 점검off·queue원복 완료다.
 
 ## 실행 계층
 
@@ -26,7 +28,7 @@ D1 `0000–0030`, Worker `aedcbd40-6605-44d2-8227-d145a186bef0`, Pages `https://
 | 학습 UI | `pages/Today`, `StudySession`, `LearningRecords`, `LearnHub`; `features/study`, `features/learning` |
 | API/Worker | `apps/api/src/index.ts`·`app.ts`, Hono/OpenAPI route·인증·track guard·Queue/Workflow/jobs |
 | API 계약 | `packages/shared/src/api-schemas.ts`·`learning-experience.ts`; API export와 web 생성 타입 |
-| DB | `packages/db/src/schema.ts`, `drizzle-v2/0000–0031` 로컬 후보, source parser·seed·fresh verifier |
+| DB | `packages/db/src/schema.ts`, `drizzle-v2/0000–0032` 운영, source parser·seed·fresh verifier |
 | 브라우저 | `e2e/playwright.config.ts`, Chromium/WebKit·모바일 실제 D1/API 흐름과 mock 음성 회귀 |
 | 로컬 운영 | `scripts/project-ops-status.mjs`·`deploy-worker-with-release.mjs`·문서/음성 검사 |
 

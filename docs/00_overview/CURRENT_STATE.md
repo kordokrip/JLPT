@@ -1,5 +1,15 @@
 # 현재 구현 상태
 
+## 최신 상태 — 2026-10-13 Production 배포 완료
+
+운영 runtime source는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`이다. 운영 D1은0032까지 적용됐고 신규5개 release600문항·220레슨을 공개·검증했다. 기존 학습13표 보존·FK/FTS·고정 canonical392검사 통과. 07:20:53 UTC(16:20:53 KST) 사후 smoke7/7·점검 해제·두 queue 원복을 완료했다. Production은 `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4`이며 Worker는 `71e71638-aff1-44c5-a242-f1e276052413`다. 이후 문서 전용 Git 커밋은 runtime source와 구분한다. 전체 증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다.
+
+실제 운영 Chrome에서 새 `/assets/index-CqR4vd4s.js`를 확인한 뒤 ko/ja 각1회 onend·HAR10건 모두200·R2/legacy0을 기록했다. 기존 앱 탭의 구 캐시를 새 후보 증거로 쓰지 않고 별도 시크릿 창에서 확인했으며 사용자 탭/학습 기록은 보존했다. 운영 사람 가청을 새로 확인했다고 주장하지 않는다. 한국어·일본어 업데이트 모달을 배포했으며 구032 최초 전환 시 모든 앱 탭/창을 닫고 다시 열어야 할 수 있다.
+
+새 후보 검사는 단위718·기존 E2E265통과/정책30제외/실패0·reviewed44·Preview44·실제 빌드 PWA24/24다. Preview494f4ff9의 두 학습자 동선·양언어 가청을 사용자 확인했고 실제 Chrome onend/Network R2·legacy0을 기록했다. 아래 구 후보의 미완료·미push 문장은 보존된 당시 이력이다.
+
+### 보존된 이전 진행 이력
+
 최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
@@ -28,11 +38,11 @@
 
 | 구분 | Production 기준 |
 | --- | --- |
-| D1 migration | `0000–0030` |
-| Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
-| Pages | `https://f62a8bdb.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
-| Worker release SHA | `032b50ddfea4051309ae95829520e6309e67a6ff` |
+| D1 migration | `0000–0032` |
+| Worker | `71e71638-aff1-44c5-a242-f1e276052413` (maintenance off) |
+| Pages | `https://6b8b8a19.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
+| Worker release SHA | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
@@ -78,13 +88,13 @@ V7 후보 기준 단위588/0/0(Ops29·DB199·Web155·API205), typecheck4 workspa
 
 ## 현재 학습 기능
 
-- 한국어 JLPT·일본어 TOPIK에 **오늘 / 학습 / 문제 / 복습 / 기록**을 제공하고 ko/ja/en UI를 지원한다. UI·해설 언어와 학습 대상 언어는 분리한다.
+- 운영은 한국어 JLPT·일본어 TOPIK에 **오늘 / 학습 / 복습 / 기록**을 제공하고 자유 문제를 학습 안에 통합한다. ko/ja/en UI와 기존 링크를 유지하며 UI·해설 언어와 학습 대상 언어를 분리한다.
 - 트랙별 목표·일일 시간·시간대를 저장하고 `daily` 20분 또는 `quick` 3–5분 세션을 생성·중단·재개한다. 열린 세션·재전송 ID·계정×트랙 소유권을 서버에서 검사한다.
 - 개념·복습·문제·지연 재시도·메모를 기록한다. 해설 조회로 완료 처리하지 않으며 최초 응답·재시도·FSRS 기억 평가를 분리한다. 저장 실패와 오프라인 pending은 완료로 표시하지 않는다.
 - 서버 수락 행동과 과거 `daily_logs`를 프로필 시간대로 집계해 스트릭을 만든다. 안내 세션 XP는 개념 5·복습 3·최초 문제 응답 3·재시도 1, 원본 중복 방지·일일 100 상한이다. 자유 학습 모든 행동에 XP를 지급하는 구현은 아니다.
 - opt-in Push는 구독 언어와 사용자 현지 07/22시를 사용하며 오늘 학습·중복 발송을 검사한다. 활성 Service Worker는 `apps/web/src/sw.ts`다.
 - JLPT 퀴즈 `strategy: random|weakest`는 요청 급수 안에서만 생성하고 정답을 제출 전에 노출하지 않는다. TOPIK owner 완료와 FSRS·activity는 공통 D1 batch를 사용한다.
-- 승인된 문제↔개념 연결 행은 아직 생성하지 않았다. 연결 없는 출제를 개념 맞춤 문제로 설명하지 않는다. 실제 학습 진입 시간·재개 성공률은 추가 계측이 필요한 지표다.
+- 공개220레슨은 승인된 문제↔개념 연결과 버전 고정 세션을 사용한다. 연결 없는 자유 출제를 개념 맞춤 문제로 설명하지 않는다. 실제 학습 진입 시간·재개 성공률은 출시 후 관찰한다.
 
 ## 데이터·API 계약
 
@@ -98,6 +108,8 @@ V7 후보 기준 단위588/0/0(Ops29·DB199·Web155·API205), typecheck4 workspa
 | `0028` | profile·session·step·annotation·content link 5개 테이블 |
 | `0029` | quick/daily mode와 `study_reward_events` |
 | `0030` | 알림 언어와 `push_notification_deliveries` |
+| `0031` | 레슨 정의·구성, 세션 버전 snapshot, 원자적 cohort 출판과 의미 봉인 |
+| `0032` | 철회된 JLPT 퀴즈 제출·조회 보호와 출판 guard trigger |
 
 주요 API는 `/api/v1/learning/profile`, `/study/sessions`, `/learning/records`, `/learning/annotations`, `/learning/motivation`, `/quiz/attempts/:id`다. 기존 quiz·TOPIK·FSRS·activity·daily_logs 계약은 유지한다. `/activity/events`는 최대 100개 idempotent batch와 인증 트랙을 검사한다. `/activity/summary?window=7d|30d`는 집계만 반환한다. 계정별 오프라인 저장과 재전송은 Dexie를 사용한다. 전체 경로는 `apps/api/src/app.ts`와 OpenAPI가 기준이다.
 
@@ -112,9 +124,9 @@ V7 후보 기준 단위588/0/0(Ops29·DB199·Web155·API205), typecheck4 workspa
 | JLPT N3 | 어휘 2,052 / 문법 163 / 한자 275; 정적 한자 읽기·듣기 120 |
 | 공용 | 예문 1,100 / 직무 82 / 주차 계획 52 |
 | JLPT N2 / N1 | canonical Batch 1–5 583행 / Batch 1–4 286행 |
-| TOPIK owner | Batch 1–5, 140 unit + 140 item |
+| TOPIK owner | 기존140 + 별도160 중40 + V7 신규240 = 공개420 unit/item |
 | TOPIK practice | v2 300 공개; v1 28 보존·비공개 |
-| 증량 후보 | N2 60 / N1 60 / TOPIK Batch 6 40은 Preview만 공개, Production 미반영 |
+| 신규 공개 | 별도 N2 60 / N1 60 / TOPIK40과 V7 JLPT200 / TOPIK240, 총600문항·220레슨 |
 
 canonical manifest 26개 source·6,501행과 정적 문제은행·reviewed expansion을 혼합 집계하지 않는다. 새 콘텐츠는 source evidence·두 독립 reviewer·validator·quality link·G0–G4·Preview·backup/restore 후 출판한다. 원본 지도는 [00_source_map](00_source_map.md)을 따른다.
 

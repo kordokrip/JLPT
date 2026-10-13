@@ -1,5 +1,18 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+## 현행 운영 규칙 — 2026-10-13
+
+최신 실측 상태와 배포 ID는 [CURRENT_STATE](CURRENT_STATE.md), 실행 순서·실패 원본은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다. 아래 이전 후보의 차단·미실행 문장은 당시 이력이며 현재 상태로 재사용하지 않는다.
+
+- 이미 적용된0031/0032와 공개된 cohort의 원본 승인 hash를 수정하거나 재적재하지 않는다. 출판 원장과 후속 runtime 배포 증적을 분리한다.
+- 현재 schema0032는0031의74-table coverage에 출판 guard trigger를 추가한다. 다음 백업은 현재 schema를 다시 조회해74개 대상·ledger·trigger·FK/FTS와 별도 내부 sequence 복구 필요성을 확인한다. 이전72-table 백업은 전환 전0030의 증거다.
+- Worker 생성 응답의 정확한 version UUID를 조회한다. 목록 첫 항목을 방금 생성된 버전으로 추정하지 않는다. D1 opaque bookmark 변화는 쓰기의 증거가 아니며 원본 컬럼/행·DDL·ledger를 직접 비교한다.
+- Pages의 canonical `nihongo-n3.pages.dev`는 `API_ORIGIN` 미설정 시 코드에 고정한 운영 Worker로 연결한다. immutable Production URL의 API503은 의도된 격리다. immutable 정적 파일 hash, canonical API/인증/SHA를 각각 검사한다. Preview는 전용 API 설정을 계속 요구한다.
+- 실제 공개 결함 시 신규5개 release 철회 → 공개0 확인 → 호환 Worker `f3caa61` → 이전 Pages `032b50dd` 순서다. 데이터 손상이 없으면 additive schema와 정상 학습 기록을 보존한다. 실패한 검증기의 오탐 수정은 별도 새 증적으로 기록하며 원래 failed를 고치지 않는다.
+- 업데이트 모달은 한국어·일본어로 새로고침 동의를 받는다. 학습/로그인/메모 중·다른 앱 탭이 있을 때 갱신을 보류한다. 구032 앱의 최초 전환은 앱 탭/창을 모두 닫고 재진입해야 할 수 있다. 강제 캐시 삭제나 무조건 reload를 복구 절차로 쓰지 않는다.
+
+### 보존된 이전 운영 이력
+
 최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.

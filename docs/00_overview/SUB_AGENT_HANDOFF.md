@@ -1,5 +1,19 @@
 # Sub Agent 운영 인수인계
 
+## 최신 인수인계 — 2026-10-13
+
+**최종 배포 완료:**16:20:53 KST, Pages6b8b8a19/Worker71e71638/source37486f8/D10032. 점검off·두queue원복·smoke7/7·실제 운영Chrome ko/ja onend/HAR0 확인. `production-37486f8-runtime-runtime-20261013-01/result.json`이 최종 성공이며 원래W03failed는 그대로 보존한다. 다음 작업은 재배포가 아니라 D+1/7/30 관찰과 문서 최신 상태 조회다.
+
+이 절과 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 먼저 읽는다. 아래 후보0adb/a49/b773의 미완료 표기는 보존 이력이다. 현재 코드·원격 branch는37486f8, 운영 D1은0032/신규600문항·220레슨 공개·검증 완료다. Pages 전환과 점검 해제의 완료 여부는 현재 상태 문서의 최신 배포 ID로 확인한다.
+
+- 재실행 금지: 이미 적용한0031/0032, 공개5개 release의 stage/publish, 원본 승인/hash/failed 변경. 기존 사용자 기록·canonical·TOPIK v2·음성 코어를 보존한다.
+- 증적: `learning-release-2026-10-13/resume-37486f8`, W02 실제72표 백업/복원, W03 운영 공개/13표 보존, canonical392, 별도r2 전체 호환 복귀. Preview494f4ff9 사용자 가족/가청 확인은 이번 배포에만 연결한다.
+- private operator 오류102–104는 앱 장애와 구분한다. exact Worker UUID 조회, opaque bookmark 대신 논리 비교, canonical proxy와 immutable503 분리가 수정 기준이다. 새 runtime-only continuation은 DB 재출판 없이 진행한다.
+- 실제 회귀가 생기면5개 철회/공개0 → 호환Worker f3caa61 → 구Pages032, 정상 학습 보존 순서다. 가청은 사람 답변, onend는 브라우저 lifecycle, mock은 로직검사로 각각 구분한다.
+- 출시 후 D+1/7/30 두 학습자의 완료·중단·재개·지연 재확인·FSRS·speech를 관찰한다. 월1회 source/부족 영역 점검만 수행하며 자동 콘텐츠 공개는 하지 않는다.
+
+### 보존된 이전 인수인계
+
 최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.

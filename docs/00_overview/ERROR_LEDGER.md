@@ -1,5 +1,16 @@
 # 오류·회귀 차단 원장
 
+## 2026-10-13 운영 전환 후속
+
+후속 결론: INC-OPS-104 수정은 새 runtime-only continuation에서 실제 통과했다.16:20:53 KST Pages6b8b8a19/Worker71e71638·점검off·queue 원복·smoke7/7·새 운영Chrome 양언어 onend/HAR0으로 배포 종료. 검사기의 실패 run은 수정하지 않았다. 일반 프로필의 구 entry 로딩은 새 후보 증거에서 제외했고 별도 실제 시크릿 Chrome에서 새 entry를 확인했다.
+
+- `INC-OPS-102` — maintenance 버전 생성 직후 목록 첫 항목을 새 버전으로 간주한 private operator의 식별 오류. CLI가 반환한 정확한 UUID를 직접 조회하고 코드·비점검 binding 불변을 검사하도록 수정했다. 첫 실패는 보존하며 실제 기존 앱 코드 변경으로 해석하지 않는다.
+- `INC-OPS-103` — D1의 현재 opaque Time Travel bookmark 차이를 곧바로 논리 데이터 쓰기로 간주해 유효한 백업/복원 후 중단했다.72개 백업 테이블과 실제 행·컬럼/DDL 비교는 모두 일치했다. 후속은76개 논리 테이블·DDL·ledger의 불변을 직접 검사하고 bookmark는 진단값으로만 남긴다. 내부 bookmark 변경 원인은 확정하지 않는다. 이전 run 실패와 실제 백업/복원 성공 artifact를 각각 보존한다.
+- `INC-OPS-104` — Pages private runner가 운영 `API_ORIGIN` 명시 설정 및 immutable Production URL의 API200을 잘못 요구했다. 실제 계약은 canonical host의 운영 Worker 기본값과 immutable API503이다. 운영 canonical 인증200/후보SHA/Google 활성·Worker read-only를 독립 확인했다. Pages 업로드 전 실패로 기존 Pages는 변경되지 않았다. 새 continuation은 immutable 정적 바이트 검증과 canonical API 검증을 분리하며 원래 실패·승인·출판 원장은 수정하지 않는다.
+- `INC-PWA-100/101`, `INC-QUIZ-098` 후속 — 후보37486f8의 실제 빌드 PWA24/24, 기존 E2E265/30정책제외/0실패, 새 Preview 레슨44/44 및 별도 전체 호환 복귀 연습을 통과했다. 아래 이전 불합격 수치는 그 당시 실행 이력이다.
+
+전체 배포 상태는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다. 아래는 보존된 이전 기록이다.
+
 - `INC-PWA-101` — 전체 기존 E2E에서4개 엔진의 `/manifest.webmanifest`가 JSON 대신 개발 SPA HTML을 반환했다(b773420:261pass/30skip/4fail). `VITE_PWA_DEV_SW=false`를 VitePWA devOptions.enabled에도 연결해 manifest route까지 비활성화한 설정 결함이다. devOptions의 manifest 제공은 유지하고 등록 차단은 기존 main.tsx 조건으로 분리한다. 실제 Production 빌드 manifest 결함이나 음성 장애로 확대하지 않는다. 기존 실패 원본은 final2 clean worktree `.artifacts/existing-e2e01.*`에 보존하며 수정 후 새 후보 전체 gate를 실행한다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.

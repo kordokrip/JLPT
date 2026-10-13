@@ -1,28 +1,28 @@
 # JLPT · TOPIK 개인 학습 PWA
 
-한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 운영의 다섯 메뉴를 오늘 / 학습 / 복습 / 기록 네 메뉴로 통합하는 로컬 후보를 구현했다. 자유 문제·FSRS·개인 메모는 유지한다.
+한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 오늘 / 학습 / 복습 / 기록 네 메뉴를 운영에 배포했다. 자유 문제·FSRS·개인 메모는 유지한다.
 
-문서 기준일: 2026-10-12 KST. [현재 상태](docs/00_overview/CURRENT_STATE.md), [문서 색인](docs/README.md), [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md), [전체 파일 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)에서 시작한다. 신규 v7 440문항/220레슨은 두 독립 의미 승인을 받았으며 정식 출판 계약과 로컬 검증 도구를 추가했다. 기존 Preview160의 실패는 보존하고 별도 v3 160문항이 두 의미 승인을 받았다. 두 후보 모두 원격 출시 완료가 아니며 이번 작업은 사용자 지시에 따라 로컬 검증·문서화로 제한한다. [구현/재작성 기록](docs/00_overview/CONTENT_LEARNING_UX_UPDATE_PLAN.md)을 따른다.
+문서 기준일: 2026-10-13 KST. [현재 상태](docs/00_overview/CURRENT_STATE.md), [문서 색인](docs/README.md), [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md), [전체 파일 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)에서 시작한다. V7 440문항/220레슨과 별도 v3 160문항은 검수·로컬/Preview·실제 복귀·백업/복원·가족/양언어 음성 검증을 거쳐 운영에 공개했다. 이전 불합격 초안/리뷰는 보존한다. [최종 릴리스 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)에 실행 증거와 한계를 구분했다.
 
 ## Production 기준
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| D1 | `nihongo-n3-prod-v2`, migration `0000–0030` |
-| Worker | `aedcbd40-6605-44d2-8227-d145a186bef0` |
-| Pages | `https://f62a8bdb.nihongo-n3.pages.dev`, ID `f62a8bdb-298e-446a-ab74-7d78ca47efd8` |
+| D1 | `nihongo-n3-prod-v2`, migration `0000–0032` |
+| Worker | `71e71638-aff1-44c5-a242-f1e276052413` |
+| Pages | `https://6b8b8a19.nihongo-n3.pages.dev`, ID `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4` |
 | canonical | `https://nihongo-n3.pages.dev` |
-| Worker/web source | `032b50ddfea4051309ae95829520e6309e67a6ff` |
+| Worker/web source | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
 | 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
-2026-10-10 시작 읽기 전용 검사는 local40/1/0·remote52/1/0이다. 현재 릴리스는 2026-09-25 배포이며 이번 폴더·문서 정리에서 재배포하거나 DB를 변경하지 않는다. 실제 gate와 실패 이력은 [릴리스 원장](docs/00_overview/LOCAL_RELEASE_LEDGER.md)에 있다.
+2026-10-13 16:20:53 KST 배포·smoke7/7·점검 해제·queue 원복 완료. 동일 후보 단위718, 기존 E2E265통과/정책30제외/실패0, Preview44/44, 실제 빌드 PWA24/24와 운영 Chrome ko/ja onend·R2/legacy0을 확인했다. 한국어·일본어 업데이트 모달을 제공하며 구 버전 최초 전환은 앱 창을 모두 닫고 다시 열어야 할 수 있다. 실제 gate와 실패 이력은 [릴리스 원장](docs/00_overview/LOCAL_RELEASE_LEDGER.md)에 있다.
 
 ## 현재 기능과 콘텐츠
 
 목표 급수·안내 언어·시간대를 저장하고 3–5분 quick 또는 기본20분 daily 세션을 시작·중단·재개한다. 서버 수락 학습일의 스트릭과 안내 세션 XP·성취를 기록하고 opt-in 알림을 선택 언어·현지 시간에 보낸다. 해설 열람·완료·최초 응답·재시도·FSRS 평가는 구분한다.
 
-JLPT N5–N1 canonical, N3 정적120, TOPIK owner Batch1–5와 practice v2 300이 운영 공개다. N2 정적60·N1 정적60·TOPIK Batch6 40은 Preview 후보이며 별도 콘텐츠 릴리스 대상이다. 수량과 원본 대응은 [콘텐츠 감사](docs/00_overview/CONTENT_AUDIT.md)와 [원본 지도](docs/00_overview/00_source_map.md)를 따른다.
+기존 JLPT N5–N1 canonical·N3 정적120·TOPIK practice v2 300을 보존했다. 신규 V7 JLPT200/TOPIK240과 별도 N2 60/N1 60/TOPIK40, 총600문항·220레슨을 공개했고 TOPIK owner는 기존140에서420개다. 수량과 원본 대응은 [콘텐츠 감사](docs/00_overview/CONTENT_AUDIT.md)와 [원본 지도](docs/00_overview/00_source_map.md)를 따른다.
 
 ## 구조·실행
 
@@ -38,7 +38,7 @@ pnpm docs:check
 pnpm ops:verify
 ```
 
-fresh D1은 disposable local DB에 로컬 후보 `0000–0031`을 적용하고 기존 seed·음성 provenance·FK/FTS·manifest·content contract/control-plane을 검사한다. 운영은0030이며 신규 레슨 공개 증거가 아니다. 과거 `content:learning:readiness` 대상 초안은 불합격으로 보존한다. 새 `content:learning:readiness:v4`에 실제 v7 동결본과 두 전체 리뷰를 명시한 실행은 exit0이다. 버전별 SHA·검증 명령·실제 레슨 E2E 결과는 릴리스 원장에서 구분한다. 운영 콘텐츠는 `INC-DATA-024`의 HEAD drift 때문에 immutable release source에 고정해 검증한다.
+fresh D1은 disposable local DB에 `0000–0032`를 적용하고 기존 seed·음성 provenance·FK/FTS·manifest·content contract/control-plane을 검사한다. fresh만으로 원격 공개를 증명하지 않는다. 과거 불합격 초안은 보존하며 현재 V7+160 출판 증거는 릴리스 원장에서 별도로 확인한다. canonical은 `INC-DATA-024`의 HEAD drift 때문에 immutable release source에 고정하고 신규600개 cohort와 구분해 검증한다.
 
 검수 V7 전용 로컬 전체 게이트는 설치된 DB workspace의 tsx로 `pnpm -C packages/db exec tsx ../../scripts/run-learning-v7-local-gates.mjs --output=/절대경로/JLPT/.artifacts/새-증적-폴더`를 실행한다. 기존 증적 폴더는 덮어쓰지 않는다. 중간 `g0-g4-local-preflight.json`은 Preview 진입 증거가 아니며, 실제 격리 DB 공개·재전송·철회와 합성 학습 기록 보존까지 성공한 최종 `g0-g4-local.json`만 사용한다. 이 명령에는 원격·커밋·배포 기능이 없다.
 

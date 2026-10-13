@@ -1,5 +1,9 @@
 # 학습 원본·데이터 흐름 지도
 
+## 최신 출판 연결 — 2026-10-13
+
+운영0032에 V7 440문항/220레슨과 별도v3 160문항을 공개했다. 정확한 동결/source/review hash → G0–G4 → `learning-cohort-remote.ts`의5개 release 단일 공개 → D1 공개 카탈로그/버전 고정 세션 → 네 메뉴 학습 UI로 연결한다. canonical source3485/manifestd102와 신규 cohort는 별도로 검증하며 원문/불합격 리뷰를 재시드하지 않는다. 실제 현재 source37486f8·Pages6b8b8a19·600품질 링크와 학습 기록 보존 근거는 [최종 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)에 있다. 아래10월12일 후보/미공개 설명은 보존된 당시 상태다.
+
 2026-10-12 후보는 V7 두 release의 question/unit/audio/lesson/cue/ref exact JSON seal과 Preview160 v3 immutable source/review를 사용한다. 기존 source facts/provenance를 보존하며 새 license 연구나 Preview 공개를 뜻하지 않는다.
 
 문서 갱신: 2026-10-12 KST. 원본, builder, Production/Preview release와 학습 저장 경로를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다. 운영 migration은0000–0030이며 콘텐츠 source3485/manifestd102는 유지합니다.

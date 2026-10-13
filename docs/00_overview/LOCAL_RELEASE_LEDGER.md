@@ -1,5 +1,15 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-13 최종 후보37486f8 실행
+
+최종16:20:53 KST 운영 배포·점검 해제 완료. Pages `6b8b8a19`, Worker `71e71638`, source37486f8, D10032, 신규600문항/220레슨이다. runtime-only 재개에서 read-only verifier/13표 보존·정적파일·canonical proxy·실제 Chrome ko/ja onend/HAR0·HTTP smoke7/7·queue 원복을 통과했다. 아래 Pages preflight 중단은 보존된 선행 사건이며 현재 상태가 아니다. 최종 문서 커밋은 runtime 재배포 없이 같은 branch로 push한다.
+
+코드 후보 `37486f888399f6297b3c95f25e16afcbecc0b5b1`를 원격 feature branch에 일반 push했다. 같은 후보의718단위·기존265/30정책제외·reviewed44·Preview44·PWA24를 통과했고 최종Preview494f4ff9에서 두 학습자 동선과 양언어 가청을 확인했다. 별도 실제 호환 복귀·72표 백업/복원과 새 predeploy 후 운영0031/0032 및5개 release600문항/220레슨 공개/검증을 완료했다.13개 기존 학습표 hash·FK/FTS와 고정 canonical392검사도 통과했다.
+
+Pages 업로드 직전 private runner의 기본 proxy 오탐으로 기존 Pages를 유지한 채 중단했다. 새로운 runtime-only continuation으로 이어가며 DB 재출판하지 않는다. 전체 배포 완료는 Pages/실제Chrome/점검·queue 복원/최종 문서 push 뒤에만 기록한다. 상세 현재 상태·시각·실패 및 성공 증적은 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다.
+
+### 보존된 이전 릴리스 이력
+
 최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.

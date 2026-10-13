@@ -1,5 +1,35 @@
 # V7·별도160 통합 릴리스 — 2026-10-13
 
+## 2026-10-13 최신 실행 — Production 배포·점검 해제 완료
+
+이 절이 아래 보존된 이전 후보·실패 이력보다 우선한다. 실행 후보는 `37486f888399f6297b3c95f25e16afcbecc0b5b1`이며 원격 `feature/topik-product-expansion` 코드 push와 Production 배포를 완료했다. 07:20:53 UTC(16:20:53 KST) 사후 smoke7/7·점검 해제·두 queue 원복 확인까지 종료했다. 문서 전용 후속 커밋은 이 runtime SHA와 구분한다.
+
+최종 문서 동기화 후 새 검사는 `docs:check`915경로/73Markdown/1102링크·lifecycle 통과, local ops39/2/0·remote ops51/2/0(exit0)이다. 두 경고는 문서11파일 미커밋과 알려진 INC-DATA-024이며 앱/DB 실패가 아니다. 문서 전용 커밋·push 뒤의 clean 상태는 종료 명령 결과로 별도 확인한다. 운영 로그인 학습/저장 재전송을 새로 생성해 검증한 것은 아니며 동일 후보 Preview의 실제 계정/재전송 테스트와 운영 비파괴 smoke를 구분한다.
+
+| 최종 대상 | 실제 값 |
+| --- | --- |
+| 운영 주소 | https://nihongo-n3.pages.dev |
+| Pages / branch | `6b8b8a19-239c-4289-b570-f0ac5fd3fdd4` / `main` |
+| Worker / 점검 | `71e71638-aff1-44c5-a242-f1e276052413` / `off` |
+| D1 | `nihongo-n3-prod-v2`, ledger33개·최신0032 |
+| 신규 공개 | 5 release·600문항·220레슨·600품질 링크 |
+| runtime continuation 결과 hash | `ac6531ca3d72595f91c3d6ff6c7e1e28ac41e96d914b4750cced48c9c415176e` |
+
+새 runtime-only 절차에서 원래 W03 auth/paths를 그대로 사용해 공개 상태와13개 학습표를 다시 읽기 전용 검증했다. migration/stage/publish를 반복하지 않았다. 원래70개 dist 파일을 고정해 main Pages 배포, immutable 정적 파일과 의도된 API503, canonical API200/정확 WorkerSHA/Google 설정을 분리 검사했다. 실제 운영 Chrome은 새 entry `index-CqR4vd4s.js` 확인 후 일본어·한국어 각1회 onend, HAR10개 요청 모두200·R2/legacy0이다. HAR SHA는 `166baee051458b82f6bdac2bd498b9323029c3a7409dac24e14547748688f927`. 기존 일반 창에서 구 entry가 관측된 시도는 새 후보 음성 증거에서 제외했으며 사용자 학습 탭을 닫거나 캐시를 지우지 않고 새 시크릿 창에서 검증했다. 새 Production 사람 가청 확인은 주장하지 않는다.
+
+한국어·일본어 업데이트 모달을 함께 배포했다. 홈에서 사용자가 갱신을 선택하며 학습/로그인/메모/다른 앱 탭이 있으면 보류한다. 구032 최초 전환에서는 앱 탭/창을 모두 닫고 재진입해야 할 수 있다. 기존 기록을 삭제하거나 강제 갱신하지 않는다. 인증 후 실사용 검증은 동일 후보 Preview의 두 학습자 확인과44개 원격 테스트가 근거이며 운영에 합성 학습 응답을 생성하지 않았다.
+
+- 동일 clean 후보: OpenAPI·typecheck·전체 단위718·build·음성 계약·fresh/upgrade·5-release staging/reseed/공개/철회 통과. 기존 E2E265 통과/기존 WebKit 시각 정책30 제외/실패0, reviewed 레슨44/44, 실제 빌드 PWA 갱신24/24 통과.
+- 최종 Preview `494f4ff9-0263-4464-8730-dca950901118`: 원격 레슨44/44, 실제 두 학습자의 N3·일본어 TOPIK3/4 동선과 ko/ja 가청을 사용자 확인했다. 실제 Chrome onend와 HAR20개 HTTP 요청의 R2/legacy0을 같은 배포에 연결했다. mock이나 이전 Preview 확인을 대신 사용하지 않았다.
+- 별도 r2 격리 환경에서 5개 철회/공개0 → 호환 Worker `f3caa61` → 이전 Pages `032b50dd` 복귀, 기존 세션·FSRS·기록과 철회 차단을 검증했다. 운영 사용자 데이터는 복사하지 않았다.
+- 06:34 UTC 운영0030의72개 테이블을 실제 백업하고 별도 로컬 복원 및0031/0032 upgrade를 통과했다. 이후 재시도는 새 백업이라고 표시하지 않고, 이 백업과 현재72개 원본 컬럼/행의 일치 및 총76개 논리 테이블·DDL·ledger 불변을 재검증한 재사용이다. `sqlite_sequence`를 기존 SQL 백업에서 복원했다는 증거는 아니며 데이터 손상 없는 runtime 복귀에 전체 DB 복원을 사용하지 않는다.
+- 06:52–06:53 UTC 운영0031/0032 적용, 호환 후보 Worker read-only 배포,600문항/220레슨 draft 적재 → 5개 release 단일 공개 → 원격 verifier 통과. 기존 학습13개 테이블의 원본 컬럼/행 hash 보존·FK0·FTS 정상, 고정 canonical source `3485c6e` 기준392개 검사도 통과했다.
+- Pages 업로드 직전 private runner가 명시적 `API_ORIGIN` 환경변수 부재를 오류로 판정했다. 실제 canonical host는 코드의 운영 Worker 기본값으로 정상 연결되며 인증200/후보SHA/Google 활성이다. immutable Production URL의 API503은 의도된 격리 계약이다. Pages는 아직 기존 `f62a8bdb`이며 새 업로드 없이 중단됐다. 실패 receipt는 보존하고, DB 재적재/재공개 없이 새 bounded runtime-only continuation에서 정적 immutable 파일과 canonical API를 분리 검증한다.
+
+증적 루트: `.artifacts/operations/learning-release-2026-10-13/`. `resume-37486f8`, `production-37486f8-window-release-20261013-02`(백업/복원 및 실패 원본), `...-03`(실제 운영 공개·검증 및 Pages preflight 실패), `production-37486f8-runtime-runtime-20261013-01`(새 실제 Pages/Chrome/off/queue 성공)을 함께 보존한다. 원본 승인·hash·failed를 성공으로 편집하지 않는다. 아래 항목의 ‘아직’·‘중단’은 해당 시점의 기록이다.
+
+### 보존된 이전 진행 이력
+
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
 
 상태: **Production 차단**. 철회 P1은 수정·제한된 격리 회귀 확인을 완료했다. 아직 새 후보 전체 Preview E2E·전체 복귀·가족 동선·backup/predeploy는 미완료다. 기존a49 Preview 가청은 확인했지만 새 후보 가청으로 확대하지 않는다. Production 배포·원격 push는 실행하지 않았다. 갱신: 2026-10-13 KST.

@@ -1,5 +1,17 @@
 # 로컬 CI/CD 운영 기준
 
+## 현행 gate — 2026-10-13 후보37486f8
+
+동일 clean 후보의 단위718·OpenAPI/typecheck/build/fresh0032·reviewed44, 기존 E2E265통과/기존정책30제외/실패0, 실제 빌드 PWA24/24, 최종 Preview44/44를 확인했다. Preview494f4ff9의 두 학습자 동선·ko/ja 사용자 가청과 실제 Chrome onend/HAR의 R2·legacy0도 연결했다. 정확한 출판·배포 상태는 [통합 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)의 최상단을 따른다. 아래 이전 후보의 미완료 수치를 현재 gate로 읽지 않는다.
+
+실행 계약은 `로컬 → Preview → 별도 실제 철회/호환 Worker·Pages 복귀 → 현재 schema 백업/복원 → predeploy → migration/호환 Worker → draft/검증 → 원자적 공개 → verifier → Pages → 실제 브라우저/HTTP smoke → 점검 해제·queue 복원`이다. GitHub Actions는 비활성 placeholder를 유지한다. 현재0031/0032는 이미 적용되어 수정 대상이 아니다.
+
+전환 전0030의 실제72-table export/restore 뒤 재시도 시 같은 백업을 사용했다. 재사용은 원본 hash·원래 취득시각·현재72표 원본 행/컬럼 일치와76논리표/DDL/ledger 불변을 새로 검증해 명시했고 새 export/restore라고 보고하지 않았다. 향후0032 백업은74-table coverage이며 내부 sequence 보존을 별도 확인한다.
+
+운영 Pages 검사에서 명시적 API_ORIGIN 유무만으로 drift를 판정하지 않는다. canonical 기본 proxy의 실제200/정확 Worker SHA/Google 설정과 immutable 정적 바이트·API503을 분리한다. 이후 runtime-only 재개는 새 bounded lease와 실패 시 read-only/queue pause를 사용하며 DB migration/stage/publish를 다시 실행하지 않는다.
+
+### 보존된 이전 CI/CD 실행 이력
+
 최신 재개: b773420의718단위/reviewed44/all-five 로컬 gate는 통과했으나 기존295는 개발 manifest4실패(261pass/30policy skip)였다. INC-PWA-101 설정을 분리한 뒤 manifest/공유 진입 회귀8/8을 통과했다. 새 clean 후보의 전체 검사를 이어간다. PWA 실제 갱신24/24와 이 개발 manifest 회귀는 별개이며 운영·음성 코어는 변경하지 않았다.
 
 2026-10-13 재개 검증: **INC-PWA-100의 검사 동기화 결함을 수정했고 새 실제 빌드 PWA 24/24가 통과했다**(`pwa-update-2026-10-13/cohort-MUoLPj`, exit0). 구 active의 상태를 새 SW 활성화로 오인한 조기 재진입을 없애고, installed 및 정확한 새 versionId의 activated를 확인한다. CDP에서 구 version의 redundant와 새 bundle/양언어 모달을 독립 교차 확인했다. 강제 활성화·캐시 삭제·검사 제외·timeout 확대는 하지 않았다. 아래22/24는 보존된 이전 실패 이력이다. 이 통과는 격리 PWA 전환 검사이며 새 전체 release/Preview/복귀/가족/가청/backup/predeploy를 대체하지 않는다. 나머지 게이트를 이어서 실행하며 아직 Production·push는 하지 않았다.
