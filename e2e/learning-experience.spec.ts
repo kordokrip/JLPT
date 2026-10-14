@@ -440,9 +440,13 @@ test("a stale device track cannot save a day note into the other track", async (
   await page.goto("/records");
   const note = page.getByRole("textbox");
   await expect(note).toBeVisible();
+  // 강성호 2026-10-14: 초기 계정/통계 조회가 끝난 stale 화면에서 제출 충돌을 검사한다.
+  // 조회 중 전환하면 GET의 track guard가 먼저 화면을 잠가 제출 경로를 검사할 수 없다.
+  await page.waitForLoadState("networkidle");
+  await note.fill("TOPIK のメモは別のトラックに保存しない");
+  await expect(page.getByRole("button", { name: "保存", exact: true })).toBeEnabled();
   const switched = await page.request.patch("/api/v1/auth/track", { data: { track: "jlpt-ja" } });
   expect(switched.status()).toBe(200);
-  await note.fill("TOPIK のメモは別のトラックに保存しない");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(page.getByRole("button", { name: "再読み込み", exact: true }).first()).toBeVisible();
   await expect(note).toHaveValue("TOPIK のメモは別のトラックに保存しない");
