@@ -1,10 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import { assertQaTestTarget } from "../scripts/lib/qa-target-policy.mjs";
 
 const externalBaseURL = process.env.E2E_BASE_URL;
 const e2eWebPort = Number(process.env.E2E_WEB_PORT ?? 4173);
 const e2eApiPort = Number(process.env.E2E_API_PORT ?? 8788);
 const reuseExistingServer = process.env.E2E_REUSE_EXISTING_SERVER === "1";
 const remoteReviewed = !!process.env.E2E_REMOTE_COHORT_RECEIPT;
+assertQaTestTarget(externalBaseURL, remoteReviewed);
 
 /**
  * e2e/playwright.config.ts

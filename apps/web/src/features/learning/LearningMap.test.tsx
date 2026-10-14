@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -62,6 +62,7 @@ function mount(mapProfile: LearningProfile = profile, prepare?: (client: QueryCl
 beforeEach(async () => {
   vi.restoreAllMocks();
   localStorage.clear();
+  sessionStorage.clear();
   onlineManager.setOnline(true);
   useUiStore.setState({ isOnline: true });
   setAccount("account-a");
@@ -110,7 +111,7 @@ it("restores a scoped current session on a cold offline home without sending a s
   onlineManager.setOnline(false);
   useUiStore.setState({ isOnline: false });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: "이어서 공부" }));
+  fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "이어서 공부" }));
   expect(screen.getByTestId("location")).toHaveTextContent("/study/offline-session");
   expect(learningApi.start).not.toHaveBeenCalled();
   expect(learningApi.current).not.toHaveBeenCalled();
@@ -189,6 +190,82 @@ it("resumes the current session ahead of due reviews even when the catalog is em
   expect(screen.getByTestId("location").textContent).toBe("/study/paused-session");
   expect(screen.queryByRole("link", { name: "복습하기" })).not.toBeInTheDocument();
   expect(learningApi.start).not.toHaveBeenCalled();
+});
+
+it("shows an active-session dialog once, and lets the learner dismiss it with Escape", async () => {
+  vi.mocked(learningApi.current).mockResolvedValue(session("notice-session"));
+  mount();
+  const dialog = await screen.findByRole("dialog", { name: "진행 중인 학습" });
+  expect(dialog.parentElement?.parentElement).toBe(document.body);
+  fireEvent.keyDown(document, { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(screen.getByRole("button", { name: "이어서 공부" })).toBeVisible();
+});
+
+it("does not automatically reopen a dismissed active-session dialog after remount", async () => {
+  vi.mocked(learningApi.current).mockResolvedValue(session("remembered-session"));
+  const first = mount();
+  fireEvent.click(await screen.findByRole("button", { name: "나중에" }));
+  first.unmount();
+  mount();
+  await screen.findByRole("button", { name: "이어서 공부" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+it("remembers confirmation to resume so the same session does not reopen the dialog", async () => {
+  vi.mocked(learningApi.current).mockResolvedValue(session("resumed-session"));
+  const first = mount();
+  fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "이어서 공부" }));
+  expect(screen.getByTestId("location")).toHaveTextContent("/study/resumed-session");
+  first.unmount();
+  mount();
+  await screen.findByRole("button", { name: "이어서 공부" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});
+
+it("shows the dialog for a new active session and keeps dismissal isolated by track", async () => {
+  vi.mocked(learningApi.current).mockResolvedValue(session("first-session"));
+  const first = mount();
+  fireEvent.click(await screen.findByRole("button", { name: "나중에" }));
+  first.unmount();
+
+  vi.mocked(learningApi.current).mockResolvedValue(session("new-session"));
+  const second = mount();
+  expect(await screen.findByRole("dialog", { name: "진행 중인 학습" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "나중에" }));
+  second.unmount();
+
+  useSettingsStore.setState({ learningTrack: "topik-ko" });
+  useAuthStore.setState({ user: { ...useAuthStore.getState().user!, learning_track: "topik-ko" } });
+  vi.mocked(learningApi.current).mockResolvedValue({ ...session("first-session"), learning_track: "topik-ko", level: "3" });
+  vi.mocked(learningApi.lessons).mockResolvedValue({ ...catalog, level: "3" });
+  mount({ ...profile, learning_track: "topik-ko", target_level: "3" });
+  expect(await screen.findByRole("dialog", { name: "진행 중인 학습" })).toBeVisible();
+});
+
+it("cleans up the active-session dialog when its scope changes", async () => {
+  vi.mocked(learningApi.current).mockImplementation(async () =>
+    useSettingsStore.getState().learningTrack === "jlpt-ja" ? session("scope-session") : null,
+  );
+  mount();
+  await screen.findByRole("dialog", { name: "진행 중인 학습" });
+  act(() => { useSettingsStore.setState({ learningTrack: "topik-ko" }); });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(document.body.style.overflow).toBe("");
+});
+
+it("opens the resume dialog when selecting a lesson while a dismissed session remains active", async () => {
+  vi.mocked(learningApi.current).mockResolvedValue(session("select-session"));
+  mount();
+  fireEvent.click(await screen.findByRole("button", { name: "나중에" }));
+  const lesson = screen.getByRole("button", { name: "실제 레슨 제목: 현재 위치" });
+  lesson.focus();
+  fireEvent.click(lesson);
+  expect(await screen.findByRole("dialog", { name: "진행 중인 학습" })).toBeVisible();
+  expect(learningApi.start).not.toHaveBeenCalled();
+  fireEvent.mouseDown(screen.getByRole("dialog").parentElement!);
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(document.activeElement).toBe(lesson);
 });
 
 it.each(["start", "close"] as const)("rejects a paused %s mutation after the account changes before execution", async (operation) => {
