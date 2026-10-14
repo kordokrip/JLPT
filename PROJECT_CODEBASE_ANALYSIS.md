@@ -1,6 +1,6 @@
 # JLPT · TOPIK 코드·DB·API 구조
 
-최신 운영(2026-10-14): D1 `0000–0033`/77표, Worker `69cffaa1-996d-42a7-9080-13c526203e86`, Pages `https://07bc33c4.nihongo-n3.pages.dev` / ID `07bc33c4-2245-4d83-a84c-646f29052f1f`, 양쪽 runtime `78ee09a5ddec3254454fe14f174c03e5051f90d0`. account preferences/avatar·learning insights API와 개인화 UI를 활성화했다. 0033의3개 additive 표 외 기존 학습·콘텐츠 계약 불변. [배포·증거 범위](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 이전 배포 수치는 보존 이력이다.
+최신 운영(2026-10-14): D1 `0000–0033`/77표, Worker `69cffaa1-996d-42a7-9080-13c526203e86` / source `78ee09a5ddec3254454fe14f174c03e5051f90d0`, Pages `https://4d0589d0.nihongo-n3.pages.dev` / ID `4d0589d0-ab54-4cb9-b3e1-00babc54c140` / web source `0b9e3544f42383def2ddad5cf1c2ebc9013fe2a7`. 반응형 shell·학습/복습/기록·보조 화면의 UI 페이스리프트와 catalog 로딩 guard를 Pages-only 배포했다. account preferences/avatar·learning insights·학습·콘텐츠·음성 계약과 Worker/DB는 유지했다. [배포·증거 범위](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 이전 배포 수치는 보존 이력이다.
 
 갱신: 2026-10-14 KST. Production0032·네 메뉴·600문항/220레슨을 유지하고 지도·레슨·완료 UI를 배포했다. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 지도 변경과 검증 범위는 [지도 릴리스 기록](docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
 

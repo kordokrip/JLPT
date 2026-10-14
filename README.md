@@ -1,6 +1,6 @@
 # JLPT · TOPIK 개인 학습 PWA
 
-2026-10-14 개인화 Production 반영: 사진 프로필·계정 테마/강조색·알림 예약·연간 기록 활성화. [릴리스·검증·복귀](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 실기기 푸시 수신·가족 관찰은 사용자 지시로 사후 확인이며 미확인 사실을 유지한다.
+2026-10-14 UI 페이스리프트 Production 반영: 반응형 shell·학습 타일·복습·기록·보조 화면과 초기 레슨 로딩 guard를 배포했다. 기존 개인화·학습 데이터·Worker·DB·음성 코어는 유지한다. [릴리스·검증·복귀](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 최종 Preview 양언어 가청은 사용자 확인했으며 실기기 푸시 수신·가족 관찰은 사용자 지시로 사후 확인이다.
 
 한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 오늘 / 학습 / 복습 / 기록 네 메뉴를 운영에 배포했다. 자유 문제·FSRS·개인 메모는 유지한다.
 
@@ -12,10 +12,10 @@
 | --- | --- |
 | D1 | `nihongo-n3-prod-v2`, migration `0000–0033` |
 | Worker | `69cffaa1-996d-42a7-9080-13c526203e86` |
-| Pages | `https://07bc33c4.nihongo-n3.pages.dev`, ID `07bc33c4-2245-4d83-a84c-646f29052f1f` |
+| Pages | `https://4d0589d0.nihongo-n3.pages.dev`, ID `4d0589d0-ab54-4cb9-b3e1-00babc54c140` |
 | canonical | `https://nihongo-n3.pages.dev` |
 | Worker source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
-| Web source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
+| Web source | `0b9e3544f42383def2ddad5cf1c2ebc9013fe2a7` |
 | 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
