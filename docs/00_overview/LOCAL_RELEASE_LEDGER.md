@@ -1,5 +1,9 @@
 # 로컬 형상관리·릴리스 원장
 
+개인화 자동 검증 후속: Preview44/44, 개인화4항목(최초 한국어2통과·일본어2시간초과→120초 제한으로 해당2개 통과), 구 Pages9f046cc6/신 Worker78ee09a 호환3/3 완료. 실패 artifact는 수정하지 않았다. 실수신·사람 가청·가족 확인은 미접수이며 운영 점검/백업/배포/push는 미실행. 재개 지점은 [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md) 최상단이다.
+
+후속: 로컬5dc5ea8→78ee09a 커밋, 별도 clean 후보 검증 후 Preview3dee006a의 Worker/0033/flag-on Pages 반영 완료. 운영·Git push는 미실행. [최신 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)에 자동 통과와 미완료 사용자/운영 gate를 구분했다. 아래 미커밋/미Preview 기록은 당시 이력이다.
+
 ## 2026-10-14 — 개인화 활성화 후보 검증 진행
 
 현재 사용자 조건부 Production/push 승인. 시작local39/2/0, 새remote51/2/0. 첫 feature-on verify:ci는 web249통과/1실패(기존 status 선택자 충돌)로 중단했으며 수정 후web250을 통과했다. 독립 검토로0033 백업 프로필 누락, cron 실제시각 사용, Web Push HKDF 확장 카운터 중복을 발견했다. 예약 슬롯 fail-first2→수정2통과, 표준 push fail-first3실패/2통과→수정5통과를 별도 보존했다. 운영 변경/새 Preview/실수신/새 가청/최종 push는 아직 미실행이며 최종 gate 결과는 후속으로 기록한다.

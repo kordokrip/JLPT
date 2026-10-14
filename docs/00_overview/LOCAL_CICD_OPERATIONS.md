@@ -1,5 +1,9 @@
 # 로컬 CI/CD 운영 기준
 
+개인화 자동 검증 후속: Preview44/44, 개인화4항목(최초 한국어2통과·일본어2시간초과→120초 제한으로 해당2개 통과), 구 Pages9f046cc6/신 Worker78ee09a 호환3/3 완료. 실패 artifact는 수정하지 않았다. 실수신·사람 가청·가족 확인은 미접수이며 운영 점검/백업/배포/push는 미실행. 재개 지점은 [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md) 최상단이다.
+
+현재 검증 후보78ee09a의 clean aggregate828단위/로컬44와 기존 브라우저291+정책 제외30, PWA24 통과. Preview3dee006a가 배포됐다. 실제 푸시 요청 수락을 수신으로 표시하지 않는다. 원격11급수/개인화/구 UI 호환성 및 사용자 확인 뒤 운영 gate를 수행한다. [동일 후보 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 재사용하되 이전 후보 통과로 대체하지 않는다.
+
 개인화 출시 후속(2026-10-14): 테스트는 반드시 `VITE_ACCOUNT_PERSONALIZATION_ENABLED=true`로 실행한다. flag-off250 통과만으로 활성화를 승인하지 않는다. 새 백업0033/77표와 명시적0032 원본 복원→0033 upgrade, delayed scheduledTime 및 독립 RFC8291 복호화 회귀를 포함한다. Preview 실푸시는 분리된 VAPID 키/일치하는 frontend 공개키를 사용하고 실제 수신과 HTTP 수락을 별도 기록한다. 기존 전체 브라우저의 구 계정 details 선택자는 새 dialog 계약으로 교체하되 기능 assertion과 실패 이력을 보존한다.
 
 현재 개인화 구현은 [실행 원장](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)의 계정 API/0033/프런트엔드 검사 대상이다. 로컬 영향 검사 후 `openapi:check`, `typecheck`, `test`, flag-on `build`, `verify:fresh`, audio contract를 실행한다. 브라우저는 `VITE_ACCOUNT_PERSONALIZATION_ENABLED=true pnpm -F @nihongo-n3/e2e exec playwright test account-personalization.spec.ts --project=chromium --project=webkit --reporter=line`로 별도 격리 DB를 사용한다. 이 자동 검사는 실제 푸시/Google 로그인/가청/Preview 검증을 대신하지 않는다. 과거 앱 테스트를 새 구현 통과로 쓰지 않는다. GitHub Actions는 변경하지 않았다.

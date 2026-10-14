@@ -2,6 +2,20 @@
 
 ## 현재 상태
 
+**최종 자동 검증:** 아래 Preview11급수44/44 통과. 개인화 최초 실행은2통과/2시간초과이며, 일본어8테마 검사2개만 같은 assertion으로120초 제한 재실행하여2/2 통과(72.2초)했다. 구 Pages9f046cc6→새 Worker78ee09a에서 guided session/FSRS·퀴즈 모드 API·선택지 제출/결과3/3 통과(52.8초). 두 개인화 실행을 하나의 단일4/4 실행으로 표시하지 않는다. 코드 수정 없이 실행 제한만 원격 환경에 맞췄다.
+
+**중단 지점:** 새 Preview에서 실제 알림 수신·사람 ko/ja 가청·본인 N3와 가족 일본어 TOPIK3/4 동선 확인을 요청했으나 아직 접수되지 않았다. 따라서 현 운영 점검·backup/restore·0033 적용·Production 배포·원격 push는 시작하지 않았다. 테스트 발송 수락/자동onend를 실수신/가청으로 대신하지 않는다. 사용자 답변 뒤에는 같은 자동 검사를 반복하지 말고 후보/배포 ID가 유지됐는지 확인 후 운영 gate를 이어간다.
+
+### 후속 실측 — 개인화 Preview78ee09a (Production 미변경)
+
+2026-10-14 로컬 후보 `78ee09a5ddec3254454fe14f174c03e5051f90d0`를 별도 clean worktree에서 검증했다. 단위828·OpenAPI/typecheck/build/fresh0033·음성/콘텐츠 계약·로컬 레슨44·G0–G4, 전체 기존 브라우저291통과/30기존 정책 제외/실패0, PWA24를 통과했다. 새 Preview는 [3dee006a](https://3dee006a.nihongo-n3.pages.dev), 배포 ID `3dee006a-b00f-4d32-be1e-e5e27b540443`다. Preview D1만0033으로 올리고 새 Worker/flag-on Pages를 반영했다. 기존600문항·220레슨 read-only verifier 통과, 콘텐츠 재시드 없음.
+
+실제 Chrome에서 동일 Preview의 ko/ja 각각onend1과 재생 중 Network R2/legacy0을 확인했다. 실제 Google 로그인 사진 로딩·기기 알림 구독·테스트 발송 수락도 확인했다. **사람 가청·가족 동선·실제 기기 알림 수신은 아직 접수 전**이며 자동 검사와 구분한다. Google 로그인이 돌아오는 Preview 별칭의 오래된 PWA는 데이터 삭제 없이 재진입→양언어 업데이트 모달→명시 새로고침 후 새 네 메뉴/프로필로 전환됐다. 계정의 정기 알림 예약은 변경하지 않았다.
+
+원격11급수44검사는44통과/제외0/실패0/재시도0(23.1분)이다. 개인화 원격 최초4개 중 한국어 사진·저장·기록2개 통과, 일본어8테마 조합2개는기본30초 제한에 도달했다. 실패 원본을 보존하고 같은 assertion/후보로 일본어2개만120초 제한으로 재실행한다. 구 Pages/신 Worker 호환성·사용자 확인·운영 backup/restore/predeploy는 아직 남아 있다. **Production과 원격 Git push는 미실행**이다. 아래 '미커밋/새 Preview 없음'은 이전 단계 이력이다. 증적은 `.artifacts/operations/personalization-release-2026-10-14/`와 clean 후보의 `.artifacts/personalization-local-final03/`에 보존한다.
+
+후속 운영 점검: local39통과/2경고/실패0(문서7개 dirty와 기존 manifest 경고), remote50통과/2경고/1실패. 원격 실패는 아직 push하지 않은 local78ee09a와 remote9b70e84의 SHA 불일치이며 다른 원격 항목은 통과했다. 원격 전체 통과로 보고하지 않는다. 문서 검사972경로/76문서/1197링크 및 diff whitespace 검사 통과.
+
 ### 2026-10-14 활성화 후보 검증 (배포 전)
 
 - feature-on 최종 단위 검사828개(ops33/DB303/web252/API240), OpenAPI/typecheck/audio 계약, fresh0000–0033과 content contract를 통과했다. 실패한 최초 실행은 별도로 보존한다.

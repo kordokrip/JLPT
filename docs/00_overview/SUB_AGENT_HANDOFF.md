@@ -1,5 +1,7 @@
 # Sub Agent 운영 인수인계
 
+최신: 후보78ee09a·활성 Preview3dee006a 배포 완료. 단위828/전체 브라우저291+정책 제외30/로컬44/PWA24/원격11급수44/개인화4항목/구 UI 호환3 통과. 개인화는 최초2통과+일본어30초 timeout2를120초로 제한 재실행하여2통과한 두 실행이며 실패 원본 보존. 실수신/사람 가청/가족 확인은 미접수. 이후 현 운영 backup/restore/predeploy→0033→호환 Worker→Pages→smoke→push 순서만 남는다. [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 읽고 통과한 동일 후보 gate를 반복하지 않는다. Production·원격 push 미실행.
+
 ## 현재 활성 실행 — 개인화 release
 
 새 사용자 요청은 테스트·활성 Preview·실푸시·가청·릴리스 검증 후 Production/push까지 조건부 승인한다. 운영 baseline은 유지 중. 새 INC-REL-114/INC-PUSH-115와 통합 디자인 문서 최상단을 우선한다. 백업0033/77표·원본0032 명시 복원·scheduledTime·RFC8291 독립 수신자 회귀를 추가했다. Preview 전용 VAPID private 파일은 `.artifacts` 보호 경로에만 두며 Git에 넣지 않는다. 이전813/60을 새 활성화 전체 gate로 쓰지 않는다. 새 과업을 추가하지 말고 남은 release gate만 완료한다.
