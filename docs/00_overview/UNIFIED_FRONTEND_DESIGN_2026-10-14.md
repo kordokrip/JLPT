@@ -2,6 +2,8 @@
 
 ## 최종 운영 배포 — 2026-10-14
 
+최종 동기화: 운영 문서 커밋a7b39ca까지 원격 일치를 확인한 뒤 status 전체 재조회 **52통과/기존INC-DATA-024 경고1/실패0**이다(`ops-remote-final02.json`). 앞선4실패 원본은 유지했다. 문서 검사972경로/76문서/1208링크 통과, 운영 기록의 기존 학습일·월별·달력 렌더링도 확인했다. 이 최종 결과 후속 문서도 동일 branch에 push하며 runtime을 다시 배포하지 않는다.
+
 - 사용자 확인: Preview3dee006a의 양언어 가청 확인 접수. 실제 기기 푸시 수신과 본인/가족 직접 관찰은 후속 지시로 **배포 후 확인 항목**으로 전환했으며 관찰 통과로 기록하지 않는다.
 - 후보: clean `78ee09a5ddec3254454fe14f174c03e5051f90d0`. 코드·선행 문서f3dc1c3를 feature/topik-product-expansion에 일반 push했다. Preview/Production은 같은 소스에 각각의 VAPID 공개키만 다르게 빌드하고82파일씩 봉인했다. OAuth/VAPID private rotation 없음.
 - 백업: `personalization-release-2026-10-14/production-0032-backup-personal-20261014-01`. 운영74표·schema/ledger·보조 OAuth/sequence 보존. 정확0032 복원→0033/77표, 기존74표 행 hash 불변·FK0. 백업 전후 불변·점검off·queue2개 원복 확인.
