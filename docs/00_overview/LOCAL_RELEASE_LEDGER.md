@@ -1,5 +1,11 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-14 UI 배포 실행 — 후속 후보 검증 중
+
+사용자가 Production·push를 승인했다. 앱839188a/검토한 E2E1fdc15a는 원격 branch에 push했고 Preview94884c8a에 배포했다. 로컬834단위·fresh/OpenAPI/typecheck/build 통과, 기존 브라우저 최초270통과/21실패/30정책 제외 후 정확 실패키 재검증으로291통과를 확인했다(한 번의 전체 green 실행이 아님). 시각30·PWA24·고정 source canonical392 통과. Preview 실기능은31/32, WebKit TOPIK1 시작1건 시간초과·해당 동일 조건3회 재검사 통과이나 원인은 미확정이다. INC-UI-117의 초기 catalog 로딩 중 시작 버튼 위치 경합을 방어하고 새 후보를 검증한다. 실제 Chrome ko/ja 정상 종료·재생 중 network0은 확인했으나94884c8a 사람 가청 답변은 아직 없다.
+
+현재0033/77표 운영 백업·정확 복원·행 비교·FK0 통과. Worker69cffaa1과 queues를 원복해 점검 해제/학습 저장 재개했다. 신규 migration·콘텐츠 write0, Production Pages는07bc33c4 유지. UI 복귀 대상은07bc33c4 Pages이며 Worker69cffaa1·DB0033·정상 학습 기록은 유지한다. 아래 미push/미백업 문장은 이전 시점 이력이다. 증거: `.artifacts/operations/ui-facelift-release-2026-10-14/`; 실패 artifact는 편집하지 않는다.
+
 ## 2026-10-14 — 승인 v6 앱 페이스리프트 (로컬, 미배포)
 
 공통 shell/여백/테마·학습 타일·퀴즈/복습·기록/보조 페이지 UI 적용. frontend258·타입/빌드, Chrome/WebKit각90주요+32보조/모달/확대+12학습dock 통과. 합성API 화면 확인이며 실제운영/저장/가청 통과가 아니다. INC-UI-116 open·실데이터 시각확인 대기. Production/DB/Worker/push 미변경. 이전dirty7파일 및 실패 로그 보존. [상세 변경·검사·범위](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).

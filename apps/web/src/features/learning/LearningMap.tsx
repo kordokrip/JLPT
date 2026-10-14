@@ -92,7 +92,8 @@ export function LearningMap({ profile, onSetup }: { profile: LearningProfile; on
     ? lessons.find((lesson) => lesson.id === currentData.lesson_id && lesson.version === currentData.lesson_version) ?? null
     : null;
   const grouped = lessons.reduce<typeof lessons[]>((groups, lesson, index) => { if (index % 5 === 0) groups.push([]); groups[groups.length - 1]?.push(lesson); return groups; }, []);
-  const blocked = current.isPending || current.isError || !isOnline || start.isPending;
+  // 강성호 2026-10-14: 초기 레슨 삽입으로 시작 버튼이 클릭 도중 이동하지 않도록 목록 준비까지 기다린다.
+  const blocked = current.isPending || catalog.isPending || current.isError || !isOnline || start.isPending;
   const selectLesson = (lesson: { id: string; version: string }, mode: "quick" | "daily" = "quick") => {
     if (current.data?.status === "active" || current.data?.status === "paused") return;
     if (blocked) return;

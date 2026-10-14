@@ -38,11 +38,12 @@ function setAccount(id: string) {
 function Location() {
   return <output data-testid="location">{useLocation().pathname}</output>;
 }
-function mount(mapProfile: LearningProfile = profile) {
+function mount(mapProfile: LearningProfile = profile, prepare?: (client: QueryClient) => void) {
   const client = new QueryClient({ defaultOptions: {
     queries: { retry: false, retryDelay: 0 }, mutations: { retry: false },
   } });
   clients.push(client);
+  prepare?.(client);
   const view = render(
     <StrictMode>
       <I18nextProvider i18n={i18n}>
@@ -77,6 +78,21 @@ afterEach(() => {
   clients.splice(0).forEach((client) => client.clear());
   onlineManager.setOnline(true);
   useUiStore.setState({ isOnline: true });
+});
+
+it("keeps daily start disabled until the initial lesson layout has settled", async () => {
+  let resolve!: (value: LearningLessonCatalog) => void;
+  vi.mocked(learningApi.lessons).mockImplementation(() => new Promise((done) => { resolve = done; }));
+  mount(profile, (client) => client.setQueryData(["study-current", localUserIdFor("account-a", "jlpt-ja")], null));
+  const daily = screen.getByRole("button", { name: "20분 공부 시작" });
+  expect(daily).toBeDisabled();
+  fireEvent.click(daily);
+  expect(learningApi.start).not.toHaveBeenCalled();
+  await act(async () => { resolve(catalog); });
+  await waitFor(() => expect(daily).toBeEnabled());
+  fireEvent.click(daily);
+  await waitFor(() => expect(learningApi.start).toHaveBeenCalledTimes(1));
+  expect(screen.getByTestId("location")).toHaveTextContent("/study/accepted-session");
 });
 
 it("reacts immediately to offline state without creating a new session", async () => {

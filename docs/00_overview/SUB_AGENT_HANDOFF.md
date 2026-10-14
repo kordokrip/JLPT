@@ -1,5 +1,11 @@
 # Sub Agent 운영 인수인계
 
+## 2026-10-14 UI 배포 실행 — 후속 후보 검증 중
+
+사용자가 Production·push를 승인했다. 앱839188a/검토한 E2E1fdc15a는 원격 branch에 push했고 Preview94884c8a에 배포했다. 로컬834단위·fresh/OpenAPI/typecheck/build 통과, 기존 브라우저 최초270통과/21실패/30정책 제외 후 정확 실패키 재검증으로291통과를 확인했다(한 번의 전체 green 실행이 아님). 시각30·PWA24·고정 source canonical392 통과. Preview 실기능은31/32, WebKit TOPIK1 시작1건 시간초과·해당 동일 조건3회 재검사 통과이나 원인은 미확정이다. INC-UI-117의 초기 catalog 로딩 중 시작 버튼 위치 경합을 방어하고 새 후보를 검증한다. 실제 Chrome ko/ja 정상 종료·재생 중 network0은 확인했으나94884c8a 사람 가청 답변은 아직 없다.
+
+현재0033/77표 운영 백업·정확 복원·행 비교·FK0 통과. Worker69cffaa1과 queues를 원복해 점검 해제/학습 저장 재개했다. 신규 migration·콘텐츠 write0, Production Pages는07bc33c4 유지. UI 복귀 대상은07bc33c4 Pages이며 Worker69cffaa1·DB0033·정상 학습 기록은 유지한다. 아래 미push/미백업 문장은 이전 시점 이력이다. 증거: `.artifacts/operations/ui-facelift-release-2026-10-14/`; 실패 artifact는 편집하지 않는다.
+
 최신 후속: **v6는 승인됐고 로컬 앱에 적용했다.** frontend258·양엔진각90+32+12 합성UI 검증 통과. [통합 문서 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)의 화면군별 관찰 한계를 읽는다. 다음은 실제 상세 화면 확인이지 backend/DB/음성/배포 도구 재작업이 아니다. 기존dirty/실패 로그를 보존하고 새 유료 시안·재승인·무관한 전체gate 반복을 하지 않는다. Production/push 미실행. 아래 ‘검토 대기/앱 미적용’은 이전 조사 이력이다.
 
 현재 과업: **UI/UX만**. `INC-UI-116`과 [통합 디자인 문서 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 확인한다. Superdesign대표시안v6은 검토 대기이고 앱 미적용. 다음은 승인 후 공통 레이아웃/페이지군 UI 수정이며 backend·DB·음성·배포 재작업이 아니다. 기존 전체 gate를 반복하지 말고 실제 화면 겹침/잘림 회귀를 먼저 확보한다. 34라우트 코드 감사와12조합 시안 검사를 전 페이지 기능/시각 검증으로 합산하지 않는다.

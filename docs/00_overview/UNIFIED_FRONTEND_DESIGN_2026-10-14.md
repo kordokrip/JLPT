@@ -1,5 +1,11 @@
 # 전 페이지 학습 지도 디자인 통합·개인화 — 2026-10-14
 
+## 2026-10-14 UI 배포 실행 — 후속 후보 검증 중
+
+사용자가 Production·push를 승인했다. 앱839188a/검토한 E2E1fdc15a는 원격 branch에 push했고 Preview94884c8a에 배포했다. 로컬834단위·fresh/OpenAPI/typecheck/build 통과, 기존 브라우저 최초270통과/21실패/30정책 제외 후 정확 실패키 재검증으로291통과를 확인했다(한 번의 전체 green 실행이 아님). 시각30·PWA24·고정 source canonical392 통과. Preview 실기능은31/32, WebKit TOPIK1 시작1건 시간초과·해당 동일 조건3회 재검사 통과이나 원인은 미확정이다. INC-UI-117의 초기 catalog 로딩 중 시작 버튼 위치 경합을 방어하고 새 후보를 검증한다. 실제 Chrome ko/ja 정상 종료·재생 중 network0은 확인했으나94884c8a 사람 가청 답변은 아직 없다.
+
+현재0033/77표 운영 백업·정확 복원·행 비교·FK0 통과. Worker69cffaa1과 queues를 원복해 점검 해제/학습 저장 재개했다. 신규 migration·콘텐츠 write0, Production Pages는07bc33c4 유지. UI 복귀 대상은07bc33c4 Pages이며 Worker69cffaa1·DB0033·정상 학습 기록은 유지한다. 아래 미push/미백업 문장은 이전 시점 이력이다. 증거: `.artifacts/operations/ui-facelift-release-2026-10-14/`; 실패 artifact는 편집하지 않는다.
+
 ## 승인된 v6 앱 적용 — 로컬 UI 후보 / 2026-10-14
 
 사용자가 v6 기반 전 페이지 개선을 승인했다. 아래 ‘시안 검토 대기/앱 미적용’은 이전 조사 이력이다. 이번 수정은 **프런트엔드 표현만**이며 API/Worker/DB/콘텐츠/FSRS/XP/음성/저장 계약은 변경하지 않았다. Production·push·새 Preview는 미실행이다.
