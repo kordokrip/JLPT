@@ -45,6 +45,7 @@ test.describe('자연 일본어 검색 UX', () => {
       });
 
       await page.goto('/browse/vocab');
+      await page.locator('details > summary').filter({ hasText: /AI.*検索|AI.*검색|AI.*search/i }).click();
       await page.getByPlaceholder(/오늘은 일이 많아서|今日は仕事|I am a little tired/).fill('오늘은 조금 피곤해요');
       await page.getByRole('button', { name: /자연 일본어로 변환|Convert to natural Japanese|自然な日本語に変換/ }).click();
 

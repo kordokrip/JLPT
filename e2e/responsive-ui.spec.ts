@@ -108,6 +108,7 @@ test.describe("반응형 UI 안전성", () => {
     }
 
     await nav.locator('a[href="/learn"]').click();
+    await page.locator('.learn-hub__supporting > summary').click();
     await expect(page.locator('main a[href="/curriculum"]')).toBeVisible();
     await expect(page.locator('main a[href="/characters"]')).toBeVisible();
     await expect(page.locator('main a[href="/self-check"]')).toBeVisible();
