@@ -21,6 +21,7 @@
     "@scalar/hono-api-reference": "^0.10.19",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.26",
+    "jpeg-js": "0.4.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {

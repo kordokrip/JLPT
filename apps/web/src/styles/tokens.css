@@ -83,12 +83,12 @@
   /* ── 레이아웃 ────────────────────────────────── */
   --nav-height:    4rem;     /* 64px BottomTab */
   --sidebar-width: 14rem;    /* 224px SideNav */
-  --radius:        0.625rem;
+  --radius:        1.25rem;
   --radius-sm:     0.375rem;
-  --radius-md:     0.5rem;
-  --radius-lg:     1rem;
+  --radius-md:     1rem;
+  --radius-lg:     1.25rem;
   --radius-xl:     1.25rem;
-  --touch-target:  44px;
+  --touch-target:  48px;
   --content-max:   50rem;
   --content-wide:  72rem;
 
@@ -136,6 +136,11 @@
   --ring: color-mix(in srgb, var(--track-accent) 34%, transparent);
 }
 
+/* Account-selected accents override the track default only for this app shell. */
+[data-account-accent='forest'] { --accent: #527A69; --accent-soft: #E5F0E9; }
+[data-account-accent='sea'] { --accent: #28677A; --accent-soft: #E1F0F3; }
+[data-account-accent='ink'] { --accent: #172536; --accent-soft: #E7EAED; }
+
 /* ── 다크 모드 ──────────────────────────────────── */
 .dark {
   --accent-soft: #3D2320;
@@ -176,9 +181,15 @@
 }
 
 .dark [data-learning-track='topik-ko'] {
+  --accent-foreground: #142831;
   --track-accent: #74A6C5;
   --track-secondary: #E66A5D;
   --track-soft: #1C3445;
   --accent-soft: var(--track-soft);
   --track-art-opacity: 0.11;
 }
+
+/* 강성호 2026-10-14: 사용자 강조색과 트랙 표시는 분리하며 다크에서도 텍스트 대비를 확보한다. */
+.dark [data-account-accent='forest'] { --accent:#81B69D; --accent-soft:#20372D; --accent-foreground:#10241B; }
+.dark [data-account-accent='sea'] { --accent:#80BBD0; --accent-soft:#203642; --accent-foreground:#142831; }
+.dark [data-account-accent='ink'] { --accent:#C4CED9; --accent-soft:#303940; --accent-foreground:#172536; }

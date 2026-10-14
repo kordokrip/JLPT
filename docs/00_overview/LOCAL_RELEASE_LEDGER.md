@@ -1,5 +1,17 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-14 — 개인화 활성화 후보 검증 진행
+
+현재 사용자 조건부 Production/push 승인. 시작local39/2/0, 새remote51/2/0. 첫 feature-on verify:ci는 web249통과/1실패(기존 status 선택자 충돌)로 중단했으며 수정 후web250을 통과했다. 독립 검토로0033 백업 프로필 누락, cron 실제시각 사용, Web Push HKDF 확장 카운터 중복을 발견했다. 예약 슬롯 fail-first2→수정2통과, 표준 push fail-first3실패/2통과→수정5통과를 별도 보존했다. 운영 변경/새 Preview/실수신/새 가청/최종 push는 아직 미실행이며 최종 gate 결과는 후속으로 기록한다.
+
+## 2026-10-14 개인화 구현 — 로컬 후보, 미배포
+
+사용자 후속 구현 승인: 한자 포함 5종 최적화 아이콘·프로필 사진·계정 테마/예약·학습 인사이트를 추가했다. `0033`은 계정/사진/발송 claim의 additive 변경이며 새 Worker와 Pages를 함께 검증해야 한다. 콘텐츠/채점/FSRS/XP/음성 코어 변경 없음. 로컬 실패·수정·통과와 미완료 gate는 [통합 설계 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)에 모은다. commit/push·Preview·Production·원격 DB 변경 없음. 아래 디자인-only와 Pages-only 문장은 이전 단계 이력이다.
+
+## 2026-10-14 전 페이지 UI 통합 — 디자인 단계
+
+기존 Superdesign 지도에서 대표6화면을3묶음으로 확장한다. 디자인 기준/생성 요청/route 적용 계약만 작성하며 앱·Worker·DB·Production·commit/push는 변경하지 않는다. 상세 상태와 시안은 [설계 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 따른다. 기존 지도 릴리스 결과와 신규 시안의 합격 여부를 구분한다.
+
 ## 2026-10-14 지도 UI 배포
 
 코드887d2b2를 feature/topik-product-expansion에 일반 push하고 새Preview9f046cc6의44검사/실사용/가청을 확인했다. 새74표 백업·0032 복원·점검 해제·predeploy 이후 Pages2c0fea8d에 배포했다. Worker71e71638와 콘텐츠/기록은 유지한다. 운영 점검기 실패01–03·복구 및 최종04 결과는 [상세 릴리스](LEARNING_MAP_RELEASE_2026-10-14.md)에 보존한다. 아래 미배포 상태는 이전 이력이다.

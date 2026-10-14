@@ -4,6 +4,7 @@ import QuizTimer from '../../components/feature/QuizTimer';
 import { QUIZ_MODE_ICONS, QUIZ_MODES } from './logic';
 import { useQuizSession } from './useQuiz';
 import type { QuizMode } from './types';
+import { LearningIllustration } from '../../components/ui/LearningIllustration';
 
 type QuizViewProps = {
   rawMode: string | undefined;
@@ -44,11 +45,11 @@ function ModeSelect({ onSelectMode }: { onSelectMode: (mode: QuizMode) => void }
             key={nextMode}
             type="button"
             onClick={() => onSelectMode(nextMode)}
-            className="card-hairline rounded-xl p-5 text-left hover:border-[var(--accent)]
+            className="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
           >
-            <div className="text-2xl mb-2">{QUIZ_MODE_ICONS[nextMode]}</div>
-            <div className="font-pretendard font-semibold text-[15px] text-foreground mb-1">
+            <LearningIllustration kind={nextMode === 'kanji_reading' ? 'kanji-tile' : nextMode === 'listening' ? 'listening' : nextMode === 'grammar_fill' ? 'recall-cards' : 'study-book'} />
+            <div className="mt-3 font-pretendard font-semibold text-base text-foreground mb-1">
               {t(`quiz.modes.${nextMode}`)}
             </div>
             <div className="font-pretendard text-[12px] text-[var(--muted-foreground)]">

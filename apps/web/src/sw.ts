@@ -79,7 +79,9 @@ registerRoute(
 registerRoute(
   ({ url }) =>
     url.pathname.includes("/api/v1/tracks/topik-ko/owner-private/") ||
-    url.pathname.includes("/api/v1/admin/topik-owner-private/"),
+    url.pathname.includes("/api/v1/admin/topik-owner-private/") ||
+    url.pathname.startsWith("/api/v1/account/") ||
+    url.pathname.startsWith("/api/v1/learning/insights"),
   new NetworkOnly(),
 );
 

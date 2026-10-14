@@ -29,8 +29,8 @@ function isCurrentStudyScope(expectedScope: string): boolean {
   );
 }
 export const studyButton =
-  "study-select min-h-12 rounded-xl border border-[var(--border)] px-4 py-2 font-semibold disabled:opacity-50";
-export const studyPrimary = studyButton + " bg-[var(--accent)] text-white";
+  "study-select min-h-12 rounded-[var(--radius-md)] border border-[var(--border)] px-4 py-2 font-semibold disabled:opacity-50";
+export const studyPrimary = studyButton + " border-b-4 bg-[var(--accent)] text-[var(--accent-foreground)]";
 export const studyInput =
   "study-select min-h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3";
 export function LanguageSelect() {

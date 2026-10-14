@@ -1,5 +1,21 @@
 # 오류·회귀 차단 원장
 
+## INC-PUSH-115 — Web Push 암호문 표준 복호화 실패
+
+2026-10-14 실제 푸시 준비 중 `push.ts`의 CEK/nonce HKDF info에 확장 카운터0x01이 중복 추가된 것을 확인했다. 독립 RFC8291 HMAC 수신자 회귀에서3개 복호화 실패·VAPID 서명1개 통과로 재현했다. WebCrypto HKDF가 카운터를 내부 처리하므로 두 info 값에서 추가0x01을 제거한다. 이 로컬 표준 검사는 실제 기기 알림 수신 증거가 아니며 새 Preview의 실제 수신 확인 전 출시 게이트는 미완료다. 운영에서 과거 알림이 실제 실패했는지 여부는 이 재현만으로 단정하지 않는다.
+
+## INC-REL-114 — 개인화 활성화 후보의 출시 검증 보강 (운영 미반영)
+
+2026-10-14 새 기능 활성화 검사에서 기존 Settings 테스트의 전역 status 선택자가 추가 기기 상태와 충돌했다. 안내 언어 영역의 로딩 문구로 선택 범위를 고정하고 개인화 API fixture를 격리했다. 독립 검토는0033의 새3표가 백업 프로필에 없어 backup/restore가 차단되는 점과 cron이 실제 실행 분을 사용해 지연된 예약을 놓치는 점을 확인했다. 백업77표·JPEG BLOB 복원과 scheduledTime 회귀를 보강한다. 구 Worker 직접 복귀는 custom opt-out/중복 차단을 보존하지 못하므로 기본 복귀는 직전 Pages+호환 Worker 유지이며, backend 복귀 시 알림 cron 중지 또는 보호된 호환 Worker를 별도 검증해야 한다. 실패 로그는 보존하며 필수 gate 전 Production/push는 실행하지 않는다.
+
+## INC-UI-113 — 개인화 로컬 후보의 계정 경합·설정 저장 (운영 미노출)
+
+독립 검토에서 사진 초안의 계정 전환 잔존, 설정 GET 전 기본값 저장, 독립 GET의 늦은 응답이 저장 결과를 덮는 문제, 실패 안내 누락을 확인했다. 사진 key/generation·계정 guard, 설정 로딩 중 저장 금지, 계정별 React Query 공유/취소, 명시 오류를 적용했다. 후속 검토는 알림 DELETE 대기 중 계정 변경 후 기기 구독 해지와 새 계정의 loading 잔존을 발견했다. 응답 후 owner 검사·unsubscribe 실제 결과·계정 변경 초기화를 적용했다. 모의 회귀와 격리 브라우저 검증은 [실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 따른다. 운영 사용자 혼입이나 실제 푸시 통과로 해석하지 않는다.
+
+## INC-UI-112 — 지도와 전역 UI의 테마·조작 표현 불일치 (open)
+
+2026-10-14 사용자 스크린샷과 코드 교차 확인: `LearningMap.css`는 밝은 배경/글자색을 직접 지정하지만 나머지는 `.dark` 토큰을 따르며, `RootLayout`은 전체 폭 계정 details/summary를 렌더링한다. Review/Curriculum의 serif 제목과 서로 다른 버튼 규칙도 확인했다. 동작/DB 결함으로 단정하지 않는다. [전 화면 통합 계약](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)에 따라 시안 승인→공통 컴포넌트→전체 route/기능 회귀를 진행한다. 시안만으로 resolved 처리하지 않는다.
+
 ## 2026-10-14 지도 배포 점검기 — INC-OPS-111
 
 앱 회귀/Preview 검증 후 작성한 private 백업 점검기에서 운영 준비 결함을 확인했다. 첫 시도는7403으로, 두 번째는 Cloudflare 내부 `_cf_KV` 직접 조회의7500/SQLITE_AUTH로 운영 변경 전에 중단했다. 세 번째는 점검 전환 직후 health 불일치에 이어 secret 변경 복귀10220을 처리하지 못해 read-only가 잠시 유지됐다. 부모가 API가 제시한 변경 secret이 정확히 `MAINTENANCE_MODE` 하나인 경우에만 복귀 확인을 적용하여 기존Worker71e71638·maintenance off를 실제 확인했다. 큐 변경·D1 데이터 쓰기는0이다.

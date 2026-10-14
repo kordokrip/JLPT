@@ -77,11 +77,14 @@ export default {
         }
       }
 
-      if (cron === '0 * * * *') {
+      if (cron === '0 * * * *' || cron === '*/15 * * * *') {
         try {
+          // 강성호 2026-10-14: 실행 지연이 있어도 원래 예약 슬롯·현지 날짜를 유지한다.
+          const now = new Date(controller.scheduledTime);
           await Promise.all([
-            runPushReminder(env, 'morning'),
-            runPushReminder(env, 'evening'),
+            runPushReminder(env, 'morning', { now }),
+            runPushReminder(env, 'evening', { now }),
+            runPushReminder(env, 'custom', { now }),
           ]);
         } catch (err) {
           console.error({ event: 'push_notification_error', error_name: safeErrorName(err) });

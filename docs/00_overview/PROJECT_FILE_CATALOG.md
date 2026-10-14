@@ -2,34 +2,34 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **931개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **972개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
 | Agent 운영 지침 | 16 |
-| API route | 40 |
-| API 공통 서비스 | 20 |
-| DB migration 및 snapshot | 41 |
+| API route | 42 |
+| API 공통 서비스 | 22 |
+| DB migration 및 snapshot | 42 |
 | DB schema 및 설정 | 4 |
 | DB seed 및 parser | 53 |
-| DB 검증 및 운영 | 179 |
+| DB 검증 및 운영 | 180 |
 | GitHub 비활성 설정 | 1 |
-| UI 컴포넌트 | 21 |
+| UI 컴포넌트 | 25 |
 | Worker 진입점 및 설정 | 21 |
 | 공통 API 및 학습 계약 | 21 |
 | 로컬 운영 스크립트 및 테스트 | 31 |
-| 루트 실행 및 정책 | 15 |
+| 루트 실행 및 정책 | 22 |
 | 문서 이력 | 1 |
 | 문서 진입점 | 3 |
 | 브라우저 시각 기준 | 60 |
-| 브라우저 테스트 및 설정 | 35 |
-| 브랜드 및 PWA 자산 | 13 |
-| 앱 회귀 테스트 | 67 |
-| 운영 문서 | 27 |
-| 웹 공통 상태·계약·음성 | 46 |
+| 브라우저 테스트 및 설정 | 36 |
+| 브랜드 및 PWA 자산 | 18 |
+| 앱 회귀 테스트 | 78 |
+| 운영 문서 | 28 |
+| 웹 공통 상태·계약·음성 | 50 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
-| 학습 기능 | 61 |
+| 학습 기능 | 63 |
 | 학습 콘텐츠 원본 | 34 |
 | 학습 화면 | 31 |
 
@@ -54,6 +54,7 @@
 
 ## API route
 
+- [apps/api/src/routes/account.ts](../../apps/api/src/routes/account.ts)
 - [apps/api/src/routes/activity-oa.ts](../../apps/api/src/routes/activity-oa.ts)
 - [apps/api/src/routes/activity.ts](../../apps/api/src/routes/activity.ts)
 - [apps/api/src/routes/admin-oa.ts](../../apps/api/src/routes/admin-oa.ts)
@@ -68,6 +69,7 @@
 - [apps/api/src/routes/homophones-oa.ts](../../apps/api/src/routes/homophones-oa.ts)
 - [apps/api/src/routes/kanji-oa.ts](../../apps/api/src/routes/kanji-oa.ts)
 - [apps/api/src/routes/learning-experience.ts](../../apps/api/src/routes/learning-experience.ts)
+- [apps/api/src/routes/learning-insights.ts](../../apps/api/src/routes/learning-insights.ts)
 - [apps/api/src/routes/logs-oa.ts](../../apps/api/src/routes/logs-oa.ts)
 - [apps/api/src/routes/logs.ts](../../apps/api/src/routes/logs.ts)
 - [apps/api/src/routes/notifications-oa.ts](../../apps/api/src/routes/notifications-oa.ts)
@@ -97,6 +99,7 @@
 
 ## API 공통 서비스
 
+- [apps/api/src/lib/account-personalization.ts](../../apps/api/src/lib/account-personalization.ts)
 - [apps/api/src/lib/ai-learning-assistance.ts](../../apps/api/src/lib/ai-learning-assistance.ts)
 - [apps/api/src/lib/auth-session.ts](../../apps/api/src/lib/auth-session.ts)
 - [apps/api/src/lib/content-release-control-plane.ts](../../apps/api/src/lib/content-release-control-plane.ts)
@@ -104,6 +107,7 @@
 - [apps/api/src/lib/fsrs.ts](../../apps/api/src/lib/fsrs.ts)
 - [apps/api/src/lib/fts.ts](../../apps/api/src/lib/fts.ts)
 - [apps/api/src/lib/learning-effects.ts](../../apps/api/src/lib/learning-effects.ts)
+- [apps/api/src/lib/learning-insights.ts](../../apps/api/src/lib/learning-insights.ts)
 - [apps/api/src/lib/learning-lessons.ts](../../apps/api/src/lib/learning-lessons.ts)
 - [apps/api/src/lib/motivation.ts](../../apps/api/src/lib/motivation.ts)
 - [apps/api/src/lib/owner-publication.ts](../../apps/api/src/lib/owner-publication.ts)
@@ -153,6 +157,7 @@
 - [packages/db/drizzle-v2/0030_push_notification_deliveries.sql](../../packages/db/drizzle-v2/0030_push_notification_deliveries.sql)
 - [packages/db/drizzle-v2/0031_learning_lessons.sql](../../packages/db/drizzle-v2/0031_learning_lessons.sql)
 - [packages/db/drizzle-v2/0032_quiz_publication_guards.sql](../../packages/db/drizzle-v2/0032_quiz_publication_guards.sql)
+- [packages/db/drizzle-v2/0033_account_personalization.sql](../../packages/db/drizzle-v2/0033_account_personalization.sql)
 - [packages/db/drizzle-v2/meta/0000_snapshot.json](../../packages/db/drizzle-v2/meta/0000_snapshot.json)
 - [packages/db/drizzle-v2/meta/0001_snapshot.json](../../packages/db/drizzle-v2/meta/0001_snapshot.json)
 - [packages/db/drizzle-v2/meta/0002_snapshot.json](../../packages/db/drizzle-v2/meta/0002_snapshot.json)
@@ -227,6 +232,7 @@
 
 ## DB 검증 및 운영
 
+- [packages/db/src/ops/account-personalization-migration.test.ts](../../packages/db/src/ops/account-personalization-migration.test.ts)
 - [packages/db/src/ops/apply-migrations.ts](../../packages/db/src/ops/apply-migrations.ts)
 - [packages/db/src/ops/audit-question-bank-quality.ts](../../packages/db/src/ops/audit-question-bank-quality.ts)
 - [packages/db/src/ops/author-preview160-v2.ts](../../packages/db/src/ops/author-preview160-v2.ts)
@@ -415,6 +421,9 @@
 
 - [apps/web/src/components/IosInstallHint.tsx](../../apps/web/src/components/IosInstallHint.tsx)
 - [apps/web/src/components/PwaUpdatePrompt.tsx](../../apps/web/src/components/PwaUpdatePrompt.tsx)
+- [apps/web/src/components/account/AccountMenu.tsx](../../apps/web/src/components/account/AccountMenu.tsx)
+- [apps/web/src/components/account/AvatarEditor.tsx](../../apps/web/src/components/account/AvatarEditor.tsx)
+- [apps/web/src/components/account/DevicePushStatus.tsx](../../apps/web/src/components/account/DevicePushStatus.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.tsx)
 - [apps/web/src/components/feature/Heatmap.tsx](../../apps/web/src/components/feature/Heatmap.tsx)
 - [apps/web/src/components/feature/LearningTrackSwitch.tsx](../../apps/web/src/components/feature/LearningTrackSwitch.tsx)
@@ -431,6 +440,7 @@
 - [apps/web/src/components/ui/Button.tsx](../../apps/web/src/components/ui/Button.tsx)
 - [apps/web/src/components/ui/Card.tsx](../../apps/web/src/components/ui/Card.tsx)
 - [apps/web/src/components/ui/Input.tsx](../../apps/web/src/components/ui/Input.tsx)
+- [apps/web/src/components/ui/LearningIllustration.tsx](../../apps/web/src/components/ui/LearningIllustration.tsx)
 - [apps/web/src/components/ui/Progress.tsx](../../apps/web/src/components/ui/Progress.tsx)
 - [apps/web/src/components/ui/Ruby.tsx](../../apps/web/src/components/ui/Ruby.tsx)
 - [apps/web/src/components/ui/index.ts](../../apps/web/src/components/ui/index.ts)
@@ -523,8 +533,15 @@
 - [.env.example](../../.env.example)
 - [.gitignore](../../.gitignore)
 - [.node-version](../../.node-version)
+- [.superdesign/assets/learning-porcelain-v1/growth-journal.png](../../.superdesign/assets/learning-porcelain-v1/growth-journal.png)
+- [.superdesign/assets/learning-porcelain-v1/kanji-tile.png](../../.superdesign/assets/learning-porcelain-v1/kanji-tile.png)
+- [.superdesign/assets/learning-porcelain-v1/listening.png](../../.superdesign/assets/learning-porcelain-v1/listening.png)
+- [.superdesign/assets/learning-porcelain-v1/manifest.json](../../.superdesign/assets/learning-porcelain-v1/manifest.json)
+- [.superdesign/assets/learning-porcelain-v1/recall-cards.png](../../.superdesign/assets/learning-porcelain-v1/recall-cards.png)
+- [.superdesign/assets/learning-porcelain-v1/study-book.png](../../.superdesign/assets/learning-porcelain-v1/study-book.png)
 - [.superdesign/design-system.md](../../.superdesign/design-system.md)
 - [.superdesign/resume.json](../../.superdesign/resume.json)
+- [.superdesign/unified-ui-flow.json](../../.superdesign/unified-ui-flow.json)
 - [AGENTS.md](../../AGENTS.md)
 - [LICENSE](../../LICENSE)
 - [PROJECT_CODEBASE_ANALYSIS.md](../../PROJECT_CODEBASE_ANALYSIS.md)
@@ -610,6 +627,7 @@
 
 ## 브라우저 테스트 및 설정
 
+- [e2e/account-personalization.spec.ts](../../e2e/account-personalization.spec.ts)
 - [e2e/audio-qa.spec.ts](../../e2e/audio-qa.spec.ts)
 - [e2e/auth-helper.ts](../../e2e/auth-helper.ts)
 - [e2e/auth.spec.ts](../../e2e/auth.spec.ts)
@@ -654,6 +672,11 @@
 - [apps/web/public/brand-mark.png](../../apps/web/public/brand-mark.png)
 - [apps/web/public/favicon-16.png](../../apps/web/public/favicon-16.png)
 - [apps/web/public/favicon-32.png](../../apps/web/public/favicon-32.png)
+- [apps/web/public/learning-icons/growth-journal.webp](../../apps/web/public/learning-icons/growth-journal.webp)
+- [apps/web/public/learning-icons/kanji-tile.webp](../../apps/web/public/learning-icons/kanji-tile.webp)
+- [apps/web/public/learning-icons/listening.webp](../../apps/web/public/learning-icons/listening.webp)
+- [apps/web/public/learning-icons/recall-cards.webp](../../apps/web/public/learning-icons/recall-cards.webp)
+- [apps/web/public/learning-icons/study-book.webp](../../apps/web/public/learning-icons/study-book.webp)
 - [apps/web/public/learning-journey.png](../../apps/web/public/learning-journey.png)
 - [apps/web/public/masked-icon.svg](../../apps/web/public/masked-icon.svg)
 - [apps/web/public/page-bg-unified.png](../../apps/web/public/page-bg-unified.png)
@@ -664,10 +687,14 @@
 
 ## 앱 회귀 테스트
 
+- [apps/api/src/__tests__/account-personalization.test.ts](../../apps/api/src/__tests__/account-personalization.test.ts)
 - [apps/api/src/__tests__/auth-bridge.test.ts](../../apps/api/src/__tests__/auth-bridge.test.ts)
 - [apps/api/src/__tests__/fsrs.test.ts](../../apps/api/src/__tests__/fsrs.test.ts)
+- [apps/api/src/__tests__/learning-insights.test.ts](../../apps/api/src/__tests__/learning-insights.test.ts)
 - [apps/api/src/__tests__/maintenance-background.test.ts](../../apps/api/src/__tests__/maintenance-background.test.ts)
 - [apps/api/src/__tests__/observability-alerts.test.ts](../../apps/api/src/__tests__/observability-alerts.test.ts)
+- [apps/api/src/__tests__/push-encryption.test.ts](../../apps/api/src/__tests__/push-encryption.test.ts)
+- [apps/api/src/__tests__/reminder-scheduled-time.test.ts](../../apps/api/src/__tests__/reminder-scheduled-time.test.ts)
 - [apps/api/src/__tests__/routes.test.ts](../../apps/api/src/__tests__/routes.test.ts)
 - [apps/api/src/lib/ai-learning-assistance.eval.test.ts](../../apps/api/src/lib/ai-learning-assistance.eval.test.ts)
 - [apps/api/src/lib/ai-learning-assistance.test.ts](../../apps/api/src/lib/ai-learning-assistance.test.ts)
@@ -677,6 +704,8 @@
 - [apps/api/src/lib/release-operations.test.ts](../../apps/api/src/lib/release-operations.test.ts)
 - [apps/web/src/components/IosInstallHint.test.tsx](../../apps/web/src/components/IosInstallHint.test.tsx)
 - [apps/web/src/components/PwaUpdatePrompt.test.tsx](../../apps/web/src/components/PwaUpdatePrompt.test.tsx)
+- [apps/web/src/components/account/AccountMenu.test.tsx](../../apps/web/src/components/account/AccountMenu.test.tsx)
+- [apps/web/src/components/account/DevicePushStatus.test.tsx](../../apps/web/src/components/account/DevicePushStatus.test.tsx)
 - [apps/web/src/components/feature/AiAssistanceNotice.test.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.test.tsx)
 - [apps/web/src/components/feature/SRSCard.test.tsx](../../apps/web/src/components/feature/SRSCard.test.tsx)
 - [apps/web/src/components/layout/BottomTabBar.test.tsx](../../apps/web/src/components/layout/BottomTabBar.test.tsx)
@@ -686,6 +715,8 @@
 - [apps/web/src/features/learning/LearningMap.test.tsx](../../apps/web/src/features/learning/LearningMap.test.tsx)
 - [apps/web/src/features/learning/next-action.test.ts](../../apps/web/src/features/learning/next-action.test.ts)
 - [apps/web/src/features/quiz/logic.test.ts](../../apps/web/src/features/quiz/logic.test.ts)
+- [apps/web/src/features/records/AnswerDistribution.test.tsx](../../apps/web/src/features/records/AnswerDistribution.test.tsx)
+- [apps/web/src/features/records/LearningInsights.test.tsx](../../apps/web/src/features/records/LearningInsights.test.tsx)
 - [apps/web/src/features/review/logic.test.ts](../../apps/web/src/features/review/logic.test.ts)
 - [apps/web/src/features/stats/logic.test.ts](../../apps/web/src/features/stats/logic.test.ts)
 - [apps/web/src/features/stats/useStats.test.tsx](../../apps/web/src/features/stats/useStats.test.tsx)
@@ -695,6 +726,7 @@
 - [apps/web/src/features/topik/learning/content.test.ts](../../apps/web/src/features/topik/learning/content.test.ts)
 - [apps/web/src/features/topik/owner-private-content.test.ts](../../apps/web/src/features/topik/owner-private-content.test.ts)
 - [apps/web/src/features/topik/useKoreanAudio.test.tsx](../../apps/web/src/features/topik/useKoreanAudio.test.tsx)
+- [apps/web/src/hooks/useAccountPreferences.test.tsx](../../apps/web/src/hooks/useAccountPreferences.test.tsx)
 - [apps/web/src/hooks/useLearningActivity.test.tsx](../../apps/web/src/hooks/useLearningActivity.test.tsx)
 - [apps/web/src/hooks/useLearningProfile.test.tsx](../../apps/web/src/hooks/useLearningProfile.test.tsx)
 - [apps/web/src/hooks/useSRS.test.tsx](../../apps/web/src/hooks/useSRS.test.tsx)
@@ -709,7 +741,9 @@
 - [apps/web/src/lib/__tests__/pages-api-proxy.test.js](../../apps/web/src/lib/__tests__/pages-api-proxy.test.js)
 - [apps/web/src/lib/__tests__/pwa-update.test.ts](../../apps/web/src/lib/__tests__/pwa-update.test.ts)
 - [apps/web/src/lib/__tests__/study-plan-policy.test.ts](../../apps/web/src/lib/__tests__/study-plan-policy.test.ts)
+- [apps/web/src/lib/account-api.test.ts](../../apps/web/src/lib/account-api.test.ts)
 - [apps/web/src/lib/learning-experience.test.ts](../../apps/web/src/lib/learning-experience.test.ts)
+- [apps/web/src/lib/push-subscribe.test.ts](../../apps/web/src/lib/push-subscribe.test.ts)
 - [apps/web/src/lib/track-registry.test.ts](../../apps/web/src/lib/track-registry.test.ts)
 - [apps/web/src/pages/__tests__/AudioQa.test.tsx](../../apps/web/src/pages/__tests__/AudioQa.test.tsx)
 - [apps/web/src/pages/__tests__/CharacterTrainer.test.ts](../../apps/web/src/pages/__tests__/CharacterTrainer.test.ts)
@@ -761,10 +795,12 @@
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md)
 - [docs/00_overview/SUB_AGENT_HANDOFF.md](../../docs/00_overview/SUB_AGENT_HANDOFF.md)
 - [docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](../../docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)
+- [docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md](../../docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md)
 
 ## 웹 공통 상태·계약·음성
 
 - [apps/web/src/App.tsx](../../apps/web/src/App.tsx)
+- [apps/web/src/hooks/useAccountPreferences.ts](../../apps/web/src/hooks/useAccountPreferences.ts)
 - [apps/web/src/hooks/useContent.ts](../../apps/web/src/hooks/useContent.ts)
 - [apps/web/src/hooks/useContentVersionInvalidation.ts](../../apps/web/src/hooks/useContentVersionInvalidation.ts)
 - [apps/web/src/hooks/useCurrentWeek.ts](../../apps/web/src/hooks/useCurrentWeek.ts)
@@ -780,6 +816,8 @@
 - [apps/web/src/i18n/ko.ts](../../apps/web/src/i18n/ko.ts)
 - [apps/web/src/i18n/study.ts](../../apps/web/src/i18n/study.ts)
 - [apps/web/src/index.css](../../apps/web/src/index.css)
+- [apps/web/src/lib/account-api.ts](../../apps/web/src/lib/account-api.ts)
+- [apps/web/src/lib/account-personalization-flag.ts](../../apps/web/src/lib/account-personalization-flag.ts)
 - [apps/web/src/lib/activity-events.ts](../../apps/web/src/lib/activity-events.ts)
 - [apps/web/src/lib/api-base.ts](../../apps/web/src/lib/api-base.ts)
 - [apps/web/src/lib/api.ts](../../apps/web/src/lib/api.ts)
@@ -794,6 +832,7 @@
 - [apps/web/src/lib/google-browser-speech.ts](../../apps/web/src/lib/google-browser-speech.ts)
 - [apps/web/src/lib/learning-experience.ts](../../apps/web/src/lib/learning-experience.ts)
 - [apps/web/src/lib/learning-flag.ts](../../apps/web/src/lib/learning-flag.ts)
+- [apps/web/src/lib/learning-insights.ts](../../apps/web/src/lib/learning-insights.ts)
 - [apps/web/src/lib/push-subscribe.ts](../../apps/web/src/lib/push-subscribe.ts)
 - [apps/web/src/lib/pwa-update.ts](../../apps/web/src/lib/pwa-update.ts)
 - [apps/web/src/lib/srs-due-snapshot.ts](../../apps/web/src/lib/srs-due-snapshot.ts)
@@ -934,6 +973,8 @@
 - [apps/web/src/features/quiz/logic.ts](../../apps/web/src/features/quiz/logic.ts)
 - [apps/web/src/features/quiz/types.ts](../../apps/web/src/features/quiz/types.ts)
 - [apps/web/src/features/quiz/useQuiz.ts](../../apps/web/src/features/quiz/useQuiz.ts)
+- [apps/web/src/features/records/AnswerDistribution.tsx](../../apps/web/src/features/records/AnswerDistribution.tsx)
+- [apps/web/src/features/records/LearningInsights.tsx](../../apps/web/src/features/records/LearningInsights.tsx)
 - [apps/web/src/features/review/ReviewView.tsx](../../apps/web/src/features/review/ReviewView.tsx)
 - [apps/web/src/features/review/logic.ts](../../apps/web/src/features/review/logic.ts)
 - [apps/web/src/features/review/types.ts](../../apps/web/src/features/review/types.ts)

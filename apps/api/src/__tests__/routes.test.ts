@@ -94,6 +94,9 @@ import rawPushNotificationDeliveriesMigration from '../../../../packages/db/driz
 import rawLearningLessonsMigration from '../../../../packages/db/drizzle-v2/0031_learning_lessons.sql?raw';
 // @ts-ignore – Vite raw import
 import rawQuizPublicationGuardsMigration from '../../../../packages/db/drizzle-v2/0032_quiz_publication_guards.sql?raw';
+// @ts-ignore – Vite raw import
+import rawAccountMigration from '../../../../packages/db/drizzle-v2/0033_account_personalization.sql?raw';
+import jpeg from 'jpeg-js';
 
 // ─────────────────────────────────────────────
 // 테스트 전 D1 스키마 적용
@@ -105,6 +108,7 @@ beforeAll(async () => {
   const filteredLines = `${rawMigration}\n${rawFtsMigration}\n${rawAppDefaultsMigration}\n${rawSelfCheckMigration}\n${rawPracticeContentMigration}\n${rawLearningTrackMigration}\n${rawOauthLearningTrackMigration}\n${rawContentProvenanceHomophonesMigration}\n${rawTopikTrackMigration}\n${rawTopikPlacementV2Migration}\n${rawTopikOfficialReferenceMigration}\n${rawTopikJapanesePlacementMigration}\n${rawContentReleaseContractMigration}\n${rawContentReleaseControlPlaneMigration}\n${rawContentReleaseReviewSignoffsMigration}\n${rawAiLearningAssistanceMigration}\n${rawTopikOwnerPrivatePublicationMigration}\n${rawContentSourceAudioAndOwnerCurriculumMigration}\n${rawPreserveExistingJlptLevelsMigration}\n${rawTopikOwnerCurriculumAudioTextMigration}\n${rawContentAudioBindingActivationsMigration}\n${rawTopikOwnerCurriculumProgressFsrsMigration}\n${rawQuestionBankQualityLedgerMigration}\n${rawRebalanceJlptN3ReadingAnswersMigration}\n${rawLearningActivityEventsMigration}\n${rawJlptPracticeQuestionsMigration}\n${rawReleaseQualityLinksMigration}\n${rawGoogleSpeechContractMigration}\n${rawLearningExperienceMigration}\n${rawStudyMotivationMigration}\n${rawPushNotificationDeliveriesMigration}`
     .concat('\n',rawLearningLessonsMigration)
     .concat('\n',rawQuizPublicationGuardsMigration)
+    .concat('\n',rawAccountMigration)
     .replaceAll('--> statement-breakpoint', '')
     .split('\n')
     .filter(line => {
@@ -2627,6 +2631,7 @@ describe('timezone-aware Push reminders', () => {
         VALUES (?, ?, 'test-key', 'test-auth', 1, 0, 'ja', unixepoch())`).bind(japanese.data.user.id, japaneseEndpoint),
       db.prepare(`INSERT INTO learning_activity_events(event_id,user_id,learning_track,event_type,content_type,content_id,correct,occurred_at)
         VALUES (?, ?, 'jlpt-ja', 'quiz_answered', 'jlpt-quiz', 'reminder-test', 1, ?)`).bind(`reminder-study-${crypto.randomUUID()}`, korean.data.user.id, Math.floor(now.getTime() / 1000) - 60),
+      db.prepare(`INSERT INTO daily_logs(user_id,learning_track,date,items_review) VALUES(?,'jlpt-ja','2026-09-02',1)`).bind(korean.data.user.id),
     ]);
 
     const delivered: Array<{ endpoint: string; title: string }> = [];
@@ -2745,6 +2750,40 @@ describe('존재하지 않는 경로', () => {
     const body = await res.json<{ type: string; status: number }>();
     expect(body.status).toBe(404);
     expect(body.type).toContain('not-found');
+  });
+});
+
+describe('account reminder and insights integration', () => {
+  it('custom quarter-hour reminders claim once, ignore forged activities, and suppress legacy',async()=>{
+    const db=(env as typeof env & {DB:D1Database}).DB;
+    const headers={Cookie:await registerTestSession(),'Content-Type':'application/json'};
+    const {data:{user}}=await json<{data:{user:{id:string}}}>('/api/v1/auth/me',{headers});
+    const endpoint=`https://push.example.test/custom-${crypto.randomUUID()}`;
+    await db.prepare(`INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,morning_on,evening_on,created_at) VALUES(?,?,'key','auth',1,1,1)`).bind(user.id,endpoint).run();
+    const saved=await fetch('/api/v1/account/preferences',{method:'PUT',headers,body:JSON.stringify({reminder_enabled:true,reminder_time:'07:15',timezone:'Asia/Seoul'})});
+    expect(saved.status).toBe(200);
+    const now=new Date('2026-10-13T22:15:00Z');
+    await db.prepare(`INSERT INTO learning_activity_events(event_id,user_id,learning_track,event_type,content_type,content_id,occurred_at) VALUES(?,?,'jlpt-ja','content_completed','vocab','fake',?)`).bind(crypto.randomUUID(),user.id,now.getTime()/1000-1).run();
+    const delivered:string[]=[];
+    const send=async (s:{endpoint:string})=>{delivered.push(s.endpoint);return {ok:true,status:201};};
+    const pushEnv={...env,VAPID_PRIVATE_KEY:'test-key'} as unknown as import('../types.js').Env;
+    await Promise.all([runPushReminder(pushEnv,'custom',{now,send}),runPushReminder(pushEnv,'custom',{now,send})]);
+    expect(delivered.filter(e=>e===endpoint)).toHaveLength(1);
+    await runPushReminder(pushEnv,'morning',{now:new Date('2026-10-13T22:00:00Z'),send});
+    expect(delivered.filter(e=>e===endpoint)).toHaveLength(1);
+    expect((await fetch('/api/v1/account/preferences',{method:'PUT',headers,body:JSON.stringify({reminder_time:'07:30'})})).status).toBe(200);
+    await runPushReminder(pushEnv,'custom',{now:new Date('2026-10-13T22:30:00Z'),send});
+    expect(delivered.filter(e=>e===endpoint)).toHaveLength(1);
+    // 실제 일지 저장만 학습일/알림 생략의 근거가 된다.
+    await db.prepare("INSERT INTO daily_logs(user_id,learning_track,date,items_new) VALUES(?,'jlpt-ja','2026-10-15',1)").bind(user.id).run();
+    await runPushReminder(pushEnv,'custom',{now:new Date('2026-10-14T22:30:00Z'),send});
+    expect(delivered.filter(e=>e===endpoint)).toHaveLength(1);
+    const insight=await fetch('/api/v1/learning/insights?year=2026',{headers});
+    expect(insight.status).toBe(200);
+    const result=await insight.json<{data:{learning_track:string;days:{date:string;studied:boolean}[]}}>();
+    expect(result.data.learning_track).toBe('jlpt-ja');
+    expect(result.data.days.find(day=>day.date==='2026-10-14')?.studied).toBe(false);
+    await db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').bind(endpoint).run();
   });
 });
 

@@ -464,9 +464,14 @@ test("mobile account settings and four menus stay reachable with larger text", a
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBeTruthy();
-  await page.getByText("アカウント・設定", { exact: true }).click();
-  await page.getByRole('link',{name:'設定',exact:true}).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  if (process.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true') {
+    await page.getByRole('button', { name: 'アカウント', exact: true }).click();
+    await page.getByRole('dialog', { name: 'アカウント', exact: true }).getByRole('link', { name: 'アプリのデザイン', exact: true }).click();
+  } else {
+    await page.getByText("アカウント・設定", { exact: true }).click();
+    await page.getByRole('link',{name:'設定',exact:true}).click();
+  }
+  await expect(page).toHaveURL(/\/settings(?:#appearance)?$/);
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { name: "言語", exact: true })).toBeVisible();
   const japaneseLanguageControls = main.getByRole("button", { name: "日本語", exact: true });

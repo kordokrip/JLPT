@@ -435,6 +435,8 @@ export interface AuthUser {
   role: AuthRole;
   auth_provider?: string;
   learning_track: LearningTrackId;
+  google_picture_url?: string | null;
+  avatar_updated_at?: number | null;
 }
 
 export interface AuthConfig {

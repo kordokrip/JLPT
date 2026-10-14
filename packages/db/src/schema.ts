@@ -22,8 +22,31 @@ import {
   primaryKey,
   uniqueIndex,
   foreignKey,
+  blob,
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+
+/** 강성호 2026-10-14: 계정 개인화는 학습 데이터와 분리하고 사진은 D1에 한 장만 보관한다. */
+export const accountPreferences = sqliteTable('account_preferences', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  theme: text('theme', { enum: ['light','dark','system'] }),
+  accent: text('accent', { enum: ['track','forest','sea','ink'] }),
+  reminderEnabled: integer('reminder_enabled').notNull().default(0),
+  reminderTime: text('reminder_time').notNull().default('19:00'),
+  timezone: text('timezone').notNull().default('Asia/Seoul'),
+  customReminderConfigured: integer('custom_reminder_configured').notNull().default(0),
+  googlePictureUrl: text('google_picture_url'), updatedAt: integer('updated_at').notNull(),
+});
+export const accountAvatars = sqliteTable('account_avatars', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  jpeg: blob('jpeg', { mode: 'buffer' }).notNull(), updatedAt: integer('updated_at').notNull(),
+});
+export const customReminderDeliveries = sqliteTable('custom_reminder_deliveries', {
+  endpoint: text('endpoint').notNull(), localDate: text('local_date').notNull(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['claimed','sent'] }).notNull(),
+  claimedAt: integer('claimed_at').notNull(), sentAt: integer('sent_at'),
+}, t => ({ pk: primaryKey({ columns: [t.endpoint,t.localDate] }) }));
 
 /** Additive daily-learning state; existing content and FSRS tables remain authoritative. */
 export const learningProfiles = sqliteTable('learning_profiles', {

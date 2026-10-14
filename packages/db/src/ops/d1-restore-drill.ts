@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { D1_BACKUP_SCHEMA_QUERY, detectD1BackupSchemaProfile, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
+import { D1_BACKUP_SCHEMA_QUERY, detectD1BackupSchemaProfile, exactRestoreSourceMigration, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
 import { validateD1BackupManifest } from './d1-backup-manifest.js';
 
 interface SqliteTrigger {
@@ -24,11 +24,14 @@ const restoreTables = tablesForPhase('all', manifest.schemaProfile);
 const persistTo = fs.mkdtempSync(path.join(os.tmpdir(), 'nihongo-n3-restore-'));
 // 강성호 2026-10-13: 운영 schema 그대로 복원한 뒤 additive upgrade를 검증하는 별도 경로를 제공한다.
 const exactSchemaUpgrade = process.argv.includes('--exact-schema-upgrade');
+const requestedSourceMigration = process.argv.find((arg) => arg.startsWith('--source-migration='))?.slice('--source-migration='.length);
+if (!exactSchemaUpgrade && requestedSourceMigration !== undefined) throw new Error('--source-migration requires --exact-schema-upgrade');
+const sourceMigration = exactSchemaUpgrade ? exactRestoreSourceMigration(manifest.schemaProfile, requestedSourceMigration) : undefined;
 let config = path.join(root, 'apps/api/wrangler.toml');
 if (exactSchemaUpgrade) {
   const migrationDirectory = path.join(persistTo,'migrations');
   fs.mkdirSync(migrationDirectory,{mode:0o700});
-  const backupMigration = Number(manifest.schemaProfile);
+  const backupMigration = Number(sourceMigration);
   const canonicalDirectory = path.join(root,'packages/db/drizzle-v2');
   for (const file of fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))<=backupMigration))
     fs.copyFileSync(path.join(canonicalDirectory,file),path.join(migrationDirectory,file));
@@ -220,22 +223,32 @@ try {
       legacySnapshots.set(table.name,{columns,sha256:rowsHash(table.name,columns)});
     }
     const canonicalDirectory=path.join(root,'packages/db/drizzle-v2');
-    const pending=fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))>Number(manifest.schemaProfile)).sort();
-    // 강성호 2026-10-13: 승인된 레슨0031 + 철회 보호0032만 포함한다.0032는 trigger-only이며74-table coverage는 동일하다.
-    const approved=['0031_learning_lessons.sql','0032_quiz_publication_guards.sql'].filter(file=>Number(file.slice(0,4))>Number(manifest.schemaProfile));
-    if(JSON.stringify(pending)!==JSON.stringify(approved)) throw new Error('Exact approved upgrade set [0031,0032] required');
+    const pending=fs.readdirSync(canonicalDirectory).filter(file=>/^\d{4}_.*\.sql$/.test(file) && Number(file.slice(0,4))>Number(sourceMigration)).sort();
+    // 0032 is trigger-only and therefore remains represented by backup profile
+    // 0031 (74 tables). Exact upgrades intentionally allow only the audited
+    // 0030/0031 paths through 0033; never replay arbitrary future migrations.
+    const approvedBySourceMigration: Record<string, readonly string[]> = {
+      '0030': ['0031_learning_lessons.sql', '0032_quiz_publication_guards.sql', '0033_account_personalization.sql'],
+      '0031': ['0032_quiz_publication_guards.sql', '0033_account_personalization.sql'],
+      '0032': ['0033_account_personalization.sql'],
+      '0033': [],
+    };
+    const approved = approvedBySourceMigration[sourceMigration!];
+    if (JSON.stringify(pending) !== JSON.stringify(approved)) {
+      throw new Error('Exact approved upgrade set to 0033 required for the selected source migration');
+    }
     for(const file of pending)fs.copyFileSync(path.join(canonicalDirectory,file),path.join(persistTo,'migrations',file));
     wrangler(['d1','migrations','apply','DB',...localArgs()],'upgrading restored local schema');
     for(const [table,before] of legacySnapshots)
       if(rowsHash(table,before.columns)!==before.sha256) failures.push(`upgrade changed legacy rows: ${table}`);
     const upgradedTables=parseD1SchemaTableNames(wrangler(['d1','execute','DB',...localArgs(),'--json','--command',D1_BACKUP_SCHEMA_QUERY],'reading upgraded local schema'));
     const profile=detectD1BackupSchemaProfile(upgradedTables);
-    if(profile!=='0031') failures.push('Upgraded schema is not 0031');
+    if(profile!=='0033') failures.push('Upgraded schema is not 0033');
     const afterFk=JSON.parse(wrangler(['d1','execute','DB',...localArgs(),'--json','--command','PRAGMA foreign_key_check'],'checking upgraded foreign keys'));
     if(afterFk[0]?.results?.length) failures.push('upgrade foreign_key_check failed');
     const guardTriggers=JSON.parse(wrangler(['d1','execute','DB',...localArgs(),'--json','--command',"SELECT name FROM sqlite_schema WHERE type='trigger' AND name IN ('quiz_attempts_no_replace','quiz_attempts_snapshot_immutable','quiz_attempts_finished_immutable','quiz_attempts_publication_insert','quiz_attempts_publication_grade')"],'checking approved quiz guard triggers'));
     if(guardTriggers[0]?.results?.length!==5)failures.push('0032 quiz guard triggers incomplete');
-    upgrade={migration:pending,migrationLedgerTarget:'0032',schemaProfile:profile,regularTables:tablesForPhase('all',profile).length,
+    upgrade={sourceMigration,migration:pending,migrationLedgerTarget:'0033',schemaProfile:profile,regularTables:tablesForPhase('all',profile).length,
       legacyTablesCompared:legacySnapshots.size,legacyRowsUnchanged:!failures.length,
       foreignKeyViolations:afterFk[0]?.results?.length??0};
   }
@@ -243,6 +256,7 @@ try {
     generatedAt: new Date().toISOString(),
     backup: inputDir,
     schemaProfile: manifest.schemaProfile,
+    sourceMigration: sourceMigration ?? null,
     legacyProfileInferred: manifest.legacyProfileInferred,
     localSchemaProfile,
     coversLocalSchema: manifest.schemaProfile === localSchemaProfile,

@@ -74,10 +74,10 @@ describe('useSettingsStore', () => {
     await useSettingsStore.persist.rehydrate();
 
     expect(useSettingsStore.persist.hasHydrated()).toBe(true);
-    expect(useSettingsStore.getState()).toMatchObject({ ...priorPreferences, languageExplicit: true });
+    expect(useSettingsStore.getState()).toMatchObject({ ...priorPreferences, languageExplicit: true, themeExplicit: true, accent: 'track' });
     expect(JSON.parse(localStorage.getItem('nihongo-n3-settings')!)).toMatchObject({
-      version: 7,
-      state: { ...priorPreferences, languageExplicit: true },
+      version: 8,
+      state: { ...priorPreferences, languageExplicit: true, themeExplicit: true, accent: 'track' },
     });
     useSettingsStore.getState().suggestLanguage('ja');
     expect(useSettingsStore.getState().language).toBe('en');

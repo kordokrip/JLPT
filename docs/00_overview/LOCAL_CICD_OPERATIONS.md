@@ -1,5 +1,9 @@
 # 로컬 CI/CD 운영 기준
 
+개인화 출시 후속(2026-10-14): 테스트는 반드시 `VITE_ACCOUNT_PERSONALIZATION_ENABLED=true`로 실행한다. flag-off250 통과만으로 활성화를 승인하지 않는다. 새 백업0033/77표와 명시적0032 원본 복원→0033 upgrade, delayed scheduledTime 및 독립 RFC8291 복호화 회귀를 포함한다. Preview 실푸시는 분리된 VAPID 키/일치하는 frontend 공개키를 사용하고 실제 수신과 HTTP 수락을 별도 기록한다. 기존 전체 브라우저의 구 계정 details 선택자는 새 dialog 계약으로 교체하되 기능 assertion과 실패 이력을 보존한다.
+
+현재 개인화 구현은 [실행 원장](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)의 계정 API/0033/프런트엔드 검사 대상이다. 로컬 영향 검사 후 `openapi:check`, `typecheck`, `test`, flag-on `build`, `verify:fresh`, audio contract를 실행한다. 브라우저는 `VITE_ACCOUNT_PERSONALIZATION_ENABLED=true pnpm -F @nihongo-n3/e2e exec playwright test account-personalization.spec.ts --project=chromium --project=webkit --reporter=line`로 별도 격리 DB를 사용한다. 이 자동 검사는 실제 푸시/Google 로그인/가청/Preview 검증을 대신하지 않는다. 과거 앱 테스트를 새 구현 통과로 쓰지 않는다. GitHub Actions는 변경하지 않았다.
+
 2026-10-14 실제 완료 gate는 [지도 UI 릴리스](LEARNING_MAP_RELEASE_2026-10-14.md)를 따른다. 동일 후보의 통과 결과를 다시 실행하지 않고 SHA·증거 hash로 연결한다. UI-only 배포에는 콘텐츠 재공개·migration을 하지 않는다. D1 provider 내부 테이블 직접 조회 금지, 생성 FTS는 복원 검사로 확인한다. 점검 전환/복귀는 실제 health 반영을 확인하며10220은 증명된 자기 점검 버전 및 변경 secret이 MAINTENANCE_MODE 하나일 때만 복귀 확인한다. GitHub Actions는 계속 비활성이다.
 
 현재 운영처럼 업데이트 동의 UI가 있는 빌드는 PWA collector `--previous-root=<clean 운영 source>`로 검사한다. `--legacy-root`는 동의 UI 이전 자동 업데이트 앱 전용이며 null seen-release 회귀를 유지한다. 둘을 혼용하지 않는다(`INC-OPS-110`). 새 후보 전체 검증은 진행 중이다.

@@ -14,6 +14,16 @@ import { reminderLanguage, reminderPayload } from '../lib/push-reminders.js';
 
 const notifications = new Hono<AppEnv>();
 notifications.use('*', cfAccessAuth);
+notifications.use('*', async(c,next)=>{
+  const expected = c.req.header('X-Account-Id');
+  if(expected && expected !== c.get('userId')) return conflict(c,'Account changed');
+  return next();
+});
+notifications.use('*', async(c,next)=>{ c.header('Cache-Control','private, no-store'); return next(); });
+notifications.get('/notifications/subscribe',async c=>{
+  const rows=await c.env.DB.prepare('SELECT endpoint FROM push_subscriptions WHERE user_id=?').bind(c.get('userId')).all<{endpoint:string}>();
+  return ok(c,{endpoints:(rows.results??[]).map(row=>row.endpoint)});
+});
 
 // ── POST /notifications/subscribe ────────────────────────────────
 notifications.post('/notifications/subscribe', async (c) => {

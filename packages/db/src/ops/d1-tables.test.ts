@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 
-import { D1_BACKUP_SCHEMA_QUERY, D1_TRANSFER_TABLES, D1_LEARNING_TRANSFER_TABLES, D1_REWARD_TRANSFER_TABLES, D1_NOTIFICATION_TRANSFER_TABLES, EXCLUDED_TRANSIENT_TABLES, detectD1BackupSchemaProfile, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
+import { D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES, D1_BACKUP_SCHEMA_QUERY, D1_TRANSFER_TABLES, D1_LEARNING_TRANSFER_TABLES, D1_REWARD_TRANSFER_TABLES, D1_NOTIFICATION_TRANSFER_TABLES, EXCLUDED_TRANSIENT_TABLES, detectD1BackupSchemaProfile, exactRestoreSourceMigration, parseD1SchemaTableNames, tablesForPhase } from './d1-tables.js';
 
 test('0028 backup profile includes all five additive learning tables', () => {
   const tables = tablesForPhase('all', '0028');
@@ -47,6 +47,30 @@ test('actual Miniflare generated _cf_METADATA does not turn a complete backup pr
 
 test('new profile still rejects unknown regular tables', () => {
   assert.throws(() => detectD1BackupSchemaProfile([...tablesForPhase('all', '0030').map((table) => table.name), 'unreviewed_table']), /unknown/u);
+});
+
+test('0033 requires all 77 tables and restores private account tables immediately after users', () => {
+  const tables = tablesForPhase('all', '0033');
+  const names = tables.map((table) => table.name);
+  assert.equal(names.length, 77);
+  assert.equal(detectD1BackupSchemaProfile(names), '0033');
+  const users = names.indexOf('users');
+  assert.deepEqual(names.slice(users + 1, users + 4), D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES.map((table) => table.name));
+  for (let count = 0; count < D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES.length; count += 1) {
+    const partial = names.filter((name) => !D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES.slice(count, count + 1).some((table) => table.name === name));
+    assert.throws(() => detectD1BackupSchemaProfile(partial), /Partial 0033|missing or unknown/u);
+  }
+  assert.throws(() => detectD1BackupSchemaProfile([...names, 'unreviewed_table']), /missing or unknown/u);
+});
+
+test('exact restore source ledger permits only the 0031-profile 0032 trigger baseline', () => {
+  assert.equal(exactRestoreSourceMigration('0030'), '0030');
+  assert.equal(exactRestoreSourceMigration('0031'), '0031');
+  assert.equal(exactRestoreSourceMigration('0031', '0032'), '0032');
+  assert.equal(exactRestoreSourceMigration('0033'), '0033');
+  for (const [profile, source] of [['0030', '0032'], ['0031', '0030'], ['0033', '0032'], ['0031', '0034']] as const) {
+    assert.throws(() => exactRestoreSourceMigration(profile, source), /Exact source migration/u);
+  }
 });
 
 test('schema mismatch diagnostics name missing and unknown tables without including row data', () => {
@@ -102,6 +126,26 @@ test('actual 0029 and 0030 migrations select the complete backup profiles', () =
     assert.equal(detectD1BackupSchemaProfile(names()), '0030');
     assert.equal(db.prepare("SELECT name FROM pragma_table_info('study_sessions') WHERE name='mode'").get()?.name, 'mode');
     assert.deepEqual(db.prepare('PRAGMA foreign_key_list(study_reward_events)').all().map((row) => row.table), ['users']);
+  } finally {
+    db.close();
+  }
+});
+
+test('actual 0033 migration selects the 77-table backup profile with parent-first account data', () => {
+  const db = new DatabaseSync(':memory:');
+  const directory = new URL('../../drizzle-v2/', import.meta.url);
+  try {
+    for (const name of readdirSync(directory).filter((name) => /^00\d\d_.*\.sql$/u.test(name) && name <= '0033_account_personalization.sql').sort()) {
+      db.exec(readFileSync(new URL(name, directory), 'utf8').replaceAll('--> statement-breakpoint', ''));
+    }
+    const names = db.prepare(D1_BACKUP_SCHEMA_QUERY).all().map((row) => row.name as string);
+    assert.equal(detectD1BackupSchemaProfile(names), '0033');
+    const order = new Map(tablesForPhase('all', '0033').map((table, index) => [table.name, index]));
+    for (const table of D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES) {
+      for (const fk of db.prepare(`PRAGMA foreign_key_list(${table.name})`).all()) {
+        assert.ok(order.get(fk.table as string)! < order.get(table.name)!, `${String(fk.table)} before ${table.name}`);
+      }
+    }
   } finally {
     db.close();
   }

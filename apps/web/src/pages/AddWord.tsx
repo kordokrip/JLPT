@@ -33,7 +33,7 @@ export default function AddWord() {
         <p className="font-pretendard text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)]">
           {t('addWord.eyebrow')}
         </p>
-        <h1 className="mt-2 font-serif-jp text-[32px] leading-tight text-foreground">
+        <h1 className="mt-2 font-pretendard text-[28px] font-bold leading-tight text-foreground">
           {t('addWord.title')}
         </h1>
         <p className="mt-3 font-pretendard text-[14px] leading-relaxed text-[var(--muted-foreground)]">

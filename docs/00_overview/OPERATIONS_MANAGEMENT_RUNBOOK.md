@@ -1,5 +1,9 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+개인화 후속 승인(2026-10-14)은 Preview·실푸시·가청·backup/restore·rollback/predeploy 통과를 전제로 Production/push를 허용한다. Preview OAuth와 VAPID를 운영에서 복사하거나 운영 키를 회전하지 않는다.0033 이후 백업은77표이며 프로필0031의 운영 원본은 ledger0032를 별도 확인한다. 구65표 cleanup 도구는 이번 릴리스에서 사용하지 않는다. UI rollback은 이전 Pages+새 호환 Worker 유지; backend rollback은 알림 cron 중지/호환 보호를 명시적으로 검증한다. 구 Worker+hourly로 무조건 되돌리면 새 opt-out·중복 방지 계약을 잃으므로 금지한다.
+
+현재 후속 개인화 구현은 [최신 계약](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 따른다. `0033`은 새 계정 데이터 3개 표를 추가하므로 기존 Pages-only 절차가 아니다. 현 schema 전체 보호 백업/복원→0033→호환 Worker(15분 cron)→개인화 flag Pages 순서가 필요하다. 현재는 로컬 검사이며 운영 write/점검/배포를 실행하지 않았다. 새 사진/설정 원문은 Git·공용 cache·R2에 보관하지 않는다. 아래 UI-only 절차는 이전 지도 배포 이력이다.
+
 2026-10-14 지도 UI 운영 기준은 [최종 릴리스 기록](LEARNING_MAP_RELEASE_2026-10-14.md)이다. Pages2c0fea8d/source887d2b2, Worker71e71638/source37486f8, D10032를 구분한다. UI 회귀 복귀 대상은 이전Pages6b8b8a19이며 정상 콘텐츠/학습 기록을 철회하지 않는다. 점검기 오류INC-OPS-111은 실패와 실제 복구를 별도 기록했고, 최종74표 백업/복원/점검 해제 뒤 배포했다. 무관한 추가 리팩터링 없이 확인된 실패 범위만 수정한다.
 
 PWA 현 운영 전환 검사는 `node scripts/run-pwa-update-gates.mjs --previous-root=<현재 운영 clean source>`를 사용한다. `--legacy-root`는 자동 업데이트 구버전용이며 두 경로를 별개로 검사한다. UI-only 복귀는 콘텐츠 철회 없이 직전 Pages 복귀다. 새 후보 gate 완료 전 운영 변경 금지.

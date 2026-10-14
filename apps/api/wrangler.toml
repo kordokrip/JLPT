@@ -111,7 +111,7 @@ crons = [
   "*/5 * * * *",  # Workers Observability 임계값 판정과 webhook 전달
   "0 14 * * SUN",  # 주간 리포트 (일요일 14:00 UTC)
   "0 15 * * SUN",  # FSRS W 옵티마이저 (일요일 15:00 UTC)
-  "0 * * * *",     # 학습자 timezone 기준 07:00/22:00 Push 알림
+  "*/15 * * * *",  # 기존 07:00/22:00 및 계정별 15분 단위 알림
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -276,7 +276,8 @@ GOOGLE_REDIRECT_URI = "https://nihongo-n3-api-topik-preview.kordokrip.workers.de
 NOTIFY_EMAIL = ""
 FSRS_OPTIMIZER_URL = ""
 AI_ASSISTANCE_ENABLED = "false"
-VAPID_PUBLIC_KEY = "BJHfUCRXkX43H96EVNlG51N9DWgmjcKdPZsPbJftK4I9WX2ym34ckNOJy7k71VXspgQZy9xze_DYzf_V7s_08jw"
+# 강성호 2026-10-14: Preview 실푸시는 운영 구독 키와 분리한다.
+VAPID_PUBLIC_KEY = "BAN5XoK4D46vXqldPgASe-6EyhUf3ULmhdl4kOaHgpZonMOcCy5tId2-niOJmAwzT4AO4ulIXCy9UF_rCi7_Xpk"
 OBSERVABILITY_WORKER_NAME = "nihongo-n3-api-topik-preview"
 
 [[env.topik-preview.d1_databases]]

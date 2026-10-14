@@ -121,7 +121,7 @@ export default function Reading() {
     <div className="mx-auto max-w-[768px] space-y-6 px-4 py-8 pb-28">
       {/* 헤더 */}
       <div>
-        <h1 className="font-serif-jp text-[40px] font-normal text-foreground leading-none mb-1">
+        <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-1">
           {t('reading.title')}
         </h1>
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)]">

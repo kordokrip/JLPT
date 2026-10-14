@@ -60,6 +60,192 @@
         }
       },
       "updatedAt": "2026-10-13T09:32:40.700Z"
+    },
+    "unified-shell-learn": {
+      "targetKind": "new-ui",
+      "projectId": "c35594fd-cdcb-482d-bee8-c2eb86320771",
+      "activeDraftId": "95672594-0112-43da-8d4a-784b9d00dbb3",
+      "sourceTarget": "today-learning-map",
+      "sourceDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "apps/web/src/pages/Today.tsx",
+        "apps/web/src/components/layout/RootLayout.tsx",
+        "apps/web/src/components/layout/BottomTabBar.tsx",
+        "apps/web/src/features/study/StudyComponents.tsx",
+        "apps/web/src/features/study/study.css",
+        "apps/web/src/index.css",
+        "apps/web/src/styles/tokens.css",
+        "apps/web/tailwind.config.ts",
+        "apps/web/src/pages/LearnHub.tsx",
+        "apps/web/src/pages/LearningRecords.tsx",
+        "apps/web/src/features/review/ReviewView.tsx",
+        "apps/web/src/features/quiz/QuizView.tsx",
+        "apps/web/src/pages/Welcome.tsx",
+        "apps/web/src/pages/Login.tsx"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "ab96b747cf1f74c1064e549b464914af858b093f8c2bf7b1366c7dcb248ba78b",
+        "apps/web/src/pages/Today.tsx": "88a4c47d738bc23a8bd2e42e5f9afa0f7328db468405215062a0577408326174",
+        "apps/web/src/components/layout/RootLayout.tsx": "5b5da43627327cbdfdaab2ddae194138c5c699733afbc184539b0b9b57c40ced",
+        "apps/web/src/components/layout/BottomTabBar.tsx": "584927000bb50fb8600d28ef3e82f87f91f22e396938b8c1de2887cf107d9cfc",
+        "apps/web/src/features/study/StudyComponents.tsx": "147d6a4bea2ba3fc358d424fed625a00b8d338bdac38334fb29400e696a8eb8b",
+        "apps/web/src/features/study/study.css": "2d7b75013d52af5924031c3bf63821c3a1770e070f7afa0a7c32bba12fb82773",
+        "apps/web/src/index.css": "f17f7441b10b60908ae3eeb36941eb08e81a483587eafdd4e8a3c6db00becd3f",
+        "apps/web/src/styles/tokens.css": "f70480fe956c6dc29f2e387cffd682a506e0d26e4e57fd3cedc129fcd6ce7b4b",
+        "apps/web/tailwind.config.ts": "3c04dbd5124f1e4e0ec465d007967ea181058a6dfbd8461d119e0a58e8eaccad",
+        "apps/web/src/pages/LearnHub.tsx": "77ff7075ff6a566ee5234012f16d3fd4bf3b2e4580d9bf6b9942ea88c7bbde64",
+        "apps/web/src/pages/LearningRecords.tsx": "1216a0d5a1aab6e99592119660bdded6b43654f373f8a04cfa021bc3961e6ae2",
+        "apps/web/src/features/review/ReviewView.tsx": "c2579ba0343f3752dd788b0c26a1208e8d9229602c068c935dd30baf77373341",
+        "apps/web/src/features/quiz/QuizView.tsx": "356898571529915e417bd93b29a2fca60d97e9bd53816658269bfc5f1e8e1c04",
+        "apps/web/src/pages/Welcome.tsx": "7a240ddd28784c4817bf35f6b9194e3c952116920e904c4f1e62b58621f3da89",
+        "apps/web/src/pages/Login.tsx": "fa99e4d5ce1364275e2c418a64d9ec145a081a178b6369c66a5b4d5df677f5d6"
+      },
+      "referenceIds": [
+        "apps-web-public-brand-mark.png"
+      ],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "apps-web-public-brand-mark.png",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/brand-assets/apps-web-public-brand-mark.png/brand-mark.png",
+          "sourcePath": "apps/web/public/brand-mark.png"
+        }
+      },
+      "drafts": {
+        "95672594-0112-43da-8d4a-784b9d00dbb3": {
+          "title": "Unified UI 1 — Header and Learn",
+          "parentDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+          "currentVersion": 4,
+          "visualDirection": "Unified map language; Korean JLPT and Japanese TOPIK; light and dark; awaiting review; porcelain learning illustration pass, awaiting review"
+        }
+      },
+      "updatedAt": "2026-10-13T16:53:50.597Z",
+      "contentAssetsManifest": ".superdesign/assets/learning-porcelain-v1/manifest.json"
+    },
+    "unified-review-records": {
+      "targetKind": "new-ui",
+      "projectId": "c35594fd-cdcb-482d-bee8-c2eb86320771",
+      "activeDraftId": "901c9fd9-5fa1-4c4e-9b8f-5155dab3ca38",
+      "sourceTarget": "today-learning-map",
+      "sourceDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "apps/web/src/pages/Today.tsx",
+        "apps/web/src/components/layout/RootLayout.tsx",
+        "apps/web/src/components/layout/BottomTabBar.tsx",
+        "apps/web/src/features/study/StudyComponents.tsx",
+        "apps/web/src/features/study/study.css",
+        "apps/web/src/index.css",
+        "apps/web/src/styles/tokens.css",
+        "apps/web/tailwind.config.ts",
+        "apps/web/src/pages/LearnHub.tsx",
+        "apps/web/src/pages/LearningRecords.tsx",
+        "apps/web/src/features/review/ReviewView.tsx",
+        "apps/web/src/features/quiz/QuizView.tsx",
+        "apps/web/src/pages/Welcome.tsx",
+        "apps/web/src/pages/Login.tsx"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "ab96b747cf1f74c1064e549b464914af858b093f8c2bf7b1366c7dcb248ba78b",
+        "apps/web/src/pages/Today.tsx": "88a4c47d738bc23a8bd2e42e5f9afa0f7328db468405215062a0577408326174",
+        "apps/web/src/components/layout/RootLayout.tsx": "5b5da43627327cbdfdaab2ddae194138c5c699733afbc184539b0b9b57c40ced",
+        "apps/web/src/components/layout/BottomTabBar.tsx": "584927000bb50fb8600d28ef3e82f87f91f22e396938b8c1de2887cf107d9cfc",
+        "apps/web/src/features/study/StudyComponents.tsx": "147d6a4bea2ba3fc358d424fed625a00b8d338bdac38334fb29400e696a8eb8b",
+        "apps/web/src/features/study/study.css": "2d7b75013d52af5924031c3bf63821c3a1770e070f7afa0a7c32bba12fb82773",
+        "apps/web/src/index.css": "f17f7441b10b60908ae3eeb36941eb08e81a483587eafdd4e8a3c6db00becd3f",
+        "apps/web/src/styles/tokens.css": "f70480fe956c6dc29f2e387cffd682a506e0d26e4e57fd3cedc129fcd6ce7b4b",
+        "apps/web/tailwind.config.ts": "3c04dbd5124f1e4e0ec465d007967ea181058a6dfbd8461d119e0a58e8eaccad",
+        "apps/web/src/pages/LearnHub.tsx": "77ff7075ff6a566ee5234012f16d3fd4bf3b2e4580d9bf6b9942ea88c7bbde64",
+        "apps/web/src/pages/LearningRecords.tsx": "1216a0d5a1aab6e99592119660bdded6b43654f373f8a04cfa021bc3961e6ae2",
+        "apps/web/src/features/review/ReviewView.tsx": "c2579ba0343f3752dd788b0c26a1208e8d9229602c068c935dd30baf77373341",
+        "apps/web/src/features/quiz/QuizView.tsx": "356898571529915e417bd93b29a2fca60d97e9bd53816658269bfc5f1e8e1c04",
+        "apps/web/src/pages/Welcome.tsx": "7a240ddd28784c4817bf35f6b9194e3c952116920e904c4f1e62b58621f3da89",
+        "apps/web/src/pages/Login.tsx": "fa99e4d5ce1364275e2c418a64d9ec145a081a178b6369c66a5b4d5df677f5d6"
+      },
+      "referenceIds": [
+        "apps-web-public-brand-mark.png"
+      ],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "apps-web-public-brand-mark.png",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/brand-assets/apps-web-public-brand-mark.png/brand-mark.png",
+          "sourcePath": "apps/web/public/brand-mark.png"
+        }
+      },
+      "drafts": {
+        "901c9fd9-5fa1-4c4e-9b8f-5155dab3ca38": {
+          "title": "Unified UI 2 — Review and Records",
+          "parentDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+          "currentVersion": 3,
+          "visualDirection": "Unified map language; Korean JLPT and Japanese TOPIK; light and dark; awaiting review; porcelain learning illustration pass, awaiting review"
+        }
+      },
+      "updatedAt": "2026-10-13T16:53:50.598Z",
+      "contentAssetsManifest": ".superdesign/assets/learning-porcelain-v1/manifest.json"
+    },
+    "unified-practice-auth": {
+      "targetKind": "new-ui",
+      "projectId": "c35594fd-cdcb-482d-bee8-c2eb86320771",
+      "activeDraftId": "9ffad5ce-817b-4800-8d25-742ee4aa404f",
+      "sourceTarget": "today-learning-map",
+      "sourceDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "apps/web/src/pages/Today.tsx",
+        "apps/web/src/components/layout/RootLayout.tsx",
+        "apps/web/src/components/layout/BottomTabBar.tsx",
+        "apps/web/src/features/study/StudyComponents.tsx",
+        "apps/web/src/features/study/study.css",
+        "apps/web/src/index.css",
+        "apps/web/src/styles/tokens.css",
+        "apps/web/tailwind.config.ts",
+        "apps/web/src/pages/LearnHub.tsx",
+        "apps/web/src/pages/LearningRecords.tsx",
+        "apps/web/src/features/review/ReviewView.tsx",
+        "apps/web/src/features/quiz/QuizView.tsx",
+        "apps/web/src/pages/Welcome.tsx",
+        "apps/web/src/pages/Login.tsx"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "ab96b747cf1f74c1064e549b464914af858b093f8c2bf7b1366c7dcb248ba78b",
+        "apps/web/src/pages/Today.tsx": "88a4c47d738bc23a8bd2e42e5f9afa0f7328db468405215062a0577408326174",
+        "apps/web/src/components/layout/RootLayout.tsx": "5b5da43627327cbdfdaab2ddae194138c5c699733afbc184539b0b9b57c40ced",
+        "apps/web/src/components/layout/BottomTabBar.tsx": "584927000bb50fb8600d28ef3e82f87f91f22e396938b8c1de2887cf107d9cfc",
+        "apps/web/src/features/study/StudyComponents.tsx": "147d6a4bea2ba3fc358d424fed625a00b8d338bdac38334fb29400e696a8eb8b",
+        "apps/web/src/features/study/study.css": "2d7b75013d52af5924031c3bf63821c3a1770e070f7afa0a7c32bba12fb82773",
+        "apps/web/src/index.css": "f17f7441b10b60908ae3eeb36941eb08e81a483587eafdd4e8a3c6db00becd3f",
+        "apps/web/src/styles/tokens.css": "f70480fe956c6dc29f2e387cffd682a506e0d26e4e57fd3cedc129fcd6ce7b4b",
+        "apps/web/tailwind.config.ts": "3c04dbd5124f1e4e0ec465d007967ea181058a6dfbd8461d119e0a58e8eaccad",
+        "apps/web/src/pages/LearnHub.tsx": "77ff7075ff6a566ee5234012f16d3fd4bf3b2e4580d9bf6b9942ea88c7bbde64",
+        "apps/web/src/pages/LearningRecords.tsx": "1216a0d5a1aab6e99592119660bdded6b43654f373f8a04cfa021bc3961e6ae2",
+        "apps/web/src/features/review/ReviewView.tsx": "c2579ba0343f3752dd788b0c26a1208e8d9229602c068c935dd30baf77373341",
+        "apps/web/src/features/quiz/QuizView.tsx": "356898571529915e417bd93b29a2fca60d97e9bd53816658269bfc5f1e8e1c04",
+        "apps/web/src/pages/Welcome.tsx": "7a240ddd28784c4817bf35f6b9194e3c952116920e904c4f1e62b58621f3da89",
+        "apps/web/src/pages/Login.tsx": "fa99e4d5ce1364275e2c418a64d9ec145a081a178b6369c66a5b4d5df677f5d6"
+      },
+      "referenceIds": [
+        "apps-web-public-brand-mark.png"
+      ],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "apps-web-public-brand-mark.png",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/brand-assets/apps-web-public-brand-mark.png/brand-mark.png",
+          "sourcePath": "apps/web/public/brand-mark.png"
+        }
+      },
+      "drafts": {
+        "9ffad5ce-817b-4800-8d25-742ee4aa404f": {
+          "title": "Unified UI 3 — Practice and Sign in",
+          "parentDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
+          "currentVersion": 4,
+          "visualDirection": "Unified map language; Korean JLPT and Japanese TOPIK; light and dark; awaiting review; porcelain learning illustration pass, awaiting review"
+        }
+      },
+      "updatedAt": "2026-10-13T16:53:50.598Z",
+      "contentAssetsManifest": ".superdesign/assets/learning-porcelain-v1/manifest.json"
     }
   }
 }

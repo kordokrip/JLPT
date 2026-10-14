@@ -9,7 +9,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 
 export type ButtonSize    = 'sm' | 'md' | 'lg' | 'icon';
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:     'bg-primary text-white shadow-sm hover:bg-primary-hover active:scale-[0.98]',
+  primary:     'bg-[var(--accent)] text-[var(--accent-foreground)] border-b-4 border-black/20 shadow-sm hover:brightness-95 active:translate-y-0.5',
   secondary:   'bg-[var(--surface-alt)] text-[var(--text-primary)] hover:bg-[var(--surface-raised)]',
   ghost:       'text-[var(--text-primary)] hover:bg-accent-soft-20',
   destructive: 'bg-red-600 text-white shadow-sm hover:bg-red-700 active:scale-[0.98]',
@@ -17,10 +17,10 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm:   'min-h-9 px-3 text-sm',
-  md:   'min-h-11 px-4 text-sm',
+  sm:   'min-h-12 px-3 text-sm',
+  md:   'min-h-12 px-4 text-base',
   lg:   'min-h-12 px-6 text-base',
-  icon: 'h-11 w-11',
+  icon: 'h-12 w-12',
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

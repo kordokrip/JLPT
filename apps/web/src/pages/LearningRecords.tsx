@@ -10,8 +10,11 @@ import { useSettingsStore } from "../stores/settings-store";
 import { StudyNote, studyButton } from "../features/study/StudyComponents";
 import { isStudyTrackConflict, StudyRequestError } from "../features/study/StudyRequestError";
 import TopikProgress from "./TopikProgress";
+import { LearningInsights } from '../features/records/LearningInsights';
+import { AnswerDistribution } from '../features/records/AnswerDistribution';
+import { recordsCopy, recordsLanguage } from '../lib/learning-insights';
 export default function LearningRecords() {
-  const { t } = useTranslation(),
+  const { t, i18n } = useTranslation(),
     scope = useDataScope(),
     profile = useLearningProfile();
   const track = useSettingsStore((s) => s.learningTrack);
@@ -83,6 +86,7 @@ export default function LearningRecords() {
           </>
         )}
       </section>
+      {import.meta.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true' && profile.data && <LearningInsights today={date} />}
       <div className="flex gap-3">
         {(["7d", "30d"] as const).map((w) => (
           <button
@@ -144,6 +148,7 @@ export default function LearningRecords() {
           </div>
           <section className="surface-panel space-y-2 p-4">
             <h2 className="font-bold">{t("study.nextReview")}</h2>
+            {data.next_review_at && data.next_review_at <= Date.now() / 1000 ? <p className="text-sm text-[var(--text-secondary)]">{recordsCopy[recordsLanguage(i18n.language)].overdue}</p> : null}
             <p>
               {data.next_review_at
                 ? new Date(data.next_review_at * 1000).toLocaleString()
@@ -156,6 +161,7 @@ export default function LearningRecords() {
               {t("study.returnReview")}
             </Link>
           </section>
+          {import.meta.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true' && <AnswerDistribution groups={data.groups} window={window}/>}
           {data.groups.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -177,7 +183,7 @@ export default function LearningRecords() {
                       </td>
                       <td>{g.answered}</td>
                       <td>
-                        {Math.round((g.correct / g.answered) * 100)}%{" "}
+                        {g.answered>0 ? Math.round((g.correct / g.answered) * 100)+'%' : recordsCopy[recordsLanguage(i18n.language)].noAnswers}{" "}
                         {g.answered < 10 && (
                           <small>{t("study.insufficient")}</small>
                         )}

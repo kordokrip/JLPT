@@ -20,7 +20,7 @@ export function validateD1BackupManifest(value: unknown): ValidatedD1BackupManif
     throw new Error('Invalid backup manifest');
   }
   const declared = 'schemaProfile' in value ? value.schemaProfile : undefined;
-  if (declared !== undefined && (typeof declared !== 'string' || !['0027', '0028', '0029', '0030', '0031'].includes(declared))) {
+  if (declared !== undefined && (typeof declared !== 'string' || !['0027', '0028', '0029', '0030', '0031', '0033'].includes(declared))) {
     throw new Error('Unknown backup manifest schema profile');
   }
   // Historical manifests predate profile metadata. Only the exact old 65-table

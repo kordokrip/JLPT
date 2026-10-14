@@ -170,8 +170,13 @@ test.describe('핵심 화면 시각 회귀', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await disableAnimations(page);
     await waitForVisualSettled(page);
-    await page.locator('header details summary').click();
-    await expect(page.locator('header details[open]')).toBeVisible();
+    if (process.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true') {
+      await page.getByRole('button', { name: '계정', exact: true }).click();
+      await expect(page.getByRole('dialog', { name: '계정', exact: true })).toBeVisible();
+    } else {
+      await page.locator('header details summary').click();
+      await expect(page.locator('header details[open]')).toBeVisible();
+    }
 
     await expect(page).toHaveScreenshot('mobile-390-more-sheet.png', {
       fullPage: false,

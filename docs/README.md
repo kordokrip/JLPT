@@ -1,5 +1,7 @@
 # JLPT · TOPIK 문서
 
+현재 작업: [입체형 UI·계정 개인화 구현](00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 사진·계정 설정·알림·연간 기록 API/화면과 additive0033을 로컬 구현했다. 새 Preview·원격 DB·배포·commit/push는 하지 않았다. 이전 시안/Pages-only 문장은 이력으로 구분한다.
+
 최신 운영은 [2026-10-14 지도 UI 릴리스](00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)다. web887d2b2/Pages2c0fea8d, Worker·DB·콘텐츠는 기존 기준선을 유지한다. 아래10월13일 이하의 미배포 문장은 보존 이력이며 현재 판정으로 사용하지 않는다.
 
 최신 작업 — 2026-10-13: 운영 V7+160 배포는 완료 상태이며, 아래 미배포 문장은 보존된 이전 이력이다. 새 작업은 [학습 지도 UI/UX 개편](00_overview/LEARNING_MAP_UX_2026-10-13.md)의 이미지 개선과 지도·레슨·완료 화면 로컬 구현이다. **프런트엔드를 변경했고 DB·콘텐츠·음성 코어·Production은 변경하지 않았다.** 새 로컬 검사와 운영 기준선은 [현재 상태](00_overview/CURRENT_STATE.md)에서 구분한다.

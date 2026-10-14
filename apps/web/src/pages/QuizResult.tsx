@@ -79,7 +79,7 @@ export default function QuizResult() {
   return (
     <div className="max-w-[640px] mx-auto px-8 py-12">
       {/* 헤더 */}
-      <h1 className="font-serif-jp text-[40px] font-normal text-foreground leading-none mb-8">
+      <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-8">
         {t('quiz.result')}
       </h1>
 

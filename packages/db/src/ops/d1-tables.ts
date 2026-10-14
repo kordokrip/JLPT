@@ -1,5 +1,5 @@
 export type D1TableGroup = 'content' | 'mutable';
-export type D1BackupSchemaProfile = '0027' | '0028' | '0029' | '0030' | '0031';
+export type D1BackupSchemaProfile = '0027' | '0028' | '0029' | '0030' | '0031' | '0033';
 
 export type D1TableSpec = {
   name: string;
@@ -108,6 +108,13 @@ export const D1_LESSON_TRANSFER_TABLES: readonly D1TableSpec[] = [
   { name:'learning_lessons',group:'content',primaryKey:'id,version',checksum:true },
   { name:'learning_lesson_entries',group:'content',primaryKey:'lesson_id,lesson_version,ordinal',checksum:true },
 ];
+// 0033 account data references users. Keep these immediately after users in
+// the restore order, before the remaining user-owned mutable rows.
+export const D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES: readonly D1TableSpec[] = [
+  { name: 'account_preferences', group: 'mutable', primaryKey: 'user_id', checksum: true },
+  { name: 'account_avatars', group: 'mutable', primaryKey: 'user_id', checksum: true },
+  { name: 'custom_reminder_deliveries', group: 'mutable', primaryKey: 'endpoint,local_date', checksum: true },
+];
 
 // Preserve the legacy constant/default for existing transfer/cleanup consumers.
 // Backup and restore must choose an explicit profile, never the default.
@@ -115,17 +122,35 @@ export function tablesForPhase(
   phase: 'content' | 'mutable' | 'all',
   schemaProfile: D1BackupSchemaProfile = '0027',
 ): D1TableSpec[] {
-  if (!['0027', '0028', '0029', '0030', '0031'].includes(schemaProfile)) {
+  if (!['0027', '0028', '0029', '0030', '0031', '0033'].includes(schemaProfile)) {
     throw new Error('Unknown D1 backup schema profile');
   }
+  const accountTables = schemaProfile === '0033' ? D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES : [];
+  const usersIndex = D1_TRANSFER_TABLES.findIndex((table) => table.name === 'users');
   const tables = [
-    ...D1_TRANSFER_TABLES,
+    ...D1_TRANSFER_TABLES.slice(0, usersIndex + 1),
+    ...accountTables,
+    ...D1_TRANSFER_TABLES.slice(usersIndex + 1),
     ...(schemaProfile === '0027' ? [] : D1_LEARNING_TRANSFER_TABLES),
-    ...(['0029', '0030', '0031'].includes(schemaProfile) ? D1_REWARD_TRANSFER_TABLES : []),
-    ...(['0030','0031'].includes(schemaProfile) ? D1_NOTIFICATION_TRANSFER_TABLES : []),
-    ...(schemaProfile === '0031' ? D1_LESSON_TRANSFER_TABLES : []),
+    ...(['0029', '0030', '0031', '0033'].includes(schemaProfile) ? D1_REWARD_TRANSFER_TABLES : []),
+    ...(['0030', '0031', '0033'].includes(schemaProfile) ? D1_NOTIFICATION_TRANSFER_TABLES : []),
+    ...(['0031', '0033'].includes(schemaProfile) ? D1_LESSON_TRANSFER_TABLES : []),
   ];
   return phase === 'all' ? tables : tables.filter((table) => table.group === phase);
+}
+
+/**
+ * 0032 is trigger-only, so its actual migration ledger shares the 0031
+ * 74-table backup profile. Operators may reconstruct that exact source before
+ * importing, but no other source-ledger override is valid.
+ */
+export function exactRestoreSourceMigration(
+  schemaProfile: D1BackupSchemaProfile,
+  requested?: string,
+): D1BackupSchemaProfile | '0032' {
+  if (requested === undefined) return schemaProfile;
+  if (schemaProfile === '0031' && requested === '0032') return '0032';
+  throw new Error('Exact source migration must equal its backup profile, except explicit 0032 with backup profile 0031');
 }
 
 // Only schema metadata is read. Known FTS storage is rebuilt; unknown regular
@@ -160,11 +185,18 @@ export function detectD1BackupSchemaProfile(tableNames: readonly string[]): D1Ba
   const rewardCount = D1_REWARD_TRANSFER_TABLES.filter((table) => names.includes(table.name)).length;
   const notificationCount = D1_NOTIFICATION_TRANSFER_TABLES.filter((table) => names.includes(table.name)).length;
   const lessonCount=D1_LESSON_TRANSFER_TABLES.filter(table=>names.includes(table.name)).length;
+  const accountCount = D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES.filter((table) => names.includes(table.name)).length;
   if(lessonCount && (lessonCount!==2 || !notificationCount))throw new Error('Partial 0031 lesson schema cannot be backed up');
   if ((rewardCount && learningCount !== D1_LEARNING_TRANSFER_TABLES.length) || (notificationCount && !rewardCount)) {
     throw new Error('Partial 0029/0030 learning schema cannot be backed up');
   }
-  const profile: D1BackupSchemaProfile = lessonCount ? '0031' : notificationCount ? '0030' : rewardCount ? '0029' : learningCount ? '0028' : '0027';
+  if (accountCount && accountCount !== D1_ACCOUNT_PERSONALIZATION_TRANSFER_TABLES.length) {
+    throw new Error('Partial 0033 account personalization schema cannot be backed up');
+  }
+  if (accountCount && (!lessonCount || !notificationCount || !rewardCount)) {
+    throw new Error('Partial 0033 schema cannot be backed up');
+  }
+  const profile: D1BackupSchemaProfile = accountCount ? '0033' : lessonCount ? '0031' : notificationCount ? '0030' : rewardCount ? '0029' : learningCount ? '0028' : '0027';
   const expected = tablesForPhase('all', profile).map((table) => table.name).sort();
   if (JSON.stringify([...names].sort()) !== JSON.stringify(expected)) {
     const missing = expected.filter((name) => !names.includes(name));

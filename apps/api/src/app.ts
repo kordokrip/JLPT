@@ -51,6 +51,8 @@ import { adminOA } from './routes/admin-oa.js';
 import { quizOA }    from './routes/quiz-oa.js';
 import { readingOA } from './routes/reading-oa.js';
 import { notificationsOA } from './routes/notifications-oa.js';
+import { accountOA } from './routes/account.js';
+import { learningInsightsOA } from './routes/learning-insights.js';
 import { activityOA } from './routes/activity-oa.js';
 import { learningExperienceOA } from './routes/learning-experience.js';
 import { aiOA } from './routes/ai-oa.js';
@@ -98,7 +100,7 @@ app.use(
     ],
     allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: [
-      'Content-Type', 'Authorization',
+      'Content-Type', 'Authorization', 'X-Account-Id',
       'Cf-Access-Jwt-Assertion', 'Range',
     ],
     exposeHeaders: [
@@ -203,6 +205,8 @@ v1.route('/', aiLearningOA);
 v1.use('/reading*', contentCacheMiddleware);
 v1.route('/', readingOA);
 v1.route('/', notificationsOA);  // /notifications/*
+v1.route('/', accountOA);
+v1.route('/', learningInsightsOA);
 v1.route('/', activityOA);
 
 app.route('/api/v1', v1);

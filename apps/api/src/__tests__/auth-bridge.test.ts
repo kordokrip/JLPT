@@ -10,6 +10,8 @@ import baseSchema from '../../../../packages/db/drizzle-v2/0000_schema_convergen
 import userTrackSchema from '../../../../packages/db/drizzle-v2/0005_learning_track.sql?raw';
 // @ts-ignore -- Vite raw SQL import
 import oauthTrackSchema from '../../../../packages/db/drizzle-v2/0006_oauth_learning_track.sql?raw';
+// @ts-ignore -- Vite raw SQL import
+import accountSchema from '../../../../packages/db/drizzle-v2/0033_account_personalization.sql?raw';
 
 const db = (env as typeof env & { DB: D1Database }).DB;
 const pagesOrigin = 'https://preview-pages.example.test';
@@ -26,7 +28,7 @@ const previewEnv = {
 };
 
 beforeAll(async () => {
-  for (const migration of [baseSchema, userTrackSchema, oauthTrackSchema]) {
+  for (const migration of [baseSchema, userTrackSchema, oauthTrackSchema, accountSchema]) {
     for (const statement of migration.split('--> statement-breakpoint').map((sql: string) => sql.trim()).filter(Boolean)) {
       await db.prepare(statement).run();
     }

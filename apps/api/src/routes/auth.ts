@@ -17,6 +17,7 @@ import {
   verifyPassword,
 } from '../lib/auth-session.js';
 import { safeErrorName } from '../lib/safe-log.js';
+import { googlePicture } from '../lib/account-personalization.js';
 
 const auth = new Hono<AppEnv>();
 
@@ -148,7 +149,7 @@ async function consumeOAuthBridgeToken(c: Context<AppEnv>, token: string): Promi
 
 async function upsertGoogleUser(
   c: Context<AppEnv>,
-  profile: { sub: string; email: string; name: string },
+  profile: { sub: string; email: string; name: string; picture?: string | null },
 ): Promise<UserRow> {
   const existing = await c.env.DB.prepare(
     `SELECT id, email, display_name, COALESCE(role, 'user') AS role, auth_provider, learning_track
@@ -172,6 +173,7 @@ async function upsertGoogleUser(
     )
       .bind(profile.sub, profile.name, now, now, existing.id)
       .run();
+    await saveGooglePicture(c, existing.id, profile.picture);
     return existing;
   }
 
@@ -189,7 +191,15 @@ async function upsertGoogleUser(
   )
     .bind(user.id, user.email, user.display_name, profile.sub, now, now, now)
     .run();
+  await saveGooglePicture(c, user.id, profile.picture);
   return user;
+}
+
+async function saveGooglePicture(c: Context<AppEnv>, userId: string, picture: string | null | undefined) {
+  if (!picture) return;
+  await c.env.DB.prepare(`INSERT INTO account_preferences(user_id,google_picture_url,updated_at) VALUES(?,?,?)
+    ON CONFLICT(user_id) DO UPDATE SET google_picture_url=excluded.google_picture_url`)
+    .bind(userId,picture,Math.floor(Date.now()/1000)).run();
 }
 
 async function tokenExchange(
@@ -213,14 +223,14 @@ async function tokenExchange(
   return res.json<{ access_token: string }>();
 }
 
-async function fetchGoogleProfile(accessToken: string): Promise<{ sub: string; email: string; name: string }> {
+async function fetchGoogleProfile(accessToken: string): Promise<{ sub: string; email: string; name: string; picture: string | null }> {
   const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`Google userinfo failed: HTTP ${res.status}`);
-  const profile = await res.json<{ sub?: string; email?: string; name?: string; email_verified?: boolean }>();
+  const profile = await res.json<{ sub?: string; email?: string; name?: string; email_verified?: boolean; picture?: string }>();
   if (!profile.sub || !profile.email || profile.email_verified === false) throw new Error('Google profile is not verified');
-  return { sub: profile.sub, email: profile.email.toLowerCase(), name: profile.name ?? profile.email };
+  return { sub: profile.sub, email: profile.email.toLowerCase(), name: profile.name ?? profile.email, picture: googlePicture(profile.picture) };
 }
 
 auth.get('/auth/config', (c) => {
@@ -237,7 +247,11 @@ auth.get('/auth/me', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await getSessionUser(c);
   if (!user) return c.json({ data: { authenticated: false, user: null } });
-  return c.json({ data: { authenticated: true, user: publicUser(user) } });
+  const photo = await c.env.DB.prepare(`SELECT p.google_picture_url,a.updated_at AS avatar_updated_at
+    FROM users u LEFT JOIN account_preferences p ON p.user_id=u.id
+    LEFT JOIN account_avatars a ON a.user_id=u.id WHERE u.id=?`).bind(user.id)
+    .first<{google_picture_url:string|null;avatar_updated_at:number|null}>();
+  return c.json({ data: { authenticated: true, user: { ...publicUser(user), ...photo } } });
 });
 
 auth.post('/auth/register', async (c) => {

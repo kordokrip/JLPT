@@ -24,7 +24,12 @@ interface SettingsState {
 
   // 외관
   theme:         'light' | 'dark' | 'system';
+  /** True only after a person has chosen a theme (or migrated an old choice). */
+  themeExplicit: boolean;
   setTheme:      (t: SettingsState['theme']) => void;
+  setRemoteTheme: (t: SettingsState['theme']) => void;
+  accent: 'track' | 'forest' | 'sea' | 'ink';
+  setAccent: (accent: SettingsState['accent']) => void;
 
   // 후리가나
   furiganaMode:  'always' | 'hover' | 'never';
@@ -63,7 +68,11 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (l) => set({ language: l, languageExplicit: true }),
 
       theme:        'system',
-      setTheme:     (t) => set({ theme: t }),
+      themeExplicit: false,
+      setTheme:     (t) => set({ theme: t, themeExplicit: true }),
+      setRemoteTheme: (theme) => set({ theme }),
+      accent: 'track',
+      setAccent: (accent) => set({ accent }),
 
       furiganaMode: 'hover',
       setFurigana:  (m) => set({ furiganaMode: m }),
@@ -81,13 +90,17 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'nihongo-n3-settings',
-      version: 7,
+      version: 8,
       migrate: (persisted) => {
         const state = persisted && typeof persisted === 'object'
           ? persisted as Partial<SettingsState>
           : {};
         return {
           ...state,
+          // v7 had no explicit flag; a persisted theme was necessarily a user
+          // choice, while a fresh v8 install must wait for account preferences.
+          themeExplicit: state.themeExplicit ?? state.theme !== undefined,
+          accent: state.accent ?? 'track',
           languageExplicit: state.languageExplicit ?? state.language !== undefined,
           instructionLanguages: {
             'jlpt-ja': state.instructionLanguages?.['jlpt-ja']

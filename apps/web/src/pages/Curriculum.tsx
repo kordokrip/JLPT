@@ -79,7 +79,7 @@ export default function Curriculum() {
     <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
       {/* 헤더 */}
       <div className="mb-10">
-        <h1 className="font-serif-jp text-[48px] font-normal text-foreground leading-none mb-3">
+        <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-3">
           {t('curriculum.planTitle')}
         </h1>
         <p className="font-pretendard text-[14px] text-[var(--muted-foreground)]">

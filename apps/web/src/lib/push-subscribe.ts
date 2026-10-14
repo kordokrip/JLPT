@@ -8,6 +8,7 @@
  */
 
 import { apiUrl } from './api-base';
+import { useAuthStore } from '../stores/auth-store';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
@@ -39,6 +40,7 @@ export interface SubscribeOptions {
 }
 
 export async function subscribeToPush(opts: SubscribeOptions = {}): Promise<boolean> {
+  const owner = useAuthStore.getState().user?.id;
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (!VAPID_PUBLIC_KEY) {
     console.warn('[Push] VITE_VAPID_PUBLIC_KEY 미설정');
@@ -65,9 +67,10 @@ export async function subscribeToPush(opts: SubscribeOptions = {}): Promise<bool
       notificationLanguage: opts.notificationLanguage,
     };
 
+    if (useAuthStore.getState().user?.id !== owner) return false;
     const res = await fetch(apiUrl('/notifications/subscribe'), {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(owner ? {'X-Account-Id':owner} : {}) },
       credentials: 'include',
       body:    JSON.stringify(body),
     });
@@ -80,6 +83,7 @@ export async function subscribeToPush(opts: SubscribeOptions = {}): Promise<bool
 }
 
 export async function unsubscribeFromPush(): Promise<boolean> {
+  const owner = useAuthStore.getState().user?.id;
   if (!('serviceWorker' in navigator)) return false;
 
   try {
@@ -87,15 +91,20 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     const subscription = await reg.pushManager.getSubscription();
     if (!subscription) return true;
 
-    await fetch(apiUrl('/notifications/subscribe'), {
+    if (useAuthStore.getState().user?.id !== owner) return false;
+    const response = await fetch(apiUrl('/notifications/subscribe'), {
       method:  'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(owner ? {'X-Account-Id':owner} : {}) },
       credentials: 'include',
       body:    JSON.stringify({ endpoint: subscription.endpoint }),
     });
 
-    await subscription.unsubscribe();
-    return true;
+    // Preserve the browser subscription when the server did not accept its
+    // deletion.  A 404 is deliberately idempotent: the endpoint is already
+    // absent server-side and it is safe to remove the device copy.
+    if (!response.ok && response.status !== 404) return false;
+    if (useAuthStore.getState().user?.id !== owner) return false;
+    return await subscription.unsubscribe();
   } catch (err) {
     console.error('[Push] unsubscribe 실패:', err);
     return false;

@@ -1,6 +1,4 @@
-.learning-map { max-width: 560px; margin: 0 auto; padding: 12px 20px 112px; color: #172536; background: #f7f3ea; border-radius: 20px; }
-.learning-map--topik { --map-accent: #214764; --map-pressed: #1a3851; --map-soft: #e6eef3; }
-.learning-map--jlpt { --map-accent: #c7483d; --map-pressed: #aa382f; --map-soft: #f8e7e3; }
+.learning-map { --map-accent: var(--accent); --map-pressed: color-mix(in srgb, var(--accent) 80%, black); --map-soft: var(--accent-soft); max-width: 560px; margin: 0 auto; padding: 12px 20px 112px; color: var(--foreground); background: var(--background); border-radius: 20px; }
 .learning-map__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(0,0,0,.1); padding: 8px 0 12px; }
 .learning-map__eyebrow { margin: 0; color: var(--map-accent); font-size: .875rem; font-weight: 800; }
 .learning-map__title { margin: 2px 0 0; font-size: 1.75rem; line-height: 1.2; font-weight: 800; }
@@ -33,4 +31,13 @@
 .learning-map__position { display: grid; place-items: center; }
 .learning-map__header > div { min-width: 0; overflow-wrap: anywhere; }
 .learning-map button:disabled { cursor: wait; opacity: .6; }
+/* 강성호 · 2026-10-14: 지도 형상은 보존하고 공통 계정 테마만 연결한다. */
+.learning-map__notice, .learning-map__circle, .learning-map__current-card,
+.learning-map__button, .learning-map__position { background: var(--surface); border-color: var(--border); }
+.learning-map__node, .learning-map__button { color: var(--foreground); }
+.learning-map__group-title, .learning-map__label, .learning-map__status { color: var(--text-secondary); }
+.learning-map__node--done .learning-map__circle,
+.learning-map__node--current .learning-map__circle,
+.learning-map__button--primary { background: var(--map-accent); color: var(--accent-foreground); border-color: var(--map-pressed); }
+.learning-map__header { border-color: var(--border); }
 @media (prefers-reduced-motion: reduce) { .learning-map *, .learning-map *::before, .learning-map *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

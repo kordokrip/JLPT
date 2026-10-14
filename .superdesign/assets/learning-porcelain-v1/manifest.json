@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "generator": "built-in image_gen",
+  "purpose": "Decorative learning illustrations; originals preserved; 192px WebP runtime derivatives implemented locally, not deployed",
+  "runtime": { "directory": "apps/web/public/learning-icons", "format": "webp", "width": 192, "height": 192, "totalBytes": 42728, "displaySizes": [48, 64, 96] },
+  "assets": [
+    {
+      "name": "kanji-tile",
+      "path": ".superdesign/assets/learning-porcelain-v1/kanji-tile.png",
+      "mimeType": "image/png",
+      "contentHash": "6642aaab2e8cfaeb8653ef139de34860fbd05f35b99c053ccc8c7e3eb9c696e3",
+      "runtimeHash": "72e7f04eb9914514b06253f57bfb1c3844233152cc3dd15afc05723b1ffcf763",
+      "promptSummary": "Single premium matte porcelain blank kanji tile and brush, transparent background; warm ivory #F7F3EA, vermilion #C7483D, indigo #214764, jade #527A69; no letters or logos. Actual 漢 rendered as HTML text.",
+      "source": "Built-in imagegen; no personal photos or email supplied"
+    },
+    {
+      "name": "study-book",
+      "path": ".superdesign/assets/learning-porcelain-v1/study-book.png",
+      "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-study-book/study-book.png",
+      "storagePath": "projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-study-book/study-book.png",
+      "filename": "study-book.png",
+      "mimeType": "image/png",
+      "size": 1194372,
+      "purpose": "content",
+      "contentHash": "fd82a87a29781f9de37c1da3f9b1a75212b0fbce8abc1dcb2755a22f53276e63",
+      "nodeId": "1dea8deb-5d23-434c-923f-1c70addba2c6",
+      "prompt": "Use case: stylized-concept. Create a single premium miniature editorial 3D illustration for an adult Korean and Japanese language-learning app. Subject: one open ivory book with thick softly rounded ceramic pages, a vermilion ribbon bookmark and a small indigo folded paper tab; subtle page grooves, no printed letters. Slight three-quarter isometric view, centered and isolated, fills 75% of square canvas with generous transparent padding. Handcrafted matte porcelain with restrained satin edge highlights, warm studio light upper left, extremely soft contact shadow only. Palette warm ivory #F7F3EA, vermilion #C7483D, deep indigo #214764, tiny muted jade #527A69 detail. Refined friendly grown-up design, simple strong silhouette readable at 80px, not a toy mascot, not glossy plastic. Transparent background. No text, no letters, no numbers, no logos, no frame, no surrounding scenery. This is the STUDY BOOK illustration in a coherent set."
+    },
+    {
+      "name": "recall-cards",
+      "path": ".superdesign/assets/learning-porcelain-v1/recall-cards.png",
+      "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-recall-cards/recall-cards.png",
+      "storagePath": "projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-recall-cards/recall-cards.png",
+      "filename": "recall-cards.png",
+      "mimeType": "image/png",
+      "size": 1126334,
+      "purpose": "content",
+      "contentHash": "8e08d6625eeaf2a49f49beba2bf8843c388c131cae812c86aaaba91301313dea",
+      "nodeId": "a523e524-dc2c-4435-ae8f-e5ce4696da84",
+      "prompt": "Use case: stylized-concept. Single premium miniature editorial 3D illustration for an adult Korean/Japanese learning app. Refined friendly matte porcelain, subtle satin edges, warm upper-left studio light, simple strong silhouette readable at 80px, slight three-quarter isometric view, centered on a truly transparent square background, wide clear margins, no text/letters/numbers/logos/watermark/frame. Palette warm ivory #F7F3EA, vermilion #C7483D, deep indigo #214764, muted jade #527A69. Not childish, no mascot, no glossy plastic, no scenery. Subject: three small softly rounded ivory flashcards fanned together, one indigo card backing, a vermilion index tab, a small jade circular return arrow sculpted in front representing recall and spaced review. The card faces are completely blank. Balanced calm premium stationery object."
+    },
+    {
+      "name": "listening",
+      "path": ".superdesign/assets/learning-porcelain-v1/listening.png",
+      "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-listening/listening.png",
+      "storagePath": "projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-listening/listening.png",
+      "filename": "listening.png",
+      "mimeType": "image/png",
+      "size": 1050498,
+      "purpose": "content",
+      "contentHash": "d018529340b8784ab2f4b52468b093f9e57194db516ba595342ca7ace3a96d3b",
+      "nodeId": "77c5619d-5b4e-4ecf-9479-3342da36ac12",
+      "prompt": "Use case: stylized-concept. Single premium miniature editorial 3D illustration for an adult Korean/Japanese learning app. Refined friendly matte porcelain, subtle satin edges, warm upper-left studio light, simple strong silhouette readable at 80px, slight three-quarter isometric view, centered on a truly transparent square background, wide clear margins, no text/letters/numbers/logos/watermark/frame. Palette warm ivory #F7F3EA, vermilion #C7483D, deep indigo #214764, muted jade #527A69. Not childish, no mascot, no glossy plastic, no scenery. Subject: elegant small over-ear headphones, padded ivory ear cushions, rounded indigo ceramic headband, a small vermilion play triangle medallion between earcups. One subtle jade sound-wave arc. Visually clear listening practice pictogram, no wires or other objects."
+    },
+    {
+      "name": "growth-journal",
+      "path": ".superdesign/assets/learning-porcelain-v1/growth-journal.png",
+      "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-growth-journal/growth-journal.png",
+      "storagePath": "projects/c35594fd-cdcb-482d-bee8-c2eb86320771/content-assets/learning-porcelain-v1-growth-journal/growth-journal.png",
+      "filename": "growth-journal.png",
+      "mimeType": "image/png",
+      "size": 987718,
+      "purpose": "content",
+      "contentHash": "6d9ba78bf3c5e9a3a3458a9e4dc64dc9cdc5dcc71ec8578fe096fe58d52be816",
+      "nodeId": "cab607e0-428e-4361-8e91-c9c0a8c8e227",
+      "prompt": "Use case: stylized-concept. Single premium miniature editorial 3D illustration for an adult Korean/Japanese learning app. Refined friendly matte porcelain, subtle satin edges, warm upper-left studio light, simple strong silhouette readable at 80px, slight three-quarter isometric view, centered on a truly transparent square background, wide clear margins, no text/letters/numbers/logos/watermark/frame. Palette warm ivory #F7F3EA, vermilion #C7483D, deep indigo #214764, muted jade #527A69. Not childish, no mascot, no glossy plastic, no scenery. Subject: a small open ivory learning journal with a vermilion bookmark, three ascending rounded indigo bars rising gently from its right page, and a tiny jade sprout beside the tallest bar. No graph axes, no scores, blank pages. Calm personal learning growth, not financial trading, not a trophy."
+    }
+  ]
+}

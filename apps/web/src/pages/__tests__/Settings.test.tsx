@@ -10,6 +10,11 @@ import { useSettingsStore } from '../../stores/settings-store';
 import { useAuthStore } from '../../stores/auth-store';
 import Settings from '../Settings';
 
+// 강성호 2026-10-14: 안내 언어 회귀에서도 활성화된 계정 설정은 격리한다.
+vi.mock('../../lib/account-api', () => ({ accountApi: {
+  preferences: vi.fn(async () => ({ theme: null, accent: null, reminder_enabled: false, reminder_time: '19:00', timezone: 'Asia/Seoul', custom_reminder_configured: false })),
+} }));
+
 const flags = vi.hoisted(() => ({ enabled: true }));
 vi.mock('../../lib/learning-experience', async (original) => ({
   ...await original<typeof import('../../lib/learning-experience')>(),
@@ -69,7 +74,7 @@ describe('Settings instruction-language server binding', () => {
     expect(useSettingsStore.getState().instructionLanguages['jlpt-ja']).toBe('ko');
     expect(save).not.toHaveBeenCalled();
     expect(instructionButton()).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent('불러오는 중');
+    expect(screen.getByText('불러오는 중…')).toHaveAttribute('role', 'status');
 
     await act(async () => delayed.resolve(savedProfile));
     await waitFor(() => expect(instructionButton()).toBeEnabled());

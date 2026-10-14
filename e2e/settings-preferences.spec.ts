@@ -113,7 +113,7 @@ test.describe('controlled profile response delivery', () => {
       await expect.poll(() => intercepted).toBe(1);
       const english = settingRow(page, '학습 해설 언어').getByRole('button', { name: 'English', exact: true });
       await expect(english).toBeDisabled();
-      await expect(page.getByRole('status')).toHaveText(/불러오는 중/);
+      await expect(page.getByRole('status').filter({ hasText: '불러오는 중…' })).toHaveText('불러오는 중…');
       expect((await storedPreferences(page)).instructionLanguages['jlpt-ja']).toBe('ko');
       expect(profileWrites).toBe(0);
 
