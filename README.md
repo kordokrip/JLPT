@@ -1,238 +1,56 @@
-# Nihongo N3
+# JLPT · TOPIK 개인 학습 PWA
 
-<p align="center">
-  <img src="./apps/web/public/brand-hero.png" alt="Nihongo N3 brand hero" width="760" />
-</p>
+2026-10-14 UI 페이스리프트 Production 반영: 반응형 shell·학습 타일·복습·기록·보조 화면과 초기 레슨 로딩 guard를 배포했다. 기존 개인화·학습 데이터·Worker·DB·음성 코어는 유지한다. [릴리스·검증·복귀](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 최종 Preview 양언어 가청은 사용자 확인했으며 실기기 푸시 수신·가족 관찰은 사용자 지시로 사후 확인이다.
 
-한국어 사용자가 일본어를 “앱을 켤 때마다 이어서 공부할 수 있게” 만든 JLPT N5-N3 학습 PWA입니다.
-단어장, 문법표, 청해 파일, 복습 앱을 따로 오가던 흐름을 하나의 계정 기반 학습 루틴으로 묶는 것이 목표입니다.
+한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 오늘 / 학습 / 복습 / 기록 네 메뉴를 운영에 배포했다. 자유 문제·FSRS·개인 메모는 유지한다.
 
-이 저장소는 단순한 정적 웹사이트가 아니라 React PWA, Cloudflare Workers API, D1 데이터베이스, R2 오디오 캐시, FSRS 복습 알고리즘, Google SSO, 관리자 회원 관리까지 포함한 pnpm 모노레포입니다.
+문서 기준일: 2026-10-13 KST. [현재 상태](docs/00_overview/CURRENT_STATE.md), [문서 색인](docs/README.md), [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md), [전체 파일 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)에서 시작한다. V7 440문항/220레슨과 별도 v3 160문항은 검수·로컬/Preview·실제 복귀·백업/복원·가족/양언어 음성 검증을 거쳐 운영에 공개했다. 이전 불합격 초안/리뷰는 보존한다. [최종 릴리스 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)에 실행 증거와 한계를 구분했다.
 
-> 기본 언어: 한국어  
-> 언어팩: 한국어, 일본어, 영어
-> 기준일: 2026-06-05 KST
+## Production 기준
 
-## Live
+| 구분 | 현재 기준 |
+| --- | --- |
+| D1 | `nihongo-n3-prod-v2`, migration `0000–0033` |
+| Worker | `69cffaa1-996d-42a7-9080-13c526203e86` |
+| Pages | `https://4d0589d0.nihongo-n3.pages.dev`, ID `4d0589d0-ab54-4cb9-b3e1-00babc54c140` |
+| canonical | `https://nihongo-n3.pages.dev` |
+| Worker source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
+| Web source | `0b9e3544f42383def2ddad5cf1c2ebc9013fe2a7` |
+| 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
+| manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
-| 영역 | 주소 |
-|---|---|
-| Web PWA | https://nihongo-n3.pages.dev |
-| Workers API | https://nihongo-n3-api.kordokrip.workers.dev |
-| API Docs | https://nihongo-n3-api.kordokrip.workers.dev/api/docs |
-| OpenAPI | https://nihongo-n3-api.kordokrip.workers.dev/openapi.json |
+2026-10-14 01:00:27 KST 지도 UI를 배포했다. 단위772, 기존 E2E287통과/정책30제외/실패0, Preview44/44, 실제 빌드 PWA24/24, 운영 asset/route79/79·Worker smoke7/7을 확인했다. Worker·DB·콘텐츠는 유지하고 점검 해제·queue 원복을 확인했다. 실제 Chrome 양언어 종료는 운영에서 확인했으며 사람 가청과 전체 Network 증거는 동일 빌드 Preview의 확인이다. 한국어·일본어 업데이트 모달을 유지한다. 실패 이력과 증거 범위는 [지도 릴리스 기록](docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)에 있다.
 
-## Why I Built This
+## 현재 기능과 콘텐츠
 
-일본어 학습은 자료가 부족해서 막히기보다, 자료가 너무 흩어져서 끊깁니다. 어휘는 엑셀, 문법은 문서, 청해는 MP3, 복습은 다른 앱, 진도 관리는 또 다른 노트에 남습니다. 이 프로젝트는 그 조각들을 하나의 운영 가능한 학습 시스템으로 합치는 실험입니다.
+목표 급수·안내 언어·시간대를 저장하고 3–5분 quick 또는 기본20분 daily 세션을 시작·중단·재개한다. 서버 수락 학습일의 스트릭과 안내 세션 XP·성취를 기록하고 opt-in 알림을 선택 언어·현지 시간에 보낸다. 해설 열람·완료·최초 응답·재시도·FSRS 평가는 구분한다.
 
-Nihongo N3는 특히 한국어 사용자를 기준으로 설계했습니다.
+기존 JLPT N5–N1 canonical·N3 정적120·TOPIK practice v2 300을 보존했다. 신규 V7 JLPT200/TOPIK240과 별도 N2 60/N1 60/TOPIK40, 총600문항·220레슨을 공개했고 TOPIK owner는 기존140에서420개다. 수량과 원본 대응은 [콘텐츠 감사](docs/00_overview/CONTENT_AUDIT.md)와 [원본 지도](docs/00_overview/00_source_map.md)를 따른다.
 
-- 한국어 의미를 먼저 안정적으로 잡고 일본어 표현으로 다시 올라갑니다.
-- 히라가나, 가타카나, N5-N3 한자, 어휘, 문법, 예문, 독해, 청해를 한 흐름에 둡니다.
-- FSRS 기반 복습으로 “오늘 다시 봐야 할 것”을 앱이 먼저 정리합니다.
-- 퀴즈와 자가진단 결과를 계정에 저장해 다음 학습 화면에 반영합니다.
-- iPhone Safari PWA, 모바일 터치 타깃, safe-area, WebKit 동작까지 실제 사용 환경을 기준으로 검증합니다.
+## 구조·실행
 
-디자인은 일본어 교재의 붉은 포인트, 검은 먹색, 따뜻한 종이 톤을 앱 UI로 옮기는 방향을 잡았습니다. 화려한 랜딩 페이지보다 매일 들어가도 피곤하지 않은 학습 도구가 목표입니다.
+`학습 원본 → deterministic seed → D1 → Hono Worker API → React Query/Dexie → UI`로 연결된다. 소스는 `apps/web`, `apps/api`, `packages/db`, `packages/shared`로 나뉜다. 상세 모델·API 진입점은 [코드 분석](PROJECT_CODEBASE_ANALYSIS.md)을 본다.
 
-## Learning Design
+```sh
+CI=true pnpm install --frozen-lockfile
+pnpm dev:api
+pnpm dev:web
 
-| 학습 문제 | 앱에서의 해결 방식 |
-|---|---|
-| 외운 단어를 금방 잊는다 | FSRS-6 기반 SRS 카드와 Again/Hard/Good/Easy 평가 |
-| 한자와 가나가 처음부터 부담스럽다 | 문자 암기 전용 화면, 단계별 관찰-회상-쓰기-즉시 테스트 흐름 |
-| 문법을 예문 없이 외운다 | 문법 패턴과 예문을 연결하고 빈칸 퀴즈로 확인 |
-| 청해 발음이 어색하다 | 브라우저 일본어 음성, 서버 오디오, VOICEVOX 후보를 비교 가능한 구조 |
-| 공부한 기록이 흩어진다 | 로그인 기반 학습 기록, 퀴즈 시도, 자가진단, 통계 저장 |
-| 모바일에서 UI가 답답하다 | Bottom tab, More sheet, iOS safe-area, 44px 이상 터치 타깃 검수 |
-| 번역이 너무 직역스럽다 | 한국어 표현을 자연스러운 일본어 검색어로 바꾸는 AI 검색 보조 |
-
-## Product Map
-
-| 메뉴 | 현재 기능 |
-|---|---|
-| 홈 | 오늘 복습량, 신규 카드, 주간 진행률, 빠른 진입 동선을 보여줍니다. |
-| 복습 | FSRS 카드, 발음 재생, 카드 뒤집기, 평가 버튼, 키보드 조작을 제공합니다. |
-| 찾아보기 | 어휘, 문법, 한자 데이터를 검색하고 후리가나/발음/예문을 확인합니다. |
-| 퀴즈 | 어휘 선택, 한자 읽기, 문법 빈칸, 청해 퀴즈를 생성하고 결과를 저장합니다. |
-| 문자 암기 | 히라가나, 가타카나, N5-N3 한자를 한 글자씩 암기하도록 설계했습니다. |
-| 독해 | 지문 목록, 상세 지문, 단어 검색 popover, 문제 제출 흐름을 제공합니다. |
-| 커리큘럼 | 16주 학습 계획과 주차별 학습 기준을 제공합니다. |
-| 자가진단 | JLPT/JF Can-do 기반 자기진단과 추천 학습 방향을 제공합니다. |
-| 통계 | 스트릭, 카드 상태, 학습 히트맵을 표시합니다. |
-| 설정 | 언어, 테마, 후리가나, 발음 음성, TTS provider, PWA 옵션을 관리합니다. |
-| Audio QA | 30개 샘플로 Browser, Cloudflare, VOICEVOX 후보를 청감 비교합니다. |
-| 관리자 | 회원, 활성 세션, 접속 이벤트를 확인합니다. |
-
-## Screens
-
-| Mobile | Desktop |
-|---|---|
-| ![mobile screenshot](./apps/web/public/screenshots/mobile.png) | ![desktop screenshot](./apps/web/public/screenshots/desktop.png) |
-
-## Architecture
-
-```text
-nihongo-n3
-├─ apps/web          React + Vite + PWA + i18n + IndexedDB + Pages Functions
-├─ apps/api          Cloudflare Workers + Hono + OpenAPI + Google OAuth
-├─ packages/db       D1 schema, migrations, seed, verify
-├─ packages/shared   Zod schema, FSRS-6 adapter, shared contracts
-├─ packages/content  docs 기반 콘텐츠 메타데이터
-├─ e2e               Playwright smoke, auth, PWA, visual, mobile touch tests
-├─ docs              운영 문서와 JLPT 학습 원문
-└─ .github           Pages, Workers, D1, content update workflows
+pnpm docs:catalog
+pnpm docs:check
+pnpm ops:verify
 ```
 
-```mermaid
-flowchart LR
-  User[Mobile / Desktop User] --> Web[Cloudflare Pages PWA]
-  Web --> Proxy[Pages Functions /api proxy]
-  Proxy --> API[Cloudflare Workers API]
-  API --> D1[(Cloudflare D1)]
-  API --> R2[(R2 Audio Cache)]
-  API --> AI[Workers AI TTS]
-  API -. optional .-> Voicevox[VOICEVOX Engine]
-  Docs[docs/**/*.md] --> Seed[Seed Parser]
-  Seed --> D1
-```
+fresh D1은 disposable local DB에 `0000–0032`를 적용하고 기존 seed·음성 provenance·FK/FTS·manifest·content contract/control-plane을 검사한다. fresh만으로 원격 공개를 증명하지 않는다. 과거 불합격 초안은 보존하며 현재 V7+160 출판 증거는 릴리스 원장에서 별도로 확인한다. canonical은 `INC-DATA-024`의 HEAD drift 때문에 immutable release source에 고정하고 신규600개 cohort와 구분해 검증한다.
 
-## Technical Highlights
+검수 V7 전용 로컬 전체 게이트는 설치된 DB workspace의 tsx로 `pnpm -C packages/db exec tsx ../../scripts/run-learning-v7-local-gates.mjs --output=/절대경로/JLPT/.artifacts/새-증적-폴더`를 실행한다. 기존 증적 폴더는 덮어쓰지 않는다. 중간 `g0-g4-local-preflight.json`은 Preview 진입 증거가 아니며, 실제 격리 DB 공개·재전송·철회와 합성 학습 기록 보존까지 성공한 최종 `g0-g4-local.json`만 사용한다. 이 명령에는 원격·커밋·배포 기능이 없다.
 
-- Same-origin API proxy: Pages Functions가 `/api/*`를 Workers API로 프록시해 Safari/PWA에서 세션 쿠키가 안정적으로 유지됩니다.
-- Google SSO: OAuth callback은 Worker에서 받고, Pages 앱 세션으로 1회용 bridge token을 통해 연결합니다.
-- FSRS-6: `packages/shared/src/fsrs.ts`에서 21 weights 기반 FSRS-6 스케줄러를 사용합니다.
-- OpenAPI: Hono + `@hono/zod-openapi` + Scalar UI로 `/api/docs`를 제공합니다.
-- Offline-first PWA: Workbox precache, API runtime cache, 오디오 cache, IndexedDB 학습 데이터 구조를 사용합니다.
-- Audio pipeline: Browser SpeechSynthesis, Cloudflare Workers AI, R2 cache, VOICEVOX adapter 확장을 지원합니다.
-- CI/CD: GitHub Actions로 Workers, Pages, D1 seed/backup, content update workflow를 관리합니다.
+2026-10-12 cohort04는 단위614·desktop/mobile Chromium/WebKit44·fresh/upgrade/reseed·정식 local 공개/철회를 통과했다. 음성은 mock이고 실제 가족·Chrome 가청·새 Preview·현 schema backup/restore·Production 검증은 아니다. 초기 실패와 최종 로그를 함께 보존한다.
 
-## Tech Stack
+## 음성·운영 관리
 
-| 계층 | 기술 |
-|---|---|
-| Web | React 18, Vite, Tailwind CSS, Zustand, TanStack Query, Dexie |
-| i18n | i18next, react-i18next |
-| API | Cloudflare Workers, Hono, @hono/zod-openapi, Scalar |
-| DB | Cloudflare D1, Drizzle ORM |
-| Auth | App session, Google OAuth, Pages Functions API proxy |
-| Audio | Cloudflare Workers AI, R2, Browser SpeechSynthesis, VOICEVOX adapter |
-| SRS | FSRS-6 shared adapter |
-| QA | Vitest, Playwright Chromium/WebKit/mobile-webkit, visual snapshots |
-| CI/CD | GitHub Actions, Cloudflare Pages, Workers, D1 workflows |
+발음은 같은 언어 Google 브라우저 음성을 우선하고 없으면 같은 언어 설치 음성을 사용한다. 한국어 `ko-*`, 일본어 `ja-*`만 허용한다. 첫 click task에서 즉시 speak하고 실제 onend 이후 성공을 기록한다. R2 발음 수집·생성·저장·조회·재생·fallback은 금지하며 legacy `/api/v1/audio/*`와 관리자 생성은410이다.
 
-## Local Setup
+9월25일 Preview 사용자 양언어 청취와 Production Chrome lifecycle/Network를 각각 기록했다. Production 사람 가청의 추가 확인은 기록되지 않았으며 이번 정리의 자동 검사로 대신하지 않는다. [음성 장애 기록](docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)과 [오류 원장](docs/00_overview/ERROR_LEDGER.md)이 회귀 계약이다.
 
-```bash
-pnpm install
-pnpm -F @nihongo-n3/api dev
-pnpm -F @nihongo-n3/web dev
-```
-
-| 서비스 | 주소 |
-|---|---|
-| Web | http://localhost:5173 |
-| API | http://localhost:8787 |
-
-로컬 웹은 Vite proxy로 `/api/*`를 `http://localhost:8787`에 연결합니다. 운영 웹은 Pages Functions로 같은 역할을 수행합니다.
-
-## Verification
-
-최근 안정화 후 확인한 핵심 검증입니다.
-
-```bash
-pnpm -F @nihongo-n3/web typecheck
-pnpm -F @nihongo-n3/web test:run
-pnpm -F @nihongo-n3/web build
-pnpm -F @nihongo-n3/api test
-pnpm -F @nihongo-n3/e2e exec playwright test auth.spec.ts quiz-modes.spec.ts menu-smoke.spec.ts --project=chromium
-pnpm -F @nihongo-n3/e2e exec playwright test auth.spec.ts --project=webkit
-```
-
-| 검증 | 최근 결과 |
-|---|---|
-| API tests | 60 pass |
-| Web typecheck | pass |
-| Web unit tests | pass |
-| Web production build | pass |
-| Local auth/menu/quiz E2E | 12 pass |
-| Production Chromium auth/menu/quiz E2E | 12 pass |
-| Production WebKit auth E2E | 6 pass |
-
-## Deploy
-
-API:
-
-```bash
-cd apps/api
-wrangler deploy
-```
-
-Web:
-
-```bash
-pnpm -F @nihongo-n3/web build
-wrangler pages deploy dist --project-name=nihongo-n3 --branch=main --cwd apps/web
-```
-
-D1 seed:
-
-```bash
-pnpm -F @nihongo-n3/db seed:remote
-pnpm -F @nihongo-n3/db verify:remote
-```
-
-## Google OAuth
-
-운영 OAuth 클라이언트에는 아래 값이 필요합니다.
-
-| 항목 | 값 |
-|---|---|
-| 승인된 JavaScript 원본 | `https://nihongo-n3.pages.dev` |
-| 승인된 리디렉션 URI | `https://nihongo-n3-api.kordokrip.workers.dev/api/v1/auth/google/callback` |
-
-현재 구조는 Worker callback을 유지하면서 Pages 앱 세션으로 로그인 완료 상태를 전달합니다. 이 방식은 기존 Google Console 설정과 호환하면서도 실제 앱 호출은 같은 출처 `/api/v1/*`로 안정화하기 위한 절충입니다.
-
-## Audio Roadmap
-
-일본어 발음은 학습 체감 품질에 바로 영향을 주기 때문에 별도 QA 흐름을 둡니다.
-
-| Provider | 용도 |
-|---|---|
-| browser | 사용자의 브라우저/iOS 네이티브 일본어 음성으로 즉시 재생 |
-| cloudflare | Workers AI 기반 서버 TTS와 R2 캐시 |
-| voicevox | 외부 HTTPS VOICEVOX Engine 연결 후 고품질 일본어 QA 비교 |
-| style-bert-vits2 | 추후 자체 호스팅 후보 |
-
-VOICEVOX 연결 예시:
-
-```bash
-node scripts/voicevox-connect.mjs --url https://VOICEVOX_ENGINE_URL --speaker 3
-node scripts/voicevox-connect.mjs --url https://VOICEVOX_ENGINE_URL --speaker 3 --apply --warmup
-```
-
-연결 후 `/audio-qa`에서 30개 샘플을 비교하고, 우세한 provider를 R2 배치 재생성 대상으로 선택합니다.
-
-## Operations Notes
-
-- 외부 유료 API 의존성은 추가하지 않습니다.
-- 기본 언어는 한국어이며, 일본어/영어는 UI 언어팩으로 관리합니다.
-- `.dev.vars`, `.env*`, `.wrangler`, 빌드 산출물, Playwright 리포트는 커밋하지 않습니다.
-- Cloudflare Access 보호 route 운영 전 `CF_ACCESS_AUD`, `CF_TEAM_DOMAIN`, policy 설정이 필요합니다.
-- `seed-diff`는 git diff 기반이므로 `.git`이 없는 복사본에서는 제한됩니다. 현재 저장소는 GitHub 원격 연결이 완료된 상태입니다.
-
-## Project Direction
-
-다음 단계는 “기능을 더 많이 넣기”보다 “학습 체감 품질을 올리는 것”입니다.
-
-1. VOICEVOX 운영 URL 연결과 30개 청감 QA
-2. 전체 단어/예문/퀴즈 오디오의 R2 배치 재생성
-3. 빈 상태와 onboarding을 실제 학습 데이터 기반으로 개선
-4. OpenAPI wrapper route 명세 완전 통일
-5. 콘텐츠 의미, 예문, 청해 문장 품질 보강
-6. FSRS 개인화 optimizer 운영 연결 여부 결정
-
-## License
-
-See [LICENSE](./LICENSE).
+GitHub Actions는 비활성이고 로컬 gate·MD 원장으로 CI/CD를 관리한다. [운영 runbook](docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md), [CI/CD 기준](docs/00_overview/LOCAL_CICD_OPERATIONS.md), [A/B 짧은 gate](docs/00_overview/LOCAL_CICD_MANAGEMENT.md), [Agent 인수인계](docs/00_overview/SUB_AGENT_HANDOFF.md)를 따른다. 변경·삭제 목록은 [10월10일 정리 기록](docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md), 날짜별 변경은 [CHANGELOG](docs/00_overview/CHANGELOG.md)에 둔다.

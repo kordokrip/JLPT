@@ -1,4 +1,7 @@
-export const AUDIO_QA_SAMPLE_SET = 'audio-qa-30-v1';
+export const AUDIO_QA_LANGUAGES = ['ja', 'ko'] as const;
+export type AudioQaLanguage = (typeof AUDIO_QA_LANGUAGES)[number];
+
+export const AUDIO_QA_SAMPLE_SET = 'audio-qa-ja-30-v1';
 
 export const AUDIO_QA_SAMPLES = [
   '今日は仕事が多くて、少し疲れています。',
@@ -32,3 +35,49 @@ export const AUDIO_QA_SAMPLES = [
   '発音を確認するときは、一つ一つの音よりも文全体のリズムを意識しましょう。',
   '次の問題に進む前に、答えと解説を確認してください。',
 ] as const;
+
+export const AUDIO_QA_KOREAN_SAMPLES = [
+  '오늘은 새로운 단어를 세 개만 정확히 익히겠습니다.',
+  '수업이 끝난 뒤에 배운 표현을 문장으로 다시 써 보세요.',
+  '천천히 또박또박 말하면 발음의 차이를 더 잘 들을 수 있습니다.',
+  '이번 주 학습 계획을 달력에 기록해 두었습니다.',
+  '모르는 문법은 예문과 함께 확인하는 것이 좋습니다.',
+  '비가 올 것 같으니 우산을 챙겨 가세요.',
+  '친구와 한국어로 짧은 대화를 나누어 보았습니다.',
+  '시험 전에는 새로운 내용보다 복습에 집중하려고 합니다.',
+  '이 단어는 문장 속에서 어떤 뜻으로 쓰였나요?',
+  '발음이 어려운 부분은 녹음해서 비교해 보세요.',
+  '저는 아침마다 십 분 동안 듣기 연습을 합니다.',
+  '설명을 읽은 다음에 문제를 다시 풀어 보겠습니다.',
+  '약속 시간이 바뀌어서 메시지를 보냈습니다.',
+  '한국의 계절과 날씨에 관한 표현을 배웠습니다.',
+  '처음에는 느려도 매일 하면 자신감이 생깁니다.',
+  '이 문장은 존댓말로 자연스럽게 바꿀 수 있습니다.',
+  '오늘 배운 내용을 내일 다시 확인해 주세요.',
+  '지하철이 늦어서 약속 장소에 조금 늦었습니다.',
+  '읽기 문제에서는 문단의 중심 내용을 먼저 찾으세요.',
+  '필요한 서류를 내일까지 제출해야 합니다.',
+  '저녁 식사 후에 온라인 수업을 들을 예정입니다.',
+  '틀린 답은 이유를 이해한 뒤에 다시 풀어야 합니다.',
+  '한국어의 억양은 문장 전체의 의미를 더 자연스럽게 만듭니다.',
+  '여행을 가기 전에 숙소와 교통편을 예약했습니다.',
+  '이 표현은 친구에게도 선생님에게도 사용할 수 있나요?',
+  '다음 문제로 넘어가기 전에 해설을 확인하세요.',
+  '짧은 문장부터 소리 내어 읽는 연습을 시작해 보세요.',
+  '학습 기록을 보면 꾸준히 한 날을 알 수 있습니다.',
+  '듣기 자료를 한 번 듣고 핵심 단어를 적어 보세요.',
+  '목표를 작게 나누면 오래 학습하기가 더 쉽습니다.',
+] as const;
+
+export const AUDIO_QA_SAMPLE_SETS = {
+  ja: { id: AUDIO_QA_SAMPLE_SET, language: 'ja', samples: AUDIO_QA_SAMPLES },
+  ko: { id: 'audio-qa-ko-30-v1', language: 'ko', samples: AUDIO_QA_KOREAN_SAMPLES },
+} as const;
+
+export function audioQaSamples(language: AudioQaLanguage): readonly string[] {
+  return AUDIO_QA_SAMPLE_SETS[language].samples;
+}
+
+export function audioQaSampleSet(language: AudioQaLanguage): string {
+  return AUDIO_QA_SAMPLE_SETS[language].id;
+}

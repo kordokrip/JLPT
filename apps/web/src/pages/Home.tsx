@@ -7,7 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { useDueCards, useSrsStats } from '../hooks/useSRS';
 import { useTrackStatus } from '../hooks/useTrackStatus';
 import { StreakBadge } from '../components/feature/StreakBadge';
+import { LearningTrackSwitch } from '../components/feature/LearningTrackSwitch';
 import { Button, Card, Progress } from '../components/ui';
+import { useLearningActivitySummary } from '../hooks/useLearningActivity';
 
 type DayKey = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
 const DAY_KEYS: DayKey[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -25,8 +27,12 @@ export default function Home() {
   const { t, i18n } = useTranslation();
   const { cards: dueCards, isLoading } = useDueCards();
   const { data: stats } = useSrsStats();
+  const activity = useLearningActivitySummary('7d');
   const { status: trackStatus, levels: releasedLevels } = useTrackStatus();
-  const hasExpandedRelease = trackStatus?.content_release === 'n5-n1';
+  const hasExpandedRelease = trackStatus?.content_release === 'n5-n2' || trackStatus?.content_release === 'n5-n1';
+  const courseScopeMessage = trackStatus?.content_release === 'n5-n2'
+    ? t('home.courseScopeN2')
+    : t('home.courseScopeExpanded');
 
   const dueCount  = dueCards.length;
   const totalCards = stats?.total  ?? 0;
@@ -37,10 +43,7 @@ export default function Home() {
   const reviewMin = Math.round(dueCount * 0.43);
   const newMin    = Math.round(newCards * 0.6);
 
-  /* 주간 진행률 (SRS 총 카드 기준 간이 추정) */
-  const weekProgress = totalCards > 0
-    ? Math.min(100, Math.round((reviewCards / Math.max(totalCards * 0.07, 1)) * 100))
-    : 0;
+  const weekReviews = activity.data?.totals.reviews;
 
   const QUICK_ITEMS = [
     { to: '/browse/vocab',   key: 'vocab'      },
@@ -64,6 +67,8 @@ export default function Home() {
           <StreakBadge />
         </div>
       </header>
+
+      <LearningTrackSwitch />
 
       <Card elevated className="mb-5 overflow-hidden border-[var(--accent-soft)]">
         <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
@@ -100,19 +105,18 @@ export default function Home() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">{t('home.thisWeek')}</p>
-                <p className="text-xs text-[var(--muted-foreground)]">{t('home.weekDetail')}</p>
+                <p className="text-xs text-[var(--muted-foreground)]">{t('study.reviewMetric')}</p>
               </div>
               <div data-visual-dynamic className="font-serif-jp text-[var(--text-xl)] text-[var(--accent)]">
-                {weekProgress}%
+                {weekReviews ?? '—'}
               </div>
             </div>
-            <Progress value={weekProgress} size="md" className="mb-5" />
 
             {hasExpandedRelease && (
               <div className="mb-5 border-t border-[var(--border)] pt-4">
                 <p className="text-xs font-semibold text-foreground">{t('home.courseScopeTitle')}</p>
                 <p className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">
-                  {t('home.courseScopeExpanded')}
+                  {courseScopeMessage}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t('home.courseScopeTitle')}>
                   {releasedLevels.map((level) => (

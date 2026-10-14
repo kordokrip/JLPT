@@ -10,9 +10,12 @@ export default function QuizListening() {
   const { levels } = useTrackStatus();
   const selectedLevel = useMemo(() => {
     const requested = searchParams.get('level');
-    return isJlptLevel(requested) && levels.includes(requested)
-      ? requested
-      : (levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels.at(-1) ?? DEFAULT_JLPT_LEVEL);
+    // Preserve a valid deep-linked level even if this runtime has not published it.
+    // The strict server response is safer than silently requesting another grade.
+    if (isJlptLevel(requested)) {
+      return requested;
+    }
+    return levels.includes(DEFAULT_JLPT_LEVEL) ? DEFAULT_JLPT_LEVEL : levels[levels.length - 1] ?? DEFAULT_JLPT_LEVEL;
   }, [levels, searchParams]);
 
   useEffect(() => {

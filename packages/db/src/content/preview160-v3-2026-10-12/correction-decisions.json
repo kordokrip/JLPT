@@ -1,0 +1,42 @@
+{
+  "schema_version": "preview160-v3-correction-decisions-v1",
+  "version": "preview160-v3-2026-10-12",
+  "parent_review_raw_sha256": {
+    "a": "291476b5b84dfdbb030b78e8ecd86af27006b92f8ac0b8fd5a9c49ffa05ed7c7",
+    "b": "47da0ec86c940839d7d84491325e6c59165aafc8dde85ca55815793c87f78dc4"
+  },
+  "parent_review_outcome": {
+    "reviewer_a": {
+      "approved": 158,
+      "rejected": 2,
+      "passed": false
+    },
+    "reviewer_b": {
+      "approved": 158,
+      "rejected": 2,
+      "passed": false
+    }
+  },
+  "corrected_origin_ids": [
+    "topik-owner-batch6-grade4-writing-2",
+    "topik-owner-batch6-grade5-grammar-2"
+  ],
+  "decisions": [
+    {
+      "origin_id": "topik-owner-batch6-grade4-writing-2",
+      "defect": "multilingual-writing-task-rubric-mismatch",
+      "resolution": "align en prompt and ko/ja/en rubric to online versus classroom lessons; no added scoring condition"
+    },
+    {
+      "origin_id": "topik-owner-batch6-grade5-grammar-2",
+      "defect": "unsupported-arithmetic-premise",
+      "resolution": "state Monday through Friday, five days per week, one hour per day in ko/ja/en prompt"
+    }
+  ],
+  "field_change_assertions": {
+    "writing_prompt_changed": true,
+    "writing_rubric_changed": true,
+    "grammar_prompt_changed": true
+  },
+  "approvals": []
+}

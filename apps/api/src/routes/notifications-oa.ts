@@ -11,9 +11,11 @@ const subscriptionBodySchema = z.object({
   auth: z.string().min(1),
   morningOn: z.boolean().optional(),
   eveningOn: z.boolean().optional(),
+  notificationLanguage: z.enum(['ko', 'ja', 'en']).optional(),
 });
 
 mountLegacyRouteWithOpenApiDocs(notificationsOA, notifications, [
+  {method:'get',path:'/notifications/subscribe',tags:['Notifications'],summary:'본인의 서버 등록 기기 확인',responses:{200:{description:'Registered endpoints',content:{'application/json':{schema:z.object({data:z.object({endpoints:z.array(z.string())})})}}},401:{description:'Authentication required'}}},
   {
     method: 'post',
     path: '/notifications/subscribe',

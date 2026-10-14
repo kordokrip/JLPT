@@ -18,7 +18,6 @@ interface SRSCardProps {
   partOfSpeech?: string;
   example?:  string;   /** 예문 (일본어) */
   exampleKo?: string;  /** 예문 번역 */
-  audioPath?: string | undefined;
   onRate:    (rating: Rating) => void;
   loading?:  boolean;
 }
@@ -30,16 +29,21 @@ const RATING_KEYS: { rating: Rating; border: string; hover: string; nextDay: str
   { rating: 'easy',  border: 'border-[var(--info)]',    hover: 'hover:bg-[#6B7F8C]/10',   nextDay: '4d' },
 ];
 
-const STATE_LABEL: Record<string, string> = {
-  new: 'New', learning: 'Learning', review: 'Apprentice', relearning: 'Again',
+const STATE_LABEL: Record<string, Record<string, string>> = {
+  ko: { new: '새 표현', learning: '익히는 중', review: '복습', relearning: '다시 익히기' },
+  ja: { new: '新しい表現', learning: '学習中', review: '復習', relearning: 'もう一度' },
+  en: { new: 'New', learning: 'Learning', review: 'Review', relearning: 'Relearning' },
 };
 
 export function SRSCard({
-  card, heading, reading, meaning, partOfSpeech, example, exampleKo, audioPath, onRate, loading = false,
+  card, heading, reading, meaning, partOfSpeech, example, exampleKo, onRate, loading = false,
 }: SRSCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const stateLabel = STATE_LABEL[i18n.language.slice(0, 2)] ?? STATE_LABEL.en!;
   const autoPronounce = useSettingsStore((s) => s.autoPronounce);
   const [flipped, setFlipped] = useState(false);
+  const frontRef = useRef<HTMLButtonElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -49,6 +53,7 @@ export function SRSCard({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (loading) return;
     const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
     const dy = Math.abs((e.changedTouches[0]?.clientY ?? 0) - touchStartY.current);
     // 수평 스와이프이고, 수직 이동보다 크면
@@ -64,16 +69,24 @@ export function SRSCard({
     if (autoPronounce) {
       audioPlayer.playPronunciation({
         text: reading || heading,
-        audioPath,
         surface: 'vocab',
         preferGoogleVoice: true,
       }).catch(() => {/* ignore */});
     }
-  }, [audioPath, autoPronounce, heading, reading]);
+  }, [autoPronounce, heading, reading]);
+
+  useEffect(() => {
+    if (flipped) backRef.current?.focus({ preventScroll: true });
+    else if (backRef.current?.contains(document.activeElement)) frontRef.current?.focus({ preventScroll: true });
+  }, [flipped]);
 
   /* 키보드 단축키 */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (loading || e.defaultPrevented || e.repeat || e.isComposing || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      // Native controls own Enter/Space and editing keys. Window shortcuts
+      // must not cancel their activation or rate a card while typing a note.
+      if (e.target instanceof Element && e.target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="textbox"], [role="combobox"]')) return;
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         if (!flipped) setFlipped(true);
@@ -86,16 +99,16 @@ export function SRSCard({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipped, onRate]);
+  }, [flipped, loading, onRate]);
 
   return (
     <div className="mx-auto w-full max-w-[760px]" data-testid="review-card">
       {/* ── 3D 플립 카드 ── */}
       <div className="perspective-1000 mb-3">
         <div
-          className="relative w-full preserve-3d transition-transform duration-[500ms]"
+          className="relative grid w-full preserve-3d transition-transform duration-[500ms] motion-reduce:transition-none"
           style={{
-            height: 'clamp(320px, 54vh, 390px)',
+            minHeight: 'clamp(260px, 42vh, 340px)',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             touchAction: 'pan-y',
           }}
@@ -104,12 +117,17 @@ export function SRSCard({
         >
           {/* 앞면 */}
           <button
+            ref={frontRef}
             type="button"
             data-testid="card-front"
+            aria-hidden={flipped}
+            {...(flipped ? { inert: '' } : {})}
+            tabIndex={flipped ? -1 : 0}
+            disabled={flipped || loading}
             aria-expanded={flipped}
             aria-label={flipped ? t('review.cardFlippedHint') : t('review.cardFrontHint')}
-            className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-6 text-left shadow-[var(--shadow-soft)] backface-hidden"
-            style={{ backfaceVisibility: 'hidden' }}
+            className="relative col-start-1 row-start-1 flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-card p-6 pb-16 text-left shadow-[var(--shadow-soft)] backface-hidden"
+            style={{ backfaceVisibility: 'hidden', pointerEvents: flipped ? 'none' : undefined }}
             onClick={() => !flipped && setFlipped(true)}
           >
             <div className="text-center w-full">
@@ -117,7 +135,7 @@ export function SRSCard({
               <div className="mb-3">
                 <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium uppercase text-[var(--accent)]">
                   <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
-                  {STATE_LABEL[card.state] ?? card.state}
+                  {stateLabel[card.state] ?? card.state}
                 </span>
               </div>
 
@@ -142,15 +160,19 @@ export function SRSCard({
 
           {/* 뒷면 */}
           <div
+            ref={backRef}
             data-testid="card-back"
-            className="absolute inset-0 flex flex-col overflow-hidden rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-5 shadow-[var(--shadow-soft)] backface-hidden sm:p-6"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            aria-hidden={!flipped}
+            {...(!flipped ? { inert: '' } : {})}
+            tabIndex={flipped ? -1 : undefined}
+            className="col-start-1 row-start-1 flex min-w-0 flex-col rounded-[var(--radius-xl)] border border-[var(--border)] bg-card p-5 shadow-[var(--shadow-soft)] backface-hidden sm:p-6"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? undefined : 'none' }}
           >
             {/* SRS 상태 뱃지 */}
             <div className="mb-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium uppercase text-[var(--accent)]">
                 <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
-                {STATE_LABEL[card.state] ?? card.state}
+                {stateLabel[card.state] ?? card.state}
               </span>
             </div>
 
@@ -166,7 +188,6 @@ export function SRSCard({
                 <PronunciationButton
                   compact
                   text={reading || heading}
-                  audioPath={audioPath}
                   surface="vocab"
                   label={t('browse.playPronunciation')}
                   className="border-0 bg-transparent p-1"
@@ -179,7 +200,7 @@ export function SRSCard({
 
             {/* 예문 */}
             {example && (
-              <div className="min-h-0 overflow-y-auto pr-1">
+              <div className="min-w-0 pr-1">
                 <div className="mb-1 text-xs uppercase text-[var(--muted-foreground)]">{t('review.example')}</div>
                 <div className="flex items-start justify-between gap-3">
                   <p className="mb-1 font-sans-jp text-sm text-[var(--text-secondary)] text-jp-body">{example}</p>

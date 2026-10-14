@@ -43,6 +43,7 @@ const adminCookie = process.env.R1_SMOKE_ADMIN_COOKIE?.trim() ?? '';
 const cookieJar = new Map();
 const checks = [];
 const manualChecks = [];
+let googleAuthEnabled = false;
 
 function cookies() {
   return [...cookieJar.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
@@ -148,7 +149,8 @@ async function verifyReadSurface() {
     const response = await expectStatus('/api/v1/auth/config', 200);
     const body = await json(response);
     assert(body?.data?.auth_mode === 'app-session', `expected app-session, received ${String(body?.data?.auth_mode)}`);
-    return { authMode: body.data.auth_mode, googleEnabled: body.data.google_enabled === true };
+    googleAuthEnabled = body.data.google_enabled === true;
+    return { authMode: body.data.auth_mode, googleEnabled: googleAuthEnabled };
   });
 
   await check('vocab_search', async () => ({ rows: (await expectDataArray('/api/v1/vocab/search?q=%E7%B5%8C%E9%A8%93&limit=3')).length }));
@@ -295,17 +297,24 @@ async function verifyWritable() {
     return { specStatus: spec.status, usersStatus: users.status };
   });
 
-  await check('google_oauth_redirect', async () => {
-    const response = await expectStatus('/api/v1/auth/google/start', 302, { redirect: 'manual' });
-    const location = response.headers.get('location');
-    assert(location, 'Google start has no Location header');
-    const googleUrl = new URL(location);
-    assert(googleUrl.hostname === 'accounts.google.com', `unexpected OAuth host: ${googleUrl.hostname}`);
-    const redirectUri = new URL(googleUrl.searchParams.get('redirect_uri') ?? '');
-    assert(redirectUri.pathname === '/api/v1/auth/google/callback', `unexpected redirect URI: ${redirectUri}`);
-    assert(googleUrl.searchParams.has('state'), 'OAuth state is missing');
-    return { oauthHost: googleUrl.hostname, redirectUri: redirectUri.toString() };
-  });
+  if (googleAuthEnabled) {
+    await check('google_oauth_redirect', async () => {
+      const response = await expectStatus('/api/v1/auth/google/start', 302, { redirect: 'manual' });
+      const location = response.headers.get('location');
+      assert(location, 'Google start has no Location header');
+      const googleUrl = new URL(location);
+      assert(googleUrl.hostname === 'accounts.google.com', `unexpected OAuth host: ${googleUrl.hostname}`);
+      const redirectUri = new URL(googleUrl.searchParams.get('redirect_uri') ?? '');
+      assert(redirectUri.pathname === '/api/v1/auth/google/callback', `unexpected redirect URI: ${redirectUri}`);
+      assert(googleUrl.searchParams.has('state'), 'OAuth state is missing');
+      return { oauthHost: googleUrl.hostname, redirectUri: redirectUri.toString() };
+    });
+  } else {
+    await check('google_oauth_disabled', async () => {
+      const response = await expectStatus('/api/v1/auth/google/start', 503, { redirect: 'manual' });
+      return { status: response.status, configured: false };
+    });
+  }
 
   await check('google_callback_error_path', async () => {
     const response = await expectStatus('/api/v1/auth/google/callback', 302, { redirect: 'manual' });
@@ -321,11 +330,13 @@ async function verifyWritable() {
     return { redirectPath: new URL(location).pathname + new URL(location).search };
   });
 
-  manualChecks.push({
-    name: 'google_oauth_positive_callback_complete',
-    status: 'manual-required',
-    detail: 'A human must complete Google consent and attach callback/complete plus authenticated /auth/me evidence.',
-  });
+  if (googleAuthEnabled) {
+    manualChecks.push({
+      name: 'google_oauth_positive_callback_complete',
+      status: 'manual-required',
+      detail: 'A human must complete Google consent and attach callback/complete plus authenticated /auth/me evidence.',
+    });
+  }
 
   await check('password_logout', async () => {
     await expectStatus('/api/v1/auth/logout', 200, { method: 'POST' });

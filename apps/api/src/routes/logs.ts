@@ -12,6 +12,7 @@ import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, badRequest } from '../lib/response.js';
 import { dailyLogBodySchema, dailyLogQuerySchema, quizAttemptBodySchema } from '@nihongo-n3/shared';
+import { learningStreak } from '../lib/motivation.js';
 
 const logs = new Hono<AppEnv>();
 logs.use('*', cfAccessAuth);
@@ -109,57 +110,8 @@ logs.get('/logs/streak', async (c) => {
   const userId = c.get('userId');
   const learningTrack = c.get('learningTrack');
 
-  // KST = UTC+9
-  const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const todayKST     = nowKST.toISOString().slice(0, 10);
-  const yesterdayKST = new Date(nowKST.getTime() - 86_400_000).toISOString().slice(0, 10);
-
-  const rows = await c.env.DB.prepare(
-    `SELECT date FROM daily_logs
-     WHERE user_id = ? AND learning_track = ? AND items_new + items_review > 0
-     ORDER BY date ASC`,
-  ).bind(userId, learningTrack).all<{ date: string }>();
-
-  const allDates = (rows.results ?? []).map((r) => r.date);
-  const dateSet  = new Set(allDates);
-
-  if (dateSet.size === 0) {
-    return ok(c, { currentStreak: 0, longestStreak: 0, totalDays: 0, lastStudyDate: null, frozen: false });
-  }
-
-  const sortedDesc = [...dateSet].sort().reverse();
-  const lastStudyDate = sortedDesc[0]!;
-
-  // currentStreak: 오늘/어제부터 연속 일수 역산
-  let currentStreak = 0;
-  if (lastStudyDate === todayKST || lastStudyDate === yesterdayKST) {
-    let d = lastStudyDate;
-    while (dateSet.has(d)) {
-      currentStreak++;
-      d = new Date(d + 'T00:00:00Z').toISOString().slice(0, 10);
-      d = new Date(new Date(d + 'T00:00:00Z').getTime() - 86_400_000).toISOString().slice(0, 10);
-    }
-  }
-
-  // longestStreak: 전체 날짜 ASC 순회
-  const sortedAsc = [...dateSet].sort();
-  let longest = 1;
-  let run = 1;
-  for (let i = 1; i < sortedAsc.length; i++) {
-    const prev = new Date(sortedAsc[i - 1]! + 'T00:00:00Z');
-    const curr = new Date(sortedAsc[i]!    + 'T00:00:00Z');
-    const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86_400_000);
-    if (diffDays === 1) { run++; if (run > longest) longest = run; }
-    else { run = 1; }
-  }
-
-  return ok(c, {
-    currentStreak,
-    longestStreak:  Math.max(longest, currentStreak),
-    totalDays:      dateSet.size,
-    lastStudyDate,
-    frozen:         false,
-  });
+  const { badgeDates: _badges, ...streak } = await learningStreak(c.env.DB, userId, learningTrack);
+  return ok(c, streak);
 });
 
 // ── GET /logs/heatmap ─────────────────────────

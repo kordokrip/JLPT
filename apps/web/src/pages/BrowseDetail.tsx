@@ -17,7 +17,7 @@ export default function BrowseDetail() {
   const numId = Number(id);
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 pb-28 sm:py-8">
+    <div className="app-page max-w-lg space-y-6">
       <Link
         to={`/browse/${type}`}
         className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] px-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-accent-soft-20 hover:text-primary"
@@ -49,7 +49,7 @@ function VocabDetail({ id }: { id: number }) {
         <p className="text-xl text-[var(--text-secondary)]">{item.meaning}</p>
       </header>
 
-      <PronunciationButton text={item.reading || item.word} audioPath={item.audio_path} surface="vocab" />
+      <PronunciationButton text={item.reading || item.word} surface="vocab" />
 
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
@@ -116,7 +116,6 @@ function KanjiDetail({ id }: { id: number }) {
       </header>
       <PronunciationButton
         text={item.reading_on || item.reading_kun || item.character}
-        audioPath={item.audio_path}
         surface="kanji"
       />
       <dl className="space-y-2 text-sm">

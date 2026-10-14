@@ -1,0 +1,14 @@
+name: Disabled local verification workflow
+
+# CI/CD 실행은 프로젝트 정책상 금지입니다.
+# GitHub Actions는 형상관리 보조 수단으로만 사용하고, 실제 검증/배포 게이트는
+# 로컬 터미널 + docs 원장(아래 MD 파일들)에서만 운영합니다.
+on:
+  workflow_dispatch:
+
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "CI/CD intentionally disabled for JLPT/TOPIK."

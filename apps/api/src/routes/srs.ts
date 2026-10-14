@@ -12,8 +12,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, notFound, badRequest, internalError } from '../lib/response.js';
-import { schedule } from '../lib/fsrs.js';
-import type { CardSnapshot } from '../lib/fsrs.js';
+import { reviewStatements } from '../lib/learning-effects.js';
 import { srsInitBodySchema, srsReviewBodySchema, srsDueQuerySchema, FsrsOptionsSchema } from '@nihongo-n3/shared';
 
 const srs = new Hono<AppEnv>();
@@ -96,79 +95,10 @@ srs.post('/srs/review', async (c) => {
     return notFound(c, 'TOPIK SRS 콘텐츠는 아직 출시되지 않았습니다');
   }
 
-  // 카드 조회
-  const card = await c.env.DB.prepare(
-    'SELECT * FROM srs_cards WHERE id = ? AND user_id = ? AND learning_track = ?',
-  )
-    .bind(card_id, userId, learningTrack)
-    .first<{
-      id: number;
-      state: string;
-      stability: number;
-      difficulty: number;
-      lapses: number;
-      reps: number;
-      due_at: string | null;
-      last_reviewed_at: string | null;
-    }>();
-
-  if (!card) return notFound(c, `카드 id=${card_id}을 찾을 수 없습니다`);
-
-  const now = new Date();
-  const snapshot: CardSnapshot = {
-    state:          card.state as CardSnapshot['state'],
-    stability:      card.stability,
-    difficulty:     card.difficulty,
-    lapses:         card.lapses,
-    reps:           card.reps,
-    lastReviewedAt: card.last_reviewed_at ? new Date(card.last_reviewed_at) : null,
-  };
-
-  const result = schedule(snapshot, rating, now);
-
-  const nowIso    = now.toISOString();
-  const dueIso    = result.dueAt.toISOString();
-  const scheduledDays = Math.round((result.dueAt.getTime() - now.getTime()) / 86_400_000);
-  const elapsedDays   = snapshot.lastReviewedAt
-    ? Math.round((now.getTime() - snapshot.lastReviewedAt.getTime()) / 86_400_000)
-    : 0;
-
-  await c.env.DB.batch([
-    // 카드 업데이트
-    c.env.DB.prepare(
-      `UPDATE srs_cards SET
-         state = ?, stability = ?, difficulty = ?,
-         lapses = ?, reps = ?,
-         due_at = ?,
-         last_reviewed_at = ?, updated_at = ?
-       WHERE id = ?`,
-    ).bind(
-      result.state,
-      result.stability,
-      result.difficulty,
-      result.lapses,
-      result.reps,
-      dueIso,
-      nowIso,
-      nowIso,
-      card_id,
-    ),
-    // 리뷰 로그 삽입
-    c.env.DB.prepare(
-      `INSERT INTO review_logs
-         (card_id, rating, elapsed_days, scheduled_days, response_ms, reviewed_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    ).bind(
-      card_id,
-      rating,
-      elapsedDays,
-      scheduledDays,
-      response_ms ?? null,
-      nowIso,
-    ),
-  ]);
-
-  return ok(c, result);
+  const mutation = await reviewStatements(c.env.DB,userId,'jlpt-ja',card_id,rating,response_ms);
+  if (!mutation) return notFound(c, 'Review card not found');
+  await c.env.DB.batch(mutation.statements);
+  return ok(c, mutation.result);
 });
 
 // ── GET /srs/settings ────────────────────────

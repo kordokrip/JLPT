@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { ensureAuthenticated } from './auth-helper';
 
+async function saveAccountTheme(page: import('@playwright/test').Page) {
+  if (process.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED !== 'true') return;
+  const saved = page.waitForResponse(response => new URL(response.url()).pathname === '/api/v1/account/preferences' && response.request().method() === 'PUT');
+  await page.getByRole('button', {name:'외관 저장', exact:true}).click();
+  expect((await saved).status()).toBe(200);
+}
+
 /**
  * e2e/settings-theme.spec.ts
  *
@@ -28,6 +35,7 @@ test.describe('테마 설정', () => {
     );
 
     await page.getByTestId('theme-option-dark').click();
+    await saveAccountTheme(page);
 
     // CSS 변수 / 클래스 전환 대기
     await page.waitForTimeout(300);
@@ -42,6 +50,7 @@ test.describe('테마 설정', () => {
 
   test('다크모드 클래스가 html 요소에 추가된다', async ({ page }) => {
     await page.getByTestId('theme-option-dark').click();
+    await saveAccountTheme(page);
     await page.waitForTimeout(300);
 
     // Tailwind dark mode 또는 CSS 변수 기반 테마 확인
@@ -67,6 +76,7 @@ test.describe('테마 설정', () => {
   test('다크모드 설정이 새로고침 후에도 유지된다', async ({ page }) => {
     // 다크모드 활성화
     await page.getByTestId('theme-option-dark').click();
+    await saveAccountTheme(page);
     await page.waitForTimeout(300);
 
     const bgAfterToggle = await page.evaluate(() =>

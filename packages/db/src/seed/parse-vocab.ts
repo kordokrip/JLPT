@@ -20,11 +20,12 @@ import {
   esc,
   escJson,
 } from './utils.js';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export interface VocabSql {
   /** `sources.code` (예: '04') */
   sourceCode: string;
-  level: 'N5' | 'N4' | 'N3';
+  level: JlptLevel;
   filePath: string;
   naturalKeys?: Set<string>;
 }
@@ -81,14 +82,20 @@ export function parseVocab(opts: VocabSql): string[] {
 
       statements.push(
         [
-          `INSERT OR IGNORE INTO \`vocab\``,
+          `INSERT INTO \`vocab\``,
           `  (\`source_id\`, \`category_id\`, \`level\`, \`ja\`, \`kana\`, \`ko\`, \`trap_note\`, \`tags\`)`,
           `VALUES (`,
           `  (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}),`,
           `  (SELECT id FROM categories WHERE source_id = (SELECT id FROM sources WHERE code = ${esc(opts.sourceCode)}) AND code = ${esc(category.code)}),`,
           `  ${esc(opts.level)}, ${esc(ja)}, ${esc(kana)}, ${esc(ko)},`,
           `  ${trap ? esc(trap) : 'NULL'}, ${escJson([])}`,
-          `);`,
+          `) ON CONFLICT(\`level\`, \`ja\`, \`kana\`) DO UPDATE SET`,
+          `  \`source_id\` = excluded.\`source_id\`,`,
+          `  \`category_id\` = excluded.\`category_id\`,`,
+          `  \`ko\` = excluded.\`ko\`,`,
+          `  \`trap_note\` = excluded.\`trap_note\`,`,
+          `  \`tags\` = excluded.\`tags\`,`,
+          `  \`updated_at\` = unixepoch();`,
         ].join('\n'),
       );
     }

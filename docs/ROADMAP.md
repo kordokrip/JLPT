@@ -1,159 +1,39 @@
-# nihongo-n3 릴리스 로드맵
+# 다음 개발·운영 계획
 
-기준일: 2026-07-18 KST
-원칙: JLPT N3 운영 안정화가 우선이며 R1, R2, R3를 독립 릴리스한다.
+갱신: 2026-10-12 KST. 현재 운영은 9월25일 quick/daily·개인 보상·알림 릴리스다. 구현·배포 값은 [현재 상태](00_overview/CURRENT_STATE.md), 완료된 날짜별 변경은 [CHANGELOG](00_overview/CHANGELOG.md), 실행 증거는 [릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md)에 둔다.
 
-## 릴리스 순서
+## 운영 안정화
 
-```text
-R1 기반 정상화
-  -> R2 N3 콘텐츠·오디오 품질
-    -> R3 LearningTrack/TOPIK 기반
-      -> TOPIK 검수 콘텐츠 별도 릴리스
-```
+1. `INC-DATA-024`: 콘텐츠 SHA·manifest·실제 seed run을 명시하는 표준 원격 검증 인터페이스를 정리한다. 현재 immutable source를 고정해 검증하며 운영 재시드로 HEAD 차이를 지우지 않는다.
+2. 현재0030/72-table profile의 새 백업과 restore drill을 마련한다. 9월25일0028/70개 백업은 migration 이후 새 보상/알림 기록을 포함하지 않는다. 운영 export 점검은 해당 작업의 승인·정지 범위를 확인한다.
+3. 실제 사용의7/30일 activity·세션·최초 응답·FSRS·speech 결과를 읽기 전용으로 관찰한다. 자동 lifecycle과 사람 가청은 별도 증거다.
+4. Legacy DB 열·테이블은 source cleanup과 구분해 별도 migration·upgrade/fresh·backup 검증을 설계한다. 현재 문서 정리로 삭제하지 않는다.
 
-앞 단계의 운영 관문을 통과하지 못하면 다음 단계 코드를 production에 함께 싣지 않는다.
+## 개인 학습 UX
 
-## R1 기반 정상화
+오늘에서 한 번 눌러 quick/daily 시작·재개하고 기록을 이해하는 흐름은 출시했다. 다음 개선은 실제 사용의 이탈·중단·오답을 근거로 선정한다. 자유 TOPIK practice의 client activity를 서버 확정 스트릭으로 승격하려면 채점·저장·재전송 계약을 먼저 설계한다.
 
-### 구현 완료
+승인된 문제↔개념 링크와 새 교육 번역·연상 설명은 독립 검수 후 공개한다. 기존 영어 교육 내용을 일본어 조작 UI 번역 완료와 혼동하지 않는다. 학습 진입 시간·실제 재개 성공률·힌트 사용은 아직 추가 계측이 필요한 지표이며 과거 기록에서 추정해 채우지 않는다.
 
-- 현재 N2/N1 작업을 WIP branch에 격리
-- `drizzle-v2/0000`~`0008` canonical migration 구성
-- 일반 table은 Drizzle, FTS는 SQL migration으로 소유권 분리
-- runtime OAuth DDL 제거
-- manifest v2의 source별 provenance·row/checksum·version/parser version과 FTS/FK/필수값 검증
-- 위험한 partial diff seed를 validation-only로 변경
-- regular table Blue/Green, backup, restore drill 도구 추가
-- read-only cutover route guard 추가
-- public/admin OpenAPI 및 generated client type 추가, 검수 완료 동음이의어 public route 활성화
-- route inventory와 OpenAPI coverage test 추가
-- request ID/release SHA/route/status/latency/auth mode JSON log 추가
-- fresh D1 기반 CI, manual production change workflow 추가
-- Quiz·Review·Stats를 view/hook/logic/type feature module로 분리하고 기존 동작 snapshot 고정
-- N2/N1은 실제 DB 분포가 release 조건을 충족할 때만 노출하도록 server-derived gate 적용
-- TOPIK T1~T3의 ADR, track-aware schema, 비공개 자체 저작 12문항 검증 기반 추가
+## 콘텐츠 후보
 
-### 운영 전 남은 일
+10월12일 V7 정규 publisher/verifier의 최종 local runner(cohort04)는 단위614/E2E44·fresh/upgrade/reseed·local G0–G4 공개/재실행/철회·12종 합성 기록 불변을 통과했다. 별도160 v3도 두160승인·quality·543 draft행/reseed·쓰기8/듣기8 binding을 확인했다. 현재 사용자 범위는 **로컬 검증·문서화뿐**이므로 commit·push·새Preview·Production은 진행하지 않는다.
 
-1. GitHub billing lock을 해제한다. **완료**
-2. Audit, CodeQL, Required Verification, Chromium/WebKit E2E, Backup을 같은 commit에서 통과시킨다. **진행 중**: 통합 SHA `4d7e96f7039c`의 Audit·CodeQL·Required Verification·fresh D1·Chromium/WebKit은 통과했다. Backup은 전용 Cloudflare secret·maintenance window·사람 승인 대기다. Pages preview는 build 통과 후 Pages 전용 token 부재로 실패했다.
-3. Cloudflare에 `nihongo-n3-prod-v2`를 생성한다.
-4. 9개 migration을 처음부터 적용해 `d1_migrations`를 생성한다.
-5. content phase를 복사하고 검증한다.
-6. 10~15분 read-only에서 mutable phase와 유효 session을 최종 동기화한다.
-7. preview smoke 후 Worker DB binding을 전환한다.
-8. 30분 집중 smoke 후 쓰기를 재개하고 24시간 모니터링한다.
+후속은 별도 승인 범위 확인 → 후보 고정/새Preview에서V7과160의 독립 control-plane/evidence → 실제 계정11급수·가족 동선 → 같은 배포의Chrome ko/ja onend·가청·Network R2/legacy0 → 현schema backup/restore·rollback/predeploy → 현재Production 승인이다. 기존160/v2 및V4–V6의 실패와 cohort01–03 실패는 보존한다. 완전 맹검·가족/가청·실사용자 기록 보존을 local/mock 결과로 주장하지 않는다.
 
-### R1 완료 정의
+| 후보 | 준비 범위 | 운영 상태 |
+| --- | --- | --- |
+| JLPT N2 정적 practice v1 | 기존60문항, 4모드×15 | 기존Preview에만 존재·재검수실패/승격금지 |
+| JLPT N1 정적 practice v1 | 기존60문항, 같은 계약 | 기존Preview에만 존재·재검수실패/승격금지 |
+| TOPIK owner Batch6 | 기존3–6급40항목 | 기존Preview에만 존재·재검수실패/승격금지 |
+| 별도 Preview160 v3 | 새N2/N1 각60·TOPIK40, 두승인·품질·local binding/reseed | 로컬 draft, 원격control-plane/publication 미실행 |
 
-- blank DB와 prod-v2에 migration 9/9
-- source/target 일반 table count 및 checksum 일치
-- FTS rebuild와 parity 일치
-- password login, Google OAuth callback, session 유지, admin, sync queue 성공
-- 5xx, D1 error, auth failure 추세에 이상 없음
-- old DB는 read-only 상태로 30일 보존
+현재 공개 canonical N2/N1과 이 정적 문제은행 후보를 구분한다. 첫 증량은 확정 정책에 따라 사용량 임계값과 별개로 품질 gate를 적용하지만, 새 source의 Preview·실제 양언어 음성·backup/restore·G0–G4·승인·postdeploy를 다시 확보해야 한다. 과거 Preview 통과를 새 후보 완료로 옮기지 않는다.
 
-## R2 N3 콘텐츠와 오디오
+배포 뒤 같은 판정 시점 최근30일 N3 최초 응답50·TOPIK owner 완료10·TOPIK FSRS 복습5를 운영 참고 지표로 집계한다. 미달이 지속되면 Batch7보다 학습 진입·다음 행동 UX를 우선한다. 이 값은 사용자 화면의 개발 목표로 노출하지 않는다. 상세 후보는 [증량 릴리스 기록](00_overview/NEXT_CONTENT_EXPANSION_RELEASE_2026-08-23.md)을 따른다.
 
-### 구현 완료
+## 개발·릴리스 기준
 
-- category를 vocab/grammar보다 먼저 seed
-- manifest v2의 13 source provenance·row/checksum·parser version 및 seed-run ledger 검증
-- 검수된 동음이의어 30쌍의 public route·OpenAPI·Browse UI 활성화
-- 코드와 콘텐츠 라이선스 문서 분리
-- 공개 audio route를 R2 read-only로 고정
-- Google batch에 admin, execute flag, approval token 요구
-- content/provider/model/version hash 기반 immutable R2 key
-- kana v2는 문자와 대표 단어를 한 번만 읽도록 생성 스크립트 변경
-- 30문장 Audio QA에 Google 후보와 평가 기록 추가
-- 52주 기본 과정과 조건부 16주 집중 과정 정책 추가
+코드 정리는 호출자·설정·테스트 참조를 교차검증하고 공개 API·학습 데이터·FSRS·음성 계약을 보존한다. 파일 지도는 `pnpm docs:catalog`로 갱신하고 `docs:check`가 stale 목록을 차단한다. 코드 변경과 문서 전용 gate는 [로컬 체크리스트](00_overview/LOCAL_CICD_MANAGEMENT.md)에 분리했다.
 
-### 남은 일
-
-1. Google TTS secret과 batch approval token을 승인된 production Worker version에만 설정한다. 현재 두 이름은 production·preview 모두 미설정이다.
-2. Cloudflare/browser/Google/VOICEVOX 30표본을 동일한 `audio-qa-30-v1` 문장으로 평가한다. 현재 원격 후보는 Cloudflare 30/30, Google 0/30, VOICEVOX 0/30이다.
-3. 청감표에 평가자, device, browser/OS, voice/model/version, 날짜와 120개 평가를 기록한다. 현재 사람 평가는 미수행이다.
-4. R1 prod-v2 전환 후 승인된 Google provider로 N5→N4→N3 vocab/kanji/sentences를 level별 배치 생성한다. 구 production log table에는 필수 컬럼이 없어 실행 차단 상태다.
-5. R2 object metadata와 D1 key를 검증한다. strict HEAD verifier 구현은 완료했고 실제 object 정합은 배치 후 확인한다.
-6. `verify:remote:audio`에서 누락/비불변 key 0을 확인한다. 현재 production 결과는 5,085건으로 EXPECTED FAIL이다.
-7. 승인 키가 없을 때 fabricated R2 경로를 만들지 않고 browser Japanese fallback을 사용하는지 Chromium/WebKit에서 확인한다. **완료**: 두 엔진 모두 quiz smoke 7/7, `ja-JP` utterance 1회, 서버 audio 요청 0회.
-
-현재 fresh DB 공백은 4,954건이고 기존 production의 새 불변 규칙 불일치는 5,085건이다. 네 후보 청감 승인, prod-v2, level별 batch, strict 원격 게이트가 모두 끝나기 전에는 R2 완료를 선언할 수 없다.
-
-### 동음이의어 출시 조건
-
-- [x] 출처·악센트·예문을 검수한 30쌍 이상
-- [x] 중복·FK·동일 읽기·source mapping 검증 0건
-- [x] UI와 공개 OpenAPI 동시 활성화
-- [x] attribution, manifest provenance, seed-run ledger 기록
-
-## R3 LearningTrack와 TOPIK 기반
-
-### foundation 구현 완료
-
-- `LearningTrackId = 'jlpt-ja' | 'topik-ko'`
-- 사용자 DB의 `learning_track`
-- OAuth state의 선택 트랙 유지
-- `/api/v1/tracks/:track/status`
-- user×track IndexedDB/localStorage/React Query namespace
-- 첫 접속 일본어/TOPIK 선택
-- TOPIK foundation-only 화면
-- 기존 JLPT route의 compatibility façade
-
-### T1~T3 내부 구현 완료
-
-- 대상 사용자·영어 기본 설명·privacy/retention 계약을 ADR로 기록
-- 서버 학습 table과 FSRS key를 user×track 기준으로 확장
-- JLPT와 분리된 track source/exam level/seed provenance schema 추가
-- 자체 저작 TOPIK I placement 12문항을 local D1 verifier로 이중 검증
-- Chromium/WebKit에서 local·server account×track 격리 확인
-
-### 현재 제한
-
-- 12문항은 내부 QA bank이며 public seed, OpenAPI, 온보딩 CTA에 등록하지 않는다.
-- 공개 채점, 레벨 진단, 추천 과정, TOPIK 학습 API는 아직 없다.
-- TOPIK 화면은 출시 약속이 아니라 저장소·라우팅 경계를 검증하는 foundation이다.
-
-### TOPIK 콘텐츠 릴리스 순서
-
-1. 영어 설명을 기본으로 할 대상 사용자와 UI 언어 정책 확정 **내부 완료**
-2. TOPIK level/section/content provenance 계약 설계 **내부 완료**
-3. 별도 migration과 manifest 작성 **내부 완료**
-4. 검수된 최소 문제은행으로 placement test 구현 **문제은행 검증 완료, 공개 API 미구현**
-5. track-aware API `/api/v1/tracks/topik-ko/...` 구현
-6. 사용자×트랙 서버 데이터 격리 검증
-7. Chromium/WebKit account×track E2E 통과
-8. 별도 수동 승인으로 출시
-
-## N2/N1 정책
-
-N2/N1 타입 지원은 장래 계약을 위한 것이며 콘텐츠 출시 완료를 의미하지 않는다. 누락된 원본 7개, `AUTO`/`EN` 검수 상태, upstream commit과 라이선스를 해결하기 전 운영 seed에 넣지 않는다.
-
-예정 경로는 다음과 같지만 파일이 실제 존재하고 manifest를 통과할 때만 등록한다.
-
-```text
-docs/05_n2/
-docs/06_n1/
-```
-
-## 공통 릴리스 관문
-
-```bash
-pnpm audit --audit-level high
-pnpm openapi:check
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm -F @nihongo-n3/db verify:fresh
-pnpm -F @nihongo-n3/e2e test:chromium
-pnpm -F @nihongo-n3/e2e test:webkit
-```
-
-R2에는 추가로 다음을 요구한다.
-
-```bash
-pnpm -F @nihongo-n3/db verify:remote:audio
-```
-
-production 변경은 GitHub `production` Environment의 수동 승인과 workflow_dispatch로만 실행한다. 로컬 성공만으로 배포하지 않는다.
+새 릴리스는 local gate → Preview → 실제 Chrome·가청·Network → backup/restore → rollback → predeploy → 승인된 변경 → remote verifier/smoke 순서다. 같은 언어 Google 우선·설치 음성 fallback·R2 발음 금지·legacy410을 유지한다. 실패·미실행·skip·mock 결과를 통과로 기록하지 않는다.

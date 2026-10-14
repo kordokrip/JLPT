@@ -11,8 +11,10 @@ import Dexie, { type EntityTable } from 'dexie';
 import type {
   GrammarContentItem,
   KanjiContentItem,
+  TopikPracticeListDto,
   VocabContentItem,
   LearningTrackId,
+  LearningActivityEvent,
 } from '@nihongo-n3/shared';
 
 // ─────────────────────────────────────────────
@@ -28,7 +30,6 @@ export interface SentenceItem {
   item_id: number;
   jp: string;
   ko: string;
-  audio_path?: string;
 }
 
 export interface SysprogItem {
@@ -141,10 +142,38 @@ export interface SyncQueueItem {
   last_error?: string;
 }
 
+export interface ActivityEventQueueItem extends LearningActivityEvent {
+  id?: number;
+  scope_id: string;
+  status: SyncStatus;
+  retries: number;
+  last_error?: string;
+}
+
 export interface LocalMeta {
   key: string;
   value: string;
   updated_at: string;
+}
+
+export interface TopikLearningProgress {
+  id?: number;
+  scope_id: string;
+  unit_id: string;
+  completed_at: string;
+}
+
+/** Public practice prompts are scoped by account and learning track. */
+export interface TopikPracticeCache {
+  id: string;
+  scope_id: string;
+  /** Server release state that selected this public practice bank. */
+  content_release: string;
+  exam_level: 'TOPIK-I' | 'TOPIK-II';
+  section: 'listening' | 'writing' | 'reading';
+  bank_version: string;
+  fetched_at: string;
+  payload: TopikPracticeListDto;
 }
 
 // ─────────────────────────────────────────────
@@ -204,9 +233,12 @@ class NihongoDb extends Dexie {
 
   // 동기화 큐
   sync_queue!: EntityTable<SyncQueueItem, 'id'>;
+  activity_event_queue!: EntityTable<ActivityEventQueueItem, 'id'>;
 
   // 로컬 메타데이터
   meta!: EntityTable<LocalMeta, 'key'>;
+  topik_progress!: EntityTable<TopikLearningProgress, 'id'>;
+  topik_practice_cache!: EntityTable<TopikPracticeCache, 'id'>;
 
   constructor() {
     super('nihongo-n3');
@@ -253,6 +285,24 @@ class NihongoDb extends Dexie {
       await tx.table<SyncQueueItem, number>('sync_queue').toCollection().modify((item) => {
         item.user_id ??= localUserIdFor(LOCAL_USER, 'jlpt-ja');
       });
+    });
+
+    this.version(3).stores({
+      topik_progress: '++id, &[scope_id+unit_id], scope_id, completed_at',
+    });
+
+    this.version(4).stores({
+      topik_practice_cache: '&id, scope_id, [scope_id+exam_level+section], fetched_at',
+    });
+
+    // A practice prompt cache must not survive a TOPIK content-release change.
+    // Older v4 entries remain harmless but are no longer addressed by the v5 key.
+    this.version(5).stores({
+      topik_practice_cache: '&id, scope_id, content_release, [scope_id+content_release+exam_level+section], fetched_at',
+    });
+
+    this.version(6).stores({
+      activity_event_queue: '++id, &event_id, scope_id, [scope_id+status], status, occurred_at',
     });
   }
 }

@@ -1,4 +1,5 @@
-# JLPT N4 문법 150개 완전 자료
+# JLPT N4 문법 학습 원본
+<!-- 운영 메타데이터(2026-08-09): content-manifest canonical D1 seed는 문법 98행·13 category다. -->
 
 ## 구성 원칙
 - 공식 N4 출제 범위 문법 약 150개를 12개 기능 카테고리로 묶음.

@@ -13,6 +13,19 @@ import {
 import { parseCurriculum } from './parse-curriculum.js';
 import { parseGrammar } from './parse-grammar.js';
 import { parseKanji } from './parse-kanji.js';
+import { buildN2Batch1Plan } from './n2-batch1.js';
+import { buildN2Batch2Plan } from './n2-batch2.js';
+import { buildN2Batch3Plan } from './n2-batch3.js';
+import { buildN2Batch4Plan } from './n2-batch4.js';
+import { buildN2Batch5Plan } from './n2-batch5.js';
+import { buildN1Batch1Plan } from './n1-batch1.js';
+import { buildN1Batch2Plan } from './n1-batch2.js';
+import { buildN1Batch3Plan } from './n1-batch3.js';
+import { buildN1Batch4Plan } from './n1-batch4.js';
+import { buildTopikOwnerBatch1Plan } from './topik-owner-curriculum-batch1.js';
+import { buildTopikOwnerBatch2Plan } from './topik-owner-curriculum-batch2.js';
+import { buildTopikOwnerBatch3Plan } from './topik-owner-curriculum-batch3.js';
+import { buildTopikOwnerBatch4Plan } from './topik-owner-curriculum-batch4.js';
 import { parseSentences } from './parse-sentences.js';
 import { parseSysProg } from './parse-sysprog.js';
 import { parseVocab } from './parse-vocab.js';
@@ -24,15 +37,20 @@ export type SeedTable =
   | 'kanji'
   | 'sentences'
   | 'sysprog_terms'
-  | 'curriculum_weeks';
+  | 'curriculum_weeks'
+  /** Historical manifest label for a multi-table, self-authored JLPT (N1/N2) batch; not a D1 table. See ADR-001. */
+  | 'n2_curriculum'
+  /** Operating owner-authored TOPIK 1–6 curriculum, independent of the practice bank. */
+  | 'topik_owner_curriculum';
 
-export const CONTENT_MANIFEST_SCHEMA_VERSION = 2;
-export const CONTENT_PARSER_VERSION = 'content-parser-v2';
-export const SEEDED_SOURCE_COUNT = 13;
+export const CONTENT_MANIFEST_SCHEMA_VERSION = 3;
+export const CONTENT_PARSER_VERSION = 'content-parser-v3';
+export const SEEDED_SOURCE_COUNT = 26;
 
 const REPOSITORY_URL = 'https://github.com/kordokrip/JLPT';
 const ATTRIBUTIONS_URL = `${REPOSITORY_URL}/blob/main/docs/ATTRIBUTIONS.md`;
-const CONTENT_REVIEWER = 'nihongo-n3 editorial QA';
+// `reviewer` is a legacy manifest column name, not a publication requirement.
+const CONTENT_REVIEWER = 'self-authored personal content record (no external reviewer)';
 const CONTENT_REVIEWED_AT = '2026-07-16';
 
 export interface ContentProvenance {
@@ -60,6 +78,10 @@ interface SeedDefinition extends SourceCatalogEntry {
   table: SeedTable;
   selector: { kind: 'source'; value: string } | { kind: 'level'; value: string } | { kind: 'all' };
   parse: () => string[];
+  /** Multi-table sources declare their deliberate content-row total explicitly. */
+  expectedRows?: number;
+  /** Parsers may repeat INSERT OR IGNORE category statements across content types. */
+  expectedCategories?: number;
 }
 
 export interface ContentManifestEntry {
@@ -115,14 +137,24 @@ function repositoryFileUrl(filePath: string): string {
 
 function sourceProvenance(code: string, title: string, filePath: string): ContentProvenance {
   const mixedTerminology = code === 'A';
+  const selfAuthoredN2Batch = code === 'N2-A1' || code === 'N2-A2' || code === 'N2-A3' || code === 'N2-A4' || code === 'N2-A5';
+  const selfAuthoredBatch = selfAuthoredN2Batch || code === 'N1-A1' || code === 'N1-A2' || code === 'N1-A3' || code === 'N1-A4' || code === 'TOPIK-A1' || code === 'TOPIK-A2' || code === 'TOPIK-A3' || code === 'TOPIK-A4';
   return {
     origin: {
-      name: mixedTerminology
+      name: selfAuthoredBatch
+        ? `${title} self-authored personal learning batch`
+        : mixedTerminology
         ? `${title} repository compilation with documented terminology references`
         : `${title} repository-managed learning source`,
       url: repositoryFileUrl(filePath),
     },
-    license: mixedTerminology
+    license: selfAuthoredBatch
+      ? {
+        id: 'LicenseRef-nihongo-n3-self-authored',
+        name: 'Self-authored personal learning content',
+        url: `${ATTRIBUTIONS_URL}#학습-콘텐츠와-provenance`,
+      }
+      : mixedTerminology
       ? {
         id: 'LicenseRef-nihongo-n3-mixed-terminology',
         name: 'Repository compilation with source references',
@@ -133,8 +165,9 @@ function sourceProvenance(code: string, title: string, filePath: string): Conten
         name: 'Repository-managed learning content',
         url: `${ATTRIBUTIONS_URL}#학습-콘텐츠와-provenance`,
       },
-    reviewer: CONTENT_REVIEWER,
-    reviewedAt: CONTENT_REVIEWED_AT,
+    // This field is legacy seed provenance, not a public-release reviewer gate.
+    reviewer: selfAuthoredBatch ? 'self-authored personal content record (no external reviewer)' : CONTENT_REVIEWER,
+    reviewedAt: code === 'N2-A5' || code === 'N1-A4' || code === 'TOPIK-A4' ? '2026-08-09' : code === 'TOPIK-A3' || code === 'N1-A3' || code === 'N2-A4' ? '2026-08-03' : code === 'TOPIK-A1' || code === 'TOPIK-A2' || code === 'N1-A1' || code === 'N1-A2' ? '2026-07-30' : selfAuthoredN2Batch ? '2026-07-29' : CONTENT_REVIEWED_AT,
   };
 }
 
@@ -156,9 +189,21 @@ const sourceCatalog: SourceCatalogEntry[] = [
   catalogEntry('10A', 'N3 어휘 전반', CONTENT_PATHS.n3Vocab1),
   catalogEntry('10B', 'N3 어휘 후반', CONTENT_PATHS.n3Vocab2),
   catalogEntry('11', 'N3 문법', CONTENT_PATHS.n3Grammar),
+  catalogEntry('N2-A1', 'N2 자체 저작 Batch 1', CONTENT_PATHS.n2Batch1),
+  catalogEntry('N2-A2', 'N2 자체 저작 Batch 2', CONTENT_PATHS.n2Batch2),
+  catalogEntry('N2-A3', 'N2 자체 저작 Batch 3', CONTENT_PATHS.n2Batch3),
+  catalogEntry('N2-A4', 'N2 자체 저작 Batch 4', CONTENT_PATHS.n2Batch4),
+  catalogEntry('N2-A5', 'N2 자체 저작 Batch 5', CONTENT_PATHS.n2Batch5),
+  catalogEntry('N1-A1', 'N1 자체 저작 Batch 1', CONTENT_PATHS.n1Batch1),
+  catalogEntry('N1-A2', 'N1 자체 저작 Batch 2', CONTENT_PATHS.n1Batch2),
+  catalogEntry('N1-A3', 'N1 자체 저작 Batch 3', CONTENT_PATHS.n1Batch3),
+  catalogEntry('N1-A4', 'N1 자체 저작 Batch 4', CONTENT_PATHS.n1Batch4),
+  catalogEntry('TOPIK-A1', 'TOPIK 1~6급 자체 저작 Batch 1', CONTENT_PATHS.topikOwnerBatch1),
+  catalogEntry('TOPIK-A2', 'TOPIK 1~6급 자체 저작 Batch 2', CONTENT_PATHS.topikOwnerBatch2),
+  catalogEntry('TOPIK-A3', 'TOPIK 1~6급 자체 저작 Batch 3', CONTENT_PATHS.topikOwnerBatch3),
+  catalogEntry('TOPIK-A4', 'TOPIK 1~6급 자체 저작 Batch 4', CONTENT_PATHS.topikOwnerBatch4),
   catalogEntry('12', '예문 코퍼스', CONTENT_PATHS.sentences),
   catalogEntry('A', '직무 어휘', CONTENT_PATHS.sysprog),
-  catalogEntry('B', '운영 가이드', path.join(REPO_ROOT, 'docs/00_overview/B_ops_guide.md')),
   catalogEntry('C', '12개월 기본 학습계획과 자가진단', CONTENT_PATHS.selfCheck),
 ];
 
@@ -166,6 +211,19 @@ function buildSeedDefinitions(): SeedDefinition[] {
   const vocabKeys = new Set<string>();
   const grammarKeys = new Set<string>();
   const kanjiKeys = new Set<string>();
+  const n2Batch1 = buildN2Batch1Plan();
+  const n2Batch2 = buildN2Batch2Plan();
+  const n2Batch3 = buildN2Batch3Plan();
+  const n2Batch4 = buildN2Batch4Plan();
+  const n2Batch5 = buildN2Batch5Plan();
+  const n1Batch1 = buildN1Batch1Plan();
+  const n1Batch2 = buildN1Batch2Plan();
+  const n1Batch3 = buildN1Batch3Plan();
+  const n1Batch4 = buildN1Batch4Plan();
+  const topikOwnerBatch1 = buildTopikOwnerBatch1Plan();
+  const topikOwnerBatch2 = buildTopikOwnerBatch2Plan();
+  const topikOwnerBatch3 = buildTopikOwnerBatch3Plan();
+  const topikOwnerBatch4 = buildTopikOwnerBatch4Plan();
   return [
     sourceSeed('04', 'vocab', 'source', () => parseVocab({ sourceCode: '04', level: 'N5', filePath: CONTENT_PATHS.n5Vocab, naturalKeys: vocabKeys })),
     sourceSeed('05', 'grammar', 'source', () => parseGrammar({ sourceCode: '05', level: 'N5', filePath: CONTENT_PATHS.n5Grammar, naturalKeys: grammarKeys })),
@@ -177,6 +235,71 @@ function buildSeedDefinitions(): SeedDefinition[] {
     sourceSeed('10B', 'vocab', 'source', () => parseVocab({ sourceCode: '10B', level: 'N3', filePath: CONTENT_PATHS.n3Vocab2, naturalKeys: vocabKeys })),
     sourceSeed('11', 'grammar', 'source', () => parseGrammar({ sourceCode: '11', level: 'N3', filePath: CONTENT_PATHS.n3Grammar, naturalKeys: grammarKeys })),
     sourceSeed('09', 'kanji', 'level', () => parseKanji({ sourceCode: '09', level: 'N3', filePath: CONTENT_PATHS.n3Kanji, naturalKeys: kanjiKeys }), 'N3'),
+    {
+      ...sourceSeed('N2-A1', 'n2_curriculum', 'source', () => n2Batch1.statements),
+      expectedRows: n2Batch1.manifest.counts.contentRows,
+      expectedCategories: n2Batch1.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A2', 'n2_curriculum', 'source', () => n2Batch2.statements),
+      expectedRows: n2Batch2.manifest.counts.contentRows,
+      expectedCategories: n2Batch2.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A3', 'n2_curriculum', 'source', () => n2Batch3.statements),
+      expectedRows: n2Batch3.manifest.counts.contentRows,
+      expectedCategories: n2Batch3.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A4', 'n2_curriculum', 'source', () => n2Batch4.statements),
+      expectedRows: n2Batch4.manifest.counts.contentRows,
+      expectedCategories: n2Batch4.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N2-A5', 'n2_curriculum', 'source', () => n2Batch5.statements),
+      expectedRows: n2Batch5.manifest.counts.contentRows,
+      expectedCategories: n2Batch5.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N1-A1', 'n2_curriculum', 'source', () => n1Batch1.statements),
+      expectedRows: n1Batch1.manifest.counts.contentRows,
+      expectedCategories: n1Batch1.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N1-A2', 'n2_curriculum', 'source', () => n1Batch2.statements),
+      expectedRows: n1Batch2.manifest.counts.contentRows,
+      expectedCategories: n1Batch2.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N1-A3', 'n2_curriculum', 'source', () => n1Batch3.statements),
+      expectedRows: n1Batch3.manifest.counts.contentRows,
+      expectedCategories: n1Batch3.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('N1-A4', 'n2_curriculum', 'source', () => n1Batch4.statements),
+      expectedRows: n1Batch4.manifest.counts.contentRows,
+      expectedCategories: n1Batch4.manifest.counts.categories,
+    },
+    {
+      ...sourceSeed('TOPIK-A1', 'topik_owner_curriculum', 'source', () => topikOwnerBatch1.statements),
+      expectedRows: topikOwnerBatch1.manifest.counts.contentRows,
+      expectedCategories: 0,
+    },
+    {
+      ...sourceSeed('TOPIK-A2', 'topik_owner_curriculum', 'source', () => topikOwnerBatch2.statements),
+      expectedRows: topikOwnerBatch2.manifest.counts.contentRows,
+      expectedCategories: 0,
+    },
+    {
+      ...sourceSeed('TOPIK-A3', 'topik_owner_curriculum', 'source', () => topikOwnerBatch3.statements),
+      expectedRows: topikOwnerBatch3.manifest.counts.contentRows,
+      expectedCategories: 0,
+    },
+    {
+      ...sourceSeed('TOPIK-A4', 'topik_owner_curriculum', 'source', () => topikOwnerBatch4.statements),
+      expectedRows: topikOwnerBatch4.manifest.counts.contentRows,
+      expectedCategories: 0,
+    },
     sourceSeed('12', 'sentences', 'source', () => parseSentences({ sourceCode: '12', filePath: CONTENT_PATHS.sentences })),
     sourceSeed('A', 'sysprog_terms', 'all', () => parseSysProg({ sourceCode: 'A', filePath: CONTENT_PATHS.sysprog })),
     sourceSeed('C', 'curriculum_weeks', 'all', parseCurriculum),
@@ -339,13 +462,13 @@ export function buildContentSeedPlan(): ContentSeedPlan {
         title: definition.title,
         filePath: relativeFilePath(definition.filePath),
         sha256,
-        sourceVersion: `source-v2-${sha256.slice(0, 16)}`,
+        sourceVersion: `source-v3-${sha256.slice(0, 16)}`,
         parserVersion: CONTENT_PARSER_VERSION,
         provenance: definition.provenance,
         table: definition.table,
         selector: definition.selector,
-        expectedRows: countInserts(parsed, definition.table),
-        expectedCategories: countInserts(parsed, 'categories'),
+        expectedRows: definition.expectedRows ?? countInserts(parsed, definition.table),
+        expectedCategories: definition.expectedCategories ?? countInserts(parsed, 'categories'),
       } satisfies ContentManifestEntry,
     };
   });
@@ -368,7 +491,7 @@ export function buildContentSeedPlan(): ContentSeedPlan {
   const manifestSha256 = checksum(identity);
   const manifest: ContentManifest = {
     ...identity,
-    contentVersion: `content-v2-${manifestSha256.slice(0, 20)}`,
+    contentVersion: `content-v3-${manifestSha256.slice(0, 20)}`,
     manifestSha256,
     seedRunId: `seed-${randomUUID()}`,
     generatedAt: new Date().toISOString(),

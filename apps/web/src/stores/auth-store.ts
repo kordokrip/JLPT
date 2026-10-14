@@ -72,12 +72,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const res = await authApi.login(email, password);
     if (res.ok) {
       const desiredTrack = useSettingsStore.getState().learningTrack;
-      const user = { ...res.data.user, learning_track: desiredTrack };
-      if (res.data.user.learning_track !== desiredTrack)
-        await authApi.setTrack(desiredTrack);
+      const user = { ...res.data.user };
+      let error: string | null = null;
+      if (user.learning_track !== desiredTrack) {
+        const trackResult = await authApi.setTrack(desiredTrack);
+        if (trackResult.ok) user.learning_track = trackResult.data.track;
+        else error = trackResult.message;
+      }
       invalidateOlderSessionProbes();
       activateUser(user);
-      set({ status: "authenticated", user, error: null });
+      set({ status: "authenticated", user, error });
       return true;
     }
     set({ status: "anonymous", user: null, error: res.message });
@@ -89,12 +93,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const res = await authApi.register(email, password, displayName);
     if (res.ok) {
       const desiredTrack = useSettingsStore.getState().learningTrack;
-      const user = { ...res.data.user, learning_track: desiredTrack };
-      if (res.data.user.learning_track !== desiredTrack)
-        await authApi.setTrack(desiredTrack);
+      const user = { ...res.data.user };
+      let error: string | null = null;
+      if (user.learning_track !== desiredTrack) {
+        const trackResult = await authApi.setTrack(desiredTrack);
+        if (trackResult.ok) user.learning_track = trackResult.data.track;
+        else error = trackResult.message;
+      }
       invalidateOlderSessionProbes();
       activateUser(user);
-      set({ status: "authenticated", user, error: null });
+      set({ status: "authenticated", user, error });
       return true;
     }
     set({ status: "anonymous", user: null, error: res.message });

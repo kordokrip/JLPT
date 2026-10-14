@@ -1,0 +1,1193 @@
+{
+  "schema_version": "preview160-semantic-review-v1",
+  "reviewer_id": "preview160-v3-review-a-2026-10-12",
+  "reviewer_role": "Independent semantic reviewer A",
+  "reviewed_at": "2026-10-12",
+  "scope": "preview160-v3-semantic-only",
+  "draft_path": "packages/db/src/content/preview160-v3-2026-10-12/draft.json",
+  "draft_sha256": "4934aa390878bd6ac2becd9ec4e930eafb7e72423b98b492430a83b1747ffd6f",
+  "source_evidence_sha256": "c5e2548381420c785909d787e9a316a1cc6057e0fc777702aa4ebfe33db73c66",
+  "manifest_sha256": "de8b459e06474fc1454b46139e4ab3a65c9692a8ee54a23ea26e702e87b61a9b",
+  "status": "approved",
+  "passed": true,
+  "full_bank_approval": true,
+  "counts": {
+    "total": 160,
+    "approved": 160,
+    "rejected": 0,
+    "unchecked": 0,
+    "choice": 152,
+    "writing": 8,
+    "audio": 38,
+    "choice_answer_matches": 152,
+    "choice_answer_mismatches": 0,
+    "semantic_findings": 0
+  },
+  "independence": {
+    "author_independent": true,
+    "other_reviewer_results_read": false,
+    "author_script_read": false,
+    "correction_decisions_read": false,
+    "old_review_files_read_this_pass": false,
+    "prior_approval_inherited": false,
+    "all_current_items_reread": true,
+    "all_current_choice_answers_recorded_before_current_key_comparison": true,
+    "completely_blind_review": false,
+    "limitation": "This is the same reviewer who reviewed v2. That history includes v2 item 1 answer exposure during initial schema inspection, subsequent v2 key comparison, and the reviewer's own earlier findings. A completely answer-blind review is therefore not claimed. In this v3 pass all 160 current items were read directly from the new draft, 152 answers were freshly recorded from projections hiding current answer_index/explanation, then all current keys and explanations were read. No author decisions or other reviewer's decisions were consulted.",
+    "verdict_basis": "Current v3 prompt/options/script semantics, natural attachment and best-answer uniqueness, ko/ja/en consistency, and each writing task/rubric/sample; not prior status, expected counts, or hash equality."
+  },
+  "coverage": {
+    "all_160_individual_semantic_decisions": true,
+    "all_152_choice_forms_options_and_keys_checked": true,
+    "all_38_listening_scripts_checked": true,
+    "all_8_writing_rubrics_and_samples_checked": true,
+    "multilingual_explanations_checked": true,
+    "english_omission_assessment": "TOPIK grade4-reading-2 omits the focus-window clock times; grade6-reading-1 omits the agency trade-secret response; grade6-reading-2 omits the average-cooling concession. Each retains the premises required by its question and unique answer; these condensations do not create a semantic blocker.",
+    "level_assessment": "Suitable as supplementary N2/N1 and TOPIK 3–6 practice: formal vocabulary/advanced Japanese constructions and progressively abstract Korean interpretation/writing are represented. Some recognition items and explicit short listening tasks are easier foundation review. This is not psychometric calibration of numerical difficulty or certification of full official-exam equivalence.",
+    "source_assessment": "The new source derivative explicitly records reuse of existing intake facts, no new HTTP acquisition and no new license research. Only this reuse declaration and current binding were reviewed; no new external provenance research is claimed.",
+    "prior_to_current_preservation_comparison": false,
+    "structure_is_not_semantic_evidence": true
+  },
+  "boundaries": {
+    "full_bank_approval_meaning": "This reviewer's semantic approval of these exact current bytes only; a separate second review and all publication gates remain required.",
+    "release_or_deployment_authorized": false,
+    "actual_audio_playback_validated": false,
+    "audio_policy": {
+      "preferred": "same-language Google browser voice",
+      "fallback": "same-language installed browser/device voice",
+      "allowed_languages": [
+        "ja-*",
+        "ko-*"
+      ],
+      "r2_pronunciation": "prohibited",
+      "legacy_audio_contract": "410 Gone unchanged"
+    },
+    "db_remote_build_e2e_full_tests_performed": false,
+    "operations_status_performed": false,
+    "writes": "Only this new reviewer JSON. v2 failure records and all drafts/source/manifest/runtime/DB files remain unmodified.",
+    "creation_method": "apply_patch Add File after checking target absence; no OS-level wx claim."
+  },
+  "findings": [],
+  "items": [
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "改めて는 계획을 다시 검토했다는 もう一度이며, 초회·별도 기회·세심함과 구별된다. ko/ja/en 해설도 재검토 의미다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "条件を満たす는 조건 충족이다. 확인·초과·정비는 충족의 동의어가 아니며 세 언어가 이를 보존한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "具体的な説明은 자세하고 분명한 설명이다. 실용성·개별성·객관성과 달라 index 2가 최선이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "졸음의 可能性는 발생할 수 있음이지 필연이나 확실성이 아니다. 보기와 해설에 가능성의 강도가 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:05",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "来年の売上げ를 과거 자료로 予測하는 것은 미래 예상이다. 현재 측정·집계와 과거 원인 추론을 배제한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:06",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "수리비를 회사가 負担하면 비용을 맡는 것이다. 임시 대납이나 일부 보상이라는 조건은 주어지지 않았다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "提案を受け入れた는 인정·채택의 완료다. 채택 보류와 수정 반송은 다르며 번역도 동일하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:08",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "一時中断는 진행 중인 작업을 잠시 멈춤이다. 착수 연기·영구 취소·단축 진행과 구별된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:09",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "資料の整理는 분류·정돈이다. 요약만·선별만·기존 순서 보관보다 포괄적인 의미가 정답이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "고용을 늘려 지역에 貢献하는 것은 도움이 되는 일이다. 지원 수령·결과 보고·특정 공동사업으로 한정되지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:11",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "結論が分からない는 あいまい의 불명확성을 뒷받침한다. 추상적·개략적·완곡함과 동일하지 않다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:12",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "혼잡을 避けるため 일찍 나가므로 혼잡에 접근하지 않는다는 뜻이다. 혼잡 자체를 줄인다는 뜻은 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:13",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "申し込みを取り消す는 신청 무효화다. 수정·처리 연기·재제출과 구분되는 해설이 세 언어에 있다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "需要는 상품을 필요로 하는 수요다. 공급량·판매 실적·재고 수량과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:vocab_mc:15",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "進み具合を共有는 팀원이 같은 정보를 갖게 하는 것이다. 외부 공개·단일 문서 집약·후임 인계는 별개다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "장기 거주와 상담역이라는 두 근거는 詳しいに違いない의 강한 긍정 추론을 지지한다. 다른 보기의 부정·의향·불필요는 맞지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "控えているが 뒤에서 食べないわけではない가 전면 부정을 부정한다. 전혀 먹지 않는다는 확정이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "規則により라는 근거상 受けることになっている가 정해진 규칙이다. 개인 의향이나 이제 정해지는 중이라는 뜻이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "毎回와 見返すたびに가 반복 관계를 형성한다. 대체나 진행 도중의 변화가 아니며 설명도 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "대설로 결항할 위험을 말하므로 欠航するおそれがある가 맞는다. 한정·의무·습관 변화는 부적합하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:06",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "신입의 적극성과 경력자의 신중함을 대조하므로 だったのに対して가 자연스럽게 접속한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "食料品に限らず가 생활용품·문구까지 취급 범위를 넓힌다. 선행 시점·방침·반대 관계는 없다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:08",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "충분한 준비에도 긴장한 결과는 準備したものの의 역접이다. 계기나 부수 행동이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:09",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "경험 정도에 맞춘 반 배정은 経験に応じて다. 절차를 따라간다는 に沿って보다 조건별 조정이 정확하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "뒷사람이 듣게 음량을 높이는 목적이므로 聞こえるように가 맞는다. 나머지는 목적 접속이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:11",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "決まり의 연용형 뒤 次第는 결정 즉시 통지라는 뜻이다. 나머지 보기는 이 형태와 의미를 동시에 충족하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:12",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "논의가 진행 중일 때 비상벨이 울려 している最中に가 맞는다. 겸업·부수 행동·완료 뒤와 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:13",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "수로 발달이라는 사실에서 별명이 비롯되므로 ことから가 인과를 연결한다. 역접이나 무행위가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:14",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "나이를 조건으로 삼지 않으므로 年齢にかかわらず가 맞는다. 나이의 병행 변화나 제한을 말하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:grammar_fill:15",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "편리함과 전력 사용 증가의 병행 변화는 便利になるにつれて다. 무관·반대·확신 표현은 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "維持＝いじ. 네 보기 중 표준 읽기는 이것뿐이며 유지라는 해설도 맞다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "輸送＝ゆそう. 輸のゆ와 送のそう를 보존하고 수송의 해설과 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "改善＝かいぜん. 善의 탁음 ぜん이 필요하며 개선의 의미가 맞다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "承認＝しょうにん. 장음 しょう와 にん이 정확하며 승인 의미다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "混雑＝こんざつ. こん과 ざつ를 모두 맞춘 읽기로 혼잡의 해설과 대응한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:06",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "講義＝こうぎ. こう의 장음과 義のぎ를 보존하며 강의라는 뜻이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "貯金＝ちょきん. ちょう 장음을 추가하지 않고 金은 きん으로 읽는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:08",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "豊富＝ほうふ. 富는 청음 ふ이며 충분히 많다는 해설도 타당하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:09",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "規模＝きぼ. 模는 ぼ이고 장음을 추가하지 않으며 규모·범위 의미다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "傾向＝けいこう. 두 한자의 읽기와 경향이라는 해설이 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:11",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "採用＝さいよう. 用의 よう를 유지하며 채용·채택 의미가 성립한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:12",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "資源＝しげん. 資는 し, 源는 げん이며 자원의 해설이 맞다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:13",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "確率＝かくりつ. 率는 이 단어에서 りつ이며 확률의 해설과 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "責任＝せきにん. 촉음화나 じん·ねん 변형은 해당 단어의 읽기가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:kanji_reading:15",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "防災＝ぼうさい. 防의 탁음·장음과 災의 청음을 보존하며 방재 의미다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "대본의 최종 결정은 開始は三時. 준비가 2시 30분에 끝날 수 있다는 계산을 명시된 시작 시각 대신 쓰지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "先に部長に下書きを送って가 첫 단계다. 의견 반영과 금요일 최종본은 후속이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "향수·액세서리를 배제하고 革の定期入れにします로 구매를 확정한다. 세 언어 보기와 해설이 동일하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "普通電車で南駅 뒤 市役所行きバス로 환승한다. 쾌속·도보·북역 역순 이동은 대본과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "휴관일이어도 入口の返却ポスト를 퇴근 후 이용한다고 한다. 우편이나 다음 개관일까지 대기는 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:06",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "목요일의 기존 예약을 翌週の火曜日の午前으로 바꿨다. 월요일 휴진과 오후 오답을 구별한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:07",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "먼저 グラフを修正하고 그 뒤 자료 제작을 시작한다. 당초 계획보다 발표용 오류 수정을 우선한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:08",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "월요일까지 제안서를 끝내야 하므로 토요일 일한다. 일요일 점심은 참석 가능 부분이지 불참 원인이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:09",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "공책·필기구는 주최 측 제공이고 각자 レインコート를 가져온다. 개인 준비물을 정확히 구분한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:10",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "미술관 표 매진 후 오후 활동은 온수 수영장 수영으로 바뀐다. 청소는 오전이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:11",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "원래 2–4시 배송이 지연되어 四時半ごろ 도착 예정이다. 확정 도착 완료로 확대하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:12",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "한자 읽기가 느려 中級の漢字・読解クラス를 선택한다. 강점인 회화와 약점 보완의 해설이 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:13",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "역·편의점은 문의 대상이고 발견 장소는 회사 会議室の机の下다. 대본의 후속 연락이 근거다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "8명에게 소회의실은 좁고 대회의실은 오후 사용 중이므로 오전 10시 대회의실 예약이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n2-practice-v1:listening:15",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "가까움보다 조용한 개인실 예약을 우선해 公園前の店를 택한다. 대본에 명시된 최종 선택이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "顕著는 뚜렷하게 눈에 띄는 뜻이다. 급격함·광범위함·분석적 확실성보다 정확한 동의 표현이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "妥当な判断은 적절하고 합리적인 판단이다. 단순 합법·실행 가능성·균등 절충과 구별된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "混乱을 懸念하는 것은 나쁜 결과를 걱정하는 것이다. 예측만 하거나 공식 경고한다는 뜻은 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "전임자의 방침을 踏襲는 기존 방식을 이어받음이다. 참고만·일부 수정·성문화는 다른 행위다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:05",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "任務を遂行した는 임무를 끝까지 실행한 것이다. 진행 관리·위임·재개만으로는 이 뜻을 대신하지 못한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:06",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "새 활용법을 模索는 해결책을 찾는 시도다. 현행 효과 검증이나 후보 하나의 시범 채택은 더 좁은 별도 행위다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "不適切な手順を是正는 잘못된 상태를 바로잡는다. 단순 추가·표준화·수치 조정으로 한정하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:08",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "交流の促進는 진행을 북돋는 것이다. 참여 범위 확대·속도 유지·관찰과 구별되며 해설도 대응한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:09",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "正確に把握는 정확히 파악함이다. 진행 요약·추정·기록과 의미가 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "脆弱는 약하고 손상되기 쉬운 상태다. 노후함·예비 구성 부족 등 특정 원인으로 한정되지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:11",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "傾向から逸脱는 경향에서 벗어남이다. 범위 안 변동이나 장기 추세 자체의 반전을 말하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:12",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "住民への配慮는 상대 사정을 생각한 배려다. 동의·통지·보상이라는 개별 절차가 정의는 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:13",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "調査の概略는 전체의 대략적 내용이다. 결론만·목차만·추상 개념만으로 한정하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "連携が円滑는 지장 없이 원활함이다. 빨라짐·표준화·자동화와 같지 않다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:vocab_mc:15",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "電力消費の抑制는 소비가 늘지 않도록 억누름이다. 수요 이동·변동 안정·손실만 줄임과 구별된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "전국 순회의 출발점이 도쿄 공연이므로 を皮切りに가 맞는다. 종료나 무시의 관계가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "즉단하는 형과 결정에 시간이 드는 동생을 なのにひきかえ로 대비한다. 접속과 대조 의미가 성립한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "そのための追加実験이라는 목적 단서에 すべく가 대응한다. 불능·금지 표현은 실험 목적과 어긋난다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "立て直したところで는 다시 계획해도 마감에 못 맞춘다는 가정적 양보다. 장소나 원인의 뜻이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "必ず와 영상의 영향을 결합해 揺さぶらずにはおかない가 성립한다. 미실행이나 회피 의미의 보기는 배제된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:06",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "세계적 연주자의 일회 공연이라는 특별한 사정이 열기의 이유라 公演とあって가 가장 적절하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "지역 재료와 전통 기법의 고유성은 工房ならではの製品으로 표현한다. の와 연결되는 문형도 적절하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:08",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "古代文学から食文化に至るまで가 범위의 양 끝을 잇는다. 至っては·至るより·至ったら는 해당 범위 문형이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:09",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "폭우라는 외부 사정 때문에 延期を余儀なくされた라는 강제된 결정이 맞는다. 연기 무시·교환은 문맥과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "全員が承知·今さら의 조건은 説明するまでもない의 불필요성을 지지한다. 권장·가치·사정상 불가능은 최선의 의미가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:11",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "特に意識せず에 見るともなく가 대응하여 목적 없는 시선을 나타낸다. 시간적 즉시성이나 불가능이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:12",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "ご報告かたがた는 보고 방문과 시제품 전달을 겸한다. 격식·방문 목적·해설이 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:13",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "재해 때도 절차를 생략하면 안 되므로 災害時といえども가 양보를 나타낸다. 선후·무시·반대가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:14",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "覚えたそばから忘れる는 외우자마자 잊는 반복이다. 다른 보기는 같은 형태와 의미를 만들지 못한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:grammar_fill:15",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "泣き出さ의 미연형에 んばかりの가 붙어 울 듯한 표정을 수식한다. 다른 보기와 어간 접속은 성립하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "遂行＝すいこう. 임무를 완수한다는 해설에 맞는 표준 읽기다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "懸念＝けねん. 불필요한 ん을 넣는 けんねん은 틀리며 우려의 의미가 맞다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "脆弱＝ぜいじゃく. 두 탁음을 정확히 보존한 읽기다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "促進＝そくしん. 促는 そく이며 촉음·장음 변형은 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "把握＝はあく. はくあく로 음절을 더하지 않고 파악이라는 뜻과 연결된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:06",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "概略＝がいりゃく. 略의 요음과 概의 탁음을 맞춘 보기다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:07",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "顧慮＝こりょ. こうりょ인 考慮와 구별하며 주변 사정을 고려한다는 뜻이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:08",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "踏襲＝とうしゅう. 두 장음을 유지하고 기존 방식 계승의 해설과 맞는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:09",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "顕在＝けんざい. 명백히 드러나 있다는 뜻이며 在의 ざい를 유지한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:10",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "措置＝そち. 촉음이나 다른 한자 독음으로 대체하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:11",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "妥当＝だとう. 妥의 탁음과 当의 장음을 보존하고 적절함이라는 뜻이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:12",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "繁栄＝はんえい. 풍요롭게 발전한다는 해설과 정확히 대응한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:13",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "賠償＝ばいしょう. 손해 배상의 의미와 償のしょう 읽기가 맞는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "逸脱＝いつだつ. いっだつ로 촉음화하지 않으며 기준을 벗어남의 해설이 맞다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:kanji_reading:15",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "閑散＝かんさん. 散의 청음을 유지하고 사람이 적어 조용함을 뜻한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:01",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "대본은 단일 지역 시험 후 결과를 보고 전국 확대를 판단한다. 즉시 전국화·취소·다지역 시험과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:02",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "상관만으로 인과를 단정하지 않도록 결론 표현을 제한하라는 요청이다. 자료 삭제나 발표 취소를 요구하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:03",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "기능을 줄이고 검증 기간은 확보한다. 시간 단축으로 검증을 희생하지 않는 두 조건이 정답에 함께 있다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:04",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "대상 범위는 넓히되 지급액은 소득에 따라 조정한다. 모두의 지급액 증가로 읽으면 대본의 구분을 잃는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:05",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "업무 연속성을 위해 당일 대체 장비를 먼저 수배한다. 회수·수리 견적은 그때 이어진다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:06",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "가격 차이가 작아 납기 지연 시 대체 공급의 계약상 보장이 우선이다. 할인·포장·계약 단축은 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:07",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "화요일 오전에는 조사표를 인쇄한다. 월요일 질문 확정·화요일 오후 현지 조사·수요일 자료 정리와 구별된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:08",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "전문지식은 이미 충분하므로 부서 간 의견 조정 경험이 다음 면접의 확인 대상이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:09",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "고객지원은 유지하고 저이용 세미나·중복 조사 위탁을 재검토한다. 모든 위탁 일괄 중단이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:10",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "평균 처리시간 20% 감소와 오류 건수 유의 변화 미확인을 함께 보존한다. 정확성 개선·악화 어느 쪽도 단정하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:11",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "추가 사례 전에 시작 질문과 결론이 맞도록 논지를 재구성한다. 주장·결론 삭제가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:12",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "통지 전 협상 기록과 납품 이력으로 사실관계를 정리한다. 문구만으로 해약권을 단정하지 않는 대본에 맞는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:13",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "첫 발표는 확인된 영향과 다음 갱신 시각이다. 조사 중인 원인이나 복구 시각을 확정하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:14",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "B의 국내 교체 부품 상시 확보가 정지 시간 손실을 줄인다. 성능이 크게 다르거나 B가 최저가여서가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:jlpt-n1-practice-v1:listening:15",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "주 2일 재택을 유지하며 신입 정기 상담을 추가한다. 장점을 보존하고 드러난 상담 기회 부족에 대응한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-vocab-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "물건 대금을 돌려받는 행위는 환불이다. 할인·포장·배송과 뚜렷이 구별되며 번역과 정의가 동일하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-vocab-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "주민 운동·강좌를 위한 지방자치단체 시설은 주민센터다. 백화점·공장·창고는 주어진 운영 목적에 맞지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-grammar-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "예상 밖 원인으로 지각한 결과이므로 오는 바람에가 맞는다. 명시된 인과 지시를 다른 보기들이 충족하지 못한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-grammar-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "비 조건에도 계획을 유지하는 양보는 오더라도다. 즉시성·활동 원인·목적의 다른 접속과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-reading-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "취소 여부 통지는 목요일 오전이다. 수요일 오후 6시는 신청 마감이며 세 언어 근거가 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-reading-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "공사 중 대체 자전거 장소는 건물 뒤편 임시 보관소다. 영어도 위치·임시성의 답 근거를 보존한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-listening-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "대본이 본관 냉방 불가로 별관 이층 회의실에서 진행한다고 명시한다. 기존 장소와 변경 장소를 구분한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-listening-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "보고서 발송 전에 수정된 수치를 한 번 더 확인해야 한다. 확인 뒤 이메일 발송이라는 순서가 직접 주어진다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-writing-1",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "담당자에게 시간과 준비물을 묻는 세 문장 정중 이메일이다. 예시의 인사·시간 문의·준비물 문의가 맞고 토요일·실내화는 숨은 필수 조건이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade3-writing-2",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "친구에게 습관 변경 방법과 이유를 세 문장으로 조언한다. 휴대전화 제한·대체 활동·긴장 완화의 예시가 맞으며 특정 방법을 rubric이 강제하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-vocab-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "결여를 채워 계획을 완전하게 만드는 것은 보완이다. 축소·연기·분리보다 정의에 정확하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-vocab-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "안전 섭취 기한은 소비기한이다. 정해진 보관 방법 준수라는 해설이 정의를 보충하며 다른 보기는 기한 자체가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-grammar-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "다양한 자료에 긴 이용 시간을 더해 강조하므로 뿐만 아니라가 맞는다. 추정·불가피·미수의 의미와 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-grammar-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "온라인 회의의 시간 절약과 집중 어려움을 대조하므로 반면에다. 덕분에의 긍정 원인이나 가정 표현은 부적합하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-reading-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "새 조치는 이용 기록에 따라 밤마다 자전거를 재배치하는 것이다. 이미 시행한 역 주변 증량과 명확히 구분된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-reading-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "긴급 업무를 공동 채널에 남기고 즉답 필요 때만 전화한다. 영어의 시간대 생략은 채널 우선이라는 답 근거를 제거하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-listening-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "참석 30명에서 40명으로 늘어 실습 재료를 열 세트 추가한다. 의자는 충분하다는 대본 조건과 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-listening-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "다른 이용자의 예약 때문에 대출 연장이 어렵다. 카드·공사·분실은 대본에 없다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-writing-1",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "불편 하나·개선 두 가지·네 문장의 조건을 예시가 과다 검색 결과, 근처 우선, 저장 기능, 효과로 충족한다. rubric은 추가 숨은 조건이 없다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade4-writing-2",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "세 언어 prompt와 rubric 모두 온라인 수업 대 교실 수업의 장단점 비교와 선호를 네 문장으로 요구한다. 예시는 양쪽 장단점·교실 선호·온라인 복습을 네 문장으로 제시하고 근무 비교 조건은 없다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-vocab-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "두 목표나 가치가 양립하기 어려운 상태는 상충하다다. 수렴·보존·확산과 의미가 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-vocab-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "현실에서 의도한 효과를 내는 성질은 실효성이다. 우연·상징·일시성과 구별된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-grammar-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "충분한 논의가 없을 때 흔히 피하기 어려운 결과는 생기기 마련입니다로 표현한다. 시늉이나 반쯤 수행과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-grammar-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "월–금 주 5일 × 하루 1시간이 명시되어 주 5시간 계산이 성립한다. 세 언어 모두 5일 조건을 보존하고 계산 결과 해석을 나타내는 보내는 셈입니다만 적합하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-reading-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "연구진은 증가 이용자의 기존 이동 행동을 확인해 전환 수요와 새 이동을 구분하려 한다. 무료 종료·혼잡·평균시간은 묻는 근거가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-reading-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "질문을 꺼리는 분위기로 오해가 반복되므로 질문과 조기 공유를 안전하게 만드는 문화가 핵심이다. 영어에도 전문가 결론이 있다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-listening-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "열 명 정도에게 질문을 먼저 보여 해석 차이를 확인하고 표현을 고치는 예비 조사가 제안이다. 본조사 표본 확대나 무작위화가 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-listening-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "벽에는 핵심 두세 문장, 상세 내용은 옆 정보 화면에 제공한다. 벽면 전면 삭제나 글자 축소와 구분된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-writing-1",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "지표 두 가지와 각각의 이유를 다섯 문장으로 요구한다. 연장 시간대 이용·기존 장벽 집단 비율과 이유·종합의 예시가 이를 충족하고 특정 지표 강제는 없다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade5-writing-2",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "교통 감소와 상점 접근성을 함께 고려한 다섯 문장 해결책이다. 차량 제한·배송 허용·순환버스·점검·조정의 예시가 균형을 이루며 추가 지표는 필수 채점 조건이 아니다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-vocab-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "중요한 것을 충분히 고려하지 않고 넘기는 말은 간과하다다. 숙고·규명·포괄은 적극적 검토·해명·포함이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-vocab-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "원인이나 논의가 특정 결과에 이르는 말은 귀결되다다. 유보·분산·상쇄와 구별되고 해설도 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-grammar-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "시간 손해를 감수하더라도 검증 원칙은 포기하지 않는 양보는 걸릴지언정이다. 추가·비례·단순 한정과 다르다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-grammar-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "복사해 둔 다행인 조건이 회의 중단을 막았으므로 두었기에 망정이지가 맞는다. 과거 어간 접속과 회피된 결과의 설명이 일치한다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-reading-1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "이의 제기 절차와 판단 근거 설명이 시민단체의 두 요구다. 영어가 기관 답변을 줄였어도 이 두 근거는 남아 있어 전면 소스코드 공개 오답과 구분된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-reading-2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "그늘 부족 지역의 노인·야외 노동자를 고려한 식재 우선순위가 강조점이다. 영어의 평균 기온 양보절 생략에도 취약성과 노출 근거는 보존된다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-listening-1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "통계 검토는 했지만 영향을 받는 두 집단 의견을 듣지 못했다. 그 의견 수렴 후 결정하자는 이유가 정답이다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-listening-2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "응답 수 부족이 아니라 20대·수도권 집중이라는 표본 편향 때문에 일반화에 신중해야 한다. 세 언어 해설이 동일하다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-writing-1",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "효율성과 접근성을 함께 다루는 여섯 문장 평가다. 예시의 처리·장소 이점, 기기 장벽, 보완 지원, 집단별 성공률, 조정이 조건을 충족하며 특정 찬반 입장을 rubric이 강제하지 않는다."
+    },
+    {
+      "id": "preview160-v3-2026-10-12:topik-owner-batch6-grade6-writing-2",
+      "status": "approved",
+      "answer_index": null,
+      "explanation_consistent": true,
+      "reason": "두 원인·원인을 구분할 자료·대응책을 여섯 문장으로 제시한다. 예시는 정보 미도달과 일정 충돌, 노출·불참 조사, 조건별 홍보·시간 대응을 포함하며 추가 숨은 조건이 없다."
+    }
+  ]
+}

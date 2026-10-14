@@ -1,0 +1,4 @@
+interface:
+  display_name: "Question Bank Quality"
+  short_description: "Audit authored learning question banks"
+  default_prompt: "Use $question-bank-quality to audit a JLPT or TOPIK authored question bank."

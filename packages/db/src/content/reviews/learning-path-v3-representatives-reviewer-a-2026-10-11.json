@@ -1,0 +1,117 @@
+{
+  "reviewer_id": "astra-independent-representative-reviewer-a-v3-2026-10-11",
+  "scope": "representative-contract-only",
+  "draft_sha256": "2978296359d74c0fd96d3e22b69b976cfe4de4248070710c186631289f6c5b17",
+  "source_evidence_sha256": "f223e9b1b60ca7c738993584ae9f8b0efc76897a6426d633d033ce63b0d41e24",
+  "concept_inventory_sha256": "cc62f1656af3748b35290f2ea6ca9827f189159d79481913e15d3fc3b45f21ef",
+  "passed": true,
+  "full_bank_approval": false,
+  "items": [
+    {
+      "id": "lp3-rep-n3-confirmation-a",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "예약표의 이름·날짜가 맞는지 살피는 행위는 確認이다. 延期·招待·返品은 해당 행동이 아니므로 정답은 하나다. N3 문맥 연습에 타당하고 ko/ja/en 안내·해설이 일치한다. 상품 발송 대조와 다른 여행 예약 상황이다."
+    },
+    {
+      "id": "lp3-rep-n3-confirmation-b",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "주문과 실제 상품의 일치를 조사하는 것은 確認이다. 交換·転送·登録은 교환·전달·등록으로 다른 행위다. 세 언어 해설이 정답 및 오답의 의미를 정확히 구별하며, 예약표와 다른 판매·배송 상황에서 N3 개념을 적용한다."
+    },
+    {
+      "id": "lp3-rep-n3-habit-a",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "명시된 현재의 의식적인 습관에는 ようにしています만 부합한다. 과거 계획·불가능·다른 선택지 부재는 다른 의미다. 접속과 N3 문법·삼언어 설명이 타당하며 건강을 위한 긍정형 실천을 묻는다."
+    },
+    {
+      "id": "lp3-rep-n3-habit-b",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "保存しないようにしています가 평소 비밀번호 저장을 피하려는 주의·노력을 표현한다. 과거 경험·과거 의도·강한 부정은 지속하는 실천이라는 조건을 충족하지 않는다. 삼언어 안내·해설과 N3 문형이 일치하며 건강 습관과 다른 정보 보호 상황 및 부정형 접속을 다룬다."
+    },
+    {
+      "id": "lp3-rep-topik-3-vocab-b1-v1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "예약 날짜를 다른 날짜로 바꾸므로 변경이다. 취소·확인·결제는 예약 유지와 날짜 교체라는 의미에 맞지 않는다. 3급 생활·업무 맥락으로 타당하고 ko/ja/en 해설이 일치한다."
+    },
+    {
+      "id": "lp3-rep-topik-3-vocab-b1-v2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "서류를 받는 행위 자체가 아니라 제출 방법의 바뀜을 물으므로 변경이다. 접수·연장·발급은 배제된다. 3급 어휘 및 삼언어 설명이 타당하고 날짜 변경과 달리 업무 절차 변경으로 개념을 적용한다."
+    },
+    {
+      "id": "lp3-rep-topik-3-grammar-b1-v1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "택배를 받아야 하는 것이 기다리는 이유이므로 하기 때문에가 맞다. 시간 순서·동시 행동·선택은 요구된 이유 관계와 다르다. 3급 문형과 삼언어 안내·해설이 일치하고 일상적인 배송 수령을 다룬다."
+    },
+    {
+      "id": "lp3-rep-topik-3-grammar-b1-v2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "보고서 재작성의 이유가 자료 오류이므로 있기 때문에가 유일한 답이다. 선택·양보·목적 표현은 안내의 인과 조건을 충족하지 않는다. 3급 업무 맥락과 삼언어 해설이 일치하며 배송 대기와 다른 문서 수정 상황이다."
+    },
+    {
+      "id": "lp3-rep-topik-4-vocab-b1-v1",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "신고·증명서 발급이라는 행정업무에 맞는 선택지는 민원실이다. 보건실·자료실·상담실은 지정 업무의 창구가 아니다. 4급 공공서비스 어휘 연습으로 타당하고 세 언어 해설이 일치한다."
+    },
+    {
+      "id": "lp3-rep-topik-4-vocab-b1-v2",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "제시된 장소 중 민원 접수·절차 문의에 적합한 곳은 민원실뿐이다. 회의·휴식·전산 운영 공간은 목적에 맞지 않는다. 특정 지자체의 모든 담당부서를 묻는 문제가 아니므로 다른 부서의 존재는 복수 정답 사유가 아니다. 4급 사회생활 문맥·삼언어 해설이 타당하고 신고·증명서 발급과 다른 소음 민원 상황이다."
+    },
+    {
+      "id": "lp3-rep-topik-4-grammar-b1-v1",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "갑작스러운 도로 차단이 구급차 지연을 일으켜 막는 바람에가 맞다. 목적·양보·대체는 예상 밖의 원인과 불리한 결과라는 명시 조건과 다르다. 4급 문형·접속·삼언어 해설이 일치한다."
+    },
+    {
+      "id": "lp3-rep-topik-4-grammar-b1-v2",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "발표 직전 장비가 꺼져 영상을 못 보여 주는 결과에는 꺼지는 바람에가 맞다. 대조·목적은 요구된 인과관계를 표현하지 않는다. 4급 문형과 삼언어 해설이 타당하며 외부 도로 차단과 다른 장비 고장·발표 상황이다."
+    }
+  ],
+  "concept_findings": [],
+  "screen_contract_findings": [],
+  "verification": {
+    "unique_item_ids": 12,
+    "independently_selected_answers": [0, 1, 2, 3, 0, 1, 2, 3, 3, 2, 1, 0],
+    "answer_distribution": [3, 3, 3, 3],
+    "per_track_level_section_max_answer_imbalance": 1,
+    "concepts_reviewed": 6,
+    "distinct_situations_per_concept": 2,
+    "inventory_count": 220,
+    "inventory_per_level": 20,
+    "representative_concepts_equal_inventory_entries": true,
+    "all_three_hashes_recomputed_and_matched": true,
+    "representatives_raw_file_sha256": "dbfcf9a904790cbdfea04bfff3cc83de28d54105d7793b438684ab619dce13cf",
+    "draft_hash_method": "SHA-256 of JSON.stringify(payload) after removing draft_sha256, source_evidence_sha256 and concept_inventory_sha256; supersedes_draft_sha256 remains part of payload",
+    "concept_cue_assessment": "All six current cues were read. 確認 now explains checking correctness and its reading in ko/ja/en. The ~ようにする cue names dictionary/ない-form attachment, deliberate effort and ongoing ようにしています in all three languages. The prior incorrect Korean particle phrases are absent. TOPIK cues accurately teach 변경, 기 때문에, 민원실 and 는 바람에. Every concept is linked to two genuinely different practice situations.",
+    "screen_contract_assessment": "Declared contract is coherent: localized instructions, unchanged target-language stimuli and choices, localized explanations after submission, learn-before-practice, hidden listening scripts, unchanged same-language Google-preferred browser speech without R2. Generic concept instruction before practice is pedagogical scaffolding, not a translation of the exercise answer. Enforcement in the actual application was not tested.",
+    "source_scope": "Prototype records retain original acquisition times and source hashes; revision note explicitly disclaims fresh HTTP collection and full-bank intake. No new remote acquisition or full-bank source approval was performed.",
+    "browser_execution": "not-run",
+    "full_bank_source_collection": "not-approved; separate incomplete full-bank gate remains",
+    "scope_note": "Independent static review of this frozen v3 representative only. Not a 440-item approval, calibrated official-exam difficulty claim, browser/voice test, database-publication approval or deployment approval. Earlier rejected records remain unchanged."
+  }
+}

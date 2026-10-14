@@ -64,6 +64,13 @@
       "when": 1784340000000,
       "tag": "0008_topik_track_content_and_learning_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1784426400000,
+      "tag": "0009_topik_placement_v2",
+      "breakpoints": true
     }
   ]
 }

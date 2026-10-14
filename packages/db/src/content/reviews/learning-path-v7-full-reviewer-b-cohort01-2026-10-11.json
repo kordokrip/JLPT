@@ -1,0 +1,3104 @@
+{
+  "reviewer_id": "independent-semantic-reviewer-b-v7-cohort01-2026-10-11",
+  "scope": "full-bank-only",
+  "full_bank_scope": "all 440 immutable v7 items; 220 concept cues and 220 lesson connections",
+  "passed": true,
+  "full_bank_approval": true,
+  "draft_sha256": "b1c7dda3b31d4bac030348f882c1786826588df83485a0f5573063a0a41b5871",
+  "source_evidence_sha256": "f7f130d0322271ce5c264d728f423212fc3a37dfaf98d8169ffe7844d7cde2a7",
+  "concept_inventory_sha256": "85515cb49ac8462875c4863c38083880f426939e8f681d20d26a7e88b5989027",
+  "coverage": {
+    "items_reviewed": 440,
+    "unique_item_ids": 440,
+    "choice_items_independently_solved": 392,
+    "choice_answer_mismatches": 0,
+    "writing_items_reviewed": 48,
+    "audio_scripts_read": 98,
+    "concept_cues_reviewed": 220,
+    "lesson_connections_reviewed": 220,
+    "source_records_reviewed": 86,
+    "source_concept_links_reviewed": 220,
+    "approved": 440,
+    "rejected": 0,
+    "unchecked": 0
+  },
+  "review_method": [
+    "Read the immutable v7 questions, every option, explanations in ko/ja/en, all writing samples and rubrics, all 98 audio scripts, all 220 multilingual cues and all lesson connections afresh. Target-language question bodies and options intentionally remain identical across UI languages; instruction triples were read separately.",
+    "Recorded independently selected zero-based choice indices before comparing the complete answer set with the bundle. Individual reasons derive from semantic reading, not structural validator approval.",
+    "Considered alternative answers, grammatical attachments, distractor plausibility, supplied versus inferred facts, grade-appropriate instruction, distinct situations for each concept, writing length, translation fidelity, and whether rubric requirements exceed the actual prompt.",
+    "Read all 86 frozen source records and 220 concept-evidence links. Dictionary metadata and owned public identities are evidence within the frozen bundle, not a new live source acquisition or an official examination-level certification.",
+    "Recomputed the draft payload hash and raw source/inventory hashes at start and finish. Did not read other reviewers, author revisions, or inherit earlier approvals."
+  ],
+  "counterexamples": [
+    {
+      "item_id": "lp7-topik-5-writing-b2-authored-1",
+      "kind": "accepted-alternative-test",
+      "reason": "A justified five-sentence preference for paper-only or app-only guidance satisfies the task without a hybrid design, supplementary condition, or follow-up survey; the rubric explicitly accepts this."
+    },
+    {
+      "item_id": "lp7-topik-6-writing-b3-authored-1",
+      "kind": "accepted-alternative-test",
+      "reason": "A qualitative stopping condition such as inability to guarantee appeals meets the requested stopping criterion; the rubric does not demand a numerical threshold or assistive-only design."
+    },
+    {
+      "item_id": "lp7-topik-6-writing-b4-authored-1",
+      "kind": "accepted-alternative-test",
+      "reason": "A six-sentence critique distinguishing reports from actual crime and explaining one justified evidence limit can satisfy the task without proposing a comparison design or listing every omitted variable."
+    },
+    {
+      "item_id": "lp7-topik-6-writing-b4-authored-2",
+      "kind": "accepted-alternative-test",
+      "example": "온라인 상태 시간이 35% 늘었다는 사실은 생산성이 같은 비율로 향상됐다는 뜻이 아니다. 접속 시간이 길어도 산출물의 양이나 질이 높아졌다고 단정할 수 없다. 퇴사자를 제외한 결과는 전체 근로자의 경험을 대표하지 못할 수 있다. 다만 퇴사 이유가 제시되지 않아 편향의 방향이나 크기까지 확정할 수는 없다. 따라서 이 자료가 직접 보여 주는 것은 분석 대상자의 온라인 시간 변화이다. 회사의 생산성 향상 주장은 현재 제시된 근거만으로 충분히 뒷받침되지 않는다.",
+      "reason": "This six-sentence critique addresses proxy validity, possible exclusion bias, and the supported claim without proposing further data, comparison design, or group-equity analysis. The v7 instructions and rubric explicitly leave these additions optional."
+    }
+  ],
+  "concept_findings": [],
+  "lesson_findings": [],
+  "screen_contract_findings": [],
+  "source_findings": [],
+  "screen_contract_review": {
+    "declared_contract_only": true,
+    "audio": "google-preferred-same-language-fallback-ko-ja-only-no-r2",
+    "r2_audio": "prohibited",
+    "legacy_audio": "410-gone"
+  },
+  "limitations": [
+    "No browser, actual screen, Chrome voice availability, family/device testing, or listening playback was performed; audio review was script-semantic only.",
+    "No remote source reacquisition, production/Preview verification, file-backed database write, staging, build, or full test suite was performed.",
+    "pnpm ops:status remained non-passing: 38 passed, 2 warnings, 1 failure from a stale file catalog; dirty-worktree and known HEAD/release manifest-drift warnings are outside this semantic artifact."
+  ],
+  "items": [
+    {
+      "id": "lp7-n5-vocab_mc-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Child goes to 学校 to study; alternative places lack the stated role.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-vocab_mc-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Classrooms and a school library identify 学校.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-vocab_mc-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The person teaching Japanese is 先生, not a student or shop worker.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-vocab_mc-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Starting the lesson before seated students identifies 先生.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-vocab_mc-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "電車 is the station-boarded transport to Tokyo.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-vocab_mc-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A train stopped by snow explains waiting at the station.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-vocab_mc-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "友達 alone can be the companion playing in the park.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-vocab_mc-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Regular play with a classmate establishes the friend relation.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-vocab_mc-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Bread and eggs after waking constitute 朝ご飯.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-vocab_mc-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "今朝 and a missed meal identify breakfast.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-grammar_fill-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "は correctly marks わたし as the introduction topic.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-grammar_fill-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "は marks この本 as the thing being described.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-grammar_fill-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "水 takes direct-object を with 飲む.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-grammar_fill-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "手紙 takes を with 書く; 家族に already marks recipient.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-grammar_fill-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Six o'clock requires specific-time に.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-grammar_fill-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three o'clock is marked に as the starting time.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-grammar_fill-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Library is the action location, so で.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-grammar_fill-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Eating in the park requires location で.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-grammar_fill-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Sleeplessness after coffee motivates present habitual negative 飲みません.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-grammar_fill-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Weekly closure and resting at home support 行きません.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-kanji_reading-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "日曜日 has the whole-word reading にちようび.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-kanji_reading-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "三日 as the travel date/duration is みっか.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-kanji_reading-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Monday 月曜日 is げつようび.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-kanji_reading-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "School starting in the named month makes 一月 January, いちがつ.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-kanji_reading-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "日本人 reads にほんじん, including the nationality suffix.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-kanji_reading-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three people are さんにん; the alternatives use incorrect counting readings.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-kanji_reading-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Standalone mountain 山 is やま.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-kanji_reading-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The standard name 富士山 is ふじさん.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-kanji_reading-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Standalone river 川 reads かわ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-kanji_reading-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Fish seen in a river supports 川 as かわ.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-listening-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The arrival is expressly in the morning with おはようございます.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-listening-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The recording explicitly gives the student's おはようございます at eight.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-listening-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The introduced occupation is システムエンジニア.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-listening-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The dialogue names Tanaka as the engineer the woman will consult, not the initial addressee Yamada.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-listening-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Wake time is six; seven is breakfast.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-listening-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Sunday waking is eight, contrasted with weekday six.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n5-listening-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Walking reaches the station; 電車 covers the company trip.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n5-listening-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Rainy-day transport is expressly 電車.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n5-listening-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Book reading occurs before sleeping.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n5-listening-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "After brushing teeth the speaker reads before sleeping.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-vocab_mc-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Future weekend activities entered in a planner are 予定.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-vocab_mc-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A meeting moved to four changes the afternoon 予定.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-vocab_mc-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Calling about delay is 連絡.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-vocab_mc-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Informing an employer of a changed address is 連絡.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-vocab_mc-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Getting clothes and a map ready is 準備.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-vocab_mc-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Readiness completed before presentation practice is 準備.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-vocab_mc-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "必要 expresses the passport requirement.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-vocab_mc-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "必要な書類 names documents required for applying.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-vocab_mc-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Meeting the doctor by agreement is 約束.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-vocab_mc-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A promise to a friend to return a book is 約束.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-grammar_fill-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "聞きながら connects simultaneous listening and cooking; other options misattach.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-grammar_fill-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Continuous map-looking while walking requires 見ながら.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-grammar_fill-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The regretted lost wallet requires past 忘れてしまいました.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-grammar_fill-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "All homework already finished yesterday supports completion 終わってしまいました.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-grammar_fill-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Required participant paperwork by a deadline demands 出さなければなりません.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-grammar_fill-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The no-shoes rule requires 脱がなければなりません.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-grammar_fill-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Past inability versus current reading ability is 読めるようになりました.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-grammar_fill-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Actual daily cycling after moving is a habit change 通うようになりました.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-grammar_fill-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Dark clouds suggest uncertain rain, かもしれません.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-grammar_fill-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Congestion supports possible lateness, not ability or intention.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-kanji_reading-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "春休み reads はるやすみ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-kanji_reading-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Flower viewing in 春 uses はる.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-kanji_reading-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "夏休み reads なつやすみ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-kanji_reading-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The hot swimming season 夏 reads なつ.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-kanji_reading-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Autumn red-leaf viewing uses 秋 read あき.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-kanji_reading-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "School sports day in 秋 retains あき.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-kanji_reading-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "冬休み reads ふゆやすみ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-kanji_reading-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Snowy 冬 is ふゆ.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-kanji_reading-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "病院 reads びょういん, preserving the long vowel.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-kanji_reading-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "入院 reads にゅういん.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-listening-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The meeting is at three at the station, before the four-o'clock film.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-listening-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The proposed replacement for early two o'clock is three at the station.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-listening-3",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The stated preparatory action is reserving tickets.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-listening-4",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The speaker volunteers to book the hotel ahead of travel.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-listening-5",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "何時に会う explicitly asks meeting time.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-listening-6",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The lunch invitation asks when to meet, not restaurant or cost.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n4-listening-7",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "何の映画 asks which film is wanted.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n4-listening-8",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The parent asks the child's desired film after homework.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n4-listening-9",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The preference stated is action rather than romance.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n4-listening-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The group-viewing preference is an action film.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-vocab_mc-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Matching card number and appointment time calls for 確認.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-vocab_mc-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Checking a safety device before use is 確認.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-vocab_mc-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Moving a reservation from Friday to Saturday is 変更.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-vocab_mc-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Replacing a moved company's address is 変更.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-vocab_mc-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "影響を与える expresses prolonged rain's effect on harvest.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-vocab_mc-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "影響する fits construction causing a service delay.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-vocab_mc-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Seeking school-selection advice is 相談.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-vocab_mc-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Seeking a solution to a leak is 相談.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-vocab_mc-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Unknown details of where/how an accident occurred are 状況.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-vocab_mc-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Completed and remaining work describe 進行状況.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-grammar_fill-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "わけではありません limits the expensive-means-durable generalization.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-grammar_fill-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "わけではありません rejects an inference of blanket opposition to remote work.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-grammar_fill-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "An explicitly universal entry rule is ことになっています.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-grammar_fill-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The library's stated rule supports ことになっています.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-grammar_fill-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Directions enabled successful arrival, a beneficial cause おかげで.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-grammar_fill-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Backups prevented loss, so おかげで.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-grammar_fill-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Explicitly self-maintained practice without a company rule is ようにしています.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-grammar_fill-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The personal sleep habit rather than a family rule is ようにしています.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-grammar_fill-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Customers are the target of the explanation, に対して.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-grammar_fill-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "のに対して contrasts the siblings' study times.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-kanji_reading-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "確認 as a complete word is かくにん.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-kanji_reading-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "確か asking certainty reads たしか.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-kanji_reading-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "認めました is the inflected verb みとめました.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-kanji_reading-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "認証 reads にんしょう.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-kanji_reading-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "会議 reads かいぎ with voiced ぎ.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-kanji_reading-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "議論 reads ぎろん in that order.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-kanji_reading-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "情報 reads じょうほう with both long vowels.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-kanji_reading-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "報告 reads ほうこく; the alternatives change its sounds.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-kanji_reading-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "連絡 reads れんらく.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-kanji_reading-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Taking a child along uses 連れて read つれて.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-listening-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Not impossible with time means difficult but potentially solvable.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-listening-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The ingredients condition leaves open her ability to cook it.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-listening-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The speaker recommends an umbrella because rain looks likely.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n3-listening-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Afternoon rain risk motivates preparing rain gear.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-listening-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The forecast expressly clears around noon.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-listening-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The announcement attributes the delay to vehicle inspection.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-listening-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Yesterday's promise supports expected arrival, not confirmed sighting.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n3-listening-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The out-for-delivery notice supports arrival today.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n3-listening-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The expert strongly infers genuineness from marks and scratches.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n3-listening-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Lights and voices support the judgment that someone is inside.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-vocab_mc-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A funding priority is guiding 方針 rather than execution order.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-vocab_mc-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicit priority-versus-sequence contrast selects 方針.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-vocab_mc-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "First/next/final steps define 手順.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-vocab_mc-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Identity check, input and submission define ordered 手順.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-vocab_mc-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Weighing weather and health before postponement is 判断.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-vocab_mc-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Comparing sources then concluding publication is possible is 判断.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-vocab_mc-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Layout improving work performance concerns 効率.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-vocab_mc-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Advance sharing improves discussion 効率.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-vocab_mc-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Unresolved elderly transport needs are a regional 課題.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-vocab_mc-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The thousand-character assigned task is 課題.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-grammar_fill-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "わけではない limits suitability for every job.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-grammar_fill-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The adequate short report defeats an inference of insufficient research.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-grammar_fill-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicit all-user rule takes ことになっている.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-grammar_fill-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A formally settled monthly schedule takes ことになっている.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-grammar_fill-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Childcare expansion accompanies population growth, に伴って.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-grammar_fill-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "のに伴って connects digitization with the changing counter role.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-grammar_fill-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "損ないかねない warns of potential harm.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-grammar_fill-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "失いかねない warns of losing needed records.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-grammar_fill-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "改善しつつある expresses ongoing water-quality improvement.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-grammar_fill-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Observed gradual uptake, not a mere feared future outcome, requires 広がりつつある.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-kanji_reading-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "基準 reads きじゅん with 準 as ジュン.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-kanji_reading-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "基盤 reads きばん.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-kanji_reading-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "準備 reads じゅんび.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-kanji_reading-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "標準 reads ひょうじゅん.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-kanji_reading-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "測定 reads そくてい.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-kanji_reading-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "推測 reads すいそく.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-kanji_reading-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "調査 reads ちょうさ.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-kanji_reading-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "検査 reads けんさ.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-kanji_reading-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "構成 reads こうせい.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-kanji_reading-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "機構 reads きこう and denotes mechanism.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-listening-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The choice follows a time-and-cost efficiency comparison, not speed alone.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-listening-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "B's fewer operations make efficiency the deciding criterion.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-listening-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Visitor counts and questionnaire views both inform the library decision.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-listening-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Sales figures and buyers' views both inform improvement.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-listening-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only 7:30–9:00 gains a counter; opening time and afternoon staffing remain unchanged.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-listening-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only Monday morning reception increases from one person to two; slots and consultation hours stay fixed.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n2-listening-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "He warns of misunderstanding a reasonless change as unilateral.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n2-listening-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicit request is a sentence giving the survey's reason, not a generic chart description.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n2-listening-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Production is stabilizing but checks continue through the month.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n2-listening-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "River conditions are recovering and monitoring continues.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-vocab_mc-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Support for a conclusion is its 論拠.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-vocab_mc-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Correlation alone is insufficient 論拠 for causality.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-vocab_mc-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Removing surrounding speech loses 脈絡.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-vocab_mc-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Missing chapter-to-conclusion coherence is 脈絡.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-vocab_mc-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A national conclusion from three participants is not 妥当.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-vocab_mc-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Comparison of bids and terms supports a 妥当 price.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-vocab_mc-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Forecast-versus-sales divergence is 乖離.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-vocab_mc-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Management-versus-field perception gap is 乖離.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-vocab_mc-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Correcting unfair pay differences is 是正.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-vocab_mc-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Correcting an audit-identified procedural defect is 是正.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-grammar_fill-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "成果いかんだ makes continued support depend on results.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-grammar_fill-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "いかんにかかっている marks dependence on compromise degree.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-grammar_fill-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "External landslide conditions force a detour, を余儀なくされた.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-grammar_fill-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Material-price shocks force plan reduction, を余儀なくされた.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-grammar_fill-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "ならではの marks the workshop's distinctive craftsmanship.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-grammar_fill-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "ならではの marks a small organization's distinctive strength.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-grammar_fill-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "ないまでも concedes less than unanimity while achieving key agreement.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-grammar_fill-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "ではないまでも concedes nonexpert status while requiring basic literacy.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-grammar_fill-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The instruction expressly requests a series' starting event, を皮切りに.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-grammar_fill-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The requested first launch in a sequence is を皮切りに, not conditional いかんで.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-kanji_reading-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "顕著 reads けんちょ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-kanji_reading-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "顕在化 reads けんざいか.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-kanji_reading-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "遂行 reads すいこう.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-kanji_reading-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "成し遂げた reads なしとげた.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-kanji_reading-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "均衡 reads きんこう.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-kanji_reading-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "不均衡 reads ふきんこう.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-kanji_reading-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "遵守 reads じゅんしゅ.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-kanji_reading-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "遵法 reads じゅんぽう with semi-voiced 法.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-kanji_reading-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "配慮 reads はいりょ.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-kanji_reading-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "考慮 reads こうりょ.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-listening-01",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The editor wants visible grounds and logical progression, not deleting the conclusion.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-listening-02",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Accurate transcription is already checked; remaining work is sufficiency and inferential coherence.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-listening-03",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Advertising and seasonality overlap, so no single cause is established.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-listening-04",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Additional research separates factory measures from rainfall effects.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-listening-05",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Actual-user operation difficulties are the next study, not repeated calculations.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-listening-06",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Budget, timing and appearance are settled; mobility for wheelchairs/strollers remains.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-n1-listening-07",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The online-heavy respondent composition may explain the gap from counter users.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-n1-listening-08",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The branch asks for reality-based metric revision after investigating the gap.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-n1-listening-09",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Correct known bills immediately and improve checks; do not wait for the full audit.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-n1-listening-10",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Stop shipment and correct the deviation's cause before harm.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "First meeting calls for 안녕하세요 rather than farewell, apology or mealtime.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "저는 수진이에요 correctly states the speaker's own name.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "학생 ends with ㅇ, requiring 이에요.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "의사 has no final consonant, requiring 예요.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicit replacement room is 305, not 201.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The class notice identifies colored paper and scissors, not the optional notebook.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The speaker explicitly says Japan; the answer is not inferred from her name.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The speaker explicitly introduces himself as a cook.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The birth-giving female parent is 어머니.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Among the family relations, the younger male is 남동생.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Existence inside the bag uses 에 있어요.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The bank's static location uses 에 있어요.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The bakery notice explicitly closes Sundays.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Saturday belongs to the 10:00–20:00 schedule, so closes at eight.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The order explicitly specifies one hot coffee.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Cheesecake is the food ordered with lemon tea.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Pencil marks are erased with 지우개.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A notebook is opened for writing class notes.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Studying's location requires 에서.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Eating in the cafeteria requires 에서.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The rule explicitly requires turning the phone off before class.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The wet umbrella belongs in the stand beside the door.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The audio assigns the children's room to floor two.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "After closing, books go in the entrance return box.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only apple matches the described red fruit with white flesh and seeds.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Fish as animals take the counter 마리.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicit polite request to sit requires 앉으세요.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-1-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The vowel-ending 오- takes 세요 for a polite request.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The bag was found on the playground; the staff room is the collection point.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-1-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The glasses are stored in the first-floor information office.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Shop two is expressly named; neither surname nor discount is inferred.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-1-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The mackerel sale expressly starts at eleven a.m.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-1-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three translated sentences give name, origin and hobby; greeting and sample details are optional."
+    },
+    {
+      "id": "lp7-topik-1-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three translated sentences give name, floor and job; greeting and particulars are optional."
+    },
+    {
+      "id": "lp7-topik-1-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences accurately preserve 9/1/7, friend lunch and library study in order."
+    },
+    {
+      "id": "lp7-topik-1-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences preserve eight-a.m. work, six-p.m. departure and eight-p.m. home exercise."
+    },
+    {
+      "id": "lp7-topik-1-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences give art preference, reason and class activity without requiring sample poster-making."
+    },
+    {
+      "id": "lp7-topik-1-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences give music preference, reason and learning content without compulsory piano."
+    },
+    {
+      "id": "lp7-topik-1-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three-turn model asks large blue-shirt availability and price; translations and rubric match."
+    },
+    {
+      "id": "lp7-topik-1-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences ask apple price and request three; rubric permits a nonvendor third sentence."
+    },
+    {
+      "id": "lp7-topik-2-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Going to the company to work is 출근합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Finishing work and going home is 퇴근합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Undecided plans and the explicit wish question require 보고 싶어요.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The current desired food, not an ongoing meal, requires 먹고 싶어요.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The agreed location is City Hall Station exit three.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only the meeting time changes; the restaurant stays the same.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The final agreement is seven after the six-o'clock work finish.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The spoken arrangement specifies the park entrance.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Falling droplets and umbrellas are observed rain, not a forecast.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Warm gloves fit subzero snowy weather among the options.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A completed meeting yesterday requires contracted past 만났어요.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Already-finished breakfast takes 먹었어요.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The reply deadline is Friday, not the Saturday event.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The invitation explicitly requests water and a mat.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Bus 32 goes to the museum; bus 12 goes to the station.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The roadwork delay is explicitly fifteen minutes.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Repeated camera-based picture taking is 사진 촬영.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Moving Saturday tennis to Sunday postpones the arrangement.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "No enrollment or plan is fixed; the conditional wish uses 고 싶어요.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The next-month club activity is desired, so 치고 싶어요.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The club explicitly welcomes first-time hikers.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The application deadline is Thursday, not the Friday screening.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The final film is Saturday five o'clock; 4:40 is the meeting time.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "They agree on the man's home; the script supplies no name.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Changing from line two to seven is 환승했습니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Waiting roadside to board a bus identifies 버스 정류장.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicitly future weekend intention uses 가려고 해요.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-2-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The instruction asks the plan decided now; 먹으려고 합니다 fits, unlike past wish or action.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "During construction the temporary boarding point is in front of the post office.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-2-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The Saturday festival last bus moves to eleven p.m.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Exit four is the meeting point; line two is transport.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-2-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The stated fallback is taking the next train and calling.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-2-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences preserve Saturday two, Central Library, joint study and reply request; internal meeting point is optional."
+    },
+    {
+      "id": "lp7-topik-2-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences preserve Sunday eleven, exhibition, ticket-office meeting and late contact; text or phone is allowed."
+    },
+    {
+      "id": "lp7-topik-2-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four past-tense sentences preserve Saturday, friend, mountain, nine departure and summit meal plus feeling."
+    },
+    {
+      "id": "lp7-topik-2-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences preserve cooking with sibling, market purchase, family meal and result without requiring shopping companion."
+    },
+    {
+      "id": "lp7-topik-2-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences give Saturday five, home cooking, invitation and drink request; ingredient assignment is optional."
+    },
+    {
+      "id": "lp7-topik-2-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences include Sunday three, field, soccer invitation and footwear request; extra attendees/reply are optional."
+    },
+    {
+      "id": "lp7-topik-2-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four planned sentences preserve picnic, friend, materials and museum rain alternative; added cycling is not mandatory."
+    },
+    {
+      "id": "lp7-topik-2-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences preserve family Busan trip, morning train, beach and evening return without imposing exact clock times."
+    },
+    {
+      "id": "lp7-topik-3-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Moving a hotel date is 변경, not extending or cancelling the stay.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "A later deadline specifically extends the application period, 연장.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Needing the parcel explains waiting, 하기 때문에.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The closure day causes inability to borrow, 휴관일이기 때문에.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Other-library books are an explicit exception requiring the desk from Monday.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The reservation expires after twenty minutes without entry.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The rescheduled appointment is Friday nine with reception requirements.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "10:30 minus twenty minutes gives 10:10.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Submitting enrollment details is 신청.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Asking about an unknown discount is 문의.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "없는데 naturally supplies background before the offer to leave a message.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "좋은데 correctly contrasts good facilities with expensive fees.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only the pool is unavailable; gym and showers remain open.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only oven users must apply in advance.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The changed venue is the annex's first-floor training room.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The revised deadline is Friday afternoon, replacing Thursday.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Keeping consistent sleeping/waking times maintains the sleep schedule.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Reducing sweet drinks from three to one reduces sugar intake.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "제출하여야 합니다 is the supplied grammatical obligation form.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "먹어야 expresses the stated necessary condition after a meal.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The first-visit condition expressly requires identification.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Changes must be requested before six today, distinct from same-day cancellation.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The doctor's first instruction is a week of sleep/headache records.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-3-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Continued knee pain triggers stopping and another consultation.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-3-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Routing a call to accounting is 전화를 연결하다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Recording caller name and number for an absent worker is 메모를 남기다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Traffic caused lateness, so 막히- plus 어서 yields 막혀서.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Completed writing then submission takes 작성하여서, not before or merely wishing to write.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The advance Tuesday task is uploading sales materials.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only the meeting time is explicitly changed; earlier photo count is unspecified.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "First check the single quantity mismatch; the calculation is already correct.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-3-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Today's deliverable is PDF; the editable USB file comes tomorrow.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Resident document issuance and filings belong to 민원실.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Community vaccination inquiries belong to 보건소 among these institutions.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Unexpected computer failure causes an adverse result, 는 바람에.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Unexpected strong wind causes performance interruption, 는 바람에.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Only nonconsenting applicants must supply the original income document.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Failure to supplement within five days leads to return of the application.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The announcement explicitly requires ID for wallet collection.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Station retention lasts through this weekend, before Monday transfer.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Cleaning bottle residue removes contamination among the listed actions.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Sorting paper, glass and food waste by type expresses 분리배출 rather than mere storage.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "들을 수 있도록 expresses the microphone's intended audibility.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "않도록 expresses preventing a forgotten deadline.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Colored bottles belong to Friday general plastics, not Thursday clear bottles.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The rainy-day exception directs the Wednesday exchange indoors.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The final Busan platform is seven rather than the earlier three.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The alternative is the 12:20 train without added fare.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Repair respecting original form and materials preserves cultural heritage.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Residents' direct planning decisions are 주민 참여.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The explicitly noncausal advantage/disadvantage contrast requires 반면에.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The siblings' contrasting talkativeness requires 하는 반면에.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The eleven-o'clock guided explanation requires reservation.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Eligible elementary-child families must apply separately for the workshop.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "ID preparation is unchanged despite venue, time and order changes.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-4-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The lecture moves to one p.m.; crafts replace its original slot.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-4-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Starting the express-bus plan implements policy.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Partial public payment supports care costs.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Taking the subway substitutes for the car, 는 대신에.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Extra work today is exchanged for later arrival tomorrow, 는 대신에.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "In-person speaking registration closes on the eleventh, distinct from online questions.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Livestream questions belong on the advance board, not chat.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-4-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The negotiated final volunteer time is Sunday ten a.m.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-4-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The final rehearsal uses the Saturday music room.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-3-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four Korean sentences preserve Tuesday-three appointment, training conflict, Thursday morning and time inquiry; translations fit."
+    },
+    {
+      "id": "lp7-topik-3-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences state the face-to-face class, move, next-month online change and feasibility/procedure questions."
+    },
+    {
+      "id": "lp7-topik-3-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences explain tomorrow's cold absence and politely ask submission method; email method and closing are optional."
+    },
+    {
+      "id": "lp7-topik-3-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences give yesterday's kitchen-faucet leak and request this week's repair time."
+    },
+    {
+      "id": "lp7-topik-3-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences supply two relevant actions and reasons without diagnosis or compulsory sample details."
+    },
+    {
+      "id": "lp7-topik-3-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Three sentences offer two feasible workday suggestions; separate reasoning sentence is not compulsory."
+    },
+    {
+      "id": "lp7-topik-3-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four polite sentences preserve tomorrow's meeting, today's four deadline and error notification without mandating markings."
+    },
+    {
+      "id": "lp7-topik-3-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four polite sentences preserve the writer's Friday evening and colleague's Sunday morning shift ownership."
+    },
+    {
+      "id": "lp7-topik-4-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Five sentences cover food-booth purpose, notification, documents and processing; greetings and sentence distribution stay optional."
+    },
+    {
+      "id": "lp7-topik-4-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Five sentences inquire about minutes, online filing, fee and format without compulsory research purpose."
+    },
+    {
+      "id": "lp7-topik-4-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences give a plausible cause, distinct actions and expected reduction; numerical evaluation is optional."
+    },
+    {
+      "id": "lp7-topik-4-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences connect serving changes and student feedback to less waste without fixed portions or survey frequency."
+    },
+    {
+      "id": "lp7-topik-4-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four translated sentences provide an illustrative local market cycle, attractions, community role and optional etiquette examples."
+    },
+    {
+      "id": "lp7-topik-4-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Four sentences describe a selected local tradition, significance, participation and precautions without forcing material or theme."
+    },
+    {
+      "id": "lp7-topik-4-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Five sentences supply concrete evening route/hours, rationale, benefits and review request without invented survey results."
+    },
+    {
+      "id": "lp7-topik-4-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Five sentences provide hours and spare-classroom measures, rationale, benefit and a pilot; sample time/duration are optional."
+    },
+    {
+      "id": "lp7-topik-5-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The 68% demand survey supports the library-hours claim as evidence.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Judging twice-weekly remote work appropriate is an opinion.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Explicit absence of any apology rules out concession; 기는커녕 fits reversed expectation.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Far from resting, even lunch was impossible: 기는커녕.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The author's limited proposal starts with an industrial-route pilot.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The author requires traffic data and replacement parking before installation.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The speaker proposes a one-department pilot with response-time and satisfaction checks.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Shorter minutes must retain decisions, owners and deadlines.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Common-criteria suitability judgment is 평가.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Side-by-side shared indicators identify 비교.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Convenience is conceded before the cost limitation, 기는 하지만.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Observed speed improvement is conceded in past 기는 했지만.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The evaluation recognizes economic gains and access/convenience shortcomings.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Low participation and skewed respondent composition restrict generalization.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The proposal adds afternoon peak staff and remeasures the same metric.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "The simultaneous referral campaign prevents sole-advertising attribution.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Persistent multi-region housing insecurity requiring institutions is 사회 문제.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "Growing needs and insufficient workers/services indicate social-care shortage.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "기 마련이다 expresses the general tendency of first-attempt mistakes.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "기 마련이다 states the expected tendency from inadequate preparation.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "표본의 통근 시간 12분 증가·비용 9만 원 감소만 뒷받침되며 전국 일반화나 인과 단정은 제외됩니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "연령·소득 미통제와 자기 보고 한계 때문에 운동과 만족도의 상관을 인과로 확정할 수 없습니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "두 화자는 수업 중 휴대전화 사용 원칙에 동의하지만 보관 방식에는 차이가 있습니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "같은 기간의 주민 생활비와 지역 상점 매출을 함께 비교하는 자료가 대안 평가에 적합합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "이미지의 대체 텍스트가 화면 읽기 이용자의 정보 접근을 직접 돕습니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "탭 이동으로 모든 버튼을 조작하게 하는 기능이 키보드 접근 장벽을 해소합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "큰 글씨에 음성 안내를 더하는 두 사실을 뿐만 아니라로 연결합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-5-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "비용 절감에 시간 절약을 더하는 두 효과를 뿐만 아니라로 연결합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "신청 완료자만 조사하면 실패하거나 포기한 이용자의 장벽이 누락됩니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-5-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "자막 안내와 문자 설문 참여 경로가 배제된 이용자의 응답을 가능하게 합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "주 4일 근무 도입 전 업무량과 응답 시간을 비교할 자료를 확보해야 한다는 결론입니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-5-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "방법은 다르지만 두 화자 모두 음식물 쓰레기 감축을 목표로 합니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-5-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장 예시가 64% 수요와 추가 인력 1명을 정확히 연결하며 채점은 입장과 실행 조건을 열어 둡니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장 예시가 결식 학생 중 58%라는 분모를 유지하고 인과 한계·추가 자료를 다루며 다른 입장도 허용합니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "종이와 앱의 비용·접근성을 비교한 5문장 의견이며 병행과 보완 조사 등 예시 설계를 강제하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "1년 보수와 3년 신축의 비용·공간 차이를 반영한 5문장이며 두 대안 모두 근거와 조건이 있으면 인정합니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장이 개인 절약의 한계, 지방정부·공급자 역할, 효과 지표를 다루며 예시 정책·지표 수를 강제하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장이 돌봄 집중 문제, 직장·공공기관 역할, 효과 지표를 다루며 신청 장벽이나 특정 지표는 선택입니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장이 마우스 전용 장벽과 키보드 개선·검증을 연결하며 화면 읽기나 특정 참여자 집단은 필수가 아닙니다."
+    },
+    {
+      "id": "lp7-topik-5-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "5문장이 자막 개선·품질 확인·조사 대상을 연결하며 예시 교정·화자 표시·이탈자 조사를 필수화하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-6-vocab-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "동시 변화와 미통제 대안 요인은 상관관계만 지지하며 필연 인과를 입증하지 않습니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-vocab-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "도심 증가와 농촌 감소라는 상반된 방향이 지역 간 양극화에 해당합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-grammar-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "걸리는 한이 있더라도는 검토 지연을 감수한 오류 시정 의지를 문법적으로 완성합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-grammar-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "부담하는 한이 있더라도는 추가 비용을 감수해 안전 기준을 지키겠다는 뜻입니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-reading-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "평균 8% 뒤의 지역별 미수혜 차이가 분배 효과를 함께 보라는 평가 관점을 지지합니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-reading-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "초기 의지·경력 차이를 통제할 비교가 선택 편향을 줄인다는 설명과 일치합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-listening-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "대본의 독립 편향 감사와 인간 판단 유지 조건이 제한적 보조 사용 검토와 정확히 대응합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-listening-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "보호 원칙은 합의했지만 구체 누진 구간·인상률은 자료 이후로 미뤘습니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-vocab-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "측정 시각·위치 차이로 인과 확정을 유보하는 것은 자료 한계를 고려한 해석입니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-vocab-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "수집된 면담 표현에서 주제를 도출하는 단계는 모집·설계·전사가 아닌 해석입니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-grammar-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "충분하지 않기에가 자료 부족을 발표 연기의 판단 근거로 연결합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-grammar-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "급하기에가 긴급하다는 판단을 선행 연락의 이유로 연결합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-reading-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "변수 범주화와 제한 접근은 검증 가능성과 재식별 위험의 균형을 구현합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-reading-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "원본·수정본·변수 설명·변경 기록 보존이 버전과 메타데이터 보존에 해당합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-listening-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "작은 표본과 동기 차이를 인정한 대본은 복습과 성취의 관련성만 주장합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-listening-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "봄 한 계절·강수량 차이 한계를 보완할 사계절 수질·생물 자료 수집이 명시됩니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-vocab-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "학습 능력 개념을 속도 시험이 충분히 대표하는가의 문제는 측정 타당성입니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-vocab-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "실험 중 집단별 이탈 차이와 완료자 분석은 탈락 편향 우려를 지지합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-grammar-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "2시간씩 7일은 14시간이므로 공부하는 셈이다가 환산 결과를 완성합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-grammar-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "무응답·중립 없이 찬반 각 절반이라는 사실에서 나뉜 셈이다라는 판단이 도출됩니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-reading-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "수거함 설치·참여율·보증금 시행은 명시됐지만 매립량 미측정과 동시 정책 때문에 순효과는 미확정입니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-reading-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "동시에 변한 의사 수와 계절 환자 수를 고려해야 앱의 대기 시간 감소 기여를 구별할 수 있습니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-listening-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "관찰된 온도 차이는 인정하지만 모든 지역에서 동일한 나무 효과라는 일반화는 대본에서 유보됩니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-listening-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "전문가는 전체 92% 정확도를 넘어 집단별 오류와 실제 이의 절차 검증을 함께 요구합니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-vocab-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "1만 명당 1명에서 2명으로 변한 실제 규모를 전달하려면 절대 위험도가 필요합니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-vocab-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "77부터 시작한 세로축이 78과 80의 차이를 확대하므로 축 범위를 확인해야 합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-grammar-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "결과에 비추어가 실험 결과를 계획 수정의 판단 근거로 연결합니다.",
+      "answer_index": 3
+    },
+    {
+      "id": "lp7-topik-6-grammar-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "원칙에 비추어가 최소 수집 원칙을 입력 항목 평가의 기준으로 삼습니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-reading-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "모름·부분 만족 선택지 부재가 복합 태도를 이분화했을 가능성이 지문에서 뒷받침됩니다.",
+      "answer_index": 0
+    },
+    {
+      "id": "lp7-topik-6-reading-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "38명 하위집단의 불확실성을 전체 2천 명 오차로 대신할 수 없다는 설명과 일치합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-listening-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "대표는 공사 자체가 아닌 시험 기간 야간 중단과 시간대별 측정 공개를 요구합니다.",
+      "answer_index": 1
+    },
+    {
+      "id": "lp7-topik-6-listening-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "상인은 임시 영업 공간과 문서화된 복귀·임대료 보장을 단계 공사의 수용 조건으로 제시합니다.",
+      "answer_index": 2
+    },
+    {
+      "id": "lp7-topik-6-writing-b1-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 예시가 편의·보안, 오인식·개인정보, 대안·조건을 모두 다루며 조건부 성능과 다양한 설계를 허용합니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b1-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 예시가 접근성·교통 감소와 재정·지역 수요 반론 및 대안을 다루며 특정 지원 방식은 강제하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b2-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 비평이 관찰의 기여와 자기선택·사전 성적·동기 한계 및 후속 설계를 연결하고 반복 실험은 선택입니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b2-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 비평이 실제 측정의 강점과 지역·센서 수·계절 한계를 설명하며 미보고 보정 상태는 확인 사항으로 표현합니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b3-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 제안이 전제·위험·사람 검토·이의·감사·중단을 포함하며 수치가 없는 타당한 중단 기준도 인정합니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b3-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 제안이 비교 조건·낙인·대안 정보·공개 조건을 다루며 예시 지표와 공개 방식을 필수화하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b4-authored-1",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 논평이 신고와 범죄의 차이 및 미제시 요인을 구분하고 채점은 특정 비교 설계나 한계 전부의 열거를 요구하지 않습니다."
+    },
+    {
+      "id": "lp7-topik-6-writing-b4-authored-2",
+      "status": "approved",
+      "explanation_consistent": true,
+      "reason": "6문장 논평이 온라인 시간의 대리지표 한계와 퇴사자 제외 편향을 비판하며 추가 자료·비교·형평성 논의는 명시적으로 선택입니다."
+    }
+  ]
+}

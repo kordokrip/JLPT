@@ -1,0 +1,4 @@
+interface:
+  display_name: "Learning Source Intake"
+  short_description: "Validate language source evidence safely"
+  default_prompt: "Use $learning-source-intake to record allowed language facts with verifiable evidence."

@@ -38,7 +38,6 @@ interface PassageFull {
   word_count:         number;
   vocab_ids:          number[];
   grammar_ids:        number[];
-  audio_r2_key:       string | null;
   source_attribution: string | null;
   questions:          RQuestion[];
 }
@@ -371,7 +370,7 @@ export default function ReadingDetail() {
   const resultData = submitMut.data?.ok ? submitMut.data.data : null;
 
   return (
-    <div className="max-w-[1100px] mx-auto px-4 py-8">
+    <div className="app-page max-w-[1100px]">
       {/* 헤더 */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>

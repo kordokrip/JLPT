@@ -7,9 +7,10 @@ import {
 } from '@nihongo-n3/shared';
 
 describe('JLPT release policy', () => {
-  it('does not expose N2/N1 until the full contiguous release is available', () => {
-    expect(contentReleaseForAvailableLevels(['N5', 'N4', 'N3', 'N2'])).toBe('n5-n3');
-    expect(levelsForContentRelease('n5-n3')).toEqual(['N5', 'N4', 'N3']);
+  it('exposes N2 only after every lower level has actual coverage', () => {
+    expect(contentReleaseForAvailableLevels(['N5', 'N4', 'N3', 'N2'])).toBe('n5-n2');
+    expect(levelsForContentRelease('n5-n2')).toEqual(['N5', 'N4', 'N3', 'N2']);
+    expect(highestReleasedJlptLevel('n5-n2')).toBe('N2');
   });
 
   it('exposes every level in N5 to N1 order after complete coverage', () => {
@@ -18,7 +19,7 @@ describe('JLPT release policy', () => {
     expect(highestReleasedJlptLevel('n5-n1')).toBe('N1');
   });
 
-  it('keeps approved audio batches at N5 to N3 until separate audio QA completes', () => {
-    expect(AUDIO_BATCH_LEVELS).toEqual(['N5', 'N4', 'N3']);
+  it('covers N5 to N1 in the audio intake/verifier scope', () => {
+    expect(AUDIO_BATCH_LEVELS).toEqual(['N5', 'N4', 'N3', 'N2', 'N1']);
   });
 });

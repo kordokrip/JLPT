@@ -1,0 +1,199 @@
+{
+  "schema_version": "learning-path-prototype-intake-v3",
+  "scope": "representative-contract-only",
+  "created_at": "2026-10-11T02:59:29.986Z",
+  "reused_intake_sha256": "b47cfd7294f770a4aa1fd9098161f2f2687c0c50a6dd0cd228db371c36cb23ce",
+  "reused_records_keep_original_retrieved_at": true,
+  "acquisition_note": "Dictionary evidence is reused from the immutable same-day v2 intake, not reported as a new HTTP download. Owned baseline forms are separately verified at the immutable repository source. Full-bank v3 collection remains incomplete after KRdict timeout and is not replaced by this prototype artifact.",
+  "records": [
+    {
+      "source": {
+        "id": "edrdg-terms",
+        "url": "https://www.edrdg.org/edrdg/licence.html",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG / JMdict and KANJIDIC2",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:37:07.932Z",
+        "sha256": "52f60ea9ca68170a2f0663d7dba381ebf1bd57c17a3347dfe21153865c156692"
+      },
+      "facts": [
+        {
+          "id": "edrdg-terms-license",
+          "kind": "exam-structure",
+          "language": "en",
+          "value": "License metadata for general dictionary text: CC-BY-SA-4.0. Individual media excluded; grade labels are not examination levels.",
+          "source_locator": "copyright policy"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-terms",
+        "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:37:07.932Z",
+        "sha256": "713622441fde49797b434288442137e0a95546b44919393b12e5081c08b22e8f"
+      },
+      "facts": [
+        {
+          "id": "krdict-terms-license",
+          "kind": "exam-structure",
+          "language": "en",
+          "value": "License metadata for general dictionary text: CC-BY-SA-2.0-KR. Individual media excluded; grade labels are not examination levels.",
+          "source_locator": "copyright policy"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E7%A2%BA%E8%AA%8D",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E7%A2%BA%E8%AA%8D",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:37:07.932Z",
+        "sha256": "7881a2ebdcab8136fb754688803d51fff5f931001ba56c71aeff6f31ac425283"
+      },
+      "facts": [
+        {
+          "id": "確認-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "確認",
+          "source_locator": "JMdict headword 確認"
+        },
+        {
+          "id": "確認-reading-0",
+          "kind": "reading",
+          "language": "ja",
+          "value": "かくにん",
+          "source_locator": "JMdict exact headword 確認; reading かくにん; matched homograph 1"
+        },
+        {
+          "id": "確認-sense-0",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "confirmation",
+          "source_locator": "JMdict exact headword 確認; reading かくにん; matched homograph 1"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%98%88%EC%95%BD",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%98%88%EC%95%BD&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:37:07.932Z",
+        "sha256": "ee7de694c23fe138849c8d7c8d3110a418865556b48aabbe11e9bc2633214fb4"
+      },
+      "facts": [
+        {
+          "id": "예약-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "예약",
+          "source_locator": "search headword 예약"
+        },
+        {
+          "id": "예약-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "よやく【予約】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EB%AC%B8%EC%9D%98",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EB%AC%B8%EC%9D%98&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:37:07.932Z",
+        "sha256": "00471f0568c7e4918eb2dd368e16adbe65be30a35e96f538bdbaf3b79c849e3b"
+      },
+      "facts": [
+        {
+          "id": "문의-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "문의",
+          "source_locator": "search headword 문의"
+        },
+        {
+          "id": "문의-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "といあわせ【問い合わせ】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "project-owned-public-topik-batch1-forms",
+        "url": "https://github.com/kordokrip/JLPT/blob/3485c6ef8addda3cd3e209730646c296175cf3c9/packages/db/src/seed/topik-owner-curriculum-batch1.ts",
+        "license": {
+          "id": "LicenseRef-nihongo-n3-self-authored",
+          "url": "https://github.com/kordokrip/JLPT/blob/3485c6ef8addda3cd3e209730646c296175cf3c9/docs/ATTRIBUTIONS.md"
+        },
+        "attribution": "JLPT project self-authored TOPIK owner Batch 1; public baseline metadata only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T02:59:29.986Z",
+        "sha256": "2b6ddcc38a848e1000dc77af7f6aaf56de9f41bcd0a4804465a488f68900ddbc"
+      },
+      "facts": [
+        {
+          "id": "owned-ko-form-1",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "변경",
+          "source_locator": "self-authored learning form; no question, explanation or audio copied"
+        },
+        {
+          "id": "owned-ko-form-2",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "기 때문에",
+          "source_locator": "self-authored learning form; no question, explanation or audio copied"
+        },
+        {
+          "id": "owned-ko-form-3",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "민원실",
+          "source_locator": "self-authored learning form; no question, explanation or audio copied"
+        },
+        {
+          "id": "owned-ko-form-4",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "는 바람에",
+          "source_locator": "self-authored learning form; no question, explanation or audio copied"
+        }
+      ]
+    }
+  ],
+  "supersedes_prototype_intake_sha256": "59df8ed4873496e5687c0ef8c3933e4f9aece03d02d8e62d92de046bcf3b545a",
+  "revision_note": "Own pedagogical cue correction only. Original source retrieval times and raw source hashes are preserved. This is not a fresh dictionary download or a 440-item intake."
+}

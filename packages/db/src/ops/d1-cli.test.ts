@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseWranglerD1Json } from "../seed/d1-cli.js";
+import { parseD1Target, parseWranglerD1Json } from "../seed/d1-cli.js";
+
+test("preserves a Wrangler environment when targeting a remote preview D1", () => {
+  const target = parseD1Target([
+    "--remote",
+    "--database=nihongo-n3-topik-preview",
+    "--env=topik-preview",
+  ]);
+
+  assert.equal(target.remote, true);
+  assert.equal(target.database, "nihongo-n3-topik-preview");
+  assert.equal(target.env, "topik-preview");
+});
 
 test("keeps one D1 result set per batched SQL statement", () => {
   const result = parseWranglerD1Json<{ count: number }>(
