@@ -23,7 +23,7 @@ export default function AdminUsers() {
   if (user && user.role !== 'admin') return <Navigate to="/" replace />;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:px-10">
+    <div className="app-page max-w-6xl">
       <header className="mb-5">
         <p className="mb-2 text-xs font-semibold uppercase text-[var(--accent)]">Admin</p>
         <h1 className="text-3xl font-semibold text-foreground">회원 관리</h1>

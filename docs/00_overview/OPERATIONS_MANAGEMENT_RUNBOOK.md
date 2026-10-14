@@ -1,5 +1,9 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+후속 UI 실행: v6 승인 후 앱 적용·로컬frontend258/양엔진UI 검증 완료. 이번 변경에는 migration/Worker변경이 없고 Production/push 미실행이다. 다음 검사는 실제 상세 콘텐츠의 시각 확인에 집중한다. 합성UI를 실제 저장/가청/운영gate로 재사용하지 않는다. 아래 ‘시안 승인 전’은 과거 절차다. [최신 적용·실패 보존](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).
+
+현재 UI 감사에서는 `INC-UI-116`의 실제 화면/시안/제품 회귀 결과를 구분한다. 시안 승인 전 앱 코드를 바꾸지 않으며 backend/DB/음성/콘텐츠는 범위 밖이다. UI 수정 후 영향 검사부터 수행하고 전체 gate 반복은 후보 출시 시에만 판단한다. [현재 디자인 계약](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).
+
 최신 운영: runtime78ee09a·Pages07bc33c4·Worker69cffaa1·D10033/77표, 점검off·queue 원복 완료. 다음 백업은0033/77표 기준이다. UI rollback은 Pages2c0fea8d+새 호환 Worker 유지, 새 계정/학습 행 삭제 금지. 사용자 지시로 실기기 푸시 수신·가족 관찰을 사후 확인에 남겼다. [최종 실행·증거 경계](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)를 우선한다. 아래 Preview-only/미배포 조건은 보존 이력이다.
 
 최신 Preview3dee006a/후보78ee09a만0033·새 Worker·개인화 on으로 반영했다. Production은 Pages2c0fea8d/Worker71e71638/D10032로 유지한다. 실제 기기·사용자 및 원격 필수 gate가 완료되기 전에는 준비된 maintenance-backup 도구를 실행하지 않는다. 운영 복귀는 기존 Pages+0033 호환 Worker를 기본으로 하고 계정/학습 데이터를 삭제하지 않는다. [현재 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).

@@ -104,7 +104,7 @@
   --shadow-sm:  0 1px 2px rgba(0,0,0,.06);
   --shadow-md:  0 4px 12px rgba(0,0,0,.08);
   --shadow-lg:  0 8px 24px rgba(0,0,0,.12);
-  --shadow-soft: 0 12px 34px rgba(42, 30, 24, 0.08);
+  --shadow-soft: 0 3px 0 rgba(42, 30, 24, 0.10);
   --shadow-float: 0 18px 48px rgba(42, 30, 24, 0.14);
 
   /* ── 타이포그래피 ────────────────────────────── */
@@ -128,6 +128,12 @@
 }
 
 [data-learning-track='topik-ko'] {
+  /* 강성호 2026-10-14: 백자·청색 계열 표면은 조작 강조색 설정과 독립적으로 유지한다. */
+  --background: #F2F5F0;
+  --surface: #FCFDF9;
+  --surface-glass: rgba(252, 253, 249, .96);
+  --card: #FCFDF9;
+  --surface-alt: #E8EFEB;
   --track-accent: var(--brand-indigo);
   --track-secondary: var(--brand-vermilion);
   --track-soft: #E6EEF3;
@@ -170,7 +176,7 @@
   --shadow-sm:  0 1px 2px rgba(0,0,0,.3);
   --shadow-md:  0 4px 12px rgba(0,0,0,.4);
   --shadow-lg:  0 8px 24px rgba(0,0,0,.5);
-  --shadow-soft: 0 12px 34px rgba(0,0,0,.28);
+  --shadow-soft: 0 3px 0 rgba(0,0,0,.30);
   --shadow-float: 0 18px 48px rgba(0,0,0,.38);
 }
 
@@ -181,6 +187,11 @@
 }
 
 .dark [data-learning-track='topik-ko'] {
+  --background: #151E20;
+  --surface: #202C2E;
+  --surface-glass: rgba(32, 44, 46, .96);
+  --card: #202C2E;
+  --surface-alt: #283638;
   --accent-foreground: #142831;
   --track-accent: #74A6C5;
   --track-secondary: #E66A5D;

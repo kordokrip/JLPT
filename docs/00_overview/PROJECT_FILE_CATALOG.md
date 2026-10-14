@@ -2,7 +2,7 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **972개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **976개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
@@ -24,12 +24,12 @@
 | 브라우저 시각 기준 | 60 |
 | 브라우저 테스트 및 설정 | 36 |
 | 브랜드 및 PWA 자산 | 18 |
-| 앱 회귀 테스트 | 78 |
+| 앱 회귀 테스트 | 79 |
 | 운영 문서 | 28 |
 | 웹 공통 상태·계약·음성 | 50 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
-| 학습 기능 | 63 |
+| 학습 기능 | 66 |
 | 학습 콘텐츠 원본 | 34 |
 | 학습 화면 | 31 |
 
@@ -709,6 +709,7 @@
 - [apps/web/src/components/feature/AiAssistanceNotice.test.tsx](../../apps/web/src/components/feature/AiAssistanceNotice.test.tsx)
 - [apps/web/src/components/feature/SRSCard.test.tsx](../../apps/web/src/components/feature/SRSCard.test.tsx)
 - [apps/web/src/components/layout/BottomTabBar.test.tsx](../../apps/web/src/components/layout/BottomTabBar.test.tsx)
+- [apps/web/src/components/layout/learner-layout.test.ts](../../apps/web/src/components/layout/learner-layout.test.ts)
 - [apps/web/src/features/browse/types.test.ts](../../apps/web/src/features/browse/types.test.ts)
 - [apps/web/src/features/learning/LearnerLessonLibrary.test.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.test.tsx)
 - [apps/web/src/features/learning/LearningMap.helpers.test.ts](../../apps/web/src/features/learning/LearningMap.helpers.test.ts)
@@ -959,6 +960,7 @@
 - [apps/web/src/features/character-trainer/logic.ts](../../apps/web/src/features/character-trainer/logic.ts)
 - [apps/web/src/features/character-trainer/types.ts](../../apps/web/src/features/character-trainer/types.ts)
 - [apps/web/src/features/character-trainer/useCharacterTrainer.ts](../../apps/web/src/features/character-trainer/useCharacterTrainer.ts)
+- [apps/web/src/features/learning/LearnHub.css](../../apps/web/src/features/learning/LearnHub.css)
 - [apps/web/src/features/learning/LearnerLessonLibrary.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.tsx)
 - [apps/web/src/features/learning/LearningMap.css](../../apps/web/src/features/learning/LearningMap.css)
 - [apps/web/src/features/learning/LearningMap.helpers.ts](../../apps/web/src/features/learning/LearningMap.helpers.ts)
@@ -975,6 +977,7 @@
 - [apps/web/src/features/quiz/useQuiz.ts](../../apps/web/src/features/quiz/useQuiz.ts)
 - [apps/web/src/features/records/AnswerDistribution.tsx](../../apps/web/src/features/records/AnswerDistribution.tsx)
 - [apps/web/src/features/records/LearningInsights.tsx](../../apps/web/src/features/records/LearningInsights.tsx)
+- [apps/web/src/features/records/records-layout.css](../../apps/web/src/features/records/records-layout.css)
 - [apps/web/src/features/review/ReviewView.tsx](../../apps/web/src/features/review/ReviewView.tsx)
 - [apps/web/src/features/review/logic.ts](../../apps/web/src/features/review/logic.ts)
 - [apps/web/src/features/review/types.ts](../../apps/web/src/features/review/types.ts)
@@ -1003,6 +1006,7 @@
 - [apps/web/src/features/topik/curriculum/useTopikOwnerCurriculum.ts](../../apps/web/src/features/topik/curriculum/useTopikOwnerCurriculum.ts)
 - [apps/web/src/features/topik/curriculum/useTopikOwnerCurriculumProgress.ts](../../apps/web/src/features/topik/curriculum/useTopikOwnerCurriculumProgress.ts)
 - [apps/web/src/features/topik/learning/content.ts](../../apps/web/src/features/topik/learning/content.ts)
+- [apps/web/src/features/topik/learning/presentation.ts](../../apps/web/src/features/topik/learning/presentation.ts)
 - [apps/web/src/features/topik/learning/useTopikLearningProgress.ts](../../apps/web/src/features/topik/learning/useTopikLearningProgress.ts)
 - [apps/web/src/features/topik/owner-private-content.ts](../../apps/web/src/features/topik/owner-private-content.ts)
 - [apps/web/src/features/topik/placement/TopikPlacementView.tsx](../../apps/web/src/features/topik/placement/TopikPlacementView.tsx)

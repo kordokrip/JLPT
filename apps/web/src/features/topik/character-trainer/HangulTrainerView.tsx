@@ -22,7 +22,7 @@ export function HangulTrainerView({ trainer }: { trainer: HangulTrainerModel }) 
 
   const card = trainer.card;
   return (
-    <div className="app-page max-w-[1040px] pb-28">
+    <div className="app-page max-w-[1040px]">
       <header className="mb-5 max-w-[760px]">
         <p className="text-sm font-bold text-[var(--accent)]">{t('topik.characters.eyebrow')}</p>
         <h1 className="mt-2 text-3xl font-black sm:text-4xl">{t('topik.characters.title')}</h1>

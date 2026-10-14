@@ -56,7 +56,7 @@ export default function QuizResult() {
 
   if (!result) {
     return (
-      <div className="max-w-[480px] mx-auto px-8 py-12 text-center">
+      <div className="app-page max-w-[480px] text-center">
         <p className="text-[var(--muted-foreground)] mb-6">
           {saved.isPending ? t('study.loading') : t('quiz.noResultData', { attemptId })}
         </p>
@@ -77,7 +77,7 @@ export default function QuizResult() {
   const ss = String((elapsed ?? 0) % 60).padStart(2, '0');
 
   return (
-    <div className="max-w-[640px] mx-auto px-8 py-12">
+    <div className="app-page max-w-[640px]">
       {/* 헤더 */}
       <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-8">
         {t('quiz.result')}

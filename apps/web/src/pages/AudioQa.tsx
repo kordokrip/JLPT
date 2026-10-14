@@ -97,7 +97,7 @@ export default function AudioQa() {
   };
 
   return (
-    <div className="mx-auto max-w-[760px] px-5 py-8 pb-24 sm:px-8">
+    <div className="app-page max-w-[760px]">
       <header className="mb-8">
         <p className="mb-2 font-pretendard text-[12px] font-medium uppercase tracking-[0.08em] text-[var(--accent)]">Browser voice check</p>
         <h1 className="font-pretendard text-[32px] font-semibold leading-tight text-foreground">브라우저 발음 음성 확인</h1>

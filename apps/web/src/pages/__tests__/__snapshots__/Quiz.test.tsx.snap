@@ -3,7 +3,7 @@
 exports[`Quiz page baseline > keeps the invalid mode message stable before feature extraction 1`] = `
 <DocumentFragment>
   <div
-    class="max-w-[480px] mx-auto px-8 py-12 text-center"
+    class="app-page max-w-[640px] text-center"
   >
     <p
       class="text-[var(--muted-foreground)]"
@@ -17,7 +17,7 @@ exports[`Quiz page baseline > keeps the invalid mode message stable before featu
 exports[`Quiz page baseline > keeps the mode configuration screen stable before feature extraction 1`] = `
 <DocumentFragment>
   <div
-    class="mx-auto max-w-[480px] px-6 py-8 pb-28 sm:px-8 sm:py-12"
+    class="app-page max-w-[640px]"
   >
     <button
       class="mb-6 flex min-h-11 items-center gap-1 rounded-[var(--radius-md)] px-2 text-sm font-medium text-[var(--muted-foreground)] hover:bg-accent-soft-20 hover:text-foreground"
@@ -139,7 +139,7 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
       </p>
     </div>
     <button
-      class="min-h-12 w-full rounded-lg bg-[var(--accent)] text-white font-pretendard font-medium
+      class="min-h-12 w-full rounded-2xl border-b-[3px] border-black/20 bg-[var(--accent)] text-[var(--accent-foreground)] font-pretendard font-semibold
                      hover:opacity-90 transition-opacity disabled:opacity-50"
       type="button"
     >
@@ -152,7 +152,7 @@ exports[`Quiz page baseline > keeps the mode configuration screen stable before 
 exports[`Quiz page baseline > keeps the mode selection screen stable before feature extraction 1`] = `
 <DocumentFragment>
   <div
-    class="max-w-[640px] mx-auto px-8 py-12"
+    class="app-page max-w-[760px]"
   >
     <h1
       class="font-pretendard text-[32px] font-medium text-foreground leading-none mb-2"
@@ -165,25 +165,25 @@ exports[`Quiz page baseline > keeps the mode selection screen stable before feat
       학습 모드를 선택하세요
     </p>
     <div
-      class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      class="grid grid-cols-2 gap-3"
     >
       <button
-        class="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
+        class="card-hairline flex min-w-0 flex-col items-start rounded-[20px] border-b-[3px] p-4 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
         type="button"
       >
         <span
           aria-hidden="true"
           class="relative inline-flex shrink-0 items-center justify-center"
-          style="width: 64px; height: 64px;"
+          style="width: 48px; height: 48px;"
         >
           <img
             alt=""
             class="h-full w-full object-contain"
-            height="64"
+            height="48"
             loading="lazy"
             src="/learning-icons/study-book.webp"
-            width="64"
+            width="48"
           />
         </span>
         <div
@@ -198,26 +198,26 @@ exports[`Quiz page baseline > keeps the mode selection screen stable before feat
         </div>
       </button>
       <button
-        class="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
+        class="card-hairline flex min-w-0 flex-col items-start rounded-[20px] border-b-[3px] p-4 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
         type="button"
       >
         <span
           aria-hidden="true"
           class="relative inline-flex shrink-0 items-center justify-center"
-          style="width: 64px; height: 64px;"
+          style="width: 48px; height: 48px;"
         >
           <img
             alt=""
             class="h-full w-full object-contain"
-            height="64"
+            height="48"
             loading="lazy"
             src="/learning-icons/kanji-tile.webp"
-            width="64"
+            width="48"
           />
           <span
             class="absolute left-[27%] top-[23%] font-serif font-bold text-[#214764]"
-            style="font-size: 21.12px;"
+            style="font-size: 15.84px;"
           >
             漢
           </span>
@@ -234,22 +234,22 @@ exports[`Quiz page baseline > keeps the mode selection screen stable before feat
         </div>
       </button>
       <button
-        class="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
+        class="card-hairline flex min-w-0 flex-col items-start rounded-[20px] border-b-[3px] p-4 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
         type="button"
       >
         <span
           aria-hidden="true"
           class="relative inline-flex shrink-0 items-center justify-center"
-          style="width: 64px; height: 64px;"
+          style="width: 48px; height: 48px;"
         >
           <img
             alt=""
             class="h-full w-full object-contain"
-            height="64"
+            height="48"
             loading="lazy"
             src="/learning-icons/recall-cards.webp"
-            width="64"
+            width="48"
           />
         </span>
         <div
@@ -264,22 +264,22 @@ exports[`Quiz page baseline > keeps the mode selection screen stable before feat
         </div>
       </button>
       <button
-        class="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
+        class="card-hairline flex min-w-0 flex-col items-start rounded-[20px] border-b-[3px] p-4 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
         type="button"
       >
         <span
           aria-hidden="true"
           class="relative inline-flex shrink-0 items-center justify-center"
-          style="width: 64px; height: 64px;"
+          style="width: 48px; height: 48px;"
         >
           <img
             alt=""
             class="h-full w-full object-contain"
-            height="64"
+            height="48"
             loading="lazy"
             src="/learning-icons/listening.webp"
-            width="64"
+            width="48"
           />
         </span>
         <div

@@ -1,5 +1,13 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-14 — 승인 v6 앱 페이스리프트 (로컬, 미배포)
+
+공통 shell/여백/테마·학습 타일·퀴즈/복습·기록/보조 페이지 UI 적용. frontend258·타입/빌드, Chrome/WebKit각90주요+32보조/모달/확대+12학습dock 통과. 합성API 화면 확인이며 실제운영/저장/가청 통과가 아니다. INC-UI-116 open·실데이터 시각확인 대기. Production/DB/Worker/push 미변경. 이전dirty7파일 및 실패 로그 보존. [상세 변경·검사·범위](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).
+
+## 2026-10-14 — UI 감사·대표 시안 v6 (릴리스 아님)
+
+사용자 지시로 UI-only 전환. 앱 HEAD01ac82c/운영 유지, 코드·migration·배포·push 미실행. 기존 Superdesign draft95672594에 직접 작성 v5→v6 반영; 생성은 크레딧 부족으로 차단되어 유료 재시도 없음. 대표 시안12조합 가로 넘침0, 실제 제품 전체 검증 아님. INC-UI-116 open/시안 검토 대기. [실측·다음 적용 순서](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).
+
 ## 2026-10-14 — 개인화 Production 배포 완료
 
 사용자 사후 관찰 전환 승인·동일 Preview 양언어 가청 수락. 실기기 수신·가족 관찰 미확인 유지. 코드78ee09a/선행 문서f3dc1c3 push→74표 backup/0032 restore/0033 upgrade/hash 보존→predeploy→0033→Worker69cffaa1→canonical392→Pages07bc33c4(main)→87asset/route·7smoke·auth proxy 완료. 점검off/queue 원복·기존 기록 보존. Chrome 업데이트 모달/새 프로필/ko·ja onend 각1회 확인. [전체 ID·실패·복귀·증거 경계](UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 미실행은 이력이다.

@@ -29,14 +29,17 @@ const RATING_KEYS: { rating: Rating; border: string; hover: string; nextDay: str
   { rating: 'easy',  border: 'border-[var(--info)]',    hover: 'hover:bg-[#6B7F8C]/10',   nextDay: '4d' },
 ];
 
-const STATE_LABEL: Record<string, string> = {
-  new: 'New', learning: 'Learning', review: 'Apprentice', relearning: 'Again',
+const STATE_LABEL: Record<string, Record<string, string>> = {
+  ko: { new: '새 표현', learning: '익히는 중', review: '복습', relearning: '다시 익히기' },
+  ja: { new: '新しい表現', learning: '学習中', review: '復習', relearning: 'もう一度' },
+  en: { new: 'New', learning: 'Learning', review: 'Review', relearning: 'Relearning' },
 };
 
 export function SRSCard({
   card, heading, reading, meaning, partOfSpeech, example, exampleKo, onRate, loading = false,
 }: SRSCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const stateLabel = STATE_LABEL[i18n.language.slice(0, 2)] ?? STATE_LABEL.en!;
   const autoPronounce = useSettingsStore((s) => s.autoPronounce);
   const [flipped, setFlipped] = useState(false);
   const frontRef = useRef<HTMLButtonElement>(null);
@@ -103,9 +106,9 @@ export function SRSCard({
       {/* ── 3D 플립 카드 ── */}
       <div className="perspective-1000 mb-3">
         <div
-          className="relative w-full preserve-3d transition-transform duration-[500ms]"
+          className="relative grid w-full preserve-3d transition-transform duration-[500ms] motion-reduce:transition-none"
           style={{
-            height: 'clamp(320px, 54vh, 390px)',
+            minHeight: 'clamp(260px, 42vh, 340px)',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             touchAction: 'pan-y',
           }}
@@ -123,7 +126,7 @@ export function SRSCard({
             disabled={flipped || loading}
             aria-expanded={flipped}
             aria-label={flipped ? t('review.cardFlippedHint') : t('review.cardFrontHint')}
-            className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-6 text-left shadow-[var(--shadow-soft)] backface-hidden"
+            className="relative col-start-1 row-start-1 flex cursor-pointer flex-col items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-card p-6 pb-16 text-left shadow-[var(--shadow-soft)] backface-hidden"
             style={{ backfaceVisibility: 'hidden', pointerEvents: flipped ? 'none' : undefined }}
             onClick={() => !flipped && setFlipped(true)}
           >
@@ -132,7 +135,7 @@ export function SRSCard({
               <div className="mb-3">
                 <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium uppercase text-[var(--accent)]">
                   <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
-                  {STATE_LABEL[card.state] ?? card.state}
+                  {stateLabel[card.state] ?? card.state}
                 </span>
               </div>
 
@@ -162,14 +165,14 @@ export function SRSCard({
             aria-hidden={!flipped}
             {...(!flipped ? { inert: '' } : {})}
             tabIndex={flipped ? -1 : undefined}
-            className="absolute inset-0 flex flex-col overflow-hidden rounded-[var(--radius-xl)] border-[0.5px] border-[var(--border)] bg-card p-5 shadow-[var(--shadow-soft)] backface-hidden sm:p-6"
+            className="col-start-1 row-start-1 flex min-w-0 flex-col rounded-[var(--radius-xl)] border border-[var(--border)] bg-card p-5 shadow-[var(--shadow-soft)] backface-hidden sm:p-6"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? undefined : 'none' }}
           >
             {/* SRS 상태 뱃지 */}
             <div className="mb-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-medium uppercase text-[var(--accent)]">
                 <span className="w-1 h-1 rounded-full bg-[var(--accent)]" />
-                {STATE_LABEL[card.state] ?? card.state}
+                {stateLabel[card.state] ?? card.state}
               </span>
             </div>
 
@@ -197,7 +200,7 @@ export function SRSCard({
 
             {/* 예문 */}
             {example && (
-              <div className="min-h-0 overflow-y-auto pr-1">
+              <div className="min-w-0 pr-1">
                 <div className="mb-1 text-xs uppercase text-[var(--muted-foreground)]">{t('review.example')}</div>
                 <div className="flex items-start justify-between gap-3">
                   <p className="mb-1 font-sans-jp text-sm text-[var(--text-secondary)] text-jp-body">{example}</p>

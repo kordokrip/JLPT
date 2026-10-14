@@ -19,7 +19,7 @@ export function QuizView({ rawMode, mode, onSelectMode }: QuizViewProps) {
 
   if (!mode) {
     return (
-      <div className="max-w-[480px] mx-auto px-8 py-12 text-center">
+      <div className="app-page max-w-[640px] text-center">
         <p className="text-[var(--muted-foreground)]">{t('quiz.unknownMode', { mode: rawMode })}</p>
       </div>
     );
@@ -32,23 +32,23 @@ function ModeSelect({ onSelectMode }: { onSelectMode: (mode: QuizMode) => void }
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-[640px] mx-auto px-8 py-12">
+    <div className="app-page max-w-[760px]">
       <h1 className="font-pretendard text-[32px] font-medium text-foreground leading-none mb-2">
         {t('nav.quiz')}
       </h1>
       <p className="font-pretendard text-[14px] text-[var(--muted-foreground)] mb-8">
         {t('quiz.selectMode')}
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {QUIZ_MODES.map((nextMode) => (
           <button
             key={nextMode}
             type="button"
             onClick={() => onSelectMode(nextMode)}
-            className="card-hairline flex min-h-44 flex-col items-start rounded-[20px] border-b-4 p-5 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
+            className="card-hairline flex min-w-0 flex-col items-start rounded-[20px] border-b-[3px] p-4 text-left hover:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)] active:translate-y-0.5
                        transition-colors group"
           >
-            <LearningIllustration kind={nextMode === 'kanji_reading' ? 'kanji-tile' : nextMode === 'listening' ? 'listening' : nextMode === 'grammar_fill' ? 'recall-cards' : 'study-book'} />
+            <LearningIllustration size={48} kind={nextMode === 'kanji_reading' ? 'kanji-tile' : nextMode === 'listening' ? 'listening' : nextMode === 'grammar_fill' ? 'recall-cards' : 'study-book'} />
             <div className="mt-3 font-pretendard font-semibold text-base text-foreground mb-1">
               {t(`quiz.modes.${nextMode}`)}
             </div>
@@ -69,7 +69,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
 
   if (!quiz.isGenerated) {
     return (
-      <div className="mx-auto max-w-[480px] px-6 py-8 pb-28 sm:px-8 sm:py-12">
+      <div className="app-page max-w-[640px]">
         <button
           type="button"
           onClick={quiz.backToModeSelect}
@@ -158,7 +158,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
           type="button"
           disabled={quiz.isGenerating}
           onClick={quiz.start}
-          className="min-h-12 w-full rounded-lg bg-[var(--accent)] text-white font-pretendard font-medium
+          className="min-h-12 w-full rounded-2xl border-b-[3px] border-black/20 bg-[var(--accent)] text-[var(--accent-foreground)] font-pretendard font-semibold
                      hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {quiz.isGenerating ? t('quiz.generating') : t('quiz.start')}
@@ -180,7 +180,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
   const progress = ((quiz.current + 1) / quiz.questions.length) * 100;
 
   return (
-    <div className="max-w-[640px] mx-auto px-8 py-8">
+    <div className="app-page max-w-[720px]">
       <div className="flex items-center justify-between mb-4">
         <span className="font-pretendard text-[13px] text-[var(--muted-foreground)]">
           {quiz.current + 1} / {quiz.questions.length}
@@ -222,7 +222,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
           <button
             type="button"
             onClick={quiz.next}
-            className="px-5 py-2 rounded-lg bg-[var(--accent)] text-white text-[13px]
+            className="px-5 py-2 rounded-2xl bg-[var(--accent)] text-[var(--accent-foreground)] text-[13px]
                        hover:opacity-90 transition-opacity"
           >
             {t('common.next')} →
@@ -232,7 +232,7 @@ function QuizSession({ mode }: { mode: QuizMode }) {
             type="button"
             disabled={!allAnswered || quiz.isSubmitting}
             onClick={quiz.submit}
-            className="px-5 py-2 rounded-lg bg-[var(--accent)] text-white text-[13px] font-medium
+            className="px-5 py-2 rounded-2xl bg-[var(--accent)] text-[var(--accent-foreground)] text-[13px] font-medium
                        hover:opacity-90 transition-opacity disabled:opacity-40"
           >
             {quiz.isSubmitting ? t('quiz.grading') : `${t('quiz.submit')} (${answeredCount}/${quiz.questions.length})`}
@@ -240,22 +240,23 @@ function QuizSession({ mode }: { mode: QuizMode }) {
         )}
       </div>
 
-      <div className="flex justify-center gap-1.5 mt-6" aria-hidden="true">
+      <div className="mt-6 flex flex-wrap justify-center gap-2" role="group" aria-label={t('quiz.questionCount')}>
         {quiz.questions.map((item, index) => (
           <button
             key={item.id}
             type="button"
             onClick={() => quiz.selectQuestion(index)}
             className={[
-              'w-2.5 h-2.5 rounded-full transition-colors',
+              'flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] text-sm font-semibold transition-colors',
               index === quiz.current
-                ? 'bg-[var(--accent)]'
+                ? 'bg-[var(--accent)] text-[var(--accent-foreground)]'
                 : quiz.answers[item.id]
                   ? 'bg-[var(--accent-soft)] border border-[var(--accent)]'
-                  : 'bg-[var(--border)]',
+                  : 'bg-[var(--card)]',
             ].join(' ')}
             aria-label={`${index + 1}${t('quiz.questionNum')}${quiz.answers[item.id] ? t('quiz.answered') : ''}`}
-          />
+            aria-current={index === quiz.current ? 'step' : undefined}
+          >{index + 1}</button>
         ))}
       </div>
     </div>

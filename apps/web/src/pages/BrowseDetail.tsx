@@ -17,7 +17,7 @@ export default function BrowseDetail() {
   const numId = Number(id);
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-6 pb-28 sm:py-8">
+    <div className="app-page max-w-lg space-y-6">
       <Link
         to={`/browse/${type}`}
         className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] px-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-accent-soft-20 hover:text-primary"

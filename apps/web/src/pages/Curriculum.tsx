@@ -76,7 +76,7 @@ export default function Curriculum() {
   });
 
   return (
-    <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
+    <div className="app-page max-w-[880px]">
       {/* 헤더 */}
       <div className="mb-10">
         <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-3">

@@ -255,7 +255,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto max-w-[880px] px-5 py-8 pb-24 sm:px-8 sm:py-12 lg:px-20">
+    <div className="app-page max-w-[880px]">
       {/* 헤더 */}
       <div className="mb-10">
         <h1 className="mb-3 font-pretendard text-3xl font-medium leading-none text-foreground sm:text-4xl">

@@ -28,7 +28,7 @@ export default function Register() {
 
   return (
     <main className="min-h-dvh bg-[var(--background)] px-5 py-8 text-foreground">
-      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-md flex-col justify-center">
+      <div className="mx-auto flex max-w-md flex-col py-4 sm:py-10">
         <Link to="/welcome" className="mb-6 text-sm font-semibold text-[var(--accent)]">JLPT · TOPIK Study</Link>
         <LanguageSelect />
         <section className="surface-card mt-4 p-6">

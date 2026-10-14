@@ -29,7 +29,7 @@ export function ReviewView(props: ReviewViewProps) {
 
   if (screen === 'complete') {
     return (
-      <div className="app-page flex min-h-[70vh] items-center justify-center">
+      <div className="app-page flex items-start justify-center">
         <Card elevated className="w-full max-w-[520px] p-8 text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--accent-soft)]">
             <svg className="w-10 h-10 text-[var(--accent)]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ export function ReviewView(props: ReviewViewProps) {
   if (screen === 'empty') {
     const canStart = starterVocab.length > 0 && !starterPending;
     return (
-      <div className="app-page flex min-h-[70vh] items-center justify-center">
+      <div className="app-page flex items-start justify-center">
         <Card elevated className="w-full max-w-[620px] p-6 text-center sm:p-8">
           <h1 className="mb-3 font-serif-jp text-[var(--text-2xl)] font-normal text-foreground">{t('review.emptyTitle')}</h1>
           <p className="mb-5 text-sm leading-6 text-[var(--muted-foreground)]">{t('review.noDueCards')}</p>
@@ -81,7 +81,7 @@ export function ReviewView(props: ReviewViewProps) {
   }
 
   return (
-    <div className="app-page">
+    <div className="app-page max-w-[720px]">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-serif-jp text-[var(--text-xl)] font-normal leading-tight text-foreground">{t('nav.review')}</h1>

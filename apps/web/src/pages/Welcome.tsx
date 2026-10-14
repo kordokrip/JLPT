@@ -24,18 +24,17 @@ export default function Welcome() {
   };
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-[var(--background)] text-foreground">
-      <section className="relative flex min-h-[86dvh] items-center overflow-hidden border-b border-black/10 dark:border-white/10">
+    <main data-learning-track={learningTrack} className="min-h-dvh bg-[var(--background)] text-foreground">
+      <section className="relative flex items-center overflow-hidden border-b border-[var(--border)]">
         <img
           src="/brand-hero-eastasia-v2.png"
           alt={t('welcome.heroAlt')}
-          className="absolute inset-0 h-full w-full object-cover object-[62%_50%] opacity-45 dark:opacity-25 lg:object-right"
+          className="absolute inset-0 h-full w-full object-cover object-right opacity-10 dark:opacity-5"
           draggable={false}
         />
-        <div className="absolute inset-y-0 left-0 w-full bg-[rgba(247,243,234,0.9)] dark:bg-[rgba(17,17,16,0.9)] lg:w-[60%]" aria-hidden="true" />
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
-          <div className="max-w-[680px]">
+        <div className="relative z-10 mx-auto w-full max-w-[1040px] px-5 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-8">
+          <div className="mx-auto max-w-[680px]">
             <div className="mb-5"><LanguageSelect /></div>
             <div className="flex items-center gap-3">
               <img
@@ -49,14 +48,14 @@ export default function Welcome() {
               </div>
             </div>
 
-            <h1 className="mt-8 max-w-[620px] break-keep text-4xl font-black leading-[1.08] sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-[620px] break-keep text-[28px] font-bold leading-[1.35] tracking-tight sm:text-4xl">
               {t('welcome.title')}
             </h1>
-            <p className="mt-5 max-w-[600px] break-keep text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
+            <p className="mt-3 max-w-[600px] break-keep text-base leading-7 text-[var(--text-secondary)]">
               {t('welcome.description')}
             </p>
 
-            <fieldset className="mt-8 max-w-[600px]">
+            <fieldset className="mt-6">
               <legend className="mb-3 text-sm font-bold">{t('welcome.chooseTrack')}</legend>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <TrackChoice
@@ -74,8 +73,8 @@ export default function Welcome() {
               </div>
             </fieldset>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link to="/login" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent)] px-7 text-base font-bold text-white shadow-[var(--shadow-soft)] hover:bg-[var(--color-primary-hover)]">
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Link to="/login" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] border-b-[3px] border-black/20 bg-[var(--accent)] px-5 text-base font-bold text-[var(--accent-foreground)] shadow-[var(--shadow-soft)] hover:opacity-90">
                 {t('welcome.login')}
               </Link>
               <Link to="/register" className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] border border-[var(--brand-indigo)]/35 bg-[var(--surface-glass)] px-7 text-base font-bold text-[var(--brand-indigo)] backdrop-blur dark:border-white/25 dark:bg-black/20 dark:text-[#FFF8EC]">
@@ -86,9 +85,9 @@ export default function Welcome() {
         </div>
       </section>
 
-      <section aria-label={t('welcome.featuresLabel')} className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-x border-black/10 bg-black/10 dark:border-white/10 dark:bg-white/10 lg:grid-cols-4">
+      <section aria-label={t('welcome.featuresLabel')} className="mx-auto grid max-w-[1040px] grid-cols-2 gap-3 p-5 sm:p-8 lg:grid-cols-4">
         {FEATURES.map(({ key, icon: Icon }) => (
-          <article key={key} className="min-h-40 bg-[var(--surface)] p-5 sm:p-6">
+          <article key={key} className="rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-4">
             <Icon aria-hidden="true" className="text-[var(--accent)]" size={24} strokeWidth={1.8} />
             <h2 className="mt-4 text-base font-black">{t(`welcome.features.${key}.title`)}</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{t(`welcome.features.${key}.description`)}</p>

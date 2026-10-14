@@ -370,7 +370,7 @@ export default function ReadingDetail() {
   const resultData = submitMut.data?.ok ? submitMut.data.data : null;
 
   return (
-    <div className="max-w-[1100px] mx-auto px-4 py-8">
+    <div className="app-page max-w-[1100px]">
       {/* 헤더 */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>

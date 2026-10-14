@@ -33,10 +33,10 @@ export function BrowseView({
   const { t } = useTranslation();
 
   return (
-    <div className="flex h-full min-h-[calc(100dvh-var(--nav-height))]">
+    <div className="flex min-w-0">
       <BrowseSidebar currentType={currentType} level={level} levels={levels} onType={onType} onLevel={onLevel} />
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[900px] px-4 py-5 pb-28 sm:px-6 lg:px-10 lg:py-8">
+      <div className="min-w-0 flex-1">
+        <div className="app-page max-w-[900px]">
           <div className="mb-5">
             <h1 className="mb-2 font-serif-jp text-[var(--text-2xl)] font-normal leading-tight text-foreground">
               {t(`browse.titleByType.${currentType}`)}
@@ -70,7 +70,7 @@ export function BrowseView({
             </div>
           )}
 
-          {currentType === 'vocab' && <NaturalJapaneseSearch onUse={onQuery} />}
+          {currentType === 'vocab' && <details className="mb-5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--card)] p-4"><summary className="flex min-h-12 cursor-pointer items-center gap-2 text-sm font-semibold">{t('naturalSearch.title')}</summary><NaturalJapaneseSearch onUse={onQuery} /></details>}
 
           {loading ? (
             <LoadingList />

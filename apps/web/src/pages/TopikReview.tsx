@@ -10,9 +10,10 @@ import { useDataScope } from '../hooks/useDataScope';
 import { topikOwnerCurriculumApi, topikPlacementApi } from '../lib/api';
 import { useSettingsStore } from '../stores/settings-store';
 import { useTranslation } from 'react-i18next';
+import { foundationJa } from '../features/topik/learning/presentation';
 
 export default function TopikReview() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const scope = useDataScope();
   const configuredInstructionLanguage = useSettingsStore((state) => state.instructionLanguages['topik-ko']);
   const instructionLanguage = configuredInstructionLanguage;
@@ -113,7 +114,7 @@ export default function TopikReview() {
           {incomplete.length > 0 ? incomplete.map((unit) => (
             <Link key={unit.id} to="/track/topik-ko/learn?view=foundation" className="surface-panel flex items-center gap-4 p-4 hover:border-[var(--accent)]">
               <BookOpenText aria-hidden="true" className="text-[var(--accent)]" />
-              <span><span className="block font-bold">{unit.titleKo}</span><span className="text-sm text-[var(--muted-foreground)]">{unit.titleEn}</span></span>
+              <span><span className="block font-bold">{i18n.language === 'ja' ? foundationJa(unit.id).title : i18n.language === 'ko' ? unit.titleKo : unit.titleEn}</span><span className="text-sm text-[var(--muted-foreground)]">{i18n.language === 'ko' ? unit.titleEn : unit.titleKo}</span></span>
             </Link>
           )) : <p className="text-sm text-[var(--muted-foreground)]">{t('topik.review.allComplete')}</p>}
         </div>

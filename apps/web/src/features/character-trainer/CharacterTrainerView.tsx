@@ -54,7 +54,7 @@ export function CharacterTrainerView(props: CharacterTrainerViewProps) {
 
   if (!card) {
     return (
-      <div className="mx-auto max-w-[920px] px-5 py-8 pb-28">
+      <div className="app-page max-w-[920px]">
         <CharacterTrainerHeader />
         <ModeControls mode={mode} level={level} levels={levels} onMode={onMode} onLevel={onLevel} />
         <div className="surface-panel mt-6 p-8 text-center text-sm text-[var(--muted-foreground)]">
@@ -65,7 +65,7 @@ export function CharacterTrainerView(props: CharacterTrainerViewProps) {
   }
 
   return (
-    <div className="mx-auto max-w-[1040px] px-4 py-6 pb-28 sm:px-6 lg:px-10">
+    <div className="app-page max-w-[1040px]">
       <CharacterTrainerHeader />
       <ModeControls mode={mode} level={level} levels={levels} onMode={onMode} onLevel={onLevel} />
 

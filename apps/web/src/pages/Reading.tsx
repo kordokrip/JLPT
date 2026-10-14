@@ -118,7 +118,7 @@ export default function Reading() {
   const allItems = data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <div className="mx-auto max-w-[768px] space-y-6 px-4 py-8 pb-28">
+    <div className="app-page max-w-[768px] space-y-6">
       {/* 헤더 */}
       <div>
         <h1 className="font-pretendard text-[28px] font-bold text-foreground leading-tight mb-1">

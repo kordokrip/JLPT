@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SrsCard } from '../../lib/db';
 import { SRSCard } from './SRSCard';
 
-const mocks = vi.hoisted(() => ({ play: vi.fn() }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+const mocks = vi.hoisted(() => ({ play: vi.fn(), language: 'ko' }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: mocks.language } }) }));
 vi.mock('../../stores/settings-store', () => ({ useSettingsStore: (select: (state: { autoPronounce: boolean }) => unknown) => select({ autoPronounce: false }) }));
 vi.mock('../../lib/audio', () => ({ audioPlayer: { playPronunciation: mocks.play } }));
 
@@ -16,7 +16,13 @@ const card: SrsCard = {
 const props = { card, heading: '確認', reading: 'かくにん', meaning: '확인' };
 
 describe('SRSCard accessible faces and keyboard controls', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.play.mockResolvedValue(true); });
+  beforeEach(() => { vi.clearAllMocks(); mocks.language = 'ko'; mocks.play.mockResolvedValue(true); });
+
+  it.each([['ko', '새 표현'], ['ja', '新しい表現'], ['en', 'New']])('localizes the new-card state in %s', (language, label) => {
+    mocks.language = language;
+    render(<SRSCard {...props} onRate={vi.fn()} />);
+    expect(screen.getByTestId('card-front')).toHaveTextContent(label);
+  });
 
   it('keeps the hidden face inert and out of the accessibility tree, then transfers focus after revealing', () => {
     render(<SRSCard {...props} onRate={vi.fn()} />);

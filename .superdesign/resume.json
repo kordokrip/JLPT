@@ -62,7 +62,7 @@
       "updatedAt": "2026-10-13T09:32:40.700Z"
     },
     "unified-shell-learn": {
-      "targetKind": "new-ui",
+      "targetKind": "existing-ui",
       "projectId": "c35594fd-cdcb-482d-bee8-c2eb86320771",
       "activeDraftId": "95672594-0112-43da-8d4a-784b9d00dbb3",
       "sourceTarget": "today-learning-map",
@@ -88,17 +88,17 @@
       "fingerprints": {
         ".superdesign/design-system.md": "ab96b747cf1f74c1064e549b464914af858b093f8c2bf7b1366c7dcb248ba78b",
         "apps/web/src/pages/Today.tsx": "88a4c47d738bc23a8bd2e42e5f9afa0f7328db468405215062a0577408326174",
-        "apps/web/src/components/layout/RootLayout.tsx": "5b5da43627327cbdfdaab2ddae194138c5c699733afbc184539b0b9b57c40ced",
+        "apps/web/src/components/layout/RootLayout.tsx": "8821b80d7d0bf3d4e0e3757cd3d549692c0177aba7fba465a9fec5112ca0cd34",
         "apps/web/src/components/layout/BottomTabBar.tsx": "584927000bb50fb8600d28ef3e82f87f91f22e396938b8c1de2887cf107d9cfc",
-        "apps/web/src/features/study/StudyComponents.tsx": "147d6a4bea2ba3fc358d424fed625a00b8d338bdac38334fb29400e696a8eb8b",
+        "apps/web/src/features/study/StudyComponents.tsx": "1b7d25b0c7024f5e3fb744416f439e2ca0e3ee91325435373e430b8587d458f4",
         "apps/web/src/features/study/study.css": "2d7b75013d52af5924031c3bf63821c3a1770e070f7afa0a7c32bba12fb82773",
-        "apps/web/src/index.css": "f17f7441b10b60908ae3eeb36941eb08e81a483587eafdd4e8a3c6db00becd3f",
-        "apps/web/src/styles/tokens.css": "f70480fe956c6dc29f2e387cffd682a506e0d26e4e57fd3cedc129fcd6ce7b4b",
+        "apps/web/src/index.css": "95b0903e814f1a05832ab143b89e02a6e6a738c62b54024999382842619fcc39",
+        "apps/web/src/styles/tokens.css": "85ed90ada94da7e51ae6d7c0752ad66fb0d7c518346573672613603dd6e754f9",
         "apps/web/tailwind.config.ts": "3c04dbd5124f1e4e0ec465d007967ea181058a6dfbd8461d119e0a58e8eaccad",
-        "apps/web/src/pages/LearnHub.tsx": "77ff7075ff6a566ee5234012f16d3fd4bf3b2e4580d9bf6b9942ea88c7bbde64",
-        "apps/web/src/pages/LearningRecords.tsx": "1216a0d5a1aab6e99592119660bdded6b43654f373f8a04cfa021bc3961e6ae2",
+        "apps/web/src/pages/LearnHub.tsx": "634182fd1a8fb8927eac656e89387d38c47dcde23a5335e59f9f234c911ace19",
+        "apps/web/src/pages/LearningRecords.tsx": "9b7a9c080d7dfee346b740269b9755c097eea7a1b28fe0f20db2bb988d048d59",
         "apps/web/src/features/review/ReviewView.tsx": "c2579ba0343f3752dd788b0c26a1208e8d9229602c068c935dd30baf77373341",
-        "apps/web/src/features/quiz/QuizView.tsx": "356898571529915e417bd93b29a2fca60d97e9bd53816658269bfc5f1e8e1c04",
+        "apps/web/src/features/quiz/QuizView.tsx": "9748767217d8447031b881752b21c20329779a78511f2185750e62d636d5f95d",
         "apps/web/src/pages/Welcome.tsx": "7a240ddd28784c4817bf35f6b9194e3c952116920e904c4f1e62b58621f3da89",
         "apps/web/src/pages/Login.tsx": "fa99e4d5ce1364275e2c418a64d9ec145a081a178b6369c66a5b4d5df677f5d6"
       },
@@ -116,12 +116,13 @@
         "95672594-0112-43da-8d4a-784b9d00dbb3": {
           "title": "Unified UI 1 — Header and Learn",
           "parentDraftId": "8fa35f81-5ea9-4eb0-ad1a-f5ce0cbc9f61",
-          "currentVersion": 4,
-          "visualDirection": "Unified map language; Korean JLPT and Japanese TOPIK; light and dark; awaiting review; porcelain learning illustration pass, awaiting review"
+          "currentVersion": 6,
+          "visualDirection": "Responsive facelift: compact map entry, cohesive tactile material tiles, Korean/Japanese and light/dark; direct HTML import after credit block; awaiting user approval, not applied to app"
         }
       },
-      "updatedAt": "2026-10-13T16:53:50.597Z",
-      "contentAssetsManifest": ".superdesign/assets/learning-porcelain-v1/manifest.json"
+      "updatedAt": "2026-10-14T02:31:59.604Z",
+      "contentAssetsManifest": ".superdesign/assets/learning-porcelain-v1/manifest.json",
+      "lastAudit": "12 draft viewport/language/theme combinations: no horizontal overflow; not product regression coverage"
     },
     "unified-review-records": {
       "targetKind": "new-ui",

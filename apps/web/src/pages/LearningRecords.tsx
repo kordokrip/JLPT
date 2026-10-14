@@ -13,6 +13,7 @@ import TopikProgress from "./TopikProgress";
 import { LearningInsights } from '../features/records/LearningInsights';
 import { AnswerDistribution } from '../features/records/AnswerDistribution';
 import { recordsCopy, recordsLanguage } from '../lib/learning-insights';
+import "../features/records/records-layout.css";
 export default function LearningRecords() {
   const { t, i18n } = useTranslation(),
     scope = useDataScope(),
@@ -45,11 +46,16 @@ export default function LearningRecords() {
   const data = query.data;
   const today = data?.days.find((day) => day.date === date);
   const showTopikProgress = track === "topik-ko" && searchParams.get("detail") === "topik-progress";
+  const metricLabels = i18n.language.startsWith("ja")
+    ? ["連続", "最長", "XP", "ステップ", "復習"]
+    : i18n.language.startsWith("ko")
+      ? ["연속", "최장", "XP", "단계", "복습"]
+      : ["Streak", "Longest", "XP", "Level", "Review"];
   return (
-    <div className="app-page mx-auto max-w-3xl space-y-6">
+    <div className="records-page app-page mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-bold">{t("study.records")}</h1>
       {showTopikProgress && <TopikProgress />}
-      <section className="surface-panel space-y-3 p-4">
+      <section className="records-page__motivation surface-panel">
         <h2 className="text-xl font-bold">{t("study.motivation")}</h2>
         {motivation.isError ? (
           <p role="status">{t("study.motivationUnavailable")}</p>
@@ -57,16 +63,15 @@ export default function LearningRecords() {
           <p>{t("study.loading")}</p>
         ) : (
           <>
-            <p>
-              {t("study.motivationSummary", {
-                streak: motivation.data.streak,
-                xp: motivation.data.xp,
-                level: motivation.data.level,
-              })}
-            </p>
-            <p>{t("study.longestStreak", { count: motivation.data.longest_streak })}</p>
-            <p>{t("study.dueCount", { count: motivation.data.due_count })}</p>
-            <p className="text-sm text-[var(--text-secondary)]">{t("study.xpScope")}</p>
+            <div className="records-page__motivation-metrics">
+              {[
+                motivation.data.streak,
+                motivation.data.longest_streak,
+                motivation.data.xp,
+                motivation.data.level,
+                motivation.data.due_count,
+              ].map((value, index) => <p key={metricLabels[index]}><strong>{value}</strong><span>{metricLabels[index]}</span></p>)}
+            </div>
             <div className="flex flex-wrap gap-2" aria-label={t("study.badges")}>
               {motivation.data.badges.length === 0 ? (
                 <span className="text-sm text-[var(--text-secondary)]">
@@ -87,7 +92,7 @@ export default function LearningRecords() {
         )}
       </section>
       {import.meta.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true' && profile.data && <LearningInsights today={date} />}
-      <div className="flex gap-3">
+      <div className="records-page__period" role="group" aria-label={t("study.period", { days: window === "7d" ? 7 : 30 })}>
         {(["7d", "30d"] as const).map((w) => (
           <button
             className={studyButton}
@@ -113,7 +118,7 @@ export default function LearningRecords() {
       ) : (
         <>
           <p className="text-sm">{t("study.newRecords")}</p>
-          <section className="surface-panel space-y-2 p-4">
+          <section className="records-page__today surface-panel">
             <h2 className="font-bold">{t("study.today")}</h2>
             <p>
               {t("study.learnedMetric")}: {today?.completed ?? 0} ·{" "}
@@ -127,7 +132,7 @@ export default function LearningRecords() {
               })}
             </p>
           </section>
-          <div className="grid grid-cols-2 gap-3">
+          <section className="records-page__summary" aria-label={t("study.records")}>
             {[
               [
                 "first",
@@ -140,12 +145,12 @@ export default function LearningRecords() {
               ["learnedMetric", data.totals.learned],
               ["reviewMetric", data.totals.reviews],
             ].map(([label, value]) => (
-              <div key={label} className="surface-panel p-4">
+              <div key={label} className="surface-panel">
                 <h2 className="text-sm">{t("study." + label)}</h2>
                 <p className="mt-2 text-2xl font-bold">{value}</p>
               </div>
             ))}
-          </div>
+          </section>
           <section className="surface-panel space-y-2 p-4">
             <h2 className="font-bold">{t("study.nextReview")}</h2>
             {data.next_review_at && data.next_review_at <= Date.now() / 1000 ? <p className="text-sm text-[var(--text-secondary)]">{recordsCopy[recordsLanguage(i18n.language)].overdue}</p> : null}
@@ -163,6 +168,7 @@ export default function LearningRecords() {
           </section>
           {import.meta.env.VITE_ACCOUNT_PERSONALIZATION_ENABLED === 'true' && <AnswerDistribution groups={data.groups} window={window}/>}
           {data.groups.length > 0 && (
+            <section className="records-page__grouped surface-panel">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <caption className="text-left font-bold">
@@ -193,6 +199,7 @@ export default function LearningRecords() {
                 </tbody>
               </table>
             </div>
+            </section>
           )}
           <section className="space-y-3">
             <h2 className="text-xl font-bold">{t("study.history")}</h2>

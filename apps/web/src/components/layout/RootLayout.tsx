@@ -36,7 +36,7 @@ export function RootLayout() {
       data-side-state={sideNavCollapsed ? 'collapsed' : 'expanded'}
       data-learning-track={learningTrack}
       data-account-accent={accountPersonalizationEnabled ? accent : 'track'}
-      className="app-shell relative min-h-dvh overflow-x-clip bg-[var(--background)]"
+      className="app-shell relative min-h-dvh bg-[var(--background)]"
     >
       {!learningExperienceEnabled && <div
         aria-hidden="true"
@@ -73,16 +73,13 @@ export function RootLayout() {
       <main
         id="main-content"
         className={[
-          'relative z-10',
-          'min-[760px]:pl-[var(--active-sidebar-width)]',
-          'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto min-[760px]:h-auto min-[760px]:min-h-dvh min-[760px]:overflow-visible',
-          'pb-0 min-[760px]:pb-0',
+          'app-main relative z-10',
           'min-w-0 pt-[env(safe-area-inset-top)]',
           !isOnline ? 'mt-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
         ].join(' ')}
       >
-        {learningExperienceEnabled && <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-2">{accountPersonalizationEnabled ? <><Link to="/settings" className="inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl px-2 font-semibold"><span className="text-[var(--track-accent)]">{learningTrack==='jlpt-ja'?'JLPT':'TOPIK'}</span><span>{profile.data?.target_level??''}</span></Link><AccountMenu /></> : <details className="ml-auto w-full max-w-xl"><summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary><div className="space-y-4 py-4"><Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>{user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}<button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button></div></details>}</header>}
-        <div key={scope}><Outlet /></div>
+        {learningExperienceEnabled && <header className="learner-header">{accountPersonalizationEnabled ? <><Link to="/settings" className="learner-header__track"><span className="learner-header__seal" aria-hidden="true" lang={learningTrack==='jlpt-ja'?'ja':'ko'}>{learningTrack==='jlpt-ja'?'あ':'가'}</span><span className="text-[var(--track-accent)]">{learningTrack==='jlpt-ja'?'JLPT':'TOPIK'}</span><span className="learner-header__level">{profile.data?.target_level??''}</span></Link><AccountMenu /></> : <details className="learner-header__legacy"><summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary><div className="space-y-4 py-4"><Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>{user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}<button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button></div></details>}</header>}
+        <div className="app-outlet" key={scope}><Outlet /></div>
       </main>
 
       {/* 하단 탭 (모바일) */}

@@ -1,5 +1,9 @@
 # Sub Agent 운영 인수인계
 
+최신 후속: **v6는 승인됐고 로컬 앱에 적용했다.** frontend258·양엔진각90+32+12 합성UI 검증 통과. [통합 문서 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)의 화면군별 관찰 한계를 읽는다. 다음은 실제 상세 화면 확인이지 backend/DB/음성/배포 도구 재작업이 아니다. 기존dirty/실패 로그를 보존하고 새 유료 시안·재승인·무관한 전체gate 반복을 하지 않는다. Production/push 미실행. 아래 ‘검토 대기/앱 미적용’은 이전 조사 이력이다.
+
+현재 과업: **UI/UX만**. `INC-UI-116`과 [통합 디자인 문서 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 확인한다. Superdesign대표시안v6은 검토 대기이고 앱 미적용. 다음은 승인 후 공통 레이아웃/페이지군 UI 수정이며 backend·DB·음성·배포 재작업이 아니다. 기존 전체 gate를 반복하지 말고 실제 화면 겹침/잘림 회귀를 먼저 확보한다. 34라우트 코드 감사와12조합 시안 검사를 전 페이지 기능/시각 검증으로 합산하지 않는다.
+
 최신: 운영runtime78ee09a·Pages07bc33c4·Worker69cffaa1·D10033/77표 배포 완료. 점검off/queue 정상, 콘텐츠600/레슨220·기존 학습행 보존. [통합 실행 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 읽고 통과한 동일 후보 gate를 반복하지 않는다. 실기기 푸시 수신·가족 관찰은 사용자 요청으로 사후 확인이며 재질문을 배포 차단으로 삼지 않는다. UI 복귀는 Pages2c0fea8d+새 호환 Worker 유지. 아래 pending/미push는 이전 이력이다.
 
 최신: 후보78ee09a·활성 Preview3dee006a 배포 완료. 단위828/전체 브라우저291+정책 제외30/로컬44/PWA24/원격11급수44/개인화4항목/구 UI 호환3 통과. 개인화는 최초2통과+일본어30초 timeout2를120초로 제한 재실행하여2통과한 두 실행이며 실패 원본 보존. 실수신/사람 가청/가족 확인은 미접수. 이후 현 운영 backup/restore/predeploy→0033→호환 Worker→Pages→smoke→push 순서만 남는다. [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 읽고 통과한 동일 후보 gate를 반복하지 않는다. Production·원격 push 미실행.

@@ -70,17 +70,17 @@ export function SideNav() {
         <NavLink
           to={homePath}
           aria-label={t('nav.productHome', { product: trackDefinition.shortLabel })}
-          className={`group flex min-w-0 items-center ${compact ? 'justify-center' : 'gap-3'}`}
+          className={`group flex min-w-0 items-center ${compact ? 'justify-center' : 'gap-2'}`}
         >
           {compact && <span className="sr-only">JLPT · TOPIK Study</span>}
           <img
             src="/brand-mark.png"
             alt=""
-            className={`${compact ? 'h-11 w-11' : 'h-12 w-12'} shrink-0 rounded-[var(--radius-md)] border border-black/10 object-cover shadow-[0_10px_24px_rgba(42,30,24,0.14)] transition-transform group-hover:scale-[1.03]`}
+            className={`${compact ? 'h-11 w-11' : 'h-10 w-10'} shrink-0 rounded-[var(--radius-md)] border border-black/10 object-cover shadow-[var(--shadow-soft)] transition-transform group-hover:scale-[1.03] motion-reduce:transition-none`}
           />
           {!compact && (
             <span className="min-w-0">
-              <span className="block truncate text-[16px] font-bold leading-none text-foreground">
+              <span className="block whitespace-nowrap text-[14px] font-bold leading-none text-foreground">
                 JLPT · TOPIK
               </span>
               <span className="mt-1 block truncate text-[10px] font-bold uppercase text-[var(--muted-foreground)]">
