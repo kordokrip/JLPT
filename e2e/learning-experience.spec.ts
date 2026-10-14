@@ -78,7 +78,7 @@ for (const language of ["ko", "ja"] as const) {
     expect(initial.steps.length).toBeGreaterThanOrEqual(2);
     expect(initial.steps.length).toBeLessThanOrEqual(4);
     await page.getByRole("button", { name: copy.pause, exact: true }).click();
-    await page.getByRole("button", { name: copy.resume, exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: copy.resume, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/study/${id}$`));
     const step = initial.steps[0];
     if (step.phase === "learn" || step.phase === "review") {
@@ -341,7 +341,7 @@ for (const level of [
       page.getByRole("button", { name: copy.next, exact: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: copy.pause, exact: true }).click();
-    await page.getByRole("button", { name: copy.resume, exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: copy.resume, exact: true }).click();
     await expect(page).toHaveURL(sessionUrl);
     await page.reload();
     await expect(
