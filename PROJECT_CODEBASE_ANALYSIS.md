@@ -1,5 +1,7 @@
 # JLPT · TOPIK 코드·DB·API 구조
 
+최신 운영(2026-10-14): D1 `0000–0033`/77표, Worker `69cffaa1-996d-42a7-9080-13c526203e86`, Pages `https://07bc33c4.nihongo-n3.pages.dev` / ID `07bc33c4-2245-4d83-a84c-646f29052f1f`, 양쪽 runtime `78ee09a5ddec3254454fe14f174c03e5051f90d0`. account preferences/avatar·learning insights API와 개인화 UI를 활성화했다. 0033의3개 additive 표 외 기존 학습·콘텐츠 계약 불변. [배포·증거 범위](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 이전 배포 수치는 보존 이력이다.
+
 갱신: 2026-10-14 KST. Production0032·네 메뉴·600문항/220레슨을 유지하고 지도·레슨·완료 UI를 배포했다. 현재 배포 결과는 [CURRENT_STATE](docs/00_overview/CURRENT_STATE.md), 지도 변경과 검증 범위는 [지도 릴리스 기록](docs/00_overview/LEARNING_MAP_RELEASE_2026-10-14.md), 폴더별 전체 파일은 [자동 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)를 본다.
 
 현행 출판은 `learning-cohort-remote.ts`의 정확 대상 `stage/publish/verify/withdraw`,5개 release 원자적 공개/철회와0032 퀴즈 guard를 사용한다. 기존 Preview-only 도구는 운영 우회 진입점으로 쓰지 않는다. 퀴즈 버전 snapshot·철회 차단, 세션/FSRS 보존, 한국어·일본어 PWA 모달을 검증했다. 운영 proxy는 canonical host 기본 Worker 연결과 immutable API503을 구분한다. 운영 단위718·기존265/정책30제외·Preview44·PWA24·13표 보존·canonical392·smoke7의 증거는 [최종 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)을 따른다. 아래 신규 후보 절은10월12일 설계/검증 이력이다.

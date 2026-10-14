@@ -1,5 +1,7 @@
 # 로컬 CI/CD 운영 기준
 
+최신 출시: 동일 clean78ee09a의 기존 gate를 반복하지 않고 새74표 운영 backup/정확0032 restore→0033 upgrade·predeploy 후 Worker69cffaa1/Pages07bc33c4 배포. 사후392canonical·7smoke·87asset/route·auth proxy 통과. 실기기 수신·가족 관찰은 사용자 명시 유예이며 가상 pass 금지. 운영 문서 후속 커밋과 runtime SHA를 구분한다. [증적·복귀](UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 pending은 이전 시점이다.
+
 개인화 자동 검증 후속: Preview44/44, 개인화4항목(최초 한국어2통과·일본어2시간초과→120초 제한으로 해당2개 통과), 구 Pages9f046cc6/신 Worker78ee09a 호환3/3 완료. 실패 artifact는 수정하지 않았다. 실수신·사람 가청·가족 확인은 미접수이며 운영 점검/백업/배포/push는 미실행. 재개 지점은 [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md) 최상단이다.
 
 현재 검증 후보78ee09a의 clean aggregate828단위/로컬44와 기존 브라우저291+정책 제외30, PWA24 통과. Preview3dee006a가 배포됐다. 실제 푸시 요청 수락을 수신으로 표시하지 않는다. 원격11급수/개인화/구 UI 호환성 및 사용자 확인 뒤 운영 gate를 수행한다. [동일 후보 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 재사용하되 이전 후보 통과로 대체하지 않는다.

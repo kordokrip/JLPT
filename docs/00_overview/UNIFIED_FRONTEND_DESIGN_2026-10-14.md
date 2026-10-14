@@ -1,6 +1,19 @@
 # 전 페이지 학습 지도 디자인 통합·개인화 — 2026-10-14
 
-## 현재 상태
+## 최종 운영 배포 — 2026-10-14
+
+- 사용자 확인: Preview3dee006a의 양언어 가청 확인 접수. 실제 기기 푸시 수신과 본인/가족 직접 관찰은 후속 지시로 **배포 후 확인 항목**으로 전환했으며 관찰 통과로 기록하지 않는다.
+- 후보: clean `78ee09a5ddec3254454fe14f174c03e5051f90d0`. 코드·선행 문서f3dc1c3를 feature/topik-product-expansion에 일반 push했다. Preview/Production은 같은 소스에 각각의 VAPID 공개키만 다르게 빌드하고82파일씩 봉인했다. OAuth/VAPID private rotation 없음.
+- 백업: `personalization-release-2026-10-14/production-0032-backup-personal-20261014-01`. 운영74표·schema/ledger·보조 OAuth/sequence 보존. 정확0032 복원→0033/77표, 기존74표 행 hash 불변·FK0. 백업 전후 불변·점검off·queue2개 원복 확인.
+- 배포: predeploy→0033→Worker `69cffaa1-996d-42a7-9080-13c526203e86`→canonical392→Production branch main Pages `07bc33c4-2245-4d83-a84c-646f29052f1f`. 개인화 flag on. 기존600문항/220레슨 재시드/공개 변경 없음.
+- 사후: canonical392/392·Worker smoke7/7·asset/route87/87·인증 proxy 통과. 실제 Chrome에서 양언어 모달의 명시적 새로고침→새 프로필·기존 활성 세션 표시 및 ko/ja 각1회 onend 확인. 운영 Network HAR·사람 가청을 새로 확인한 것은 아니다. 같은 소스 Preview Network R2/legacy0·사용자 가청 증거와 분리한다.
+- 자동 검사는 아래828단위·기존291/정책30제외·로컬44·Preview44·개인화 최초2+재실행2·구 UI 호환3·격리 PWA24 증거를 재사용했다. 소스가 바뀌지 않은 전체 검사는 반복하지 않았다.
+- 도구 실패: predeploy가 주석의 `[vars]`를 오인→실제 헤더 파서·6회귀로 수정. migration 첫 호출 root tsx 부재로 실행 전 중단→DB package script로0033만 적용. Worker secret 비교는 점검 MAINTENANCE_MODE의 secret→명시 plain_text off 전환을 오탐→Google/VAPID secret 보존·health off·정확 version을 read-only 재확인. 앱 후보 재수정/재배포 없음. 운영 status 최초4실패는 문서의 이전 Pages/Worker/source/ledger 기준과 새 배포의 차이로 원본 보존.
+- UI 복귀: Pages `2c0fea8d-a995-4ceb-9106-a7ba444ace82`만 복귀하고 **새 호환 Worker·0033 데이터 유지**. 구 hourly Worker 단독 복귀는 새 알림 opt-out을 무시할 수 있어 금지. backend 장애는 cron 중지 후 호환 복구를 판단한다. 데이터 손상 없이 D1 전체 복원/콘텐츠 철회하지 않는다.
+
+증적: `.artifacts/operations/personalization-release-2026-10-14/`의 production-predeploy/migration/worker/pages/assets/smoke JSON, canonical-post.json, acceptance-current.json. 비밀키·백업 원문·사용자 자료는 Git 제외. 아래 pending/미배포 문장은 당시 이력이다.
+
+## 배포 전 자동 검증·중단 이력
 
 **최종 자동 검증:** 아래 Preview11급수44/44 통과. 개인화 최초 실행은2통과/2시간초과이며, 일본어8테마 검사2개만 같은 assertion으로120초 제한 재실행하여2/2 통과(72.2초)했다. 구 Pages9f046cc6→새 Worker78ee09a에서 guided session/FSRS·퀴즈 모드 API·선택지 제출/결과3/3 통과(52.8초). 두 개인화 실행을 하나의 단일4/4 실행으로 표시하지 않는다. 코드 수정 없이 실행 제한만 원격 환경에 맞췄다.
 

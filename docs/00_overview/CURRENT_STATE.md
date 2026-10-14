@@ -1,5 +1,13 @@
 # 현재 구현 상태
 
+## 최신 운영 — 2026-10-14 개인화 배포 완료
+
+Production은 `07bc33c4-2245-4d83-a84c-646f29052f1f`이며 Worker `69cffaa1-996d-42a7-9080-13c526203e86`, 양쪽 runtime source `78ee09a5ddec3254454fe14f174c03e5051f90d0`, D1 `0000–0033`이다. 사진 프로필·계정 디자인·알림 예약·연간 기록을 활성화했다. 콘텐츠600문항/220레슨·학습 기록·FSRS·XP·음성 코어는 재시드/변경하지 않았다.
+
+74표 백업→정확0032 복원→0033/77표에서 기존74표 행 hash 불변·FK0, 점검off·queue 원복을 확인했다. predeploy 후0033→호환 Worker→Pages 순서로 반영했다. 사후 canonical392/392·Worker smoke7/7·asset/route87/87·인증 proxy 통과. Chrome 업데이트 모달→새 프로필·ko/ja 각1회 정상 종료를 확인했다. 사람 가청은 동일 소스 Preview3dee006a의 사용자 답변이다.
+
+사용자가 **실제 기기 푸시 수신·두 학습자 직접 관찰을 사후 확인으로 유예**했다. 로컬/Preview 자동 검사·푸시 표준 복호화·발송 수락과 이 두 미확인 관찰을 구분한다. 코드/선행 문서f3dc1c3 push 완료; 운영 결과는 후속 문서 커밋으로 동기화한다. [실행·실패·복귀 상세](UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 진행 문장은 배포 이전 보존 이력이며 최상단과 상태 요약 표가 현재 기준이다.
+
 후속 최신: 후보78ee09a·활성 Preview3dee006a 배포 완료. 단위828/기존 브라우저291통과+정책 제외30/로컬44/PWA24, 실제 Preview11급수44, 개인화4항목(최초2통과+시간 제한 재실행2통과), 이전 UI/새 Worker 호환3개 통과. **실제 기기 알림 수신·사람 가청·가족 동선 확인은 미접수이며 운영 backup/restore/predeploy·Production·원격 push 미실행.** [실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md) 최상단을 기준으로 한다. 자동 검사 완료를 출시 완료로 해석하지 않는다.
 
 ## 현재 실행 — 개인화 활성화·출시 검증
@@ -66,11 +74,11 @@ Production은 `2c0fea8d-a995-4ceb-9106-a7ba444ace82`이며 web source는 `887d2b
 
 | 구분 | Production 기준 |
 | --- | --- |
-| D1 migration | `0000–0032` |
-| Worker | `71e71638-aff1-44c5-a242-f1e276052413` (maintenance off) |
-| Pages | `https://2c0fea8d.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
-| web source SHA | `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2` |
-| Worker release SHA | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
+| D1 migration | `0000–0033` |
+| Worker | `69cffaa1-996d-42a7-9080-13c526203e86` (maintenance off) |
+| Pages | `https://07bc33c4.nihongo-n3.pages.dev` (canonical `https://nihongo-n3.pages.dev`) |
+| web source SHA | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
+| Worker release SHA | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 

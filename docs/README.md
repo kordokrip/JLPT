@@ -1,5 +1,7 @@
 # JLPT · TOPIK 문서
 
+최신 운영: [입체형 UI·계정 개인화 배포](00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md), runtime78ee09a·Pages07bc33c4·Worker69cffaa1·D10033/77표. 사진·계정 설정·알림·연간 기록 활성화 및 기존 콘텐츠/학습 기록 보존. 사용자 요청으로 실기기 수신·가족 관찰은 사후 확인이며 자동 pass로 대체하지 않는다. 아래 지도 릴리스와 미배포 문장은 보존 이력이다.
+
 현재 작업: [입체형 UI·계정 개인화 구현](00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 사진·계정 설정·알림·연간 기록 API/화면과 additive0033을 로컬 구현했다. 새 Preview·원격 DB·배포·commit/push는 하지 않았다. 이전 시안/Pages-only 문장은 이력으로 구분한다.
 
 최신 운영은 [2026-10-14 지도 UI 릴리스](00_overview/LEARNING_MAP_RELEASE_2026-10-14.md)다. web887d2b2/Pages2c0fea8d, Worker·DB·콘텐츠는 기존 기준선을 유지한다. 아래10월13일 이하의 미배포 문장은 보존 이력이며 현재 판정으로 사용하지 않는다.

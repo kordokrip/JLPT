@@ -1,5 +1,7 @@
 # Sub Agent 운영 인수인계
 
+최신: 운영runtime78ee09a·Pages07bc33c4·Worker69cffaa1·D10033/77표 배포 완료. 점검off/queue 정상, 콘텐츠600/레슨220·기존 학습행 보존. [통합 실행 최상단](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 읽고 통과한 동일 후보 gate를 반복하지 않는다. 실기기 푸시 수신·가족 관찰은 사용자 요청으로 사후 확인이며 재질문을 배포 차단으로 삼지 않는다. UI 복귀는 Pages2c0fea8d+새 호환 Worker 유지. 아래 pending/미push는 이전 이력이다.
+
 최신: 후보78ee09a·활성 Preview3dee006a 배포 완료. 단위828/전체 브라우저291+정책 제외30/로컬44/PWA24/원격11급수44/개인화4항목/구 UI 호환3 통과. 개인화는 최초2통과+일본어30초 timeout2를120초로 제한 재실행하여2통과한 두 실행이며 실패 원본 보존. 실수신/사람 가청/가족 확인은 미접수. 이후 현 운영 backup/restore/predeploy→0033→호환 Worker→Pages→smoke→push 순서만 남는다. [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)을 먼저 읽고 통과한 동일 후보 gate를 반복하지 않는다. Production·원격 push 미실행.
 
 ## 현재 활성 실행 — 개인화 release

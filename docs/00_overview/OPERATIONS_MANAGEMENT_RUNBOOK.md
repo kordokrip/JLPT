@@ -1,5 +1,7 @@
 # 운영관리·버그·정리·릴리스 runbook
 
+최신 운영: runtime78ee09a·Pages07bc33c4·Worker69cffaa1·D10033/77표, 점검off·queue 원복 완료. 다음 백업은0033/77표 기준이다. UI rollback은 Pages2c0fea8d+새 호환 Worker 유지, 새 계정/학습 행 삭제 금지. 사용자 지시로 실기기 푸시 수신·가족 관찰을 사후 확인에 남겼다. [최종 실행·증거 경계](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)를 우선한다. 아래 Preview-only/미배포 조건은 보존 이력이다.
+
 최신 Preview3dee006a/후보78ee09a만0033·새 Worker·개인화 on으로 반영했다. Production은 Pages2c0fea8d/Worker71e71638/D10032로 유지한다. 실제 기기·사용자 및 원격 필수 gate가 완료되기 전에는 준비된 maintenance-backup 도구를 실행하지 않는다. 운영 복귀는 기존 Pages+0033 호환 Worker를 기본으로 하고 계정/학습 데이터를 삭제하지 않는다. [현재 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md).
 
 개인화 후속 승인(2026-10-14)은 Preview·실푸시·가청·backup/restore·rollback/predeploy 통과를 전제로 Production/push를 허용한다. Preview OAuth와 VAPID를 운영에서 복사하거나 운영 키를 회전하지 않는다.0033 이후 백업은77표이며 프로필0031의 운영 원본은 ledger0032를 별도 확인한다. 구65표 cleanup 도구는 이번 릴리스에서 사용하지 않는다. UI rollback은 이전 Pages+새 호환 Worker 유지; backend rollback은 알림 cron 중지/호환 보호를 명시적으로 검증한다. 구 Worker+hourly로 무조건 되돌리면 새 opt-out·중복 방지 계약을 잃으므로 금지한다.

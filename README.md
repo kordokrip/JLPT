@@ -1,5 +1,7 @@
 # JLPT · TOPIK 개인 학습 PWA
 
+2026-10-14 개인화 Production 반영: 사진 프로필·계정 테마/강조색·알림 예약·연간 기록 활성화. [릴리스·검증·복귀](docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 실기기 푸시 수신·가족 관찰은 사용자 지시로 사후 확인이며 미확인 사실을 유지한다.
+
 한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 한 계정에서 학습하는 React PWA다. 오늘 / 학습 / 복습 / 기록 네 메뉴를 운영에 배포했다. 자유 문제·FSRS·개인 메모는 유지한다.
 
 문서 기준일: 2026-10-13 KST. [현재 상태](docs/00_overview/CURRENT_STATE.md), [문서 색인](docs/README.md), [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md), [전체 파일 지도](docs/00_overview/PROJECT_FILE_CATALOG.md)에서 시작한다. V7 440문항/220레슨과 별도 v3 160문항은 검수·로컬/Preview·실제 복귀·백업/복원·가족/양언어 음성 검증을 거쳐 운영에 공개했다. 이전 불합격 초안/리뷰는 보존한다. [최종 릴리스 기록](docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)에 실행 증거와 한계를 구분했다.
@@ -8,12 +10,12 @@
 
 | 구분 | 현재 기준 |
 | --- | --- |
-| D1 | `nihongo-n3-prod-v2`, migration `0000–0032` |
-| Worker | `71e71638-aff1-44c5-a242-f1e276052413` |
-| Pages | `https://2c0fea8d.nihongo-n3.pages.dev`, ID `2c0fea8d-a995-4ceb-9106-a7ba444ace82` |
+| D1 | `nihongo-n3-prod-v2`, migration `0000–0033` |
+| Worker | `69cffaa1-996d-42a7-9080-13c526203e86` |
+| Pages | `https://07bc33c4.nihongo-n3.pages.dev`, ID `07bc33c4-2245-4d83-a84c-646f29052f1f` |
 | canonical | `https://nihongo-n3.pages.dev` |
-| Worker source | `37486f888399f6297b3c95f25e16afcbecc0b5b1` |
-| Web source | `887d2b2566fef6f09b183ca03fa4ba4b79b79bf2` |
+| Worker source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
+| Web source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
 | 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 

@@ -1,5 +1,9 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-14 — 개인화 Production 배포 완료
+
+사용자 사후 관찰 전환 승인·동일 Preview 양언어 가청 수락. 실기기 수신·가족 관찰 미확인 유지. 코드78ee09a/선행 문서f3dc1c3 push→74표 backup/0032 restore/0033 upgrade/hash 보존→predeploy→0033→Worker69cffaa1→canonical392→Pages07bc33c4(main)→87asset/route·7smoke·auth proxy 완료. 점검off/queue 원복·기존 기록 보존. Chrome 업데이트 모달/새 프로필/ko·ja onend 각1회 확인. [전체 ID·실패·복귀·증거 경계](UNIFIED_FRONTEND_DESIGN_2026-10-14.md). 아래 미실행은 이력이다.
+
 개인화 자동 검증 후속: Preview44/44, 개인화4항목(최초 한국어2통과·일본어2시간초과→120초 제한으로 해당2개 통과), 구 Pages9f046cc6/신 Worker78ee09a 호환3/3 완료. 실패 artifact는 수정하지 않았다. 실수신·사람 가청·가족 확인은 미접수이며 운영 점검/백업/배포/push는 미실행. 재개 지점은 [통합 실행 기록](UNIFIED_FRONTEND_DESIGN_2026-10-14.md) 최상단이다.
 
 후속: 로컬5dc5ea8→78ee09a 커밋, 별도 clean 후보 검증 후 Preview3dee006a의 Worker/0033/flag-on Pages 반영 완료. 운영·Git push는 미실행. [최신 증적](UNIFIED_FRONTEND_DESIGN_2026-10-14.md)에 자동 통과와 미완료 사용자/운영 gate를 구분했다. 아래 미커밋/미Preview 기록은 당시 이력이다.
