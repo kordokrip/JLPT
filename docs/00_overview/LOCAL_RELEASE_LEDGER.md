@@ -1,6 +1,20 @@
 # 로컬 형상관리·릴리스 원장
 
-## 2026-10-14 UI 배포 실행 — 후속 후보 검증 중
+## 2026-10-14 최종 UI 페이스리프트 — Production 배포 완료
+
+Production은 `4d0589d0-ab54-4cb9-b3e1-00babc54c140`이며 앱 source는 `0b9e3544f42383def2ddad5cf1c2ebc9013fe2a7`이다. canonical은 https://nihongo-n3.pages.dev 이고 Production branch는 `main`이다. Worker `69cffaa1-996d-42a7-9080-13c526203e86` / source `78ee09a5ddec3254454fe14f174c03e5051f90d0`, D1 `0000–0033` 77표·콘텐츠·FSRS·XP·음성 코어는 유지했다. 점검 off·queues 원복·학습 저장 활성 상태다. 아래 검증 중/미배포 문장은 당시 보존 이력이다.
+
+- 최종 후보: 전체 단위835·OpenAPI/typecheck/build/fresh0033/음성 계약 통과. 브라우저 전체 최초289통과/30기존 정책 제외/2실패 후, 비표준 포트로 실패한 WebKit 메뉴2건을 기존 표준 포트에서 변경 없는 검사로2/2 재통과했다. 합산 고유291통과이며 단일 전체 green으로 보고하지 않는다.
+- 최종 Preview `495f752d`: 실제 전용 backend의11급수·학습/제출/재개/기록/FSRS 등32/32. 격리 실제 빌드 PWA24/24. 활성 Chrome ko/ja 각1회 종료·Network R2/legacy0, 사용자가 **최종 후보에서 두 언어 모두 들림** 확인.
+- 같은 세션의 현 schema77표 백업/복원·행 비교·FK0·rollback/predeploy 통과 후 Pages만 배포했다. 백업 후 후속 후보 차이는 UI 로딩 guard/테스트/문서이며 DB·Worker·음성 변경0을 확인했다. 백업 이후 정상 학습 쓰기가 재개됐으므로 UI 문제에 이 백업을 복원하지 않는다.
+- 운영 사후: 고정 canonical source392/392·Worker smoke7/7·인증 proxy3항목·실제 HTTP 파일/경로89/89 통과. 새 운영 배포 URL에서 `index-CJDqnH-_.js` 및 활성 Chrome ko/ja 각1회 종료·재생 구간 Network R2/legacy0 확인. 운영 사람 청취를 별도로 새로 받았다는 뜻은 아니다.
+- canonical의 기존 탭에서 한·일 업데이트 모달을 확인했다. 갱신 클릭은 다른 앱 탭이 열린 상태에서 안전 보류/닫기 안내로 끝났다. 사용자 학습 탭·캐시를 강제로 닫거나 삭제하지 않았다. 새 배포 URL 음성 검증과 canonical 탭의 업데이트 완료는 구분한다.
+- 복귀: Pages `07bc33c4-2245-4d83-a84c-646f29052f1f`로 복귀하고 Worker69cffaa1·D10033·정상 학습 기록을 유지한다. 신규 콘텐츠/DB 공개나 migration은 없었다.
+- 앱 후보는 `origin/feature/topik-product-expansion`에 push 완료. 이 운영 결과는 문서 후속 커밋으로 같은 branch에 동기화한다. 실제 기기 푸시 수신·두 학습자 사용성 관찰은 사용자가 유예한 사후 항목이며 자동 검사로 대체 완료 처리하지 않는다.
+
+증적: `.artifacts/operations/ui-facelift-release-2026-10-14/`의 `production-pages-r2.json`, `production-predeploy-r2.json`, `canonical-post.json`, `production-smoke-r2.json`, `production-http-r2.json`, `production-native-audio-r2.json`. 최초 실패 artifact와 리뷰는 보존한다.
+
+## 이전 이력 — UI 배포 실행·후속 후보 검증 중
 
 사용자가 Production·push를 승인했다. 앱839188a/검토한 E2E1fdc15a는 원격 branch에 push했고 Preview94884c8a에 배포했다. 로컬834단위·fresh/OpenAPI/typecheck/build 통과, 기존 브라우저 최초270통과/21실패/30정책 제외 후 정확 실패키 재검증으로291통과를 확인했다(한 번의 전체 green 실행이 아님). 시각30·PWA24·고정 source canonical392 통과. Preview 실기능은31/32, WebKit TOPIK1 시작1건 시간초과·해당 동일 조건3회 재검사 통과이나 원인은 미확정이다. INC-UI-117의 초기 catalog 로딩 중 시작 버튼 위치 경합을 방어하고 새 후보를 검증한다. 실제 Chrome ko/ja 정상 종료·재생 중 network0은 확인했으나94884c8a 사람 가청 답변은 아직 없다.
 
