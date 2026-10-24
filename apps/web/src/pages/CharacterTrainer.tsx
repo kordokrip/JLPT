@@ -26,6 +26,10 @@ export default function CharacterTrainer() {
       onStage={trainer.switchStage}
       onNext={trainer.nextCard}
       onComplete={trainer.complete}
+      onSelect={trainer.selectCard}
+      loading={trainer.loading}
+      error={trainer.error}
+      onReload={trainer.reload}
     />
   );
 }

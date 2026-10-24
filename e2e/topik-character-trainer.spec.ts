@@ -8,14 +8,14 @@ test.describe('TOPIK 한글 문자 암기', () => {
     await registerTopikUser(page);
     await page.goto('/track/topik-ko/characters', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByRole('heading', { name: /한글을 보고, 쓰고, 기억하세요|See, write, and remember Hangul|ハングルを見て、書いて、覚える/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /문자 암기|Characters|文字の練習/ })).toBeVisible();
     await expect(page.getByText('가').first()).toBeVisible();
-    await expect(page.getByText('가방').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /가방.*발음|Play Korean pronunciation for 가방|가방の韓国語発音/ })).toBeVisible();
-    await page.getByRole('button', { name: /가방.*발음|Play Korean pronunciation for 가방|가방の韓国語発音/ }).click();
+    await expect(page.locator('.character-info')).toContainText('가방');
+    await expect(page.getByRole('button', { name: /발음 듣기|Play pronunciation|発音を聞く/ })).toBeVisible();
+    await page.getByRole('button', { name: /발음 듣기|Play pronunciation|発音を聞く/ }).click();
 
-    await page.getByRole('button', { name: /3\. 손으로 쓰기|3\. Write|3\. 手書き/ }).click();
-    const canvas = page.getByLabel(/한글 쓰기 연습 캔버스|Hangul handwriting practice canvas|ハングル手書き練習キャンバス/);
+    await page.getByRole('button', { name: /따라 쓰기|Practice writing|書く練習/ }).click();
+    const canvas = page.getByLabel(/쓰기 연습 캔버스|Writing practice canvas|文字を書くキャンバス/);
     await expect(canvas).toBeVisible();
     const box = await canvas.boundingBox();
     expect(box).not.toBeNull();
@@ -29,18 +29,18 @@ test.describe('TOPIK 한글 문자 암기', () => {
       await page.mouse.move(box.x + 145, box.y + 205);
       await page.mouse.up();
     }
-    await page.getByRole('button', { name: '채점하기' }).click();
-    await expect(page.getByText(/통과입니다|다시 쓰는 편|아직 충분히/)).toBeVisible();
+    await page.getByRole('button', { name: /쓰기 크기 확인|Check writing size|書いた大きさを確認/ }).click();
+    await expect(page.getByText(/연습 흔적이 충분|크기와 위치를 조정|먼저 캔버스에|十分に書け|大きさと位置|まずキャンバス/)).toBeVisible();
 
-    await page.getByRole('button', { name: /4\. 손쓰기 퀴즈|4\. Handwriting quiz|4\. 手書きクイズ/ }).click();
-    await expect(page.getByText(/ga.*한글|Hangul character for the ga|ga表記/).first()).toBeVisible();
-    await page.getByRole('button', { name: /5\. 즉시 테스트|5\. Quick check|5\. 即時テスト/ }).click();
+    await page.getByRole('button', { name: /기억해서 쓰기|Write from memory|見ずに書く/ }).click();
+    await expect(page.locator('.character-glyph')).toHaveText('?');
+    await page.getByRole('button', { name: /구별하기|Distinguish|見分ける/, exact: true }).click();
     await page.getByRole('button', { name: 'ga', exact: true }).click();
-    await expect(page.getByText(/정답입니다|Correct\.|正解です/)).toBeVisible();
+    await expect(page.getByText(/잘 떠올렸어요|Nicely recalled|思い出せました/)).toBeVisible();
 
-    await page.getByRole('tab', { name: /자음|Consonants|子音/ }).click();
+    await page.getByRole('button', { name: /자음|Consonants|子音/, exact: true }).click();
     await expect(page.getByText('ㄱ').first()).toBeVisible();
-    await page.getByRole('tab', { name: /모음|Vowels|母音/ }).click();
+    await page.getByRole('button', { name: /모음|Vowels|母音/, exact: true }).click();
     await expect(page.getByText('ㅏ').first()).toBeVisible();
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   });

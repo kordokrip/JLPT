@@ -41,7 +41,7 @@ function VocabDetail({ id }: { id: number }) {
     <article className="space-y-5">
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">
+          <h1 className="min-w-0 text-4xl font-bold text-[var(--text-primary)]">
             <Ruby base={item.word} reading={item.reading ?? ''} />
           </h1>
           <Badge variant={levelVariant(item.level)}>{item.level.toUpperCase()}</Badge>
@@ -75,7 +75,7 @@ function GrammarDetail({ id }: { id: number }) {
     <article className="space-y-5">
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)]">{item.pattern}</h1>
+          <h1 className="min-w-0 text-3xl font-bold text-[var(--text-primary)]">{item.pattern}</h1>
           <Badge variant={levelVariant(item.level)}>{item.level.toUpperCase()}</Badge>
         </div>
         <p className="text-lg text-[var(--text-secondary)]">{item.meaning}</p>
@@ -89,7 +89,7 @@ function GrammarDetail({ id }: { id: number }) {
       {item.example_jp && (
         <section className="rounded-[var(--radius)] bg-[var(--muted)] p-4 space-y-1">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-sm text-[var(--text-primary)]">{item.example_jp}</p>
+            <p className="min-w-0 text-sm text-[var(--text-primary)]">{item.example_jp}</p>
             <PronunciationButton compact text={item.example_jp} surface="example" label={t('browse.playExamplePronunciation')} />
           </div>
           {item.example_ko && <p className="text-sm text-[var(--text-secondary)]">{item.example_ko}</p>}
@@ -109,7 +109,7 @@ function KanjiDetail({ id }: { id: number }) {
     <article className="space-y-5">
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-6xl font-bold text-[var(--text-primary)]">{item.character}</h1>
+          <h1 className="min-w-0 text-6xl font-bold text-[var(--text-primary)]">{item.character}</h1>
           <Badge variant={levelVariant(item.level)}>{item.level.toUpperCase()}</Badge>
         </div>
         <p className="text-lg text-[var(--text-secondary)]">{item.meaning}</p>
@@ -122,13 +122,13 @@ function KanjiDetail({ id }: { id: number }) {
         {item.reading_on && (
           <div className="flex gap-3">
             <dt className="font-medium text-[var(--text-muted)] w-20 shrink-0">{t('browse.onyomi')}</dt>
-            <dd className="text-[var(--text-primary)]">{item.reading_on}</dd>
+            <dd className="min-w-0 break-words text-[var(--text-primary)]">{item.reading_on}</dd>
           </div>
         )}
         {item.reading_kun && (
           <div className="flex gap-3">
             <dt className="font-medium text-[var(--text-muted)] w-20 shrink-0">{t('browse.kunyomi')}</dt>
-            <dd className="text-[var(--text-primary)]">{item.reading_kun}</dd>
+            <dd className="min-w-0 break-words text-[var(--text-primary)]">{item.reading_kun}</dd>
           </div>
         )}
       </dl>

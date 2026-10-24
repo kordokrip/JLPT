@@ -66,5 +66,6 @@ export function useHangulTrainer() {
     switchStage,
     nextCard,
     complete,
+    selectCard: (next: number) => { setIndex(next); resetCardState(); },
   };
 }

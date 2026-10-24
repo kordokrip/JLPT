@@ -5,7 +5,7 @@
 .records-page__motivation-metrics p { display: grid; gap: .25rem; min-width: 0; padding: .625rem; border-radius: .875rem; background: var(--accent-soft); }
 .records-page__motivation-metrics strong { font-size: 1.25rem; line-height: 1; }
 .records-page__motivation-metrics span { color: var(--text-secondary); font-size: .75rem; line-height: 1.25; overflow-wrap: anywhere; }
-.records-page__period { display: flex; gap: .5rem; padding: .25rem; width: fit-content; border: 1px solid var(--border); border-radius: .875rem; background: var(--surface); }
+.records-page__period { display: flex; gap: .5rem; max-width: 100%; overflow-x: auto; padding: .25rem; width: fit-content; border: 1px solid var(--border); border-radius: .875rem; background: var(--surface); }
 .records-page__period button { min-height: 2.5rem; padding-inline: .875rem; }
 .records-page__period button[aria-pressed="true"] { background: var(--accent); color: var(--accent-foreground); }
 .records-page__today { display: grid; gap: .5rem; padding: 1rem; }
