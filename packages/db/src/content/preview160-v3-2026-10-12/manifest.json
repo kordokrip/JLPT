@@ -1,0 +1,35 @@
+{
+  "schema_version": "immutable-preview160-manifest-v1",
+  "version": "preview160-v3-2026-10-12",
+  "publication": "draft-unpublished",
+  "parent": {
+    "draft_sha256": "22f2850223026427682b3afa53fbaf4410b35b2b421d013f1db453e805af6711",
+    "source_derivative_sha256": "7df63f52d3ab3387eea65f23cf46fc6b007100716afe42172a25fa916d41142a",
+    "review_raw_sha256": {
+      "a": "291476b5b84dfdbb030b78e8ecd86af27006b92f8ac0b8fd5a9c49ffa05ed7c7",
+      "b": "47da0ec86c940839d7d84491325e6c59165aafc8dde85ca55815793c87f78dc4"
+    }
+  },
+  "counts": {
+    "total": 160,
+    "jlpt_n2": 60,
+    "jlpt_n1": 60,
+    "topik": 40,
+    "corrected": 2
+  },
+  "approvals": [],
+  "files": {
+    "source-derivative.json": {
+      "bytes": 722,
+      "sha256": "c5e2548381420c785909d787e9a316a1cc6057e0fc777702aa4ebfe33db73c66"
+    },
+    "draft.json": {
+      "bytes": 361867,
+      "sha256": "4934aa390878bd6ac2becd9ec4e930eafb7e72423b98b492430a83b1747ffd6f"
+    },
+    "correction-decisions.json": {
+      "bytes": 1296,
+      "sha256": "25939d3ab6436cb3acc46d530e477c33c044d9c051425cc7775a44cf3e34ee81"
+    }
+  }
+}

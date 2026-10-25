@@ -28,12 +28,12 @@ export default function AddWord() {
   const target = `/browse/vocab${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`;
 
   return (
-    <div className="min-h-[calc(100vh-var(--nav-height,60px))] flex items-center justify-center px-5 py-10">
+    <div className="app-page flex items-start justify-center">
       <section className="w-full max-w-[520px] card-hairline rounded-lg bg-card p-6">
         <p className="font-pretendard text-[12px] font-semibold uppercase tracking-wide text-[var(--accent)]">
           {t('addWord.eyebrow')}
         </p>
-        <h1 className="mt-2 font-serif-jp text-[32px] leading-tight text-foreground">
+        <h1 className="mt-2 font-pretendard text-[28px] font-bold leading-tight text-foreground">
           {t('addWord.title')}
         </h1>
         <p className="mt-3 font-pretendard text-[14px] leading-relaxed text-[var(--muted-foreground)]">

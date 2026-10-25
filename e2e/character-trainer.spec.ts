@@ -9,17 +9,17 @@ test.describe('문자 암기 트레이너', () => {
 
     await expect(page.getByRole('heading', { name: '문자 암기' })).toBeVisible();
     await expect(page.getByText('あ').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'あ 발음 듣기' }).first()).toBeVisible();
-    await expect(page.getByText('あ → あいさつ (인사)')).toBeVisible();
-    await expect(page.getByRole('button', { name: '1. 관찰' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '발음 듣기', exact: true })).toBeVisible();
+    await expect(page.getByText('あいさつ · 인사')).toBeVisible();
+    await expect(page.getByRole('button', { name: '살펴보기' })).toBeVisible();
     await expect(page.getByText('읽기', { exact: true }).first()).toBeVisible();
     await expect(page.locator('dd').getByText('a', { exact: true }).first()).toBeVisible();
 
-    await page.getByRole('button', { name: 'あ 발음 듣기' }).first().click();
+    await page.getByRole('button', { name: '발음 듣기', exact: true }).click();
 
-    await page.getByRole('button', { name: '3. 손으로 쓰기' }).click();
+    await page.getByRole('button', { name: '따라 쓰기' }).click();
     await expect(page.getByLabel('쓰기 연습 캔버스')).toBeVisible();
-    await expect(page.getByText('쓰기 순서 힌트')).toBeVisible();
+    await expect(page.getByText(/손글씨 인식·획순 채점이 아닙니다/)).toBeVisible();
     const canvas = page.getByLabel('쓰기 연습 캔버스');
     const box = await canvas.boundingBox();
     expect(box).not.toBeNull();
@@ -37,19 +37,20 @@ test.describe('문자 암기 트레이너', () => {
       await page.mouse.move(box.x + 240, box.y + 165);
       await page.mouse.up();
     }
-    await page.getByRole('button', { name: '채점하기' }).click();
-    await expect(page.getByText(/통과입니다|다시 쓰는 편|아직 충분히/)).toBeVisible();
+    await page.getByRole('button', { name: '쓰기 크기 확인' }).click();
+    await expect(page.getByText(/연습 흔적이 충분|크기와 위치를 조정|먼저 캔버스에/)).toBeVisible();
 
-    await page.getByRole('button', { name: '4. 손쓰기 퀴즈' }).click();
-    await expect(page.getByText('a 발음의 문자를 떠올려 쓰세요.')).toBeVisible();
+    await page.getByRole('button', { name: '기억해서 쓰기' }).click();
+    await expect(page.locator('.character-glyph')).toHaveText('?');
 
-    await page.getByRole('button', { name: '5. 즉시 테스트' }).click();
+    await page.getByRole('button', { name: '구별하기', exact: true }).click();
     await page.getByRole('button', { name: /^a$/ }).click();
-    await expect(page.getByText('정답입니다.')).toBeVisible();
+    await expect(page.getByText('잘 떠올렸어요!')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^a$/ })).toBeDisabled();
 
     await page.getByRole('button', { name: '가타카나' }).click();
     await expect(page.getByText('ア').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'ア 발음 듣기' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: '발음 듣기', exact: true })).toBeVisible();
   });
 
   test('한자 모드는 API 데이터와 JLPT 레벨 선택 UI를 제공한다', async ({ page }) => {
@@ -61,6 +62,9 @@ test.describe('문자 암기 트레이너', () => {
     await expect(page.getByRole('button', { name: 'N5' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'N4' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'N3' })).toBeVisible();
-    await expect(page.getByText(/한자 데이터를 불러오는 중입니다.|획수/).first()).toBeVisible();
+    await expect(page.locator('.character-glyph')).toBeVisible();
+    await expect(page.locator('.character-info')).toContainText('뜻');
+    await page.getByRole('button', { name: 'N5', exact: true }).click();
+    await expect(page.locator('.character-glyph')).toBeVisible();
   });
 });

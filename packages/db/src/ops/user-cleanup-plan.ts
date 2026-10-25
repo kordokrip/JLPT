@@ -210,3 +210,59 @@ export function buildUserCleanupPlan(input: {
 
   return { ...unsigned, planHash: hashPlan(unsigned) };
 }
+
+/**
+ * Pure SQL builder, not an execution/approval gate. The caller must retain a
+ * current-schema backup/restore proof, enforce foreign keys and verify RETURNING
+ * IDs against the approved candidates. SQL contains exact identities: do not log.
+ * Cascades are schema-owned; login_events is retained via ON DELETE SET NULL.
+ */
+export function buildExactUserDeleteSql(
+  users: CleanupUserRow[],
+  keepIDs: string[],
+): string {
+  buildUserCleanupPlan({
+    users,
+    keepUserIds: keepIDs,
+    relatedCounts: [],
+    source: "backup",
+    database: "exact-inventory-only",
+    generatedAt: "2026-10-14T00:00:00.000Z",
+  });
+  const keep = new Set(keepIDs);
+  const literal = (value: string): string => {
+    if (typeof value !== "string" || !value || value.includes("\0")) {
+      throw new Error("exact cleanup identities must be nonempty NUL-free strings");
+    }
+    return `'${value.replaceAll("'", "''")}'`;
+  };
+  const inventory = users.map((row) => {
+    if (!Number.isSafeInteger(row.created_at)) {
+      throw new Error("exact cleanup created_at must be a safe integer");
+    }
+    if (!keep.has(row.id) && (
+      row.role !== "user" || row.auth_provider !== "password" ||
+      row.email !== row.email.trim() ||
+      !/^(?:e2e|topik)-[0-9]{13}-[a-z0-9]+@example\.com$/.test(row.email)
+    )) {
+      throw new Error("exact cleanup candidate is outside the approved synthetic identity pattern");
+    }
+    return `(${[row.id, row.email, row.role, row.auth_provider].map(literal).join(", ")}, ${row.created_at}, ${keep.has(row.id) ? 0 : 1})`;
+  });
+  // Materialize BEFORE the first deletion: re-counting after an earlier row is
+  // deleted could otherwise turn an all-or-nothing guard into partial cleanup.
+  return `WITH expected(id, email, role, auth_provider, created_at, delete_candidate) AS MATERIALIZED (
+  VALUES ${inventory.join(",\n         ")}
+), inventory_guard AS MATERIALIZED (
+  SELECT (SELECT COUNT(*) FROM users) = ${users.length}
+    AND (SELECT COUNT(*) FROM users AS actual
+      JOIN expected ON (actual.id COLLATE BINARY, actual.email COLLATE BINARY, actual.role COLLATE BINARY, actual.auth_provider COLLATE BINARY, actual.created_at)
+        = (expected.id, expected.email, expected.role, expected.auth_provider, expected.created_at)) = ${users.length} AS unchanged
+)
+DELETE FROM users
+WHERE (SELECT unchanged FROM inventory_guard)
+  AND (id COLLATE BINARY, email COLLATE BINARY, role COLLATE BINARY, auth_provider COLLATE BINARY, created_at) IN (
+    SELECT id, email, role, auth_provider, created_at FROM expected WHERE delete_candidate = 1
+  )
+RETURNING id;`;
+}

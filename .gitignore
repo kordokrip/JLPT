@@ -18,6 +18,10 @@ e2e/test-results/
 .tmp-*/
 .artifacts/
 
+# Local browser render evidence and synthetic UI-only fixtures
+.playwright-cli/
+output/playwright/
+
 # ─────────────────────────────────────────────
 # Wrangler / Cloudflare — 절대 커밋 금지
 # ─────────────────────────────────────────────
@@ -42,6 +46,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# 로컬 프로젝트 인수인계 자료 원본(문서 소스가 아닌 바이너리)
+/JLPT.pptx
+
 # ─────────────────────────────────────────────
 # 로그
 # ─────────────────────────────────────────────
@@ -53,3 +60,8 @@ pnpm-debug.log*
 # TypeScript
 # ─────────────────────────────────────────────
 *.tsbuildinfo
+
+# Superdesign 재생성 가능한 분석·미리보기 파일 (승인/설계 상태는 별도 보존)
+.superdesign/init/
+.superdesign/tmp/
+.superdesign/website/

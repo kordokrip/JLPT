@@ -14,7 +14,7 @@ test('records complete provenance for every operating seed source', () => {
   assert.equal(manifest.entries.length, SEEDED_SOURCE_COUNT);
   assert.ok(manifest.entries.every((entry) => hasCompleteProvenance(entry.provenance)));
   assert.ok(manifest.entries.every((entry) => entry.sha256.length === 64));
-  assert.ok(manifest.entries.every((entry) => entry.sourceVersion.startsWith('source-v2-')));
+  assert.ok(manifest.entries.every((entry) => entry.sourceVersion.startsWith('source-v3-')));
   assert.ok(manifest.entries.every((entry) => entry.parserVersion === manifest.parserVersion));
 });
 

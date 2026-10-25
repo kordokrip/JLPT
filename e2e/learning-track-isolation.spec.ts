@@ -78,7 +78,8 @@ test.describe('계정 및 학습 트랙 격리', () => {
   test('TOPIK과 JLPT 학습 데이터가 서로 다른 namespace에 유지된다', async ({ page }) => {
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: /한국어 · TOPIK/ }).click();
+    await page.getByRole('combobox').selectOption('ko');
+    await page.getByRole('radio', { name: /한국어 · TOPIK/ }).click();
     await page.getByRole('link', { name: '회원가입' }).first().click();
     await page.getByLabel('이름').fill('트랙 격리 테스트');
     await page.getByLabel('이메일').fill(`track-${unique}@example.com`);
@@ -86,7 +87,7 @@ test.describe('계정 및 학습 트랙 격리', () => {
     await page.getByRole('button', { name: '계정 만들기' }).click();
 
     await expect(page).toHaveURL(/\/track\/topik-ko$/);
-    await expect(page.getByRole('heading', { name: /한국어 학습 트랙 기반/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '오늘도, 한 걸음' })).toBeVisible();
     const topikUser = await sessionUser(page);
     expect(topikUser.learning_track).toBe('topik-ko');
     const topikScope = `user:${topikUser.id}|track:topik-ko`;
@@ -116,7 +117,8 @@ test.describe('계정 및 학습 트랙 격리', () => {
     expect(topikSync.body.data.server_delta.daily_logs).toHaveLength(2);
     expect(topikSync.body.data.server_delta.daily_logs.every((row) => row.learning_track === 'topik-ko')).toBe(true);
 
-    await page.getByRole('button', { name: 'JLPT 일본어 학습으로 전환' }).click();
+    await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '일본어 · JLPT' }).click();
     await expect(page).toHaveURL(/\/$/);
     const jlptUser = await sessionUser(page);
     expect(jlptUser.learning_track).toBe('jlpt-ja');

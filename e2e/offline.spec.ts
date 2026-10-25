@@ -50,6 +50,7 @@ test.describe('오프라인 모드', () => {
     await expect(appRoot.or(page.locator('body > *').first())).toBeVisible({ timeout: 5_000 });
 
     await expect.poll(() => readNihongoStoreNames(page), { timeout: 10_000 }).toContain('srs_cards');
+    await expect.poll(() => readNihongoStoreNames(page), { timeout: 10_000 }).toContain('topik_progress');
   });
 
   test('오프라인 상태에서 Dexie IDB에 캐시된 카드가 유지된다', async ({ page }) => {

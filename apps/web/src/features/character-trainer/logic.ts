@@ -15,7 +15,6 @@ export function makeKanjiCard(item: KanjiItem): StudyCard {
     hint: `${item.meaning}의 핵심 이미지를 떠올린 뒤 한국 한자음/일본어 읽기를 분리해서 말하세요.`,
     level: item.level as JlptLevel,
   };
-  if (item.audio_path) card.audioPath = item.audio_path;
   return card;
 }
 
@@ -29,10 +28,6 @@ export function getCardAudioText(card: StudyCard): string {
     .map((value) => value.trim())
     .find((value) => value.length > 0 && value !== '-');
   return firstReading ?? card.char;
-}
-
-export function getCardAudioPath(card: StudyCard): string | undefined {
-  return card.audioPath;
 }
 
 export function elongateKanaForSpeech(char: string, _reading = ''): string {

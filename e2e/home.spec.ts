@@ -6,7 +6,7 @@ import { ensureAuthenticated } from './auth-helper';
  *
  * 홈 화면 기본 로드 테스트
  * - 앱이 정상 렌더링되는지 확인
- * - due 카드 카운트가 표시되는지 확인 (0 포함)
+ * - 신규 목표 설정과 기존 사용자의 한 번 눌러 시작 확인
  * - 네비게이션 주요 링크 접근 가능 여부
  */
 test.describe('홈 화면', () => {
@@ -26,25 +26,17 @@ test.describe('홈 화면', () => {
     await expect(nav).toBeVisible({ timeout: 10_000 });
   });
 
-  test('복습 카드 카운트가 표시된다 (0 포함)', async ({ page }) => {
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 10_000 });
-
-    // due count 배지 또는 숫자 — 0이라도 표시되어야 함
-    // 공통적인 패턴: data-testid="due-count" 또는 텍스트로 숫자
-    const dueCount = page.locator('[data-testid="due-count"], .due-count, [aria-label*="복습"]').first();
-    // 있으면 숫자를 포함하고 있어야 함
-    if (await dueCount.count() > 0) {
-      const text = await dueCount.textContent();
-      expect(text).toMatch(/\d+/);
-    } else {
-      // fallback: 숫자가 포함된 요소가 화면에 하나라도 있으면 통과
-      const anyNumber = page.locator('text=/\\d+/').first();
-      await expect(anyNumber).toBeVisible({ timeout: 5_000 });
-    }
+  test('목표 설정 뒤 오늘 분량을 한 번 눌러 시작한다', async ({ page }) => {
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible();
+    await expect(page.getByLabel('목표 급수', {exact:true})).toHaveValue('N5');
+    await page.getByRole('button', {name:'저장',exact:true}).click();
+    await page.getByRole('button', {name:'20분 공부 시작'}).click();
+    await expect(page).toHaveURL(/\/study\/[\w-]+$/);
+    await expect(page.getByRole('progressbar')).toHaveAttribute('value','0');
   });
 
   test('복습 시작 버튼 또는 링크가 존재한다', async ({ page }) => {
-    await expect(page.getByText(/오늘 할 일|오늘도 천천히/).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', {name:'오늘도, 한 걸음'})).toBeVisible({ timeout: 10_000 });
 
     const reviewLink = page.locator(
       'a[href*="review"], button:has-text("복습"), a:has-text("복습"), [data-testid="start-review"]',

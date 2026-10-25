@@ -9,6 +9,19 @@ import {
   type ContentManifest,
   type ContentManifestEntry,
 } from "./content-manifest.js";
+import { N2_BATCH_1_SOURCE_ASSET_ID } from './n2-batch1.js';
+import { N2_BATCH_2_SOURCE_ASSET_ID } from './n2-batch2.js';
+import { N2_BATCH_3_SOURCE_ASSET_ID } from './n2-batch3.js';
+import { N2_BATCH_4_SOURCE_ASSET_ID } from './n2-batch4.js';
+import { N2_BATCH_5_SOURCE_ASSET_ID } from './n2-batch5.js';
+import { N1_BATCH_1_SOURCE_ASSET_ID } from './n1-batch1.js';
+import { N1_BATCH_2_SOURCE_ASSET_ID } from './n1-batch2.js';
+import { N1_BATCH_3_SOURCE_ASSET_ID } from './n1-batch3.js';
+import { N1_BATCH_4_SOURCE_ASSET_ID } from './n1-batch4.js';
+import { topikOwnerBatch1ContentRowsSql } from './topik-owner-curriculum-batch1.js';
+import { topikOwnerBatch2ContentRowsSql } from './topik-owner-curriculum-batch2.js';
+import { topikOwnerBatch3ContentRowsSql } from './topik-owner-curriculum-batch3.js';
+import { topikOwnerBatch4ContentRowsSql } from './topik-owner-curriculum-batch4.js';
 import {
   argValue,
   countSql,
@@ -67,7 +80,6 @@ const currentManifest = buildContentSeedPlan().manifest;
 const seededManifest = readManifest(manifestPath);
 const checks: VerificationCheck[] = [];
 const numericSqlChecks: NumericSqlCheck[] = [];
-const requireAudio = process.argv.includes("--require-audio");
 
 function readManifest(filePath: string): ContentManifest {
   if (!fs.existsSync(filePath)) {
@@ -157,6 +169,29 @@ function sqlLiteral(value: string): string {
 }
 
 function rowCountSql(entry: ContentManifestEntry): string {
+  if (entry.table === "n2_curriculum") {
+    const assetId = jlptCurriculumAssetId(entry.sourceCode);
+    // A canonical kanji/vocabulary row can legitimately be shared by later
+    // batches. Its mutable level/source column may therefore change, while the
+    // batch-owned stable ref remains the immutable content identity.
+    return `SELECT
+      (SELECT count(*) FROM learning_content_stable_refs WHERE source_asset_id = ${sqlLiteral(assetId)}) +
+      (SELECT count(*) FROM reading_questions q
+        WHERE EXISTS (
+          SELECT 1
+          FROM learning_content_stable_refs ref
+          WHERE ref.source_asset_id = ${sqlLiteral(assetId)}
+            AND ref.item_type = 'jlpt-reading'
+            AND ref.item_id = CAST(q.passage_id AS TEXT)
+        )) AS count;`;
+  }
+  if (entry.table === 'topik_owner_curriculum') {
+    if (entry.sourceCode === 'TOPIK-A1') return topikOwnerBatch1ContentRowsSql();
+    if (entry.sourceCode === 'TOPIK-A2') return topikOwnerBatch2ContentRowsSql();
+    if (entry.sourceCode === 'TOPIK-A3') return topikOwnerBatch3ContentRowsSql();
+    if (entry.sourceCode === 'TOPIK-A4') return topikOwnerBatch4ContentRowsSql();
+    throw new Error(`Unknown TOPIK owner curriculum source: ${entry.sourceCode}`);
+  }
   if (entry.selector.kind === "source") {
     return `SELECT count(*) AS count FROM ${entry.table} WHERE source_id = (SELECT id FROM sources WHERE code = ${sqlLiteral(entry.selector.value)})`;
   }
@@ -165,6 +200,23 @@ function rowCountSql(entry: ContentManifestEntry): string {
     return `SELECT count(*) AS count FROM ${entry.table} WHERE ${column} = ${sqlLiteral(entry.selector.value)}`;
   }
   return `SELECT count(*) AS count FROM ${entry.table}`;
+}
+
+function jlptCurriculumAssetId(sourceCode: string): string {
+  const assetByCode: Record<string, string> = {
+    'N2-A1': N2_BATCH_1_SOURCE_ASSET_ID,
+    'N2-A2': N2_BATCH_2_SOURCE_ASSET_ID,
+    'N2-A3': N2_BATCH_3_SOURCE_ASSET_ID,
+    'N2-A4': N2_BATCH_4_SOURCE_ASSET_ID,
+    'N2-A5': N2_BATCH_5_SOURCE_ASSET_ID,
+    'N1-A1': N1_BATCH_1_SOURCE_ASSET_ID,
+    'N1-A2': N1_BATCH_2_SOURCE_ASSET_ID,
+    'N1-A3': N1_BATCH_3_SOURCE_ASSET_ID,
+    'N1-A4': N1_BATCH_4_SOURCE_ASSET_ID,
+  };
+  const assetId = assetByCode[sourceCode];
+  if (!assetId) throw new Error(`Unknown JLPT curriculum source: ${sourceCode}`);
+  return assetId;
 }
 
 function compareManifests(
@@ -521,38 +573,6 @@ addNumericSqlCheck(
   "foreign_key_check",
   0,
   "SELECT count(*) AS count FROM pragma_foreign_key_check",
-);
-
-function invalidImmutableAudioKey(
-  itemType: string,
-  levelColumn: string,
-): string {
-  const prefix = `'audio/${itemType}/' || lower(${levelColumn}) || '/' || id || '-'`;
-  return `(
-    audio_r2_key IS NULL
-    OR audio_r2_key NOT LIKE ${prefix} || '%.mp3'
-    OR length(audio_r2_key) <> length(${prefix}) + 20
-    OR substr(audio_r2_key, length(${prefix}) + 1, 16) GLOB '*[^0-9a-f]*'
-  )`;
-}
-
-addNumericSqlCheck(
-  "audio_r2_key missing/non-immutable (R2 gate)",
-  0,
-  `SELECT
-     (SELECT count(*) FROM vocab
-      WHERE level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey("vocab", "level")})
-     +
-     (SELECT count(*) FROM kanji
-      WHERE jlpt_level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey("kanji", "jlpt_level")})
-     +
-     (SELECT count(*) FROM sentences
-     WHERE level IN ('N5', 'N4', 'N3')
-        AND ${invalidImmutableAudioKey("sentence", "level")})
-     AS count`,
-  requireAudio,
 );
 
 const numericActuals = countSqlBatch(

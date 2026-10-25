@@ -37,7 +37,7 @@ export function SelfCheckView({
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-[880px] mx-auto px-8 lg:px-20 py-12 pb-24">
+    <div className="app-page max-w-[880px]">
       <div className="mb-8">
         <h1 className="font-serif-jp text-[48px] font-normal text-foreground leading-none mb-3">
           {t('selfCheck.title')}

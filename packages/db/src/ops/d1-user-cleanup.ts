@@ -56,6 +56,9 @@ const BACKUP_TABLES = [
   "login_events",
   "srs_cards",
   "review_logs",
+  "topik_owner_curriculum_progress",
+  "topik_owner_srs_cards",
+  "topik_owner_review_logs",
   "daily_logs",
   "quiz_attempts",
   "self_check",
@@ -74,11 +77,17 @@ function resolveFromRoot(value: string): string {
   return path.isAbsolute(value) ? value : path.resolve(root, value);
 }
 
+export function requireExplicitDatabase(value: string | undefined): string {
+  if (!value) throw new Error("--database=<explicit D1 name> is required");
+  if (!/^[a-z0-9][a-z0-9_-]{0,62}$/i.test(value)) {
+    throw new Error("invalid D1 database name");
+  }
+  return value;
+}
+
 function parseOptions(): Options {
   const execute = process.argv.includes("--execute");
-  const database = argument("database") ?? "nihongo-n3-prod";
-  if (!/^[a-z0-9][a-z0-9_-]{0,62}$/i.test(database))
-    throw new Error("invalid D1 database name");
+  const database = requireExplicitDatabase(argument("database"));
 
   const credentialsFile = argument("credentials-file");
   if (credentialsFile) {
@@ -149,7 +158,6 @@ function wranglerRaw(
   database: string,
   sql: string,
   config: string,
-  yes = false,
 ): string {
   if (!process.env["CLOUDFLARE_API_TOKEN"]) {
     throw new Error("CLOUDFLARE_API_TOKEN is required for remote D1 access");
@@ -167,9 +175,13 @@ function wranglerRaw(
         "--json",
         `--command=${sql}`,
         `--config=${config}`,
-        ...(yes ? ["--yes"] : []),
       ],
-      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, CI: "true", WRANGLER_WRITE_LOGS: "0" },
+      },
     );
   } catch (error) {
     throw safeWranglerFailure(error);
@@ -338,6 +350,18 @@ export function collectRelatedCounts(
            SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${keep})) THEN 1 ELSE 0 END) AS keep_rows,
            SUM(CASE WHEN card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${remove})) THEN 1 ELSE 0 END) AS delete_rows
       FROM review_logs`,
+    `SELECT 'topik_owner_curriculum_progress' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM topik_owner_curriculum_progress`,
+    `SELECT 'topik_owner_srs_cards' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
+      FROM topik_owner_srs_cards`,
+    `SELECT 'topik_owner_review_logs' AS table_name, COUNT(*) AS total,
+           SUM(CASE WHEN card_id IN (SELECT id FROM topik_owner_srs_cards WHERE user_id IN (${keep})) THEN 1 ELSE 0 END) AS keep_rows,
+           SUM(CASE WHEN card_id IN (SELECT id FROM topik_owner_srs_cards WHERE user_id IN (${remove})) THEN 1 ELSE 0 END) AS delete_rows
+      FROM topik_owner_review_logs`,
     `SELECT 'daily_logs' AS table_name, COUNT(*) AS total,
            SUM(CASE WHEN user_id IN (${keep}) THEN 1 ELSE 0 END) AS keep_rows,
            SUM(CASE WHEN user_id IN (${remove}) THEN 1 ELSE 0 END) AS delete_rows
@@ -471,6 +495,8 @@ function cleanupSql(candidateIds: string[]): string {
     PRAGMA defer_foreign_keys = true;
     DELETE FROM review_logs
      WHERE card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${candidates}));
+    DELETE FROM topik_owner_review_logs
+     WHERE card_id IN (SELECT id FROM topik_owner_srs_cards WHERE user_id IN (${candidates}));
     DELETE FROM auth_sessions WHERE user_id IN (${candidates});
     DELETE FROM oauth_login_tokens WHERE user_id IN (${candidates});
     DELETE FROM push_subscriptions WHERE user_id IN (${candidates});
@@ -478,6 +504,8 @@ function cleanupSql(candidateIds: string[]): string {
     DELETE FROM quiz_attempts WHERE user_id IN (${candidates});
     DELETE FROM self_check WHERE user_id IN (${candidates});
     DELETE FROM srs_cards WHERE user_id IN (${candidates});
+    DELETE FROM topik_owner_srs_cards WHERE user_id IN (${candidates});
+    DELETE FROM topik_owner_curriculum_progress WHERE user_id IN (${candidates});
     DELETE FROM login_events
      WHERE user_id IN (${candidates})
         OR (user_id IS NULL AND ${testDomainPredicate("email")});
@@ -544,7 +572,6 @@ function executePlan(options: Options): void {
       options.database,
       cleanupSql(candidateIds),
       options.config,
-      true,
     );
 
     const remainingUsers = readUsers(source);
@@ -562,6 +589,9 @@ function executePlan(options: Options): void {
         (SELECT COUNT(*) FROM oauth_login_tokens WHERE user_id IN (${candidateList})) AS oauth_login_tokens,
         (SELECT COUNT(*) FROM srs_cards WHERE user_id IN (${candidateList})) AS srs_cards,
         (SELECT COUNT(*) FROM review_logs WHERE card_id IN (SELECT id FROM srs_cards WHERE user_id IN (${candidateList}))) AS review_logs,
+        (SELECT COUNT(*) FROM topik_owner_curriculum_progress WHERE user_id IN (${candidateList})) AS topik_owner_curriculum_progress,
+        (SELECT COUNT(*) FROM topik_owner_srs_cards WHERE user_id IN (${candidateList})) AS topik_owner_srs_cards,
+        (SELECT COUNT(*) FROM topik_owner_review_logs WHERE card_id IN (SELECT id FROM topik_owner_srs_cards WHERE user_id IN (${candidateList}))) AS topik_owner_review_logs,
         (SELECT COUNT(*) FROM daily_logs WHERE user_id IN (${candidateList})) AS daily_logs,
         (SELECT COUNT(*) FROM quiz_attempts WHERE user_id IN (${candidateList})) AS quiz_attempts,
         (SELECT COUNT(*) FROM self_check WHERE user_id IN (${candidateList})) AS self_check,

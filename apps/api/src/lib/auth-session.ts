@@ -181,7 +181,7 @@ export async function createSession(c: Context<AppEnv>, userId: string): Promise
 }
 
 export async function getSessionUser(c: Context<AppEnv>): Promise<AuthUser | null> {
-  const token = getCookie(c, sessionCookieName(c)) ?? getCookie(c, SESSION_COOKIE) ?? getCookie(c, DEV_SESSION_COOKIE);
+  const token = getCookie(c, sessionCookieName(c));
   if (!token) return null;
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
@@ -224,14 +224,13 @@ export function setAuthContext(c: Context<AppEnv>, user: AuthUser): void {
 }
 
 export async function revokeCurrentSession(c: Context<AppEnv>): Promise<void> {
-  const token = getCookie(c, sessionCookieName(c)) ?? getCookie(c, SESSION_COOKIE) ?? getCookie(c, DEV_SESSION_COOKIE);
+  const token = getCookie(c, sessionCookieName(c));
   if (!token) return;
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
   await c.env.DB.prepare('UPDATE auth_sessions SET revoked_at = ? WHERE token_hash = ?')
     .bind(now, tokenHash)
-    .run()
-    .catch(() => undefined);
+    .run();
   clearSessionCookie(c);
 }
 

@@ -39,6 +39,33 @@ function deferred<T>() {
 }
 
 describe("useAuthStore", () => {
+  it("does not clear a newer login when an older logout finishes late", async () => {
+    useAuthStore.setState({ status: "authenticated", user });
+    const pending = deferred<{ ok: true; data: { ok: true } }>();
+    mocks.authApi.logout.mockReturnValueOnce(pending.promise);
+    const logout = useAuthStore.getState().logout();
+    const newer = { ...user, id: 'newer-session-user' };
+    mocks.authApi.login.mockResolvedValueOnce({ ok: true, data: { user: newer } });
+    await useAuthStore.getState().login(user.email, 'Synthetic-password');
+    pending.resolve({ ok: true, data: { ok: true } });
+    expect(await logout).toBe(false);
+    expect(useAuthStore.getState()).toMatchObject({ status: 'authenticated', user: newer });
+  });
+  it("finishes logout when the server confirms that the session already expired or was revoked", async () => {
+    useAuthStore.setState({ status: "authenticated", user });
+    mocks.authApi.logout.mockResolvedValueOnce({ ok: false, status: 401, message: "Unauthorized" });
+    expect(await useAuthStore.getState().logout()).toBe(true);
+    expect(useAuthStore.getState()).toMatchObject({ status: "anonymous", user: null, error: null });
+    expect(mocks.setActiveLocalUserId).toHaveBeenCalledWith(null);
+  });
+  it.each(["http", "network"])("keeps the session and exposes a retryable logout error on %s failure", async failure => {
+    useAuthStore.setState({ status: "authenticated", user });
+    if (failure === "http") mocks.authApi.logout.mockResolvedValueOnce({ ok: false, message: "Unavailable" });
+    else mocks.authApi.logout.mockRejectedValueOnce(new Error("Offline"));
+    expect(await useAuthStore.getState().logout()).toBe(false);
+    expect(useAuthStore.getState()).toMatchObject({ status: "authenticated", user, error: "logout_failed" });
+    expect(mocks.setActiveLocalUserId).not.toHaveBeenCalledWith(null);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useSettingsStore.setState({ learningTrack: "jlpt-ja" });
@@ -111,4 +138,53 @@ describe("useAuthStore", () => {
       user: null,
     });
   });
+
+  it.each(["login", "register"] as const)(
+    "%s keeps the authenticated server track when the preferred track write fails",
+    async (operation) => {
+      useSettingsStore.setState({ learningTrack: "topik-ko" });
+      mocks.authApi[operation].mockResolvedValueOnce({ ok: true, data: { user } });
+      mocks.authApi.setTrack.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        message: "Track update is temporarily unavailable",
+      });
+
+      const completed = operation === "login"
+        ? await useAuthStore.getState().login(user.email, "Passw0rd1234")
+        : await useAuthStore.getState().register(user.email, "Passw0rd1234", user.display_name);
+
+      expect(completed).toBe(true);
+      expect(mocks.authApi.setTrack).toHaveBeenCalledWith("topik-ko");
+      expect(useAuthStore.getState()).toMatchObject({
+        status: "authenticated",
+        user,
+        error: "Track update is temporarily unavailable",
+      });
+      expect(useSettingsStore.getState().learningTrack).toBe("jlpt-ja");
+      expect(mocks.setActiveLearningTrack).toHaveBeenLastCalledWith("jlpt-ja");
+    },
+  );
+
+  it.each(["login", "register"] as const)(
+    "%s adopts the preferred track only after the server confirms it",
+    async (operation) => {
+      useSettingsStore.setState({ learningTrack: "topik-ko" });
+      mocks.authApi[operation].mockResolvedValueOnce({ ok: true, data: { user } });
+      mocks.authApi.setTrack.mockResolvedValueOnce({ ok: true, data: { track: "topik-ko" } });
+
+      const completed = operation === "login"
+        ? await useAuthStore.getState().login(user.email, "Passw0rd1234")
+        : await useAuthStore.getState().register(user.email, "Passw0rd1234", user.display_name);
+
+      expect(completed).toBe(true);
+      expect(useAuthStore.getState()).toMatchObject({
+        status: "authenticated",
+        user: { ...user, learning_track: "topik-ko" },
+        error: null,
+      });
+      expect(useSettingsStore.getState().learningTrack).toBe("topik-ko");
+      expect(mocks.setActiveLearningTrack).toHaveBeenLastCalledWith("topik-ko");
+    },
+  );
 });

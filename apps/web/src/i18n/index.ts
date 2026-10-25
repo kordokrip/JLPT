@@ -9,6 +9,9 @@ import { initReactI18next } from 'react-i18next';
 import ko from './ko';
 import ja from './ja';
 import en from './en';
+import { studyKo, studyJa, studyEn } from './study';
+import { learningExperienceEnabled } from '../lib/learning-flag';
+const studyNav = (copy: typeof studyKo) => learningExperienceEnabled ? { home: copy.today, learn: copy.learn, quiz: copy.questions, stats: copy.records } : {};
 
 export type SupportedLang = 'ko' | 'ja' | 'en';
 
@@ -37,9 +40,9 @@ void i18n
   .use(initReactI18next)
   .init({
     resources: {
-      ko: { translation: ko },
-      ja: { translation: ja },
-      en: { translation: en },
+      ko: { translation: { ...ko, nav: { ...ko.nav, ...studyNav(studyKo) }, study: studyKo } },
+      ja: { translation: { ...ja, nav: { ...ja.nav, ...studyNav(studyJa) }, study: studyJa } },
+      en: { translation: { ...en, nav: { ...en.nav, ...studyNav(studyEn) }, study: studyEn } },
     },
     lng:           getInitialLang(),
     fallbackLng:   'ko',

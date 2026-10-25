@@ -1,0 +1,67 @@
+{
+  "artifact_sha256": "85f29bd7c5a614d6dd234cba759cdf80f33e1a189f4ce6ed107aa66cac850502",
+  "facts": [
+    {
+      "id": "google-browser-speech-only",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Intake and audio rules",
+      "value": "Japanese and Korean listening playback uses browser Google speech only, with no stored pronunciation audio or fallback asset."
+    },
+    {
+      "id": "jlpt-n1-current-test-sections",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Official exam-structure review, JLPT N1 and N2",
+      "value": "Official JLPT N1 has a 110-minute Language Knowledge (Vocabulary/Grammar) and Reading section plus a 55-minute Listening section."
+    },
+    {
+      "id": "jlpt-n2-current-test-sections",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Official exam-structure review, JLPT N1 and N2",
+      "value": "Official JLPT N2 has a 105-minute Language Knowledge (Vocabulary/Grammar) and Reading section plus a 50-minute Listening section."
+    },
+    {
+      "id": "jlpt-n2-n1-practice-structure",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Authorship boundary, paragraph 2",
+      "value": "Each self-authored JLPT N2 and N1 practice v1 bank covers vocab_mc, grammar_fill, kanji_reading, and listening."
+    },
+    {
+      "id": "topik-ibt-current-structure",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Official exam-structure review, TOPIK",
+      "value": "Official TOPIK I IBT uses Listening and Reading for grades 1-2; TOPIK II IBT uses Listening, Reading, and Writing for grades 3-6."
+    },
+    {
+      "id": "topik-owner-batch6-structure",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Authorship boundary, paragraph 2",
+      "value": "The self-authored TOPIK owner Batch 6 covers grades 3 through 6 across vocab, grammar, reading, listening, and writing."
+    },
+    {
+      "id": "topik-pbt-current-structure",
+      "kind": "exam-structure",
+      "language": "en",
+      "source_locator": "Official exam-structure review, TOPIK",
+      "value": "Official TOPIK I PBT uses Listening and Reading for grades 1-2; TOPIK II PBT uses Listening, Reading, and Writing for grades 3-6."
+    }
+  ],
+  "intake_schema_version": "1",
+  "source": {
+    "allowed_use": "language-facts-and-metadata-only",
+    "attribution": "© Nihongo N3 contributors; self-authored JLPT N2/N1 practice and TOPIK owner Batch 6 learning content.",
+    "id": "jlpt-n2-n1-topik-owner-expansion-self-authored-2026-08-23",
+    "license": {
+      "id": "LicenseRef-nihongo-n3-self-authored",
+      "url": "https://github.com/kordokrip/JLPT/blob/main/docs/ATTRIBUTIONS.md#현재-자체-저작-콘텐츠"
+    },
+    "retrieved_at": "2026-08-22T16:48:32Z",
+    "sha256": "b8d1089c34ac907782bf982ba37b2a461804b014efdf6ef0f86a040e1d55209c",
+    "url": "https://github.com/kordokrip/JLPT/blob/main/packages/db/src/content/next-content-expansion-source.md"
+  }
+}

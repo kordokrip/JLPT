@@ -1,0 +1,2522 @@
+{
+  "schema_version": "learning-path-facts-v1",
+  "retrieved_at": "2026-10-10T16:19:12.398Z",
+  "records": [
+    {
+      "source": {
+        "id": "edrdg-terms",
+        "url": "https://www.edrdg.org/edrdg/licence.html",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG / JMdict and KANJIDIC2",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "52f60ea9ca68170a2f0663d7dba381ebf1bd57c17a3347dfe21153865c156692"
+      },
+      "facts": [
+        {
+          "id": "edrdg-terms-license",
+          "kind": "exam-structure",
+          "language": "en",
+          "value": "License metadata for general dictionary text: CC-BY-SA-4.0. Individual media excluded; grade labels are not examination levels.",
+          "source_locator": "copyright policy"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-terms",
+        "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "0e2a3af83e019022b75934f4e1f050567643bb8617234a366a595d07f59fbabc"
+      },
+      "facts": [
+        {
+          "id": "krdict-terms-license",
+          "kind": "exam-structure",
+          "language": "en",
+          "value": "License metadata for general dictionary text: CC-BY-SA-2.0-KR. Individual media excluded; grade labels are not examination levels.",
+          "source_locator": "copyright policy"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%AD%A6%E6%A0%A1",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%AD%A6%E6%A0%A1",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "e14f7ef2f3fc5aa13030e9a52ff87fd6766f97b2839efda07b3e87a8ab28a89d"
+      },
+      "facts": [
+        {
+          "id": "学校-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "学校",
+          "source_locator": "JMdict headword 学校"
+        },
+        {
+          "id": "学校-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "がっこう",
+          "source_locator": "JMdict headword 学校"
+        },
+        {
+          "id": "学校-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "school",
+          "source_locator": "JMdict first short sense 学校"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%85%88%E7%94%9F",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%85%88%E7%94%9F",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "e4b59dd8e51eab847d37c911f9351a1c4f04d2a86f182730094b83751780b075"
+      },
+      "facts": [
+        {
+          "id": "先生-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "先生",
+          "source_locator": "JMdict headword 先生"
+        },
+        {
+          "id": "先生-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "シーサン",
+          "source_locator": "JMdict headword 先生"
+        },
+        {
+          "id": "先生-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "man",
+          "source_locator": "JMdict first short sense 先生"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E9%9B%BB%E8%BB%8A",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E9%9B%BB%E8%BB%8A",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "c35c3b6ea6cc8e136fb3dcad69fd7ec396086b4434c0a1394ea1ef07751df0bf"
+      },
+      "facts": [
+        {
+          "id": "電車-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "電車",
+          "source_locator": "JMdict headword 電車"
+        },
+        {
+          "id": "電車-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "でんしゃ",
+          "source_locator": "JMdict headword 電車"
+        },
+        {
+          "id": "電車-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "train",
+          "source_locator": "JMdict first short sense 電車"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%8F%8B%E9%81%94",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%8F%8B%E9%81%94",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "f4010a0f8c8549f307fef65b4d5552956abba6c75faa5287512443e1165a6af5"
+      },
+      "facts": [
+        {
+          "id": "友達-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "友達",
+          "source_locator": "JMdict headword 友達"
+        },
+        {
+          "id": "友達-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ともだち(P);トモダチ(sk)",
+          "source_locator": "JMdict headword 友達"
+        },
+        {
+          "id": "友達-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "friend",
+          "source_locator": "JMdict first short sense 友達"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E6%9C%9D%E3%81%94%E9%A3%AF",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E6%9C%9D%E3%81%94%E9%A3%AF",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "0a8f2345daacaf7ac1bfa33f49b4e9dcf0b4feab53677ab2282d3ce39e68858a"
+      },
+      "facts": [
+        {
+          "id": "朝ご飯-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "朝ご飯",
+          "source_locator": "JMdict headword 朝ご飯"
+        },
+        {
+          "id": "朝ご飯-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あさごはん",
+          "source_locator": "JMdict headword 朝ご飯"
+        },
+        {
+          "id": "朝ご飯-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "breakfast",
+          "source_locator": "JMdict first short sense 朝ご飯"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E4%BA%88%E5%AE%9A",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E4%BA%88%E5%AE%9A",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "1020b508681ef3a7b7122e806315cd875437de216dd5982a4a9490f2fb6191d5"
+      },
+      "facts": [
+        {
+          "id": "予定-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "予定",
+          "source_locator": "JMdict headword 予定"
+        },
+        {
+          "id": "予定-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "よてい",
+          "source_locator": "JMdict headword 予定"
+        },
+        {
+          "id": "予定-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "plans",
+          "source_locator": "JMdict first short sense 予定"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E9%80%A3%E7%B5%A1",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E9%80%A3%E7%B5%A1",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "93634bdda8cf6aeff1e584153598130501f4d42f563a813c260528f7c7f1e013"
+      },
+      "facts": [
+        {
+          "id": "連絡-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "連絡",
+          "source_locator": "JMdict headword 連絡"
+        },
+        {
+          "id": "連絡-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "れんらく",
+          "source_locator": "JMdict headword 連絡"
+        },
+        {
+          "id": "連絡-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "contacting",
+          "source_locator": "JMdict first short sense 連絡"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E6%BA%96%E5%82%99",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E6%BA%96%E5%82%99",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "66647824fea18b94db3b2b3d1438631b970147a65e6ba83f9995a51329ad15b6"
+      },
+      "facts": [
+        {
+          "id": "準備-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "準備",
+          "source_locator": "JMdict headword 準備"
+        },
+        {
+          "id": "準備-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "じゅんび",
+          "source_locator": "JMdict headword 準備"
+        },
+        {
+          "id": "準備-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "preparation",
+          "source_locator": "JMdict first short sense 準備"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%BF%85%E8%A6%81",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%BF%85%E8%A6%81",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "d970c461964ebea4381802296fa9dfc4123c6407d5883484f0729863b894349d"
+      },
+      "facts": [
+        {
+          "id": "必要-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "必要",
+          "source_locator": "JMdict headword 必要"
+        },
+        {
+          "id": "必要-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ひつよう",
+          "source_locator": "JMdict headword 必要"
+        },
+        {
+          "id": "必要-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "necessary",
+          "source_locator": "JMdict first short sense 必要"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E7%B4%84%E6%9D%9F",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E7%B4%84%E6%9D%9F",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "b1ccac55130147f94218b41e8e25052cd746249e3d9abf57c5b6684497de5c01"
+      },
+      "facts": [
+        {
+          "id": "約束-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "約束",
+          "source_locator": "JMdict headword 約束"
+        },
+        {
+          "id": "約束-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "やくそく",
+          "source_locator": "JMdict headword 約束"
+        },
+        {
+          "id": "約束-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "promise",
+          "source_locator": "JMdict first short sense 約束"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E7%A2%BA%E8%AA%8D",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E7%A2%BA%E8%AA%8D",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "7881a2ebdcab8136fb754688803d51fff5f931001ba56c71aeff6f31ac425283"
+      },
+      "facts": [
+        {
+          "id": "確認-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "確認",
+          "source_locator": "JMdict headword 確認"
+        },
+        {
+          "id": "確認-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "かくにん",
+          "source_locator": "JMdict headword 確認"
+        },
+        {
+          "id": "確認-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "confirmation",
+          "source_locator": "JMdict first short sense 確認"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%A4%89%E6%9B%B4",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%A4%89%E6%9B%B4",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "25dce8b2d44eb0f433a0b76b29b597afca7d6881fb205bd1cae95fdf17b85a9b"
+      },
+      "facts": [
+        {
+          "id": "変更-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "変更",
+          "source_locator": "JMdict headword 変更"
+        },
+        {
+          "id": "変更-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "へんこう",
+          "source_locator": "JMdict headword 変更"
+        },
+        {
+          "id": "変更-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "change",
+          "source_locator": "JMdict first short sense 変更"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%BD%B1%E9%9F%BF",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%BD%B1%E9%9F%BF",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "9bf7c70b5abe29b4b611e6e8a9b12ce2b6664d1041a71cec3113d08bb7958d26"
+      },
+      "facts": [
+        {
+          "id": "影響-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "影響",
+          "source_locator": "JMdict headword 影響"
+        },
+        {
+          "id": "影響-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "えいきょう",
+          "source_locator": "JMdict headword 影響"
+        },
+        {
+          "id": "影響-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "influence",
+          "source_locator": "JMdict first short sense 影響"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%AF%BE%E5%BF%9C",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%AF%BE%E5%BF%9C",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "b01fec48f70d46acd459b320daf27b976edb3ad919074f1f1d0b979be1cb6612"
+      },
+      "facts": [
+        {
+          "id": "対応-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "対応",
+          "source_locator": "JMdict headword 対応"
+        },
+        {
+          "id": "対応-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "たいおう",
+          "source_locator": "JMdict headword 対応"
+        },
+        {
+          "id": "対応-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "correspondence",
+          "source_locator": "JMdict first short sense 対応"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E7%8A%B6%E6%B3%81",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E7%8A%B6%E6%B3%81",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "9dea29dd52a0d2c89200dfa9397d85b3ba28d3afbbb8b739443c32cc4da67f71"
+      },
+      "facts": [
+        {
+          "id": "状況-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "状況",
+          "source_locator": "JMdict headword 状況"
+        },
+        {
+          "id": "状況-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "じょうきょう",
+          "source_locator": "JMdict headword 状況"
+        },
+        {
+          "id": "状況-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "state of affairs",
+          "source_locator": "JMdict first short sense 状況"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E6%96%B9%E9%87%9D",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E6%96%B9%E9%87%9D",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "db7299fb4aa269a21be6fb97040152d3496cc91e42a8212e166b93685d019feb"
+      },
+      "facts": [
+        {
+          "id": "方針-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "方針",
+          "source_locator": "JMdict headword 方針"
+        },
+        {
+          "id": "方針-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ほうしん",
+          "source_locator": "JMdict headword 方針"
+        },
+        {
+          "id": "方針-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "policy",
+          "source_locator": "JMdict first short sense 方針"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E6%89%8B%E9%A0%86",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E6%89%8B%E9%A0%86",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "aa51d5eac8faab808793247e875b304e0bae924b680d7b2061c0607dc85c9eea"
+      },
+      "facts": [
+        {
+          "id": "手順-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "手順",
+          "source_locator": "JMdict headword 手順"
+        },
+        {
+          "id": "手順-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "てじゅん",
+          "source_locator": "JMdict headword 手順"
+        },
+        {
+          "id": "手順-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "process",
+          "source_locator": "JMdict first short sense 手順"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%88%A4%E6%96%AD",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%88%A4%E6%96%AD",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "6bec58eddb96708389b64b0f87ece0f1cbeab393b76e432b7964331d3623faae"
+      },
+      "facts": [
+        {
+          "id": "判断-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "判断",
+          "source_locator": "JMdict headword 判断"
+        },
+        {
+          "id": "判断-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "はんだん",
+          "source_locator": "JMdict headword 判断"
+        },
+        {
+          "id": "判断-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "judgment",
+          "source_locator": "JMdict first short sense 判断"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%8A%B9%E7%8E%87",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%8A%B9%E7%8E%87",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "8cc0c0f4fb1ab1eb11f133a6030dcfbd27432a793f1875179d5cc7d30ba01f86"
+      },
+      "facts": [
+        {
+          "id": "効率-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "効率",
+          "source_locator": "JMdict headword 効率"
+        },
+        {
+          "id": "効率-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "こうりつ",
+          "source_locator": "JMdict headword 効率"
+        },
+        {
+          "id": "効率-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "efficiency",
+          "source_locator": "JMdict first short sense 効率"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E8%AA%B2%E9%A1%8C",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E8%AA%B2%E9%A1%8C",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "47a79765eb91393deaa7d6a0d0099dbacbb8b89563a69210c35a5ba20e61cab0"
+      },
+      "facts": [
+        {
+          "id": "課題-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "課題",
+          "source_locator": "JMdict headword 課題"
+        },
+        {
+          "id": "課題-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "かだい",
+          "source_locator": "JMdict headword 課題"
+        },
+        {
+          "id": "課題-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "subject",
+          "source_locator": "JMdict first short sense 課題"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E8%AB%96%E6%8B%A0",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E8%AB%96%E6%8B%A0",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "95fb57fba62e6dabb749d9c674fea2c2c6097614a74a5215f80ae8fcb9a554fe"
+      },
+      "facts": [
+        {
+          "id": "論拠-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "論拠",
+          "source_locator": "JMdict headword 論拠"
+        },
+        {
+          "id": "論拠-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ろんきょ",
+          "source_locator": "JMdict headword 論拠"
+        },
+        {
+          "id": "論拠-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "grounds of an argument",
+          "source_locator": "JMdict first short sense 論拠"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E8%84%88%E7%B5%A1",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E8%84%88%E7%B5%A1",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "a5cfb183897c3330e6281b7f203734231bb8ae800a79dddba65ad6547bfe1f1b"
+      },
+      "facts": [
+        {
+          "id": "脈絡-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "脈絡",
+          "source_locator": "JMdict headword 脈絡"
+        },
+        {
+          "id": "脈絡-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "みゃくらく",
+          "source_locator": "JMdict headword 脈絡"
+        },
+        {
+          "id": "脈絡-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "logical connection",
+          "source_locator": "JMdict first short sense 脈絡"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E5%A6%A5%E5%BD%93%E6%80%A7",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E5%A6%A5%E5%BD%93%E6%80%A7",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "7c906f681dc3802b1d79d9b6850f9797e6b9acf91ca2bf31dea1d4fe117574e8"
+      },
+      "facts": [
+        {
+          "id": "妥当性-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "妥当性",
+          "source_locator": "JMdict headword 妥当性"
+        },
+        {
+          "id": "妥当性-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "だとうせい",
+          "source_locator": "JMdict headword 妥当性"
+        },
+        {
+          "id": "妥当性-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "validity",
+          "source_locator": "JMdict first short sense 妥当性"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E4%B9%96%E9%9B%A2",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E4%B9%96%E9%9B%A2",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "aad421f0c2a07e5c0cb8b6ed2422ae990526f87fe0be7ea979525eabd5e3d6c8"
+      },
+      "facts": [
+        {
+          "id": "乖離-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "乖離",
+          "source_locator": "JMdict headword 乖離"
+        },
+        {
+          "id": "乖離-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "かいり",
+          "source_locator": "JMdict headword 乖離"
+        },
+        {
+          "id": "乖離-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "divergence",
+          "source_locator": "JMdict first short sense 乖離"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "jmdict-%E6%98%AF%E6%AD%A3",
+        "url": "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1ZUE%E6%98%AF%E6%AD%A3",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG JMdict via WWWJDIC (James Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "7a00cb5f198346fa1d87e6e030df918c3995d3595e1373797c047a6c1ba10213"
+      },
+      "facts": [
+        {
+          "id": "是正-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "是正",
+          "source_locator": "JMdict headword 是正"
+        },
+        {
+          "id": "是正-reading",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ぜせい",
+          "source_locator": "JMdict headword 是正"
+        },
+        {
+          "id": "是正-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "correction",
+          "source_locator": "JMdict first short sense 是正"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "kanjidic2-selected-characters",
+        "url": "https://www.edrdg.org/kanjidic/kanjidic2.xml.gz",
+        "license": {
+          "id": "CC-BY-SA-4.0",
+          "url": "https://www.edrdg.org/edrdg/licence.html"
+        },
+        "attribution": "EDRDG KANJIDIC2 (Jim Breen et al.)",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "c759787172bd60df824ff59fc1ee29e30f8275b7bf6eef4c62a960d35049e879"
+      },
+      "facts": [
+        {
+          "id": "日-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "日",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "日-on-1",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ニチ",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "日-on-2",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ジツ",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "日-kun-3",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ひ",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "日-kun-4",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-び",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "日-kun-5",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-か",
+          "source_locator": "KANJIDIC2 literal 日"
+        },
+        {
+          "id": "月-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "月",
+          "source_locator": "KANJIDIC2 literal 月"
+        },
+        {
+          "id": "月-on-7",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ゲツ",
+          "source_locator": "KANJIDIC2 literal 月"
+        },
+        {
+          "id": "月-on-8",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ガツ",
+          "source_locator": "KANJIDIC2 literal 月"
+        },
+        {
+          "id": "月-kun-9",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つき",
+          "source_locator": "KANJIDIC2 literal 月"
+        },
+        {
+          "id": "人-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "人",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "人-on-11",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ジン",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "人-on-12",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ニン",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "人-kun-13",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ひと",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "人-kun-14",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-り",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "人-kun-15",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-と",
+          "source_locator": "KANJIDIC2 literal 人"
+        },
+        {
+          "id": "山-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "山",
+          "source_locator": "KANJIDIC2 literal 山"
+        },
+        {
+          "id": "山-on-17",
+          "kind": "reading",
+          "language": "ja",
+          "value": "サン",
+          "source_locator": "KANJIDIC2 literal 山"
+        },
+        {
+          "id": "山-on-18",
+          "kind": "reading",
+          "language": "ja",
+          "value": "セン",
+          "source_locator": "KANJIDIC2 literal 山"
+        },
+        {
+          "id": "山-kun-19",
+          "kind": "reading",
+          "language": "ja",
+          "value": "やま",
+          "source_locator": "KANJIDIC2 literal 山"
+        },
+        {
+          "id": "川-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "川",
+          "source_locator": "KANJIDIC2 literal 川"
+        },
+        {
+          "id": "川-on-21",
+          "kind": "reading",
+          "language": "ja",
+          "value": "セン",
+          "source_locator": "KANJIDIC2 literal 川"
+        },
+        {
+          "id": "川-kun-22",
+          "kind": "reading",
+          "language": "ja",
+          "value": "かわ",
+          "source_locator": "KANJIDIC2 literal 川"
+        },
+        {
+          "id": "会-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "会",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "会-on-24",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カイ",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "会-on-25",
+          "kind": "reading",
+          "language": "ja",
+          "value": "エ",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "会-kun-26",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あ.う",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "会-kun-27",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あ.わせる",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "会-kun-28",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あつ.まる",
+          "source_locator": "KANJIDIC2 literal 会"
+        },
+        {
+          "id": "社-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "社",
+          "source_locator": "KANJIDIC2 literal 社"
+        },
+        {
+          "id": "社-on-30",
+          "kind": "reading",
+          "language": "ja",
+          "value": "シャ",
+          "source_locator": "KANJIDIC2 literal 社"
+        },
+        {
+          "id": "社-kun-31",
+          "kind": "reading",
+          "language": "ja",
+          "value": "やしろ",
+          "source_locator": "KANJIDIC2 literal 社"
+        },
+        {
+          "id": "駅-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "駅",
+          "source_locator": "KANJIDIC2 literal 駅"
+        },
+        {
+          "id": "駅-on-33",
+          "kind": "reading",
+          "language": "ja",
+          "value": "エキ",
+          "source_locator": "KANJIDIC2 literal 駅"
+        },
+        {
+          "id": "時-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "時",
+          "source_locator": "KANJIDIC2 literal 時"
+        },
+        {
+          "id": "時-on-35",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ジ",
+          "source_locator": "KANJIDIC2 literal 時"
+        },
+        {
+          "id": "時-kun-36",
+          "kind": "reading",
+          "language": "ja",
+          "value": "とき",
+          "source_locator": "KANJIDIC2 literal 時"
+        },
+        {
+          "id": "時-kun-37",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-どき",
+          "source_locator": "KANJIDIC2 literal 時"
+        },
+        {
+          "id": "間-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "間",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "間-on-39",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カン",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "間-on-40",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ケン",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "間-kun-41",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あいだ",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "間-kun-42",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ま",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "間-kun-43",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あい",
+          "source_locator": "KANJIDIC2 literal 間"
+        },
+        {
+          "id": "確-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "確",
+          "source_locator": "KANJIDIC2 literal 確"
+        },
+        {
+          "id": "確-on-45",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カク",
+          "source_locator": "KANJIDIC2 literal 確"
+        },
+        {
+          "id": "確-on-46",
+          "kind": "reading",
+          "language": "ja",
+          "value": "コウ",
+          "source_locator": "KANJIDIC2 literal 確"
+        },
+        {
+          "id": "確-kun-47",
+          "kind": "reading",
+          "language": "ja",
+          "value": "たし.か",
+          "source_locator": "KANJIDIC2 literal 確"
+        },
+        {
+          "id": "確-kun-48",
+          "kind": "reading",
+          "language": "ja",
+          "value": "たし.かめる",
+          "source_locator": "KANJIDIC2 literal 確"
+        },
+        {
+          "id": "変-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "変",
+          "source_locator": "KANJIDIC2 literal 変"
+        },
+        {
+          "id": "変-on-50",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ヘン",
+          "source_locator": "KANJIDIC2 literal 変"
+        },
+        {
+          "id": "変-kun-51",
+          "kind": "reading",
+          "language": "ja",
+          "value": "か.わる",
+          "source_locator": "KANJIDIC2 literal 変"
+        },
+        {
+          "id": "変-kun-52",
+          "kind": "reading",
+          "language": "ja",
+          "value": "か.わり",
+          "source_locator": "KANJIDIC2 literal 変"
+        },
+        {
+          "id": "変-kun-53",
+          "kind": "reading",
+          "language": "ja",
+          "value": "か.える",
+          "source_locator": "KANJIDIC2 literal 変"
+        },
+        {
+          "id": "議-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "議",
+          "source_locator": "KANJIDIC2 literal 議"
+        },
+        {
+          "id": "議-on-55",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ギ",
+          "source_locator": "KANJIDIC2 literal 議"
+        },
+        {
+          "id": "調-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "調",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "調-on-57",
+          "kind": "reading",
+          "language": "ja",
+          "value": "チョウ",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "調-kun-58",
+          "kind": "reading",
+          "language": "ja",
+          "value": "しら.べる",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "調-kun-59",
+          "kind": "reading",
+          "language": "ja",
+          "value": "しら.べ",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "調-kun-60",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ととの.う",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "調-kun-61",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ととの.える",
+          "source_locator": "KANJIDIC2 literal 調"
+        },
+        {
+          "id": "連-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "連",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "連-on-63",
+          "kind": "reading",
+          "language": "ja",
+          "value": "レン",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "連-kun-64",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つら.なる",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "連-kun-65",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つら.ねる",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "連-kun-66",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つ.れる",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "連-kun-67",
+          "kind": "reading",
+          "language": "ja",
+          "value": "-づ.れ",
+          "source_locator": "KANJIDIC2 literal 連"
+        },
+        {
+          "id": "対-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "対",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-on-69",
+          "kind": "reading",
+          "language": "ja",
+          "value": "タイ",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-on-70",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ツイ",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-71",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あいて",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-72",
+          "kind": "reading",
+          "language": "ja",
+          "value": "こた.える",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-73",
+          "kind": "reading",
+          "language": "ja",
+          "value": "そろ.い",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-74",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つれあ.い",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-75",
+          "kind": "reading",
+          "language": "ja",
+          "value": "なら.ぶ",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "対-kun-76",
+          "kind": "reading",
+          "language": "ja",
+          "value": "むか.う",
+          "source_locator": "KANJIDIC2 literal 対"
+        },
+        {
+          "id": "効-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "効",
+          "source_locator": "KANJIDIC2 literal 効"
+        },
+        {
+          "id": "効-on-78",
+          "kind": "reading",
+          "language": "ja",
+          "value": "コウ",
+          "source_locator": "KANJIDIC2 literal 効"
+        },
+        {
+          "id": "効-kun-79",
+          "kind": "reading",
+          "language": "ja",
+          "value": "き.く",
+          "source_locator": "KANJIDIC2 literal 効"
+        },
+        {
+          "id": "効-kun-80",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ききめ",
+          "source_locator": "KANJIDIC2 literal 効"
+        },
+        {
+          "id": "効-kun-81",
+          "kind": "reading",
+          "language": "ja",
+          "value": "なら.う",
+          "source_locator": "KANJIDIC2 literal 効"
+        },
+        {
+          "id": "判-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "判",
+          "source_locator": "KANJIDIC2 literal 判"
+        },
+        {
+          "id": "判-on-83",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ハン",
+          "source_locator": "KANJIDIC2 literal 判"
+        },
+        {
+          "id": "判-on-84",
+          "kind": "reading",
+          "language": "ja",
+          "value": "バン",
+          "source_locator": "KANJIDIC2 literal 判"
+        },
+        {
+          "id": "判-kun-85",
+          "kind": "reading",
+          "language": "ja",
+          "value": "わか.る",
+          "source_locator": "KANJIDIC2 literal 判"
+        },
+        {
+          "id": "課-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "課",
+          "source_locator": "KANJIDIC2 literal 課"
+        },
+        {
+          "id": "課-on-87",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カ",
+          "source_locator": "KANJIDIC2 literal 課"
+        },
+        {
+          "id": "顕-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "顕",
+          "source_locator": "KANJIDIC2 literal 顕"
+        },
+        {
+          "id": "顕-on-89",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ケン",
+          "source_locator": "KANJIDIC2 literal 顕"
+        },
+        {
+          "id": "顕-kun-90",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あきらか",
+          "source_locator": "KANJIDIC2 literal 顕"
+        },
+        {
+          "id": "顕-kun-91",
+          "kind": "reading",
+          "language": "ja",
+          "value": "あらわ.れる",
+          "source_locator": "KANJIDIC2 literal 顕"
+        },
+        {
+          "id": "乖-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "乖",
+          "source_locator": "KANJIDIC2 literal 乖"
+        },
+        {
+          "id": "乖-on-93",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カイ",
+          "source_locator": "KANJIDIC2 literal 乖"
+        },
+        {
+          "id": "乖-kun-94",
+          "kind": "reading",
+          "language": "ja",
+          "value": "そむ.く",
+          "source_locator": "KANJIDIC2 literal 乖"
+        },
+        {
+          "id": "乖-kun-95",
+          "kind": "reading",
+          "language": "ja",
+          "value": "もとる",
+          "source_locator": "KANJIDIC2 literal 乖"
+        },
+        {
+          "id": "遂-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "遂",
+          "source_locator": "KANJIDIC2 literal 遂"
+        },
+        {
+          "id": "遂-on-97",
+          "kind": "reading",
+          "language": "ja",
+          "value": "スイ",
+          "source_locator": "KANJIDIC2 literal 遂"
+        },
+        {
+          "id": "遂-kun-98",
+          "kind": "reading",
+          "language": "ja",
+          "value": "と.げる",
+          "source_locator": "KANJIDIC2 literal 遂"
+        },
+        {
+          "id": "遂-kun-99",
+          "kind": "reading",
+          "language": "ja",
+          "value": "つい.に",
+          "source_locator": "KANJIDIC2 literal 遂"
+        },
+        {
+          "id": "衡-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "衡",
+          "source_locator": "KANJIDIC2 literal 衡"
+        },
+        {
+          "id": "衡-on-101",
+          "kind": "reading",
+          "language": "ja",
+          "value": "コウ",
+          "source_locator": "KANJIDIC2 literal 衡"
+        },
+        {
+          "id": "緩-form",
+          "kind": "lexical-form",
+          "language": "ja",
+          "value": "緩",
+          "source_locator": "KANJIDIC2 literal 緩"
+        },
+        {
+          "id": "緩-on-103",
+          "kind": "reading",
+          "language": "ja",
+          "value": "カン",
+          "source_locator": "KANJIDIC2 literal 緩"
+        },
+        {
+          "id": "緩-kun-104",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ゆる.い",
+          "source_locator": "KANJIDIC2 literal 緩"
+        },
+        {
+          "id": "緩-kun-105",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ゆる.やか",
+          "source_locator": "KANJIDIC2 literal 緩"
+        },
+        {
+          "id": "緩-kun-106",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ゆる.む",
+          "source_locator": "KANJIDIC2 literal 緩"
+        },
+        {
+          "id": "緩-kun-107",
+          "kind": "reading",
+          "language": "ja",
+          "value": "ゆる.める",
+          "source_locator": "KANJIDIC2 literal 緩"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EA%B0%80%EC%A1%B1",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EA%B0%80%EC%A1%B1&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "3dd6112a2914badab0e64c2fbfc7b05ac442adca2491ac301921822a0e01cf3e"
+      },
+      "facts": [
+        {
+          "id": "가족-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "가족",
+          "source_locator": "search headword 가족"
+        },
+        {
+          "id": "가족-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "かぞく【家族】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%ED%95%99%EA%B5%90",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%ED%95%99%EA%B5%90&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "cb0b70234319af74cbecb120039ef1d68f7884d396d9bf238ac5e27af6823329"
+      },
+      "facts": [
+        {
+          "id": "학교-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "학교",
+          "source_locator": "search headword 학교"
+        },
+        {
+          "id": "학교-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "がっこう【学校】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%8B%9C%EC%9E%A5",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%8B%9C%EC%9E%A5&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "cfed0db580f33cccf2469116f5078a5f30006fa79ee252b560842ac95e039e73"
+      },
+      "facts": [
+        {
+          "id": "시장-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "시장",
+          "source_locator": "search headword 시장"
+        },
+        {
+          "id": "시장-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . いちば【市場】。マーケット",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%95%BD%EC%86%8D",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%95%BD%EC%86%8D&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "ba52e4f4ee768b3a910ff841584162eefd82370fc48fb3ddd97fdf546d3fc40d"
+      },
+      "facts": [
+        {
+          "id": "약속-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "약속",
+          "source_locator": "search headword 약속"
+        },
+        {
+          "id": "약속-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "やくそく【約束】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EB%82%A0%EC%94%A8",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EB%82%A0%EC%94%A8&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "638dc695a676be8fa853330d81434e261cf28273ce7502ff90bed37161605407"
+      },
+      "facts": [
+        {
+          "id": "날씨-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "날씨",
+          "source_locator": "search headword 날씨"
+        },
+        {
+          "id": "날씨-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "てんき【天気】。きこう【気候】。てんこう【天候】。そらもよう【空模様】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%B7%A8%EB%AF%B8",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%B7%A8%EB%AF%B8&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "cc9782938c739ae84edaaa0546b98a3b0aa83bdd93c4f05f82d5914bc1f793d1"
+      },
+      "facts": [
+        {
+          "id": "취미-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "취미",
+          "source_locator": "search headword 취미"
+        },
+        {
+          "id": "취미-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . しゅみ【趣味】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EA%B5%90%ED%86%B5",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EA%B5%90%ED%86%B5&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "4de7a67aa1671ccdfc2456c2dc09f308845f514d77ae9e55934a90de31bd80e8"
+      },
+      "facts": [
+        {
+          "id": "교통-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "교통",
+          "source_locator": "search headword 교통"
+        },
+        {
+          "id": "교통-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . こうつう【交通】。つうこう【通行】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%98%88%EC%95%BD",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%98%88%EC%95%BD&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "6c4369456f9e717f40361899ca02006b2b322117b27e553a37683be724ca7222"
+      },
+      "facts": [
+        {
+          "id": "예약-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "예약",
+          "source_locator": "search headword 예약"
+        },
+        {
+          "id": "예약-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "よやく【予約】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%8B%A0%EC%B2%AD",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%8B%A0%EC%B2%AD&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "72e34949aa64130d4233eb4a2779bd4c62c0460ae09b9066d2efdc68063f6f8e"
+      },
+      "facts": [
+        {
+          "id": "신청-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "신청",
+          "source_locator": "search headword 신청"
+        },
+        {
+          "id": "신청-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . しんせい【申請】。もうしこみ【申込み】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EB%AC%B8%EC%9D%98",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EB%AC%B8%EC%9D%98&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "a89f86cfb39062e4ddb33d621984b9040c68f88cb3031adb1bd59e2328f45e08"
+      },
+      "facts": [
+        {
+          "id": "문의-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "문의",
+          "source_locator": "search headword 문의"
+        },
+        {
+          "id": "문의-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "といあわせ【問い合わせ】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EA%B1%B4%EA%B0%95",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EA%B1%B4%EA%B0%95&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "17a4db906bf77984d0fd55b3ae15ce3b0f65e5bc760e1671b42cd098e31744c5"
+      },
+      "facts": [
+        {
+          "id": "건강-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "건강",
+          "source_locator": "search headword 건강"
+        },
+        {
+          "id": "건강-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "けんこう【健康】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%8A%B5%EA%B4%80",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%8A%B5%EA%B4%80&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "da246f1e0d464516293810f344e511d2e6c6e6e56220dbdce43a099eb2d8e37c"
+      },
+      "facts": [
+        {
+          "id": "습관-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "습관",
+          "source_locator": "search headword 습관"
+        },
+        {
+          "id": "습관-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "しゅうかん【習慣】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%A7%81%EC%9E%A5",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%A7%81%EC%9E%A5&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "6053490aa606e6a8e0e89e92b323d91017cbdca61937823fe6708e101a8e0ec7"
+      },
+      "facts": [
+        {
+          "id": "직장-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "직장",
+          "source_locator": "search headword 직장"
+        },
+        {
+          "id": "직장-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . しょくば【職場】。つとめさき【勤め先】。きんむさき【勤務先】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%ED%99%98%EA%B2%BD",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%ED%99%98%EA%B2%BD&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "239acf969aaadbcd0d2aa99afa358822a2752faee7dce2f3a7ccc3ff41fa255c"
+      },
+      "facts": [
+        {
+          "id": "환경-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "환경",
+          "source_locator": "search headword 환경"
+        },
+        {
+          "id": "환경-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . かんきょう【環境】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EB%AC%B8%ED%99%94",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EB%AC%B8%ED%99%94&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "c370e5709ca74fae5ea7c1fd14a89c145ca521fa04209020f54c26a7b6ae3685"
+      },
+      "facts": [
+        {
+          "id": "문화-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "문화",
+          "source_locator": "search headword 문화"
+        },
+        {
+          "id": "문화-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "ぶんか【文化】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%A0%95%EC%B1%85",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%A0%95%EC%B1%85&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "053d4a594e4b2d608c2b941783b34862ff8baf4dfdf96ba0b2bc47b352c90fc7"
+      },
+      "facts": [
+        {
+          "id": "정책-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "정책",
+          "source_locator": "search headword 정책"
+        },
+        {
+          "id": "정책-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "せいさく【政策】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%9D%98%EA%B2%AC",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%9D%98%EA%B2%AC&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "92e7a9e0866b13f303b90477df1545641a0a2482c15d5dd1a510d94a6f1a2beb"
+      },
+      "facts": [
+        {
+          "id": "의견-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "의견",
+          "source_locator": "search headword 의견"
+        },
+        {
+          "id": "의견-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "いけん【意見】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EA%B7%BC%EA%B1%B0",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EA%B7%BC%EA%B1%B0&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "b6bb353aa82a6aaa690259b4ff15a7ebbe580dbfe75b01ac549cfec188de27be"
+      },
+      "facts": [
+        {
+          "id": "근거-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "근거",
+          "source_locator": "search headword 근거"
+        },
+        {
+          "id": "근거-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . こんきょ【根拠】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EB%B9%84%EA%B5%90",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EB%B9%84%EA%B5%90&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "0159d7f81946c9549a9c794add55625dfc3910aefb72de6fea892d6e8f4acb04"
+      },
+      "facts": [
+        {
+          "id": "비교-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "비교",
+          "source_locator": "search headword 비교"
+        },
+        {
+          "id": "비교-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "ひかく【比較】。くらべ【比べ】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%ED%8F%89%EA%B0%80",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%ED%8F%89%EA%B0%80&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "c90936c99798a6c9e37cd916832ef1b86b9c3b2e2f3f6ca66984d142bb0a6b81"
+      },
+      "facts": [
+        {
+          "id": "평가-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "평가",
+          "source_locator": "search headword 평가"
+        },
+        {
+          "id": "평가-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "ひょうか【評価】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%82%AC%ED%9A%8C",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%82%AC%ED%9A%8C&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "df8eab18b94f89c0da95f258913dd69984c52eacb2870148834e5dd66f34aa01"
+      },
+      "facts": [
+        {
+          "id": "사회-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "사회",
+          "source_locator": "search headword 사회"
+        },
+        {
+          "id": "사회-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . しゃかい【社会】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%97%B0%EA%B5%AC",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%97%B0%EA%B5%AC&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "b72720df8af4b77515aa6489bf005fb2ab0e406d3348ec2aa4f80b35b93bc5b8"
+      },
+      "facts": [
+        {
+          "id": "연구-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "연구",
+          "source_locator": "search headword 연구"
+        },
+        {
+          "id": "연구-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "けんきゅう【研究】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%ED%95%B4%EC%84%9D",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%ED%95%B4%EC%84%9D&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "a03baa6804911d2f81b5272e2d9c560a17d4e5e58dcb82af1c377c178c3e97c7"
+      },
+      "facts": [
+        {
+          "id": "해석-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "해석",
+          "source_locator": "search headword 해석"
+        },
+        {
+          "id": "해석-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "1 . かいしゃく【解釈】",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%9E%90%EB%A3%8C",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%9E%90%EB%A3%8C&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "d7ab092e6cca81a747dee51e90ceeebc0f080572bc03715fabc1fa2f462af2ba"
+      },
+      "facts": [
+        {
+          "id": "자료-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "자료",
+          "source_locator": "search headword 자료"
+        },
+        {
+          "id": "자료-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "しりょう【資料】。データ",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-%EC%A0%91%EA%B7%BC%EC%84%B1",
+        "url": "https://krdict.korean.go.kr/jpn/dicMarinerSearch/search?mainSearchWord=%EC%A0%91%EA%B7%BC%EC%84%B1&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "국립국어원 한국어기초사전 / 韓国語-日本語学習辞典",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "74e02101654fd4e17f1edd7c4c1e9509b9433b557393c74fb82e08b46958123b"
+      },
+      "facts": [
+        {
+          "id": "접근성-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "접근성",
+          "source_locator": "search headword 접근성"
+        },
+        {
+          "id": "접근성-ja-sense",
+          "kind": "sense-label",
+          "language": "ja",
+          "value": "せっきんせい【接近性】。アクセス",
+          "source_locator": "first Japanese headword label; no definition/example copied"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "sejong-curriculum-metadata",
+        "url": "https://www.iksi.or.kr/lms/main/curriculum.do",
+        "license": {
+          "id": "metadata-reference-only",
+          "url": "https://www.iksi.or.kr/lms/main/curriculum.do"
+        },
+        "attribution": "Online King Sejong Institute curriculum overview",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-10T16:19:12.398Z",
+        "sha256": "cd5d3401406b5ba1f3b4dc480e1a6633af02808d95fee8622e63dc1fbd03cefd"
+      },
+      "facts": [
+        {
+          "id": "sejong-structure",
+          "kind": "exam-structure",
+          "language": "en",
+          "value": "The curriculum separates introductory, beginner and intermediate learning paths. This metadata is not a TOPIK grade equivalence or permission to reproduce lessons.",
+          "source_locator": "curriculum headings"
+        }
+      ]
+    }
+  ]
+}

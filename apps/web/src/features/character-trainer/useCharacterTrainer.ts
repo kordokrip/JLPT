@@ -27,8 +27,10 @@ export function useCharacterTrainer() {
     queryKey: ['character-trainer-kanji', track, level],
     queryFn: async () => {
       const res = await kanjiApi.list({ level, limit: 200 });
-      return res.ok ? res.data.map(makeKanjiCard) : [];
+      if (!res.ok) throw new Error('Character data unavailable');
+      return res.data.map(makeKanjiCard);
     },
+    enabled: mode === 'kanji',
     staleTime: 1000 * 60 * 30,
   });
 
@@ -72,6 +74,10 @@ export function useCharacterTrainer() {
     nextCard();
   };
 
+  const selectCard = (next: number) => {
+    setIndex(next); setStage('observe'); setRevealed(false); setAnswer(null);
+  };
+
   return {
     mode,
     level,
@@ -86,12 +92,16 @@ export function useCharacterTrainer() {
     choices,
     expected,
     correct,
-    setLevel,
+    setLevel: (next: JlptLevel) => { setLevel(next); selectCard(0); },
     setRevealed,
     setAnswer,
     switchMode,
     switchStage,
     nextCard,
     complete,
+    selectCard,
+    loading: mode === 'kanji' && kanjiQuery.isPending,
+    error: mode === 'kanji' && kanjiQuery.isError,
+    reload: () => { void kanjiQuery.refetch(); },
   };
 }

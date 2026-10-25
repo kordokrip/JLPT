@@ -12,6 +12,8 @@ export interface D1TargetOptions {
   remote: boolean;
   database: string;
   config: string;
+  /** Wrangler environment used to resolve a named D1 binding (for example, preview). */
+  env?: string;
   persistTo?: string;
 }
 
@@ -30,10 +32,12 @@ export function parseD1Target(args = process.argv.slice(2)): D1TargetOptions {
   }
 
   const persistTo = optionValue(args, "--persist-to");
+  const env = optionValue(args, "--env");
   return {
     remote,
     database: optionValue(args, "--database") ?? "DB",
     config: path.resolve(optionValue(args, "--config") ?? DEFAULT_CONFIG),
+    ...(env ? { env } : {}),
     ...(persistTo ? { persistTo: path.resolve(persistTo) } : {}),
   };
 }
@@ -58,6 +62,9 @@ function targetArgs(options: D1TargetOptions): string[] {
     options.config,
     "--yes",
   ];
+  if (options.env) {
+    args.push("--env", options.env);
+  }
   if (!options.remote && options.persistTo) {
     args.push("--persist-to", options.persistTo);
   }
@@ -71,6 +78,9 @@ export function executeSqlFile(
   execFileSync("pnpm", [...targetArgs(options), "--file", filePath], {
     cwd: path.dirname(options.config),
     stdio: "pipe",
+    // 강성호 2026-10-13: 전체 draft 적재 결과가 기본1MiB 버퍼를 넘겨 부분 실패로 보이지 않게 한다.
+    // 출력은 콘솔로 내보내지 않으며 exit 실패는 그대로 호출자에게 전달한다.
+    maxBuffer: 32 * 1024 * 1024,
   });
 }
 

@@ -1,0 +1,415 @@
+{
+  "schema_version": "dictionary-web-fact-projections-v1",
+  "policy_verified_url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo",
+  "policy_verification_reference": "turn111view2",
+  "records": [
+    {
+      "source": {
+        "id": "krdict-web-17298",
+        "url": "https://krdict.korean.go.kr/kor/dicSearch/SearchView?ParaWordNo=17298",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "4cbbe71a04159dfd74ae3407aabe822fc8b18fb391137e56221109773bbc5c19",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn111view0"
+      },
+      "facts": [
+        {
+          "id": "17298-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "안녕",
+          "source_locator": "KRdict exact headword 안녕; entry 17298"
+        },
+        {
+          "id": "17298-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "감탄사",
+          "source_locator": "KRdict exact headword 안녕; entry 17298"
+        },
+        {
+          "id": "17298-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "greeting for peers or younger people",
+          "source_locator": "KRdict exact headword 안녕; entry 17298"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-62272",
+        "url": "https://krdict.korean.go.kr/jpn/dicSearch/SearchView?ParaWordNo=62272&nation=jpn",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "70c1917b6194b195d94197f488387fe721a86b70c69461f57987f895c6c50760",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn111view1"
+      },
+      "facts": [
+        {
+          "id": "62272-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "부모님",
+          "source_locator": "KRdict exact headword 부모님; entry 62272"
+        },
+        {
+          "id": "62272-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 부모님; entry 62272"
+        },
+        {
+          "id": "62272-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "parents, honorific form",
+          "source_locator": "KRdict exact headword 부모님; entry 62272"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-15252",
+        "url": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=15252",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "a1efabd84f47e59a1f8bd7ab097953073a64206e91df1d69cd70f009c824e812",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn113view0"
+      },
+      "facts": [
+        {
+          "id": "15252-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "공책",
+          "source_locator": "KRdict exact headword 공책; entry 15252"
+        },
+        {
+          "id": "15252-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 공책; entry 15252"
+        },
+        {
+          "id": "15252-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "notebook",
+          "source_locator": "KRdict exact headword 공책; entry 15252"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-27368",
+        "url": "https://krdict.korean.go.kr/m/eng/searchResultView?ParaWordNo=27368&nation=eng",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "d009b0465c5b6bfc1943e71f1fcfc3f69a88015d966c0880dc1283b1b2eda622",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn144view0"
+      },
+      "facts": [
+        {
+          "id": "27368-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "아침",
+          "source_locator": "KRdict exact headword 아침; entry 27368"
+        },
+        {
+          "id": "27368-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 아침; entry 27368"
+        },
+        {
+          "id": "27368-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "morning; breakfast",
+          "source_locator": "KRdict exact headword 아침; entry 27368"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-66031",
+        "url": "https://krdict.korean.go.kr/kor/dicSearch/SearchView?ParaWordNo=66031",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "020dc96e0f38e9480c1466a7b5807f5cad17306e2da68323c26bd2199b120913",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn113view1"
+      },
+      "facts": [
+        {
+          "id": "66031-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "맑다",
+          "source_locator": "KRdict exact headword 맑다; entry 66031"
+        },
+        {
+          "id": "66031-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "형용사",
+          "source_locator": "KRdict exact headword 맑다; entry 66031"
+        },
+        {
+          "id": "66031-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "clear; fine weather",
+          "source_locator": "KRdict exact headword 맑다; entry 66031"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-47546",
+        "url": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=47546",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "dad04ff6e4ab57033e9adf694d09f5830c1115630de5562259d53d47966fe10f",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn140view4"
+      },
+      "facts": [
+        {
+          "id": "47546-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "대중교통",
+          "source_locator": "KRdict exact headword 대중교통; entry 47546"
+        },
+        {
+          "id": "47546-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 대중교통; entry 47546"
+        },
+        {
+          "id": "47546-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "public transportation",
+          "source_locator": "KRdict exact headword 대중교통; entry 47546"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-67633",
+        "url": "https://krdict.korean.go.kr/ind/dicSearch/SearchView?ParaWordNo=67633&nation=ind",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "d6cd8027825254f51bc5a6c73271b850cb59194cdbf56c55561ce73847e6158d",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn140view0"
+      },
+      "facts": [
+        {
+          "id": "67633-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "연결하다",
+          "source_locator": "KRdict exact headword 연결하다; entry 67633"
+        },
+        {
+          "id": "67633-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "동사",
+          "source_locator": "KRdict exact headword 연결하다; entry 67633"
+        },
+        {
+          "id": "67633-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "connect; relate two or more things",
+          "source_locator": "KRdict exact headword 연결하다; entry 67633"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-66246",
+        "url": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=66246&nation=eng&nationCode=6",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "89ff9db46849c0eef74ef84cdaacff0ccef101e1627af1df496885a5d99d0dbd",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn142view0"
+      },
+      "facts": [
+        {
+          "id": "66246-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "문제",
+          "source_locator": "KRdict exact headword 문제; entry 66246"
+        },
+        {
+          "id": "66246-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 문제; entry 66246"
+        },
+        {
+          "id": "66246-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "problem; issue being discussed or researched",
+          "source_locator": "KRdict exact headword 문제; entry 66246"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-21110",
+        "url": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=21110&nation=eng",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "4bf82bd6552a051d06b4eb93f6299aa6325a62e86ec07793e71b7c6c540c79cf",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn143view0"
+      },
+      "facts": [
+        {
+          "id": "21110-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "분석",
+          "source_locator": "KRdict exact headword 분석; entry 21110"
+        },
+        {
+          "id": "21110-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 분석; entry 21110"
+        },
+        {
+          "id": "21110-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "analysis",
+          "source_locator": "KRdict exact headword 분석; entry 21110"
+        }
+      ]
+    },
+    {
+      "source": {
+        "id": "krdict-web-60385",
+        "url": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=60385",
+        "license": {
+          "id": "CC-BY-SA-2.0-KR",
+          "url": "https://krdict.korean.go.kr/kor/kboardPolicy/copyRightTermsInfo"
+        },
+        "attribution": "National Institute of Korean Language / Korean Basic Dictionary; compact verified language facts only",
+        "allowed_use": "language-facts-and-metadata-only",
+        "retrieved_at": "2026-10-11T06:18:00.000Z",
+        "sha256": "a1aeb04949100eef590f8db292ddba325fd1ae33096c3400770530d62b38b57c",
+        "retrieval_transport": "web.run",
+        "hash_basis": "verified-fact-projection-v1",
+        "verification_reference": "turn140view5"
+      },
+      "facts": [
+        {
+          "id": "60385-form",
+          "kind": "lexical-form",
+          "language": "ko",
+          "value": "비평",
+          "source_locator": "KRdict exact headword 비평; entry 60385"
+        },
+        {
+          "id": "60385-pos",
+          "kind": "grammar-constraint",
+          "language": "ko",
+          "value": "명사",
+          "source_locator": "KRdict exact headword 비평; entry 60385"
+        },
+        {
+          "id": "60385-sense",
+          "kind": "sense-label",
+          "language": "en",
+          "value": "criticism; critique; review; comment",
+          "source_locator": "KRdict exact headword 비평; entry 60385"
+        }
+      ]
+    }
+  ],
+  "missing_headwords": [
+    "봉지",
+    "변경",
+    "민원실",
+    "분리",
+    "배출"
+  ],
+  "note": "SHA-256 hashes the compact verified fact projection, not original HTTP bytes. Tool lookup time does not assert origin freshness. No examples or media retained."
+}

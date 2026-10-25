@@ -1,0 +1,18 @@
+# 프로젝트 전용. 전역 provider/권한과 실행 중 UI 모델은 변경하지 않는다.
+[agents]
+max_threads = 2
+default_subagent_model = "gpt-5.6-terra"
+default_subagent_reasoning_effort = "medium"
+
+[agents.astra_review]
+description = "보안·동시성·데이터 손실 위험 독립 검토"
+config_file = "agents/astra_review.toml"
+[agents.terra_execution]
+description = "확정 절차의 좁은 구현과 영향 테스트"
+config_file = "agents/terra_execution.toml"
+[agents.sol_longform]
+description = "사실과 파일 범위가 확정된 문서 작성"
+config_file = "agents/sol_longform.toml"
+[agents.luna_mechanical]
+description = "스크립트로 어려운 정형 추출과 비교"
+config_file = "agents/luna_mechanical.toml"

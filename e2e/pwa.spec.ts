@@ -6,15 +6,15 @@ test.describe('PWA install and share target', () => {
     const index = await page.request.get('/');
     expect(index.ok()).toBe(true);
     const html = await index.text();
-    expect(html).toContain('name="theme-color" content="#080A08"');
-    expect(html).toContain('name="theme-color" content="#111110" media="(prefers-color-scheme: dark)"');
+    expect(html).toContain('name="theme-color" content="#F7F3EA"');
+    expect(html).toContain('name="theme-color" content="#172536" media="(prefers-color-scheme: dark)"');
     expect(html).toContain('viewport-fit=cover');
     expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
     expect(html).toContain('name="mobile-web-app-capable" content="yes"');
     expect(html).toContain('name="apple-mobile-web-app-status-bar-style" content="black-translucent"');
     expect(html).toContain('name="format-detection" content="telephone=no, date=no, address=no, email=no"');
     expect(html).toContain('rel="apple-touch-icon"');
-    expect(html).toContain('href="/favicon.ico"');
+    expect(html).toContain('href="/brand-mark.png"');
 
     const manifestResponse = await page.request.get('/manifest.webmanifest');
     expect(manifestResponse.ok()).toBe(true);
@@ -24,8 +24,8 @@ test.describe('PWA install and share target', () => {
     expect(manifest.display_override).toEqual(expect.arrayContaining(['standalone']));
     expect(manifest.start_url).toBe('/');
     expect(manifest.scope).toBe('/');
-    expect(manifest.theme_color).toBe('#080A08');
-    expect(manifest.background_color).toBe('#080A08');
+    expect(manifest.theme_color).toBe('#F7F3EA');
+    expect(manifest.background_color).toBe('#F7F3EA');
     expect(manifest.orientation).toBe('portrait-primary');
     expect(manifest.lang).toBe('ko');
     expect(manifest.categories).toEqual(expect.arrayContaining(['education']));

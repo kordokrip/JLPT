@@ -9,10 +9,11 @@
  *   | 一 | 하나, 1 | いち | ひと | 일(一) | 一つ |
  */
 import { parseMarkdownTables, normalizeCell, stripBr, esc, escJson } from './utils.js';
+import type { JlptLevel } from '@nihongo-n3/shared';
 
 export interface KanjiSql {
   sourceCode: string;
-  level: 'N5' | 'N4' | 'N3';
+  level: JlptLevel;
   filePath: string;
   naturalKeys?: Set<string>;
 }
@@ -56,14 +57,21 @@ export function parseKanji(opts: KanjiSql): string[] {
 
       statements.push(
         [
-          `INSERT OR IGNORE INTO \`kanji\``,
+          `INSERT INTO \`kanji\``,
           `  (\`char\`, \`meaning_ko\`, \`on_yomi\`, \`kun_yomi\`,`,
           `   \`korean_hanja_pronunciation\`, \`jlpt_level\`, \`related_vocab_ids\`)`,
           `VALUES (`,
           `  ${esc(char)}, ${esc(meaningKo)},`,
           `  ${onYomi ? esc(onYomi) : 'NULL'}, ${kunYomi ? esc(kunYomi) : 'NULL'},`,
           `  ${hanja ? esc(hanja) : 'NULL'}, ${esc(opts.level)}, ${escJson([])}`,
-          `);`,
+          `) ON CONFLICT(\`char\`) DO UPDATE SET`,
+          `  \`meaning_ko\` = excluded.\`meaning_ko\`,`,
+          `  \`on_yomi\` = excluded.\`on_yomi\`,`,
+          `  \`kun_yomi\` = excluded.\`kun_yomi\`,`,
+          `  \`korean_hanja_pronunciation\` = excluded.\`korean_hanja_pronunciation\`,`,
+          `  \`jlpt_level\` = excluded.\`jlpt_level\`,`,
+          `  \`related_vocab_ids\` = excluded.\`related_vocab_ids\`,`,
+          `  \`updated_at\` = unixepoch();`,
         ].join('\n'),
       );
     }

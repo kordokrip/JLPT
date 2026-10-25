@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { dictionaryWebEvidence, dictionaryWebEvidenceFailures } from "./dictionary-web-evidence.js";
+import type { SourceRecord } from "./learning-path-full-contract.js";
+test("web evidence hashes explicit compact facts, never claims original HTTP response bytes", () => {
+  const record = dictionaryWebEvidence({ url: "https://krdict.korean.go.kr/kor/dicSearch/SearchView?ParaWordNo=17298", headword: "안녕", part_of_speech: "감탄사", sense: "greeting", retrieved_at: "2026-10-11T00:00:00Z", verification_reference: "synthetic test only" });
+  assert.equal(record.source.hash_basis, "verified-fact-projection-v1");
+  assert.deepEqual(dictionaryWebEvidenceFailures(record), []);
+  record.facts[0]!.value = "unrelated";
+  assert.match(dictionaryWebEvidenceFailures(record).join("\n"), /hash mismatch/);
+  delete (record.source as Partial<typeof record.source>).hash_basis;
+  assert.match(dictionaryWebEvidenceFailures(record).join("\n"), /unsupported/);
+  assert.throws(() => dictionaryWebEvidence({ url: "https://krdict.korean.go.kr/kor/search", headword: "안녕", part_of_speech: "감탄사", sense: "greeting", retrieved_at: "2026-10-11T00:00:00Z", verification_reference: "synthetic" }), /Exact official/);
+});
+test("official API evidence retains native response hash provenance and rejects downgrade or credential retention", () => {
+  const record = {source:{id:"krdict-api-59344",url:"https://krdict.korean.go.kr/kor/dicSearch/SearchView?ParaWordNo=59344",sha256:"a".repeat(64),hash_basis:"raw-http-response-sha256",retrieval_transport:"official-krdict-api",exact_entry_id:"59344",expected_origin:"",sense_order:"1",definition_scope:"first-returned-sense",api_request:{endpoint:"https://krdict.korean.go.kr/api/search",q:"봉지",method:"exact",req_type:"xml"}},facts:[{kind:"lexical-form",value:"봉지",source_locator:"entry 59344; sense 1"}]} as unknown as SourceRecord;
+  assert.deepEqual(dictionaryWebEvidenceFailures(record), []);
+  const downgraded = structuredClone(record) as SourceRecord & {source:{hash_basis?:string}};
+  delete downgraded.source.hash_basis;
+  assert.match(dictionaryWebEvidenceFailures(downgraded).join("\n"), /unsupported dictionary API/);
+  const stripped=structuredClone(record) as SourceRecord & {source:{hash_basis?:string;retrieval_transport?:string;expected_origin?:string}};
+  stripped.source.id="krdict-59344";delete stripped.source.hash_basis;delete stripped.source.retrieval_transport;
+  assert.match(dictionaryWebEvidenceFailures(stripped).join("\n"), /unsupported dictionary API/);
+  const noOrigin=structuredClone(record) as SourceRecord & {source:{expected_origin?:string}};delete noOrigin.source.expected_origin;
+  assert.match(dictionaryWebEvidenceFailures(noOrigin).join("\n"), /unsupported dictionary API/);
+  const withKey=structuredClone(record);Object.assign(withKey.source,{key:"synthetic-secret-not-a-real-key"});
+  assert.match(dictionaryWebEvidenceFailures(withKey).join("\n"), /unsupported dictionary API/);
+  const wrong=structuredClone(record);wrong.facts[0]!.value="비닐봉지";
+  assert.match(dictionaryWebEvidenceFailures(wrong).join("\n"), /unsupported dictionary API/);
+});

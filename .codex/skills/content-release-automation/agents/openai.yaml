@@ -1,0 +1,4 @@
+interface:
+  display_name: "Content Release Automation"
+  short_description: "Gate D1 content releases safely"
+  default_prompt: "Use $content-release-automation to run the guarded JLPT and TOPIK content release flow."

@@ -11,7 +11,6 @@ export interface VocabContentItem {
   part_of_speech?: string;
   example_jp?: string;
   example_ko?: string;
-  audio_path?: string;
   source_id?: number;
   category_id?: number;
 }
@@ -36,7 +35,6 @@ export interface KanjiContentItem {
   meaning: string;
   stroke_count?: number;
   level: ContentLevel;
-  audio_path?: string;
   source_id?: number;
 }
 
@@ -104,13 +102,13 @@ export function normalizeVocabContentItem(row: ApiRawContentRecord): VocabConten
   const partOfSpeech = text(row, 'part_of_speech', 'pos');
   const exampleJp = text(row, 'example_jp');
   const exampleKo = text(row, 'example_ko');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
   const sourceId = numberValue(row, 'source_id');
   const categoryId = numberValue(row, 'category_id');
   if (partOfSpeech !== undefined) item.part_of_speech = partOfSpeech;
   if (exampleJp !== undefined) item.example_jp = exampleJp;
   if (exampleKo !== undefined) item.example_ko = exampleKo;
-  item.audio_path = audioPath ?? `audio/vocab/${level.toLowerCase()}/${id}.mp3`;
+  // Pronunciation is requested from Google at playback time. Never expose a
+  // legacy R2 key through a learner DTO.
   if (sourceId !== undefined) item.source_id = sourceId;
   if (categoryId !== undefined) item.category_id = categoryId;
   return item;
@@ -148,9 +146,7 @@ export function normalizeKanjiContentItem(row: ApiRawContentRecord): KanjiConten
   };
   const strokeCount = numberValue(row, 'stroke_count');
   const sourceId = numberValue(row, 'source_id');
-  const audioPath = text(row, 'audio_path', 'audio_r2_key');
   if (strokeCount !== undefined) item.stroke_count = strokeCount;
   if (sourceId !== undefined) item.source_id = sourceId;
-  item.audio_path = audioPath ?? `audio/kanji/${level.toLowerCase()}/${id}.mp3`;
   return item;
 }

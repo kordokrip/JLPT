@@ -1,6 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ensureAuthenticated } from './auth-helper';
 
+declare global {
+  interface Window {
+    __quizGoogleSpeech?: Array<{ lang: string; voice: string | null }>;
+  }
+}
+
 const QUIZ_MODES = [
   { mode: 'vocab_mc', title: /어휘 선택|Vocab Choice|語彙選択/, pageTitle: /어휘 선택|Vocab Choice|語彙選択/ },
   { mode: 'kanji_reading', title: /한자 읽기|Kanji Reading|漢字読み/, pageTitle: /한자 읽기|Kanji Reading|漢字読み/ },
@@ -20,6 +26,46 @@ async function expectNoConsoleErrors(page: Page, run: () => Promise<void>) {
 
   expect(consoleErrors, 'browser console errors').toEqual([]);
   expect(pageErrors, 'uncaught page errors').toEqual([]);
+}
+
+async function installJapaneseSystemSpeechMock(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const spoken: Array<{ lang: string; voice: string | null }> = [];
+    Object.defineProperty(window, '__quizGoogleSpeech', { configurable: true, value: spoken });
+    class FakeSpeechSynthesisUtterance {
+      lang = '';
+      rate = 1;
+      pitch = 1;
+      voice: SpeechSynthesisVoice | null = null;
+      onstart: ((event: Event) => void) | null = null;
+      onend: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+
+      constructor(_text: string) {}
+    }
+    const japaneseSystemVoice = {
+      default: true,
+      lang: 'ja-JP',
+      localService: true,
+      name: 'Kyoko',
+      voiceURI: 'apple-ja-jp',
+    } as SpeechSynthesisVoice;
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: FakeSpeechSynthesisUtterance });
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: {
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        cancel: () => undefined,
+        getVoices: () => [japaneseSystemVoice],
+        speak: (utterance: FakeSpeechSynthesisUtterance) => {
+          spoken.push({ lang: utterance.lang, voice: utterance.voice?.voiceURI ?? null });
+          utterance.onstart?.(new Event('start'));
+          utterance.onend?.(new Event('end'));
+        },
+      },
+    });
+  });
 }
 
 test.describe('퀴즈 기능 smoke', () => {
@@ -50,7 +96,7 @@ test.describe('퀴즈 기능 smoke', () => {
   test('퀴즈 모드 선택 화면에서 4개 모드가 모두 보인다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.goto('/quiz');
-      await expect(page.getByRole('heading', { name: /퀴즈|Quiz|クイズ/ })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /문제|Questions|問題/ })).toBeVisible();
       for (const { title } of QUIZ_MODES) {
         await expect(page.getByRole('button', { name: title })).toBeVisible();
       }
@@ -72,14 +118,22 @@ test.describe('퀴즈 기능 smoke', () => {
   test('일반 퀴즈는 선택지 풀이 후 제출하고 결과 화면으로 이동한다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
       await page.goto('/quiz/vocab_mc');
+      const generatedResponse = page.waitForResponse((response) =>
+        response.url().endsWith('/api/v1/quiz/generate') && response.request().method() === 'POST');
       await page.getByRole('button', { name: /시작하기|Start|開始/ }).click();
+      const generatedBody = await (await generatedResponse).json();
+      const questionIds = generatedBody.data.questions.map((question: { id: string }) => question.id);
+      expect(new Set(questionIds).size, 'generated question IDs are unique').toBe(questionIds.length);
 
       for (let i = 0; i < 5; i += 1) {
         await expect(page.getByRole('radiogroup')).toBeVisible({ timeout: 20_000 });
-        await page.getByRole('radio').first().click();
+        const firstChoice = page.getByRole('radio').first();
+        await firstChoice.click();
+        await expect(firstChoice).toHaveAttribute('aria-checked', 'true');
 
         const submit = page.getByRole('button', { name: /제출|Submit|提出/ });
         if (await submit.isVisible()) {
+          await expect(submit).toBeEnabled();
           await submit.click();
           break;
         }
@@ -92,99 +146,58 @@ test.describe('퀴즈 기능 smoke', () => {
     });
   });
 
-  test('청해 전용 화면은 승인된 R2가 없으면 브라우저 fallback을 제공한다', async ({ page }) => {
+  test('취약 영역 출제는 선택적으로 weakest 전략을 보내고 기존 응답 형식을 유지한다', async ({ page }) => {
+    await page.goto('/quiz/vocab_mc?strategy=weakest');
+    await expect(page.getByRole('radio', { name: /취약 영역 우선|Weakest first|弱点を優先/ })).toBeChecked();
+    const generatedRequest = page.waitForRequest((request) =>
+      request.url().endsWith('/api/v1/quiz/generate') && request.method() === 'POST');
+    const generatedResponse = page.waitForResponse((response) =>
+      response.url().endsWith('/api/v1/quiz/generate') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: /시작하기|Start|開始/ }).click();
+
+    expect((await generatedRequest).postDataJSON()).toMatchObject({
+      mode: 'vocab_mc',
+      strategy: 'weakest',
+    });
+    const response = await generatedResponse;
+    expect(response.ok()).toBe(true);
+    const body = await response.json();
+    expect(body.data).toEqual(expect.objectContaining({
+      quiz_id: expect.any(Number),
+      mode: 'vocab_mc',
+      questions: expect.any(Array),
+    }));
+  });
+
+  test('청해 전용 화면은 같은 언어의 브라우저 음성으로 재생하고 R2 오디오를 요청하지 않는다', async ({ page }) => {
     await expectNoConsoleErrors(page, async () => {
+      await installJapaneseSystemSpeechMock(page);
       const serverAudioRequests: string[] = [];
       page.on('request', (request) => {
         if (new URL(request.url()).pathname.startsWith('/api/v1/audio/')) {
           serverAudioRequests.push(request.url());
         }
       });
-      await page.addInitScript(() => {
-        const spoken: Array<{ text: string; lang: string; voice: string | null }> = [];
-        Object.defineProperty(window, '__spokenJapaneseForTest', { value: spoken, configurable: true });
-
-        class FakeSpeechSynthesisUtterance {
-          text: string;
-          lang = '';
-          rate = 1;
-          pitch = 1;
-          volume = 1;
-          voice: SpeechSynthesisVoice | null = null;
-          onstart: (() => void) | null = null;
-          onend: (() => void) | null = null;
-          onerror: (() => void) | null = null;
-
-          constructor(text: string) {
-            this.text = text;
-          }
-        }
-
-        const japaneseVoice = {
-          default: true,
-          lang: 'ja-JP',
-          localService: true,
-          name: 'Japanese E2E Voice',
-          voiceURI: 'ja-jp-e2e',
-        } as SpeechSynthesisVoice;
-        Object.defineProperty(window, 'SpeechSynthesisUtterance', {
-          configurable: true,
-          value: FakeSpeechSynthesisUtterance,
-        });
-        Object.defineProperty(window, 'speechSynthesis', {
-          configurable: true,
-          value: {
-            addEventListener: () => undefined,
-            cancel: () => undefined,
-            getVoices: () => [japaneseVoice],
-            speak: (utterance: FakeSpeechSynthesisUtterance) => {
-              spoken.push({
-                text: utterance.text,
-                lang: utterance.lang,
-                voice: utterance.voice?.voiceURI ?? null,
-              });
-              utterance.onstart?.();
-              utterance.onend?.();
-            },
-          },
-        });
-
-        localStorage.setItem('nihongo-n3-settings', JSON.stringify({
-          state: {
-            language: 'ko',
-            theme: 'system',
-            furiganaMode: 'hover',
-            playbackRate: 1,
-            voiceGender: 'female',
-            selectedVoiceURI: null,
-            ttsProvider: 'browser',
-            autoPronounce: true,
-            dailyNewLimit: 20,
-            lastSyncedAt: new Date(0).toISOString(),
-          },
-          version: 0,
-        }));
-      });
       await page.goto('/quiz/listening');
       await expect(page.getByRole('heading', { name: /청해 퀴즈|Listening Quiz|聴解クイズ/ })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByText(/일본어 브라우저 음성으로 재생합니다|Japanese browser voice|日本語ブラウザー音声/)).toBeVisible();
-      await expect(page.getByRole('group', { name: /청해 음성 소스|Listening audio source|聴解音声ソース/ })).toHaveCount(0);
+      await expect(page.getByText(/Google 일본어 음성을 우선|prefers Google Japanese|Google 日本語音声を優先/)).toBeVisible();
       const play = page.getByRole('button', { name: /재생|Play|再生/ });
-      await expect(play).toBeVisible();
+      await expect(play).toBeEnabled();
+      const activityRequest = page.waitForRequest((request) =>
+        request.url().endsWith('/api/v1/activity/events') && request.method() === 'POST');
       await play.click();
-      await expect.poll(async () => page.evaluate(() => (
-        window as unknown as { __spokenJapaneseForTest: unknown[] }
-      ).__spokenJapaneseForTest.length)).toBe(1);
-      const spoken = await page.evaluate(() => (
-        window as unknown as {
-          __spokenJapaneseForTest: Array<{ text: string; lang: string; voice: string | null }>;
-        }
-      ).__spokenJapaneseForTest);
-      expect(spoken).toHaveLength(1);
-      expect(spoken[0]?.lang).toBe('ja-JP');
-      expect(spoken[0]?.voice).toBe('ja-jp-e2e');
-      expect(spoken[0]?.text).toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
-      expect(serverAudioRequests, 'must not request a fabricated R2 path').toEqual([]);
+      expect((await activityRequest).postDataJSON()).toEqual({
+        events: [expect.objectContaining({
+          event_type: 'speech_attempted',
+          learning_track: 'jlpt-ja',
+          mode: 'listening',
+          speech_outcome: 'played',
+        })],
+      });
+      await expect.poll(() => page.evaluate(() => window.__quizGoogleSpeech ?? [])).toEqual([
+        { lang: 'ja-JP', voice: 'apple-ja-jp' },
+      ]);
+      expect(serverAudioRequests, 'must not request an R2 path').toEqual([]);
       await expect(page.locator('audio[src]')).toHaveCount(0);
       await expect(page.getByRole('radiogroup')).toBeVisible();
     });

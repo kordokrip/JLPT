@@ -53,11 +53,6 @@ export function cacheMiddleware(
   };
 }
 
-/** 30일 캐시 (오디오·이미지용) */
-export const audioCacheMiddleware = cacheMiddleware(
-  'public, max-age=2592000, immutable',
-);
-
 /** 하루 캐시 (콘텐츠용) */
 export const contentCacheMiddleware = cacheMiddleware(
   'public, max-age=86400, immutable',

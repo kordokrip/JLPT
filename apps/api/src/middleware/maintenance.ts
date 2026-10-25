@@ -15,16 +15,26 @@ const READ_ONLY_COMMAND_ROUTES = new Set([
   'POST /api/v1/ai/translate',
 ]);
 
+function canonicalApiPath(path: string): string {
+  if (path.startsWith('/api/v1/')) return path;
+  return `/api/v1${path.startsWith('/') ? path : `/${path}`}`;
+}
+
 export function isReadOnlyMaintenance(env: Pick<Env, 'MAINTENANCE_MODE'>): boolean {
   return env.MAINTENANCE_MODE?.trim().toLowerCase() === READ_ONLY_MODE;
 }
 
 export function isSideEffectingRequest(method: string, path: string): boolean {
   const normalizedMethod = method.toUpperCase();
-  if (MUTATING_GET_ROUTES.some((route) => route.test(path))) return true;
+  const apiPath = canonicalApiPath(path);
+  if (MUTATING_GET_ROUTES.some((route) => route.test(apiPath))) return true;
   if (SAFE_METHODS.has(normalizedMethod)) return false;
-  if (READ_ONLY_COMMAND_ROUTES.has(`${normalizedMethod} ${path}`)) return false;
-  return path.startsWith('/api/') || path.startsWith('/admin');
+  if (READ_ONLY_COMMAND_ROUTES.has(`${normalizedMethod} ${apiPath}`)) return false;
+
+  // A Hono sub-app can expose a router-local path (for example /auth/login)
+  // to global middleware. During cutover, every non-read request is blocked
+  // unless it is explicitly listed above as side-effect free.
+  return true;
 }
 
 export async function maintenanceMiddleware(c: Context<AppEnv>, next: Next): Promise<Response | void> {

@@ -112,6 +112,185 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/topik-owner-private/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 관리자 세션으로 owner-private TOPIK release를 한 번 claim
+         * @description 현재 authenticated admin session의 subject만 owner로 연결합니다. 요청 본문은 release ID와 manifest hash만 받으며 사용자 ID는 받지 않습니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        release_id: string;
+                        manifest_sha256: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description owner-private claim 완료 */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                release_id: string;
+                                /** @enum {string} */
+                                state: "owner_published";
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 이미 claim되었거나 policy/manifest가 일치하지 않음 */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/topik-owner-private/releases/{releaseId}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 현재 owner admin 세션으로 private publication withdrawal */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    releaseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        manifest_sha256: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description withdrawal 완료 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                state: "withdrawn";
+                            };
+                        };
+                    };
+                };
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description owner-private publication 없음 */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/dashboard": {
         parameters: {
             query?: never;
@@ -276,41 +455,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 승인된 Google TTS 오디오 배치 실행 */
+        /**
+         * 폐기된 R2 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
+         */
         post: {
             parameters: {
                 query?: never;
-                header?: {
-                    "x-audio-batch-approval"?: string;
-                };
+                header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /** @default false */
-                        execute?: boolean;
-                        dry_run?: boolean;
-                        batch?: number;
-                        /** @enum {string} */
-                        provider?: "google";
-                        /** @enum {string} */
-                        level?: "N5" | "N4" | "N3";
-                        force_regenerate?: boolean;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
-                /** @description 큐 실행 결과 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -322,6 +479,72 @@ export interface paths {
                 };
                 /** @description 관리자 권한 필요 */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 발음 생성은 비활성 */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audio/curriculum-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 폐기된 R2 curriculum 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description 인증 필요 */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 관리자 권한 필요 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 발음 생성은 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -344,7 +567,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** TTS provider 운영 연결 상태 확인 */
+        /**
+         * 폐기된 서버 TTS provider 경로
+         * @description 발음은 Google 우선 동일 언어 브라우저 음성을 사용하며 서버 provider 탐색은 비활성이다.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -354,15 +580,6 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description provider 상태 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -374,6 +591,15 @@ export interface paths {
                 };
                 /** @description 관리자 권한 필요 */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description 서버 TTS provider 경로는 비활성 */
+                410: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -400,35 +626,19 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 30개 QA 샘플 오디오 일괄 생성 */
+        /**
+         * 폐기된 R2 QA 발음 생성 경로
+         * @description R2 발음 저장·생성은 정책상 비활성이다. Google 우선 동일 언어 브라우저 음성을 사용한다.
+         */
         post: {
             parameters: {
                 query?: never;
-                header?: {
-                    "x-audio-batch-approval"?: string;
-                };
+                header?: never;
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        provider?: "cloudflare" | "google" | "voicevox";
-                        force?: boolean;
-                    };
-                };
-            };
+            requestBody?: never;
             responses: {
-                /** @description QA 샘플 생성 결과 */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GenericDataResponse"];
-                    };
-                };
                 /** @description 인증 필요 */
                 401: {
                     headers: {
@@ -445,6 +655,319 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+                /** @description R2 QA 발음 생성은 비활성 */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProblemDetail"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai/content-lint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * TOPIK 콘텐츠 초안의 결정론적 품질·권리 lint
+         * @description 초안 본문을 저장하거나 모델로 전송하지 않습니다. 번역, 해설 길이, 중복 distractor, 언어 표기, 금지 원천을 검사합니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        learning_track: "topik-ko";
+                        release_id: string;
+                        source: {
+                            /** @enum {string} */
+                            source_type: "self-authored" | "licensed-external" | "official-reference" | "fixture";
+                            /** Format: uri */
+                            source_url: string;
+                            license_id: string;
+                            allowed_use: string;
+                        };
+                        items: {
+                            stable_ref: string;
+                            prompt_ko: string;
+                            prompt_ja: string;
+                            prompt_en: string;
+                            explanation_ko: string;
+                            explanation_ja: string;
+                            explanation_en: string;
+                            /** @default [] */
+                            distractors?: string[];
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description lint 결과 */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                release_id: string;
+                                issues: {
+                                    /** @enum {string} */
+                                    severity: "error" | "warning";
+                                    code: string;
+                                    stable_ref: string;
+                                    field: string;
+                                    detail: string;
+                                }[];
+                                blocking: boolean;
+                                /** @enum {string} */
+                                provider: "deterministic-policy";
+                            };
+                        };
+                    };
+                };
+                /** @description invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description admin required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ai/content-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 검증된 TOPIK 콘텐츠 초안 보조
+         * @description feature flag와 서버 secret이 모두 설정된 경우에만 provider를 호출합니다. 결과는 draft이며 D1 release를 변경하지 않습니다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        learning_track: "topik-ko";
+                        release_id: string;
+                        source: {
+                            /** @enum {string} */
+                            source_type: "self-authored" | "licensed-external" | "official-reference" | "fixture";
+                            /** Format: uri */
+                            source_url: string;
+                            license_id: string;
+                            allowed_use: string;
+                        };
+                        items: {
+                            stable_ref: string;
+                            prompt_ko: string;
+                            prompt_ja: string;
+                            prompt_en: string;
+                            explanation_ko: string;
+                            explanation_ja: string;
+                            explanation_en: string;
+                            /** @default [] */
+                            distractors?: string[];
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description 검증된 draft */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                release_id: string;
+                                draft: {
+                                    prompt_ko: string;
+                                    prompt_ja: string;
+                                    prompt_en: string;
+                                    explanation_ko: string;
+                                    explanation_ja: string;
+                                    explanation_en: string;
+                                    distractors: string[];
+                                };
+                                /** @enum {string} */
+                                provider: "workers-ai" | "ai-gateway";
+                                model: string;
+                                prompt_version: string;
+                            };
+                        };
+                    };
+                };
+                /** @description blocking lint */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description admin required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description release not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description usage limit */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description invalid provider output */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
+                    };
+                };
+                /** @description feature disabled or unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            type?: string;
+                            title: string;
+                            status: number;
+                            detail: string;
+                        };
                     };
                 };
             };

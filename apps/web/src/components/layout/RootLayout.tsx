@@ -1,34 +1,54 @@
 /**
  * RootLayout — 앱 공통 레이아웃 (Outlet)
  */
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { SideNav }         from './SideNav';
 import { BottomTabBar }    from './BottomTabBar';
 import { useUiStore }      from '../../stores/ui-store';
 import { IosInstallHint }  from '../IosInstallHint';
 import { useTranslation }  from 'react-i18next';
 import { useContentVersionInvalidation } from '../../hooks/useContentVersionInvalidation';
+import { useSettingsStore } from '../../stores/settings-store';
+import { useAuthStore } from '../../stores/auth-store';
+import { useDataScope } from '../../hooks/useDataScope';
+import { learningExperienceEnabled } from '../../lib/learning-flag';
+import { useLearningProfile } from '../../hooks/useLearningProfile';
+import { useAccountPreferences } from '../../hooks/useAccountPreferences';
+import { AccountMenu } from '../account/AccountMenu';
+import { accountPersonalizationEnabled } from '../../lib/account-personalization-flag';
+import { studyButton } from '../../features/study/StudyComponents';
 
 export function RootLayout() {
+  const profile=useLearningProfile();
   useContentVersionInvalidation();
   const isOnline = useUiStore((s) => s.isOnline);
   const sideNavCollapsed = useUiStore((s) => s.sideNavCollapsed);
+  const learningTrack = useSettingsStore((s) => s.learningTrack);
+  const accent = useSettingsStore((s) => s.accent);
   const { t } = useTranslation();
+  const scope = useDataScope();
+  useAccountPreferences(accountPersonalizationEnabled);
+  const user = useAuthStore(s => s.user);
+  const logout = useAuthStore(s => s.logout);
+  const authError = useAuthStore(s => s.error);
 
   return (
     <div
       data-side-state={sideNavCollapsed ? 'collapsed' : 'expanded'}
-      className="app-shell relative min-h-dvh overflow-x-clip bg-[var(--background)]"
+      data-learning-track={learningTrack}
+      data-account-accent={accountPersonalizationEnabled ? accent : 'track'}
+      className="app-shell relative min-h-dvh bg-[var(--background)]"
     >
-      <div
+      {!learningExperienceEnabled && <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 bg-no-repeat opacity-[0.055] dark:opacity-[0.13]"
+        className="pointer-events-none fixed inset-0 z-0 bg-no-repeat mix-blend-multiply dark:mix-blend-soft-light"
         style={{
-          backgroundImage: "url('/page-bg-bamboo.png')",
-          backgroundPosition: 'right max(1.25rem, env(safe-area-inset-right)) bottom max(4.75rem, env(safe-area-inset-bottom))',
-          backgroundSize: 'min(56vw, 520px) auto',
+          backgroundImage: "url('/brand-hero-eastasia-v2.png')",
+          backgroundPosition: 'right max(1rem, env(safe-area-inset-right)) bottom max(4.5rem, env(safe-area-inset-bottom))',
+          backgroundSize: 'min(78vw, 760px) auto',
+          opacity: 'var(--track-art-opacity)',
         }}
-      />
+      />}
       {/* 스크린리더용 건너뛰기 링크 */}
       <a
         href="#main-content"
@@ -54,22 +74,22 @@ export function RootLayout() {
       <main
         id="main-content"
         className={[
-          'relative z-10',
-          'min-[760px]:pl-[var(--active-sidebar-width)]',
-          'h-[calc(100dvh-var(--nav-height)-env(safe-area-inset-bottom))] overflow-y-auto min-[760px]:h-auto min-[760px]:min-h-dvh min-[760px]:overflow-visible',
-          'pb-0 min-[760px]:pb-0',
+          'app-main relative z-10',
           'min-w-0 pt-[env(safe-area-inset-top)]',
           !isOnline ? 'mt-[calc(env(safe-area-inset-top)+1.5rem)]' : '',
         ].join(' ')}
       >
-        <Outlet />
+        {learningExperienceEnabled && <header className="learner-header">{accountPersonalizationEnabled ? <><Link to="/settings" className="learner-header__track"><span className="learner-header__seal" aria-hidden="true" lang={learningTrack==='jlpt-ja'?'ja':'ko'}>{learningTrack==='jlpt-ja'?'あ':'가'}</span><span className="text-[var(--track-accent)]">{learningTrack==='jlpt-ja'?'JLPT':'TOPIK'}</span><span className="learner-header__level">{profile.data?.target_level??''}</span></Link><AccountMenu /></> : <details className="learner-header__legacy"><summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary><div className="space-y-4 py-4"><Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>{user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}<button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button></div></details>}</header>}
+        {authError === 'logout_failed' && <p role="alert" className="surface-card mx-4 p-4">{t('study.auth.logoutFailed')}</p>}
+        <div className="app-outlet" key={scope}><Outlet /></div>
       </main>
 
       {/* 하단 탭 (모바일) */}
       <BottomTabBar />
 
       {/* iOS Safari 홈 화면 추가 안내 (1회만) */}
-      <IosInstallHint />
+      {/* 강성호 2026-10-11: 새 학습 홈을 가리는 iOS 설치 팝업은 설정 안의 인라인 안내로 이동한다. */}
+      {!learningExperienceEnabled && <IosInstallHint />}
     </div>
   );
 }

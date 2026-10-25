@@ -1,0 +1,132 @@
+{
+  "reviewer_id": "astra-independent-adversarial-reviewer-b-2026-10-11",
+  "scope": "representative-contract-only",
+  "draft_sha256": "abe999efbc9ded98a5f37cd4772cfca3c52af4b30662e1f550f067a539ea1dbd",
+  "source_evidence_sha256": "59df8ed4873496e5687c0ef8c3933e4f9aece03d02d8e62d92de046bcf3b545a",
+  "concept_inventory_sha256": "a6dc5b9e6ecc5944e1796a17cdb1507dcfbcd9105aaa05a37ff8125c24817faa",
+  "passed": false,
+  "full_bank_approval": false,
+  "actual_browser_verified": false,
+  "summary": "대표 12문항은 정답·오답·해설·번역·개념 연결과 상황 차이를 승인한다. 그러나 N3 개념 안내의 한국어 조사 오류 2건 때문에 대표 계약 전체는 불합격이다. 동결 입력을 수정하지 말고 새 버전에서 교정한 뒤 다시 검수해야 한다.",
+  "verification": {
+    "draft_hash_method": "SHA-256 of JSON.stringify of the frozen payload after excluding draft_sha256, source_evidence_sha256 and concept_inventory_sha256",
+    "draft_hash_matches": true,
+    "source_file_hash_matches": true,
+    "concept_inventory_file_hash_matches": true,
+    "inventory_count": 220,
+    "inventory_level_count": 11,
+    "inventory_per_level": 20,
+    "representative_concepts_match_inventory": true,
+    "unique_item_count": 12,
+    "independent_answer_distribution": [3, 3, 3, 3],
+    "independent_answers_match_authored": true,
+    "reused_intake_hash_matches": true,
+    "reused_records_unchanged": 5,
+    "owned_seed_blob_hash_matches_immutable_git_source": true,
+    "source_boundary": "동일 날짜 v2 사전 record 5개의 원래 취득 시각과 hash를 유지한 재사용 및 immutable Git source 3485c6ef8addda3cd3e209730646c296175cf3c9의 자체 저작 TOPIK 언어형 메타데이터를 확인했다. 신규 HTTP 수집, 전체 440문항 출처 완성 또는 공개 승인으로 해석하지 않는다.",
+    "screen_boundary": "동결 JSON의 화면·저작 계약만 검토했다. 학습 대상 언어의 stem/choices 유지와 ko/ja/en 조작 안내·응답 후 해설을 구분한다. 실제 화면 렌더링, 해설 노출 시점, 브라우저 음성, 저장 및 배포는 검증하지 않았다."
+  },
+  "items": [
+    {
+      "id": "lp2-rep-n3-confirmation-a",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "이름과 날짜의 정확성을 다시 살피므로 確認만 맞다. 延期·招待·返品은 해당 행동이 아니다. N3 어휘와 예약 상황이 연결되고 ko/ja/en 안내·해설이 일치한다. 배송 대조 상황인 대체 문항과 실제 맥락이 다르다."
+    },
+    {
+      "id": "lp2-rep-n3-confirmation-b",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "주문과 포장 상품의 일치 여부를 조사하는 確認이 유일하다. 交換·転送·登録은 대조 행위가 아니다. N3의 확인 개념을 물류 상황으로 전이하며 예약표 점검과 구별된다. 세 언어 해설에 의미 모순이 없다."
+    },
+    {
+      "id": "lp2-rep-n3-habit-a",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "의식적으로 유지하는 현재 습관을 요구하므로 ようにしています가 맞다. 과거 계획·불가능·유일한 선택이라는 나머지 선택지는 지시된 의미와 다르다. N3 ようにする에 직접 연결되고 건강 습관과 정보 보호라는 두 상황이 구별된다. 안내와 해설 번역이 일치한다."
+    },
+    {
+      "id": "lp2-rep-n3-habit-b",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "저장하지 않도록 평소 주의하는 노력은 保存しないようにしています이다. 과거에 그러한 경우가 있었음·과거 의도·강한 부정은 지시된 지속적 노력과 다르다. 긍정형 건강 습관과 달리 부정형 정보 보호를 적용하며 정답과 세 언어 해설이 일치한다."
+    },
+    {
+      "id": "lp2-rep-topik-3-vocab-b1-v1",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "예약을 유지하면서 날짜를 바꾸는 변경이 유일하다. 취소·확인·결제는 실제 상황과 다르며 관련 있는 서비스 어휘로 오답을 구성했다. 3급 예약과 변경 개념에 직접 연결되고 제출 방법 변경과 상황이 다르다. 일본어·영어 해설도 정확하다."
+    },
+    {
+      "id": "lp2-rep-topik-3-vocab-b1-v2",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "질문은 서류를 받는 행위가 아니라 제출 방법의 바뀜을 명시하므로 변경만 맞다. 접수·연장·발급과 구별되며 예약 날짜 변경에서 신청 절차 변경으로 개념을 전이한다. 3급 업무 맥락과 ko/ja/en 안내·해설이 타당하다."
+    },
+    {
+      "id": "lp2-rep-topik-3-grammar-b1-v1",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "택배를 받아야 하는 것이 기다리는 이유이므로 하기 때문에가 맞다. 고 나서·면서·거나는 요구한 인과 관계를 나타내지 않는다. 3급 이유 표현에 연결되며 생활 속 의무와 보고서 오류라는 두 상황이 다르다. 세 언어 해설도 인과 관계를 동일하게 설명한다."
+    },
+    {
+      "id": "lp2-rep-topik-3-grammar-b1-v2",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "오류가 보고서 재작성의 이유이므로 있기 때문에가 유일하다. 선택·양보·목적 또는 정도를 나타내는 나머지 표현은 명시된 이유 관계에 맞지 않는다. 3급 기 때문에와 연결되고 택배 수령 상황과 다르며 해설·번역이 일치한다."
+    },
+    {
+      "id": "lp2-rep-topik-4-vocab-b1-v1",
+      "status": "approved",
+      "answer_index": 3,
+      "explanation_consistent": true,
+      "reason": "전입 신고와 주민등록등본 발급을 맡는 곳으로 주어진 선택지 중 민원실이 유일하다. 보건실·자료실·상담실은 해당 행정 처리 목적과 다르다. 4급 공공 서비스 개념과 행정 어휘를 활용하며 소음 민원 접수와 구별된다. ko/ja/en 설명이 일치한다."
+    },
+    {
+      "id": "lp2-rep-topik-4-vocab-b1-v2",
+      "status": "approved",
+      "answer_index": 2,
+      "explanation_consistent": true,
+      "reason": "민원 접수와 절차 안내를 위한 민원실이 선택지 중 유일하게 목적에 맞는다. 회의실·휴게실·전산실의 용도는 다르다. 4급 공공 서비스 개념을 증명서 발급이 아닌 불편 사항 접수에 적용하며 세 언어 해설이 정확하다."
+    },
+    {
+      "id": "lp2-rep-topik-4-grammar-b1-v1",
+      "status": "approved",
+      "answer_index": 1,
+      "explanation_consistent": true,
+      "reason": "갑작스러운 길 막힘으로 구급차가 늦은 부정적 인과 관계에는 막는 바람에가 맞다. 도록·더라도·는 대신에는 각각 목적·양보·대체 관계라 지시된 뜻과 다르다. 4급 표현에 직접 연결되고 교통 장애와 발표 장비 고장이 구별된다. 해설과 번역이 일치한다."
+    },
+    {
+      "id": "lp2-rep-topik-4-grammar-b1-v2",
+      "status": "approved",
+      "answer_index": 0,
+      "explanation_consistent": true,
+      "reason": "발표 직전 노트북이 꺼져 영상을 보여 주지 못한 결과에는 꺼지는 바람에가 적절하다. 대조·목적을 나타내는 나머지 선택지는 예상 밖 원인과 불리한 결과라는 지시 조건을 충족하지 않는다. 4급 개념과 연결되고 교통 상황과 실제 맥락이 다르다. 세 언어 해설이 정답과 일치한다."
+    }
+  ],
+  "concept_findings": [
+    {
+      "concept_key": "lp2-jlpt-n3-vocab-1",
+      "field": "cue.ko",
+      "status": "rejected",
+      "reason": "한국어 학습 안내에 '확인를 두 가지 다른 상황에서 구별하고 회상합니다.'라는 조사 오류가 있다. 받침이 있는 '확인' 뒤에는 '을'을 써야 하므로 정확한 교육 안내 계약을 충족하지 못한다.",
+      "suggested_change": "새 버전의 cue.ko를 '확인을 두 가지 다른 상황에서 구별하고 회상합니다.'로 교정한다. 기존 동결 입력과 이번 불합격 리뷰는 보존한다."
+    },
+    {
+      "concept_key": "lp2-jlpt-n3-grammar-4",
+      "field": "cue.ko",
+      "status": "rejected",
+      "reason": "한국어 학습 안내에 '의식적인 노력·습관를 두 가지 다른 상황에서 구별하고 회상합니다.'라는 조사 오류가 있다. 마지막 명사 '습관'에 받침이 있으므로 '습관을'이 맞다.",
+      "suggested_change": "새 버전의 cue.ko를 '의식적인 노력·습관을 두 가지 다른 상황에서 구별하고 회상합니다.'로 교정한다. 기존 동결 입력과 이번 불합격 리뷰는 보존한다."
+    }
+  ],
+  "screen_contract_findings": []
+}
