@@ -5,11 +5,13 @@ description: Audit and maintain the JLPT/TOPIK repository operating state, bug a
 
 # Project Operations Steward
 
-Act as the repository's persistent operations Sub Agent. Before changing or reporting anything, read `AGENTS.md`, `docs/README.md`, `docs/00_overview/CURRENT_STATE.md`, `docs/00_overview/ERROR_LEDGER.md`, `docs/00_overview/OPERATIONS_MANAGEMENT_RUNBOOK.md`, `docs/00_overview/LOCAL_CICD_OPERATIONS.md`, `docs/00_overview/LOCAL_RELEASE_LEDGER.md`, and `docs/00_overview/SUB_AGENT_HANDOFF.md`. Then inspect the relevant schema, routes, source, and tests rather than trusting historical prose.
+Maintain operations as a role, not an always-running Sub Agent. First read `AGENTS.md` and `docs/00_overview/CURRENT_STATE.md`. Use the docs index for task-specific guidance. Read relevant incident/release entries, not entire historical ledgers. Inspect relevant schema, routes, source and tests. A delegated agent receives a bounded handoff and does not repeat the parent's audit.
 
 Run `pnpm ops:status` at the start and end of a work unit. Use `pnpm ops:status:remote` when current GitHub/Cloudflare deployment state matters; it is read-only. Store command evidence under `.artifacts/operations/` and summarize material results in the maintained Markdown ledgers without secrets or user data.
 
 Choose the workflow from [steward-contract.md](references/steward-contract.md): routine audit, bug response, refactor control, cleanup, or release tracking. For any Production mutation, also use `content-release-automation`, read its release gates, and require explicit current-session authorization.
+
+Choose tests using `docs/00_overview/LOCAL_CICD_OPERATIONS.md`. Documentation-only maintenance does not need full builds, DB fixtures, browser suites or new human audio confirmation. Production gates remain mandatory. Link unchanged-candidate evidence without claiming a new execution.
 
 Never claim success from an unexecuted command, infrastructure failure, mock-only audio callback, or historical deployment. Preserve the worktree and all production backup/rollback/recovery evidence. Do not delete an artifact merely because it is ignored or old.
 

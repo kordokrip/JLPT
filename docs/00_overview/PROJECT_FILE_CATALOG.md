@@ -2,11 +2,11 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **976개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **992개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
-| Agent 운영 지침 | 16 |
+| Agent 운영 지침 | 21 |
 | API route | 42 |
 | API 공통 서비스 | 22 |
 | DB migration 및 snapshot | 42 |
@@ -17,24 +17,29 @@
 | UI 컴포넌트 | 25 |
 | Worker 진입점 및 설정 | 21 |
 | 공통 API 및 학습 계약 | 21 |
-| 로컬 운영 스크립트 및 테스트 | 31 |
+| 로컬 운영 스크립트 및 테스트 | 34 |
 | 루트 실행 및 정책 | 22 |
 | 문서 이력 | 1 |
 | 문서 진입점 | 3 |
 | 브라우저 시각 기준 | 60 |
-| 브라우저 테스트 및 설정 | 36 |
+| 브라우저 테스트 및 설정 | 37 |
 | 브랜드 및 PWA 자산 | 18 |
-| 앱 회귀 테스트 | 79 |
-| 운영 문서 | 28 |
+| 앱 회귀 테스트 | 80 |
+| 운영 문서 | 31 |
 | 웹 공통 상태·계약·음성 | 50 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
-| 학습 기능 | 66 |
+| 학습 기능 | 69 |
 | 학습 콘텐츠 원본 | 34 |
 | 학습 화면 | 31 |
 
 ## Agent 운영 지침
 
+- [.codex/agents/astra_review.toml](../../.codex/agents/astra_review.toml)
+- [.codex/agents/luna_mechanical.toml](../../.codex/agents/luna_mechanical.toml)
+- [.codex/agents/sol_longform.toml](../../.codex/agents/sol_longform.toml)
+- [.codex/agents/terra_execution.toml](../../.codex/agents/terra_execution.toml)
+- [.codex/config.toml](../../.codex/config.toml)
 - [.codex/skills/content-release-automation/SKILL.md](../../.codex/skills/content-release-automation/SKILL.md)
 - [.codex/skills/content-release-automation/agents/openai.yaml](../../.codex/skills/content-release-automation/agents/openai.yaml)
 - [.codex/skills/content-release-automation/references/release-gates.md](../../.codex/skills/content-release-automation/references/release-gates.md)
@@ -499,6 +504,7 @@
 - [scripts/__tests__/browser-audio-contract.test.mjs](../../scripts/__tests__/browser-audio-contract.test.mjs)
 - [scripts/__tests__/observability-core.test.mjs](../../scripts/__tests__/observability-core.test.mjs)
 - [scripts/__tests__/project-ops-status.test.mjs](../../scripts/__tests__/project-ops-status.test.mjs)
+- [scripts/__tests__/qa-accounts.test.mjs](../../scripts/__tests__/qa-accounts.test.mjs)
 - [scripts/__tests__/release-evidence.test.mjs](../../scripts/__tests__/release-evidence.test.mjs)
 - [scripts/__tests__/worker-release-deploy.test.mjs](../../scripts/__tests__/worker-release-deploy.test.mjs)
 - [scripts/capture-learning-cohort-deployment-metadata.mjs](../../scripts/capture-learning-cohort-deployment-metadata.mjs)
@@ -512,10 +518,12 @@
 - [scripts/gen-vapid.mjs](../../scripts/gen-vapid.mjs)
 - [scripts/generate-file-catalog.mjs](../../scripts/generate-file-catalog.mjs)
 - [scripts/lib/cloudflare-response.mjs](../../scripts/lib/cloudflare-response.mjs)
+- [scripts/lib/qa-target-policy.mjs](../../scripts/lib/qa-target-policy.mjs)
 - [scripts/lib/release-evidence.mjs](../../scripts/lib/release-evidence.mjs)
 - [scripts/post-deploy-observe.mjs](../../scripts/post-deploy-observe.mjs)
 - [scripts/project-ops-status.mjs](../../scripts/project-ops-status.mjs)
 - [scripts/purge-r2-pronunciation.mjs](../../scripts/purge-r2-pronunciation.mjs)
+- [scripts/qa-accounts.mjs](../../scripts/qa-accounts.mjs)
 - [scripts/r1-preview-smoke.mjs](../../scripts/r1-preview-smoke.mjs)
 - [scripts/run-learning-cohort-local-gates.mjs](../../scripts/run-learning-cohort-local-gates.mjs)
 - [scripts/run-learning-v7-local-gates.mjs](../../scripts/run-learning-v7-local-gates.mjs)
@@ -632,6 +640,7 @@
 - [e2e/auth-helper.ts](../../e2e/auth-helper.ts)
 - [e2e/auth.spec.ts](../../e2e/auth.spec.ts)
 - [e2e/character-trainer.spec.ts](../../e2e/character-trainer.spec.ts)
+- [e2e/detail-responsive.spec.ts](../../e2e/detail-responsive.spec.ts)
 - [e2e/home.spec.ts](../../e2e/home.spec.ts)
 - [e2e/learning-activity.spec.ts](../../e2e/learning-activity.spec.ts)
 - [e2e/learning-experience.spec.ts](../../e2e/learning-experience.spec.ts)
@@ -711,6 +720,7 @@
 - [apps/web/src/components/layout/BottomTabBar.test.tsx](../../apps/web/src/components/layout/BottomTabBar.test.tsx)
 - [apps/web/src/components/layout/learner-layout.test.ts](../../apps/web/src/components/layout/learner-layout.test.ts)
 - [apps/web/src/features/browse/types.test.ts](../../apps/web/src/features/browse/types.test.ts)
+- [apps/web/src/features/character-trainer/CharacterLesson.test.tsx](../../apps/web/src/features/character-trainer/CharacterLesson.test.tsx)
 - [apps/web/src/features/learning/LearnerLessonLibrary.test.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.test.tsx)
 - [apps/web/src/features/learning/LearningMap.helpers.test.ts](../../apps/web/src/features/learning/LearningMap.helpers.test.ts)
 - [apps/web/src/features/learning/LearningMap.test.tsx](../../apps/web/src/features/learning/LearningMap.test.tsx)
@@ -778,6 +788,7 @@
 - [docs/00_overview/CONTENT_SOURCE_REGISTRY.md](../../docs/00_overview/CONTENT_SOURCE_REGISTRY.md)
 - [docs/00_overview/CURRENT_STATE.md](../../docs/00_overview/CURRENT_STATE.md)
 - [docs/00_overview/CURRICULUM_BLUEPRINT.md](../../docs/00_overview/CURRICULUM_BLUEPRINT.md)
+- [docs/00_overview/DETAIL_UI_AUDIT_2026-10-25.md](../../docs/00_overview/DETAIL_UI_AUDIT_2026-10-25.md)
 - [docs/00_overview/ERROR_LEDGER.md](../../docs/00_overview/ERROR_LEDGER.md)
 - [docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md](../../docs/00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md)
 - [docs/00_overview/LEARNING_EXPERIENCE_PLAN.md](../../docs/00_overview/LEARNING_EXPERIENCE_PLAN.md)
@@ -791,9 +802,11 @@
 - [docs/00_overview/PERSONAL_LEARNING_UX_2026-09-25.md](../../docs/00_overview/PERSONAL_LEARNING_UX_2026-09-25.md)
 - [docs/00_overview/PROJECT_FILE_CATALOG.md](../../docs/00_overview/PROJECT_FILE_CATALOG.md)
 - [docs/00_overview/PROJECT_INVENTORY.md](../../docs/00_overview/PROJECT_INVENTORY.md)
+- [docs/00_overview/QA_ACCOUNT_OPERATIONS.md](../../docs/00_overview/QA_ACCOUNT_OPERATIONS.md)
 - [docs/00_overview/QUESTION_BANK_QUALITY_PIPELINE.md](../../docs/00_overview/QUESTION_BANK_QUALITY_PIPELINE.md)
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-08-30.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-08-30.md)
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md)
+- [docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-14.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-14.md)
 - [docs/00_overview/SUB_AGENT_HANDOFF.md](../../docs/00_overview/SUB_AGENT_HANDOFF.md)
 - [docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](../../docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)
 - [docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md](../../docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md)
@@ -954,8 +967,11 @@
 - [apps/web/src/features/browse/BrowseView.tsx](../../apps/web/src/features/browse/BrowseView.tsx)
 - [apps/web/src/features/browse/types.ts](../../apps/web/src/features/browse/types.ts)
 - [apps/web/src/features/browse/useBrowse.ts](../../apps/web/src/features/browse/useBrowse.ts)
+- [apps/web/src/features/character-trainer/CharacterLesson.tsx](../../apps/web/src/features/character-trainer/CharacterLesson.tsx)
 - [apps/web/src/features/character-trainer/CharacterTrainerView.tsx](../../apps/web/src/features/character-trainer/CharacterTrainerView.tsx)
 - [apps/web/src/features/character-trainer/DrawingPracticePad.tsx](../../apps/web/src/features/character-trainer/DrawingPracticePad.tsx)
+- [apps/web/src/features/character-trainer/character-copy.ts](../../apps/web/src/features/character-trainer/character-copy.ts)
+- [apps/web/src/features/character-trainer/character-trainer.css](../../apps/web/src/features/character-trainer/character-trainer.css)
 - [apps/web/src/features/character-trainer/data.ts](../../apps/web/src/features/character-trainer/data.ts)
 - [apps/web/src/features/character-trainer/logic.ts](../../apps/web/src/features/character-trainer/logic.ts)
 - [apps/web/src/features/character-trainer/types.ts](../../apps/web/src/features/character-trainer/types.ts)

@@ -1,6 +1,6 @@
 # 세부 학습 UI·문자 연습 개선 — 2026-10-25
 
-상태: **로컬 구현·검증, 운영 미배포**. 기존 문서/모델 설정 변경은 보존했다. Worker·DB·콘텐츠·음성 코어·FSRS·XP는 변경하지 않았다.
+상태: **`6ecc203` 검증·Git push 후 Production Pages `92c6e58b` 배포 및 사후 gate 완료**. 기존 문서/모델 설정 변경은 보존했다. Worker·DB·콘텐츠·음성 코어·FSRS·XP는 변경하지 않았다.
 
 ## 문제와 변경
 
@@ -58,4 +58,24 @@
 
 ## 출시 경계
 
-로컬 격리 D1/합성 계정 기반이다. 운영 회원·학습 자료는 수정하지 않았다. 실제 기기 음성 청취, iPhone 무음 모드, 최신 Preview, 운영 배포·push는 이번 결과에 포함하지 않는다. 운영 반영은 현재 사용자 승인과 기존 릴리스 게이트를 별도로 충족해야 한다.
+### 2026-10-25 배포 후보 재검증
+
+- clean 후보 `6ecc203ddce31fe373ed17527dafad25f615463e`에서 `verify:ci` 통과: 단위858건·OpenAPI·typecheck·build·fresh0033·콘텐츠/음성 계약. 전체 브라우저는 **303통과·30정책 제외·실패0·flaky0**다. 기존 테스트를 단순 합산한 결과가 아니다.
+- [현재 Preview](https://c5bc718c.nihongo-n3.pages.dev)의 배포85파일 HTTP 바이트와 Functions/API 연결을 확인했다. 고정 JLPT/TOPIK 두 계정×Chromium/WebKit의 문자 회상·저장, 390/768/1440px×양테마, 주요 경로·재개 모달 재등장 방지가 통과했다. 일부 로컬 검사의 fixture와 실제 Preview API 검사를 구분한다.
+- 실제 활성 Chrome에서 일본어·한국어 재생 중→정상 종료 각각1회, DevTools Network 기록 중 요청0건을 확인했다. 사용자가 **이번 Preview에서 두 언어 모두 들림**을 별도로 확인했다. onend로 가청 확인을 대체하지 않았으며 iPhone 무음 모드 해결을 검증한 결과도 아니다.
+- 사용자 승인 후 운영 쓰기 동결·queue 중지·0033/77표 백업·로컬 복원·FK 검사·동일성 검사를 완료했다. 점검 종료 후 기존 Worker `69cffaa1`과 queue를 복원했다. 콘텐츠 쓰기·migration은0이다.
+- 첫 점검 시도는 비활성 Worker 복제본의 ETag 차이를 감지해 실패로 보존했다. 실제 모듈 바이트·진입점·MIME·크기·SHA-256 및 설정 동일성을 독립 검토한 뒤 별도 nonce로 다시 수행했다. 첫 실패 artifact는 수정하지 않았다.
+- 운영 canonical은 고정 content source 기준392/392 통과. 후보 코드만 원격 `feature/topik-product-expansion`에 push했고, 기존 미커밋 문서·모델 설정은 포함하지 않았다.
+- 점검 복원·push 후 현재 원격 상태는51통과/2기존 경고/실패0이다. 최초 원격 검사에서 CLI 환경에 Cloudflare 인증이 전달되지 않아 발생한7403과 pnpm PATH 오류는 실패 로그로 보존했다. 기존 `.env.local` 인증·pnpm 실행 환경을 전달한 별도 실행이 통과했으며 자격 증명을 변경하지 않았다. 문서 catalog·링크·lifecycle 검사도 통과했다.
+- 증적은 `.artifacts/operations/detail-ui-2026-10-25/`의 `release-local-gates.log`, `release-e2e.json`, `preview-qa-result.json`, `native-audio-observation.json`, `production-0033-backup-detail-ui-20261025-02/result.json`에 보존한다.
+
+### Production 결과
+
+- 최종 predeploy 통과 후 clean worktree의 `apps/web`에서 Functions 포함 배포했다. Production branch `main`, Pages **`92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`**, web source **`6ecc203ddce31fe373ed17527dafad25f615463e`**, 사용자 주소 https://nihongo-n3.pages.dev.
+- 사후188 HTTP/SPA/호스트 격리 검사, canonical392/392, Worker smoke7/7, 인증proxy3개, postdeploy gate 통과. 원격 상태51통과/2기존 경고/실패0은 문서 후속 커밋 전 조회다. 기존 Worker `69cffaa1` 100%·health200·maintenance off를 재조회했다.
+- 최초 HTTP 검사는 고유 배포 URL에도 운영 OAuth 연결을 기대해1건 실패했다. 기존 proxy는 canonical 외 미설정 호스트의 API를503으로 차단한다. 소스와 실제 canonical200/고유URL503을 대조한 뒤 별도 검사에서 **격리503과 canonical 인증200을 각각 강제**했다. 원래 실패 report는 보존하고 앱 코드는 수정하지 않았다. 사용자는 고유 URL 대신 canonical을 사용한다.
+- 최초 사후 canonical 실행은 보고서392개는 통과했으나 쉘 로그 경로가 도구의 exclusive log 출력과 충돌해 exit1이었다. 이 실패를 남기고 분리한 operator 경로·새 post-final report로 read-only verifier를 재실행해 exit0을 확인했다.
+- 현재 Preview의 사용자 가청을 운영에서 새로 청취한 증거로 표현하지 않는다. 실제 기기 푸시/가족 관찰 유예와 iPhone 무음 모드 미검증은 유지한다.
+- 최종 증거: `production-deployment.json`, `production-runtime.json`, `post-http-final.json`, `canonical-post-final.json`, `worker-smoke-post.json`, `auth-proxy-post.json`, `postdeploy-result.json`. 모두 위 private artifact 폴더에 보존한다.
+
+UI 복귀 대상은 `1d102c82-5348-4e67-980f-db2d1d9ee558`이며 정상 학습 기록을 되돌리지 않는다. 운영 회원·학습 자료는 수정하지 않았다. 후속 문서/운영 설정 커밋은 배포 runtime SHA와 구분한다.

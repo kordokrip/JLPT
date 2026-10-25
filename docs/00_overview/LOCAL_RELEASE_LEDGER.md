@@ -1,5 +1,28 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-25 — 문자·세부 UI Production 배포 완료
+
+후보 `6ecc203ddce31fe373ed17527dafad25f615463e`를 작업 branch에 push하고 **Pages `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`**에 출시했다. canonical https://nihongo-n3.pages.dev, Production branch `main`. 로컬·Preview·사용자 양언어 가청·77표 백업/복원·점검 복귀와 최종 predeploy를 통과했다. 사후188 HTTP/호스트 격리·인증proxy3·canonical392·Worker smoke7 통과. Worker `69cffaa1`, schema0033, 콘텐츠·학습 기록은 유지했다. UI 복귀는 이전 Pages `1d102c82`; DB 복원은 하지 않는다. 검사 실패/수정과 실제 청취 범위는 [출시 감사](DETAIL_UI_AUDIT_2026-10-25.md), 정리는 [유지보수 후속](REPOSITORY_MAINTENANCE_2026-10-14.md)에 보존한다.
+
+## 2026-10-14 — 재개 안내 모달 Pages 운영 배포 완료
+
+- 후보 `d69456315812c807650e6a18ff797c5255e00e40`; Production `1d102c82-5348-4e67-980f-db2d1d9ee558`, https://nihongo-n3.pages.dev. 작업 branch `feature/topik-product-expansion`에 후보 push 완료, Pages Production branch `main`에 직접 배포했다. Worker/D1/콘텐츠는 유지했다.
+- 단위854·OpenAPI/typecheck/build/fresh0033 통과. 브라우저 최초233통과/58실패/30정책 제외 후 원인별 수정·표준 포트에서 실패58/58 통과. 합산291이며 단일 전체 green 실행이 아니다. 최종 변경은 테스트 selector와 검토한 시각 기준선4개뿐이고 runtime 바이트 불변을 확인했다.
+- 최종 Preview `2d1c6092`는 고정 QA2계정×Chromium/WebKit29항목·85파일 HTTP 동일성·실제 활성 Chrome ko/ja 종료1회씩·Network0과 사용자 양언어 가청 확인을 통과했다. 첫 잘못된 Functions 미포함 Preview와 실패 harness 증적은 보존한다.
+- 기존 동일 세션0033/77표 backup/restore 해시 재검증과 현 source 고정 canonical392/392·rollback/predeploy 후 Pages-only 반영. 백업은 승인된 테스트 계정 삭제와 후속 학습 이전이므로 UI 복귀에 절대 D1을 복원하지 않는다. Pages 복귀 대상 `4d0589d0-ab54-4cb9-b3e1-00babc54c140`.
+- 사후 운영/고유 URL HTTP178/178, 인증proxy3, canonical392/392, Worker 버전/설정 동일 확인. 운영 추가 가청 검사는 사용자 브라우저 전환으로 중단했으며 새 운영 청취를 완료했다고 주장하지 않는다. 증적 `.artifacts/operations/resume-modal-release-2026-10-14/`.
+- QA 실패 로그에 포함된 테스트 세션 쿠키를 마스킹하고 Preview 고정계정 잔여 세션14개 revoke·활성0 확인. 실패 상태는 유지했다. `INC-QA-125` 참고.
+
+## 2026-10-14 — 운영 QA 회원 정리(런타임 배포 없음)
+
+- 현재 사용자 승인: 점검 후 확인된 synthetic 36명 삭제, 실사용자 2명 보존.
+- 새 0033/77표 backup/restore·FK0 후 정확 inventory 단일 DELETE. OAuth 보충 포함 79표를 로컬 삭제 예상 결과와 대조해 통과.
+- 사후 회원 2/테스트 도메인 0. 로그인 감사 행 보존. 기존 Worker69cffaa1·Pages4d0589d0로 점검 복귀, queue 복원, health off·인증 proxy3 확인.
+- 복구 증적: `.artifacts/operations/qa-account-cleanup-2026-10-14/production-0033-backup-qa-cleanup-20261014-01/`. 이후 학습을 덮는 전체 복원은 금지하고 복구 대상/유실 범위를 먼저 확인한다.
+- 지도 모달·재사용 QA 도구 변경은 로컬이며 이 운영 DB 정리가 새 UI 배포나 Git push를 뜻하지 않는다. [상세](QA_ACCOUNT_OPERATIONS.md).
+
+안내(2026-10-14): 아래는 당시 실행/실패를 보존한 역사적 원장이다. 현재 배포 기준은 [CURRENT_STATE](CURRENT_STATE.md)에서 확인하고 필요한 날짜/SHA만 검색한다. 문서·에이전트 정리는 [유지보수 기록](REPOSITORY_MAINTENANCE_2026-10-14.md)에 있으며 새 배포·push가 아니다.
+
 ## 2026-10-14 최종 UI 페이스리프트 — Production 배포 완료
 
 Production은 `4d0589d0-ab54-4cb9-b3e1-00babc54c140`이며 앱 source는 `0b9e3544f42383def2ddad5cf1c2ebc9013fe2a7`이다. canonical은 https://nihongo-n3.pages.dev 이고 Production branch는 `main`이다. Worker `69cffaa1-996d-42a7-9080-13c526203e86` / source `78ee09a5ddec3254454fe14f174c03e5051f90d0`, D1 `0000–0033` 77표·콘텐츠·FSRS·XP·음성 코어는 유지했다. 점검 off·queues 원복·학습 저장 활성 상태다. 아래 검증 중/미배포 문장은 당시 보존 이력이다.

@@ -1,12 +1,10 @@
 # 학습 원본·데이터 흐름 지도
 
-## 최신 출판 연결 — 2026-10-13
+## 현재 연결 — 2026-10-14
 
-운영0032에 V7 440문항/220레슨과 별도v3 160문항을 공개했다. 정확한 동결/source/review hash → G0–G4 → `learning-cohort-remote.ts`의5개 release 단일 공개 → D1 공개 카탈로그/버전 고정 세션 → 네 메뉴 학습 UI로 연결한다. canonical source3485/manifestd102와 신규 cohort는 별도로 검증하며 원문/불합격 리뷰를 재시드하지 않는다. 실제 현재 source37486f8·Pages6b8b8a19·600품질 링크와 학습 기록 보존 근거는 [최종 릴리스 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)에 있다. 아래10월12일 후보/미공개 설명은 보존된 당시 상태다.
+V7 440문항/220레슨 + 별도 v3 160문항은 공개 완료다. 동결/source/review hash → G0–G4 → learning-cohort-remote.ts의5개 release 원자적 공개 → D1 공개 카탈로그/버전 고정 세션 → 네 메뉴 UI로 연결한다. 원본/불합격 리뷰는 유지한다. 현재 runtime/schema는 [CURRENT_STATE](CURRENT_STATE.md), 수량은 [감사](CONTENT_AUDIT.md), 증거는 [출판 기록](LEARNING_COHORT_RELEASE_2026-10-13.md)에 둔다.
 
-2026-10-12 후보는 V7 두 release의 question/unit/audio/lesson/cue/ref exact JSON seal과 Preview160 v3 immutable source/review를 사용한다. 기존 source facts/provenance를 보존하며 새 license 연구나 Preview 공개를 뜻하지 않는다.
-
-문서 갱신: 2026-10-12 KST. 원본, builder, Production/Preview release와 학습 저장 경로를 연결합니다. 수치는 [콘텐츠 감사](CONTENT_AUDIT.md), 운영 상태는 [현재 상태](CURRENT_STATE.md)를 봅니다. 운영 migration은0000–0030이며 콘텐츠 source3485/manifestd102는 유지합니다.
+아래 날짜별 source 표는 원본 계보이며 구 Preview의 상태를 현재 v3 공개 상태로 혼동하지 않는다.
 
 ## Production source map
 
@@ -38,7 +36,7 @@ TOPIK practice v2는 “공개 후보”가 아니라 2026-08-17 production 공�
 
 세 release는 `0026` release-quality link와 G0–G4 evidence를 거쳐 production에 반영됐습니다. source release SHA는 `3485c6ef8addda3cd3e209730646c296175cf3c9`입니다. 이후 release도 같은 승인 경로를 사용합니다.
 
-## 2026-08-23 Preview source map
+## 과거 계보 — 2026-08-23 Preview source map
 
 | release                            | 자체 저작 원본                                             | builder/review                                    | 상태                                |
 | ---------------------------------- | ---------------------------------------------------------- | ------------------------------------------------- | ----------------------------------- |
@@ -65,7 +63,7 @@ TOPIK practice v2는 “공개 후보”가 아니라 2026-08-17 production 공�
 
 `Today/StudySession → /learning/profile·/study/sessions → study_sessions/study_steps → learning-effects의 완료·FSRS·activity batch → study_reward_events → /learning/records·/learning/motivation`으로 연결합니다. 0028은 학습/메모/연결, 0029는 quick/daily·보상, 0030은 알림 언어·발송 claim을 추가했습니다. `push-reminders.ts → subscription 언어·프로필 시간대 → push_notification_deliveries → sw.ts`가 알림 경로입니다.
 
-새 보상은 안내 세션의 서버 수락 결과에만 연결합니다. 기존 자유 quiz·owner·FSRS와 client speech telemetry를 중복 학습 성과로 합산하지 않습니다. 승인된 개념 연결은 별도 `content_learning_links`이며 아직 공개된 연결 행을 생성하지 않았습니다.
+새 보상은 안내 세션의 서버 수락 결과에만 연결합니다. 기존 자유 quiz·owner·FSRS와 client speech telemetry를 중복 학습 성과로 합산하지 않습니다. 승인된 개념 연결은 `content_learning_links`에 있으며 V7 공개 레슨의 버전/검수 증거와 연결됩니다.
 
 ## Speech map
 

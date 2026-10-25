@@ -1,5 +1,31 @@
 # 오류·회귀 차단 원장
 
+## 2026-10-25 — 문자 설명 열 압축
+
+- `INC-UI-126` (운영 반영): 제한된 본문 안에서 viewport breakpoint 기반 고정 열을 중첩해 문자 설명이 한 글자 폭으로 압축됐다. JLPT/Hangul 공통 컨테이너 반응형 구조로 교체했다. 실제 설명 열 최소 폭·4개 화면 폭·양테마·양언어·Chromium/WebKit 및 기존 학습 동작을 검사했다. 확대 묶음44통과 후 최종 후보 전체303통과/30정책 제외, Preview 문자·재개·가청 확인과 배포 gate를 거쳐 Pages `92c6e58b`에 반영했다. [변경·검사 범위·최초 실패 보존](DETAIL_UI_AUDIT_2026-10-25.md).
+
+- `INC-QA-127` (검사 도구 수정): Pages 고유 배포 호스트의 API503 격리를 결함으로 오판한 사후 HTTP 검사와 canonical 도구/쉘의 동일 로그 경로 충돌을 발견했다. canonical 인증200·비canonical 격리503을 각각 검사하고, verifier 결과와 operator 로그를 별도 경로로 재검증했다. 앱 변경 없이188 HTTP·392 canonical이 통과했다. 최초 실패 artifact는 보존한다.
+
+## 2026-10-14 — 재개 모달 배포 검증
+
+- `INC-OPS-123` (해결): 첫 Preview `5d362292`를 저장소 루트에서 업로드해 Pages Functions가 누락되어 API가 HTML/405를 반환했다. `apps/web` cwd에서 Functions 포함 배포 후 최종 `2d1c6092`의 API JSON·실제 계정29항목·85파일 HTTP 동일성을 확인했다. 초기 실패 증적 보존.
+- `INC-QA-124` (해결): 재개 모달 추가 후 기존 전역 버튼 selector가 배경 버튼까지 선택해51건 실패했다. 모달 범위 selector로 수정. 검토한 간격 차이4개 시각 기준선과 비표준 포트3건을 포함한 실패58건 재검사가58/58 통과했다. 최초233통과와 합산291, 정책 제외30. 임의 허용값 확대나 실패 삭제 없음.
+- `INC-QA-125` (격리·무효화 완료): private Preview harness의 raw Playwright 오류에 테스트 세션 쿠키가 포함됐다. 해당 값 마스킹·raw 오류 기록 중지 후 고정 QA2계정의 잔여 인증 세션14개를 revoke하고 활성0을 확인했다. 비밀번호·실사용자·Production 인증/학습 데이터는 변경하지 않았다. 이후 브라우저 context 종료 전 logout을 수행한다. 테스트 준비 중 profile 미구성/잘못된 기본 트랙/중단된 context 오류는 제품 검증 성공으로 계산하지 않았다.
+
+`INC-UI-121` 후속: 아래 로컬 수정은 전체 gate/실제 Preview29항목 검증 후 Production `1d102c82`, source `d694563`에 반영 완료했다. 아래 미배포 문장은 최초 검증 시점 기록이다.
+
+## 2026-10-14 — 지도 안내 겹침·QA 회원 누적
+
+- `INC-UI-121` (로컬 수정·검증, 미배포): 활성 세션 상시 안내와 current-card의 음수 margin이 겹침을 만들었다. 상시 안내를 계정/트랙/세션별 1회 모달로 바꾸고 간격16px, portal 색상, 포커스 복귀, 재개 후 중복 표시/계정 전환을 보완했다. 단위20/20·합성 ko/ja 390/768/1440px·web typecheck/build 통과. 실제 운영 수정 완료로 표현하지 않는다.
+- `INC-AUTH-122` (운영 정리 완료·재발 방지 로컬 적용): 사용자 승인 후 synthetic 36명 삭제, 실사용자 2명 보존, 테스트 도메인 0을 재조회했다. 새 77표 backup/restore·79표 사후 대조·FK0·점검 off·queue 복원 통과. 기본 E2E 원격 가입 차단과 Preview 고정 일반 계정 2개/Keychain을 추가했다. QA 도구 8/8·실제 재로그인 2/2, 삭제 SQL 15/15. 독립 검토의 트랙 재확인·JSON 오류 본문 제거·단일 SQL 동일성·불확실 삭제 후 점검 유지 지적을 반영했다. [절차/복구 위치](QA_ACCOUNT_OPERATIONS.md).
+
+## 2026-10-14 유지보수 — 도구 설정과 문서 비용
+
+- `INC-OPS-119` (open, 로컬 도구): codex-cli0.147.0의 `codex features list`가 전역 model_catalog_json의 `supports_parallel_tool_calls` 필드 누락으로 exit1. 프로젝트 TOML 문법 통과와 실제 CLI/모델 활성화는 별개다. 타 프로젝트에 영향을 주는 전역 모델/provider/catalog는 이번 저장소 정리에서 변경하지 않았다. 앱 런타임 장애는 아니다.
+- `INC-DOC-120` (문서 수정·검증 완료): 모든 작업에서7개 운영 문서 전체 읽기와 중복 현황/오래된0030 차단 안내가 반복됐다. 시작 문서를 AGENTS+CURRENT_STATE로 제한하고 위험별 gate·역할별 모델/위임 상한을 도입했다. 독립 검토에서 활성 flag·Preview 격리·명시 승인 조건 축약3건을 찾아 복구했다. 최종 증거는 [정리 기록](REPOSITORY_MAINTENANCE_2026-10-14.md).
+
+이 원장은 과거 실패를 보존한다. 현재 운영 요약은 [CURRENT_STATE](CURRENT_STATE.md), 세부 오류는 해당 ID로 검색하며 전체 원장을 매번 읽지 않는다.
+
 ## 2026-10-14 UI 최종 배포 후 판정
 
 배포 후 첫 운영 상태 검사45통과/2경고/6실패는 루트 README와 코드 분석 문서의 Pages URL·ID·web SHA 갱신 누락이었다. 실제 런타임 사후 검사는 통과했으며 두 문서 기준을 새 배포로 동기화했다. 최초 실패 결과는 보존하고 수정 후 상태 검사를 별도로 수행한다.

@@ -1,6 +1,8 @@
 # 프로젝트 폴더와 파일 관리
 
-갱신: 2026-10-10 KST. 전체 경로는 [자동 파일 지도](PROJECT_FILE_CATALOG.md), 구현은 [코드 분석](../../PROJECT_CODEBASE_ANALYSIS.md), 운영 배포는 [현재 상태](CURRENT_STATE.md)를 기준으로 한다.
+갱신: 2026-10-25 KST. 전체 경로는 [자동 파일 지도](PROJECT_FILE_CATALOG.md), 구현은 [코드 분석](../../PROJECT_CODEBASE_ANALYSIS.md), 운영 배포는 [현재 상태](CURRENT_STATE.md)를 기준으로 한다. 현재 지침과 과거 증거를 구분하며 폴더 이동 자체를 개선 성과로 삼지 않는다.
+
+사용자 탐색은 루트 README → docs/README → 목적별 문서 순서다. 비어 있던 `_design`, `guidelines`와 작업 폴더의 재생성 산출물은 정리했으며, 설계 원본은 `.superdesign`, 실제 앱 자산은 `apps/web/public`, 검증 증거는 `.artifacts/operations`에 그대로 보존한다. 정확한 이동·복구 위치는 [유지보수 기록](REPOSITORY_MAINTENANCE_2026-10-14.md)을 따른다.
 
 | 폴더 | 들어 있는 내용 | 정리 기준 |
 | --- | --- | --- |
@@ -15,7 +17,7 @@
 | `apps/api/src/jobs`, `workflows` | FSRS 최적화·관찰 알림·콘텐츠 릴리스 | Worker entrypoint와 Wrangler binding 확인 |
 | `packages/shared` | Zod DTO, FSRS, 트랙·활동·학습·음성 계약 | Web/API 공통 계약 |
 | `packages/db/src/schema.ts` | Drizzle 데이터 모델 | SQL migration과 실제 DB가 우선 |
-| `packages/db/drizzle-v2` | `0000–0030` migration 31개와 snapshot 8개 | 기존 DB 재현·복원에 필요하므로 전체 보존 |
+| `packages/db/drizzle-v2` | `0000–0033` migration과 snapshot | 기존 DB 재현·복원에 필요하므로 전체 보존 |
 | `packages/db/src/seed`, `content` | deterministic parser/builder, 자체 저작·출처·독립 리뷰 | 콘텐츠 hash·manifest·review 증적 보존 |
 | `packages/db/src/ops` | fresh/upgrade·품질·release·backup/restore 검증 | package CLI와 테스트가 직접 실행하는 파일 포함 |
 | `e2e` | Chromium/WebKit·모바일 흐름 및 시각 기준 | 회귀 테스트·snapshot은 운영 기능의 보호 장치 |
@@ -23,7 +25,7 @@
 | `docs/00_overview` | 현재 운영 계약·오류·릴리스·구현 기록 | 현재 안내를 우선; 날짜별 결과는 해당 시점의 증적 |
 | `docs/history` | 현재 문서에서 분리한 과거 상태 | 현재 작업 지시로 사용하지 않음 |
 | `docs/01_n5`–`07_topik` | seed가 읽는 학습 원문·fixture·v1 provenance | 버전이 오래돼도 parser와 checksum 입력이면 보존 |
-| `.codex/skills`, `AGENTS.md` | 후속 Agent 작업 절차 | 운영·출처·품질·릴리스 계약 |
+| `.codex/config.toml`, `.codex/agents`, `.codex/skills`, `AGENTS.md` | 역할별 모델·위임 상한·후속 Agent 절차 | 기본 위임0~1개; 운영·출처·품질·릴리스 계약 |
 | `.github/workflows` | 비활성 Actions placeholder | `workflow_dispatch`, `if: false` 유지 |
 
 재생성 가능한 `dist`, `playwright-report`, `test-results`, `.DS_Store`, `*.tsbuildinfo`는 참조·증적 보존 여부를 확인한 뒤 저장소 밖 휴지통으로 옮긴다. `node_modules`는 현재 실행 의존성이므로 일반 정리 때 제거하지 않는다.

@@ -2,7 +2,7 @@
 
 ## Required reading
 
-Read in this order: `AGENTS.md`, docs index, current state, error ledger, operations runbook, local release ledger, then the relevant code/schema/test. Read content audit/source map/quality references only for content work.
+Read AGENTS and current state first; use the index and task-specific runbook/CI sections as needed. Search relevant incident/release entries instead of reading whole ledgers. Inspect relevant code/schema/test. Content audit/source map/quality references are for content work only. Do not duplicate a parent's completed audit.
 
 ## Modes
 
@@ -20,14 +20,7 @@ Current command/remote evidence outranks code/schema/test, which outranks curren
 
 ## Report format
 
-1. Confirmed current state
-2. Missing or stale evidence
-3. Blocking failures
-4. Changes made
-5. Validation with exit status/counts
-6. Deployment and rollback state
-7. Recommended next safe unit
-8. Files inspected
+Report changes, validation exit/counts, remaining risks and deployment status concisely. Link evidence instead of reproducing logs. Add sections only when material; do not create a report per small tool invocation.
 
 ## Mutation boundaries
 
