@@ -21,6 +21,7 @@ describe('Web Push subscription boundary', () => {
     'https://updates.push.services.mozilla.com/wpush/v2/token',
     'https://web.push.apple.com/token',
     'https://wns2-example.notify.windows.com/?token=synthetic',
+    'https://wns2-example.notify.windows.com/w/?token=synthetic',
   ])('accepts a supported provider endpoint: %s', (endpoint) => {
     expect(isValidPushSubscription(subscription(endpoint))).toBe(true);
   });
@@ -41,8 +42,20 @@ describe('Web Push subscription boundary', () => {
   it('rejects malformed, non-canonical, and wrong-size key material', () => {
     const endpoint = 'https://fcm.googleapis.com/fcm/send/token';
     expect(isValidPushSubscription(subscription(endpoint, { p256dh: b64url(new Uint8Array(65).fill(1)), auth: b64url(new Uint8Array(16)) }))).toBe(false);
-    expect(isValidPushSubscription(subscription(endpoint, { p256dh: b64url(Uint8Array.from([4, ...new Uint8Array(64)])) + '=', auth: b64url(new Uint8Array(16)) }))).toBe(false);
+    expect(isValidPushSubscription(subscription(endpoint, { p256dh: b64url(Uint8Array.from([4, ...new Uint8Array(64)])) + '==', auth: b64url(new Uint8Array(16)) }))).toBe(false);
     expect(isValidPushSubscription(subscription(endpoint, { p256dh: b64url(Uint8Array.from([4, ...new Uint8Array(64)])), auth: b64url(new Uint8Array(15)) }))).toBe(false);
+  });
+
+  it('preserves existing padded standard Base64 and padded Base64url subscriptions', () => {
+    const standard = {
+      p256dh: btoa(String.fromCharCode(4, ...new Uint8Array(64).fill(251))),
+      auth: btoa(String.fromCharCode(...new Uint8Array(16).fill(255))),
+    };
+    expect(isValidPushSubscription(subscription('https://web.push.apple.com/synthetic', standard))).toBe(true);
+    expect(isValidPushSubscription(subscription('https://web.push.apple.com/synthetic', {
+      p256dh: standard.p256dh.replace(/\+/g, '-').replace(/\//g, '_'),
+      auth: standard.auth.replace(/\+/g, '-').replace(/\//g, '_'),
+    }))).toBe(true);
   });
 
   it('does not fetch an invalid stored subscription', async () => {

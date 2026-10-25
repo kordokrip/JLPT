@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { isolateLocalAuthClient } from './auth-helper';
 
 test("Japanese owner explanation is not completion; explicit completion creates one FSRS card", async ({
   page,
@@ -275,6 +276,7 @@ const locale = {
   },
 };
 async function register(page: Page, language: "ko" | "ja") {
+  await isolateLocalAuthClient(page);
   const copy = locale[language];
   await page.goto("/welcome");
   await page.getByRole("combobox").selectOption(language);

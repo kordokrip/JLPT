@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { isolateLocalAuthClient } from './auth-helper';
 
 export const MOCK_TOPIK_STATUS = {
   track: 'topik-ko',
@@ -86,6 +87,7 @@ export async function mockTopikReadApis(page: Page): Promise<void> {
 }
 
 export async function registerTopikUser(page: Page): Promise<void> {
+  await isolateLocalAuthClient(page);
   const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   await page.goto('/welcome', { waitUntil: 'domcontentloaded' });
   // Existing English-content fixtures intentionally retain their original

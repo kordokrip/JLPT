@@ -1,18 +1,19 @@
 import type { PushSubscription } from './push.js';
 
 const MAX_ENDPOINT_LENGTH = 4096;
-const BASE64URL = /^[A-Za-z0-9_-]+$/;
+const BASE64 = /^[A-Za-z0-9+/_-]+={0,2}$/;
 
 function base64urlBytes(value: string): Uint8Array | null {
-  if (!BASE64URL.test(value)) return null;
+  if (!BASE64.test(value)) return null;
   try {
-    const padded = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4);
+    const unpadded = value.replace(/=+$/, '');
+    const padding = '='.repeat((4 - unpadded.length % 4) % 4);
+    const padded = unpadded.replace(/-/g, '+').replace(/_/g, '/') + padding;
     const bytes = Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
-    const canonical = btoa(String.fromCharCode(...bytes))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-    return canonical === value ? bytes : null;
+    const standard = btoa(String.fromCharCode(...bytes));
+    const url = standard.replace(/\+/g, '-').replace(/\//g, '_');
+    // 기존 클라이언트의 padded Base64와 브라우저 JSON의 Base64url 모두 보존한다.
+    return [standard, url, standard.replace(/=+$/, ''), url.replace(/=+$/, '')].includes(value) ? bytes : null;
   } catch {
     return null;
   }
@@ -37,7 +38,7 @@ function allowedEndpoint(value: string): boolean {
     || (host === 'jmt17.google.com' && path.startsWith('/fcm/send/'))
     || (host === 'updates.push.services.mozilla.com' && (path.startsWith('/wpush/v1/') || path.startsWith('/wpush/v2/')))
     || ((host === 'push.apple.com' || host.endsWith('.push.apple.com')) && path.length > 1)
-    || (host.endsWith('.notify.windows.com') && path === '/' && endpoint.search.length > 1)
+    || (host.endsWith('.notify.windows.com') && ['/', '/w/'].includes(path) && endpoint.search.length > 1)
   );
 }
 
@@ -49,8 +50,8 @@ export function isValidPushSubscription(value: unknown): value is PushSubscripti
     typeof subscription.endpoint !== 'string'
     || typeof subscription.p256dh !== 'string'
     || typeof subscription.auth !== 'string'
-    || subscription.p256dh.length !== 87
-    || subscription.auth.length !== 22
+    || subscription.p256dh.length < 87 || subscription.p256dh.length > 88
+    || subscription.auth.length < 22 || subscription.auth.length > 24
     || !allowedEndpoint(subscription.endpoint)
   ) return false;
 

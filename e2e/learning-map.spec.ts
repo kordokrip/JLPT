@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { isolateLocalAuthClient } from './auth-helper';
 
 // Synthetic catalog validates rendering/binding only. Actual session persistence
 // remains covered by learning-experience and reviewed-learning-lessons suites.
 for (const level of ['N5', 'N4', 'N3', 'N2', 'N1', '1', '2', '3', '4', '5', '6']) {
   test(`map renders scoped public catalog and equal navigation: ${level}`, async ({ page }) => {
     test.skip(Boolean(process.env.E2E_BASE_URL), 'Local synthetic UI fixture only');
+    await isolateLocalAuthClient(page);
     await page.setViewportSize({ width: 390, height: 844 });
     const ja = !level.startsWith('N');
     const title = ja ? '予約と変更・〜なので' : '확인 · 의식적인 노력·습관';
@@ -25,7 +27,9 @@ for (const level of ['N5', 'N4', 'N3', 'N2', 'N1', '1', '2', '3', '4', '5', '6']
     await page.getByLabel(ja ? '名前' : '이름', { exact: true }).fill('Map UI fixture');
     await page.getByLabel(ja ? 'メールアドレス' : '이메일', { exact: true }).fill(`map-${crypto.randomUUID()}@example.com`);
     await page.getByLabel(ja ? 'パスワード' : '비밀번호', { exact: true }).fill('Passw0rd1234');
+    const registered = page.waitForResponse(r => r.url().includes('/api/v1/auth/register') && r.request().method() === 'POST');
     await page.getByRole('button', { name: ja ? 'アカウント作成' : '계정 만들기', exact: true }).click();
+    expect((await registered).status()).toBe(201);
     await page.getByLabel(ja ? '目標レベル' : '목표 급수', { exact: true }).selectOption(level);
     await page.getByRole('button', { name: ja ? '保存' : '저장', exact: true }).click();
     const map = page.locator('.learning-map');
