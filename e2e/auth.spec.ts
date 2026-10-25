@@ -42,6 +42,25 @@ test.describe('로그인 온보딩', () => {
     expect(res.headers().location).toContain('https://accounts.google.com/');
   });
 
+  test('반복된 비밀번호 시도는 429로 제한하고 다른 클라이언트의 로그인은 막지 않는다', async ({ request }) => {
+    const email = `rate-${crypto.randomUUID()}@example.test`;
+    let last = 0;
+    for (let attempt = 0; attempt < 31; attempt++) {
+      const response = await request.post('/api/v1/auth/login', {
+        headers: { 'CF-Connecting-IP': `10.250.${Math.floor(Math.random() * 250)}.1` },
+        data: { email, password: 'Synthetic-invalid-password' },
+      });
+      last = response.status();
+      expect([401, 429]).toContain(last);
+    }
+    expect(last).toBe(429);
+    const independent = await request.post('/api/v1/auth/login', {
+      headers: { 'CF-Connecting-IP': '10.251.0.1' },
+      data: { email: `different-${crypto.randomUUID()}@example.test`, password: 'Synthetic-invalid-password' },
+    });
+    expect(independent.status()).toBe(401);
+  });
+
   test('회원가입 후 로그아웃하고 같은 계정으로 다시 로그인할 수 있다', async ({ page }) => {
     const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const email = `login-${unique}@example.com`;
