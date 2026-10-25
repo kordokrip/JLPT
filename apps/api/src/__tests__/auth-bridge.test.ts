@@ -45,6 +45,15 @@ async function request(url: string, cookie?: string) {
 }
 
 describe('Preview cross-origin OAuth bridge (Google provider mocked; local D1)', () => {
+  it('preserves local Vite OAuth start without a proxy-synthesized Origin', async () => {
+    const ctx = createExecutionContext();
+    const response = await app.fetch(new Request('http://127.0.0.1:8788/api/v1/auth/google/start'), {
+      ...previewEnv, ENVIRONMENT: 'test', APP_ORIGIN: 'http://127.0.0.1:4173',
+      GOOGLE_REDIRECT_URI: 'http://127.0.0.1:8788/api/v1/auth/google/callback',
+    }, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(new URL(response.headers.get('location')!).origin).toBe('https://accounts.google.com');
+  });
   it('moves an immutable Preview to the configured app host before setting browser state', async () => {
     const response = await request('https://immutable-preview.example.test/api/v1/auth/google/start?track=topik-ko');
     expect(response.status).toBe(302);

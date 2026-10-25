@@ -352,7 +352,7 @@ auth.get('/auth/google/start', async (c) => {
   const requestedTrack = c.req.query('track') === 'topik-ko' ? 'topik-ko' : 'jlpt-ja';
   const configuredApp = new URL(appOrigin(c)).origin;
   const configuredCallback = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
-  if (new URL(configuredCallback).origin !== configuredApp
+  if (c.env.ENVIRONMENT === 'preview' && new URL(configuredCallback).origin !== configuredApp
     && (c.req.header('Origin') ?? new URL(c.req.url).origin) !== configuredApp) {
     // Hash Preview와 고정 Preview callback의 host-only 쿠키가 갈라지지 않게
     // state를 만들기 전에 설정된 앱 호스트에서 OAuth를 시작한다.
