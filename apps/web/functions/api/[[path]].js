@@ -41,6 +41,17 @@ function previewApiUnavailable() {
 
 export async function onRequest({ request, env = {} }) {
   const sourceUrl = new URL(request.url);
+  // 원래 브라우저 Origin을 확인하기 전에 프록시 Origin으로 덮어쓰지 않는다.
+  const method = request.method.toUpperCase();
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const origin = request.headers.get("Origin");
+    const site = request.headers.get("Sec-Fetch-Site");
+    if ((origin && origin !== sourceUrl.origin)
+      || (!origin && site && site !== "same-origin" && site !== "none")) {
+      return Response.json({ status: 403, title: "Forbidden", detail: "Untrusted request origin" },
+        { status: 403, headers: { "cache-control": "no-store" } });
+    }
+  }
   const apiOrigin = resolveApiOrigin(sourceUrl, env);
   if (!apiOrigin) return previewApiUnavailable();
 
@@ -52,7 +63,6 @@ export async function onRequest({ request, env = {} }) {
   headers.set("x-forwarded-host", sourceUrl.host);
   headers.set("x-forwarded-proto", sourceUrl.protocol.replace(":", ""));
 
-  const method = request.method.toUpperCase();
   const upstreamRequest = new Request(targetUrl, {
     method,
     headers,

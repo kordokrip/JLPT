@@ -28,6 +28,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { apiReference } from '@scalar/hono-api-reference';
 import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
+import { bodyLimit } from 'hono/body-limit';
 
 import type { AppEnv, Env } from './types.js';
 import { contentCacheMiddleware } from './middleware/cache.js';
@@ -65,7 +66,8 @@ import { topikOwnerCurriculumOA } from './routes/topik-owner-curriculum.js';
 import { ownerPrivateTopikOA } from './routes/topik-owner-private.js';
 import { adminSessionAuth } from './lib/auth-session.js';
 import { securityMiddleware } from './middleware/security.js';
-import { syncRateLimit, authRateLimit } from './middleware/rate-limit.js';
+import { syncRateLimit, authRateLimit, loginRateLimit } from './middleware/rate-limit.js';
+import { requestIntent } from './middleware/request-intent.js';
 import { maintenanceMiddleware } from './middleware/maintenance.js';
 import { isD1Error, observabilityMiddleware, routeTemplate } from './middleware/observability.js';
 import { safeErrorName } from './lib/safe-log.js';
@@ -91,6 +93,12 @@ app.use(
   }),
 );
 app.use('/api/*', securityMiddleware);
+app.use('*', requestIntent);
+app.use('/api/v1/auth/*', bodyLimit({ maxSize: 16 * 1024 }));
+app.use('/api/v1/notifications/*', bodyLimit({ maxSize: 16 * 1024 }));
+for (const path of ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/bootstrap-admin']) {
+  app.use(path, loginRateLimit);
+}
 app.use(
   '/api/*',
   cors({

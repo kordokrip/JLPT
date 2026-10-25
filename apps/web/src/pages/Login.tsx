@@ -45,7 +45,7 @@ export default function Login() {
           <p className="mt-2 text-sm text-[var(--muted-foreground)]">{t('study.auth.description')}</p>
           {params.get('error') && (
             <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {t('study.auth.failed')}
+              {t(params.get('error') === 'google_account_link' ? 'study.auth.googleAccountLink' : 'study.auth.failed')}
             </p>
           )}
           {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{t('study.auth.failed')}</p>}

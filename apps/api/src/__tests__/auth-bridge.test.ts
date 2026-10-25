@@ -45,6 +45,15 @@ async function request(url: string, cookie?: string) {
 }
 
 describe('Preview cross-origin OAuth bridge (Google provider mocked; local D1)', () => {
+  it('moves an immutable Preview to the configured app host before setting browser state', async () => {
+    const response = await request('https://immutable-preview.example.test/api/v1/auth/google/start?track=topik-ko');
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe(pagesOrigin + '/api/v1/auth/google/start?track=topik-ko');
+    expect(response.headers.get('set-cookie')).toBeNull();
+    const canonicalStart = await request(response.headers.get('location')!);
+    expect(canonicalStart.headers.get('set-cookie')).toContain('oauth');
+    expect(new URL(canonicalStart.headers.get('location')!).origin).toBe('https://accounts.google.com');
+  });
   it.each(['jlpt-ja', 'topik-ko'] as const)(
     'creates the %s session on the app origin and rejects sequential bridge-token reuse',
     async (track) => {
@@ -77,6 +86,7 @@ describe('Preview cross-origin OAuth bridge (Google provider mocked; local D1)',
       expect(authorization.origin).toBe('https://accounts.google.com');
       expect(authorization.searchParams.get('redirect_uri')).toBe(redirectUri);
       const state = authorization.searchParams.get('state')!;
+      const browserCookie = (start.headers.get('set-cookie') ?? '').split(';')[0]!;
       const stateHash = await sha256Hex(state);
       expect(await db.prepare('SELECT learning_track, consumed_at FROM oauth_states WHERE state_hash=?').bind(stateHash).first())
         .toMatchObject({ learning_track: track, consumed_at: null });
@@ -101,7 +111,29 @@ describe('Preview cross-origin OAuth bridge (Google provider mocked; local D1)',
       expect((await db.prepare('SELECT consumed_at FROM oauth_states WHERE state_hash=?').bind(stateHash).first<{ consumed_at: number }>())?.consumed_at)
         .toBeGreaterThan(0);
 
-      const complete = await request(bridgeUrl.href);
+      for (const wrongCookie of [undefined, 'n3_oauth_state=another-browser']) {
+        const rejected = await request(bridgeUrl.href, wrongCookie);
+        expect(rejected.headers.get('location')).toBe(pagesOrigin + '/login?error=google_callback');
+        expect(rejected.headers.get('set-cookie') ?? '').not.toContain('n3_session=');
+        expect(await db.prepare('SELECT consumed_at FROM oauth_login_tokens WHERE token_hash=?').bind(tokenHash).first())
+          .toEqual({ consumed_at: null });
+      }
+      const forgedUrl = new URL(bridgeUrl);
+      const otherState = 'A'.repeat(32);
+      forgedUrl.searchParams.set('token', token.split('.')[0] + '.' + otherState);
+      const forged = await request(forgedUrl.href, 'n3_oauth_state=' + otherState);
+      expect(forged.headers.get('location')).toBe(pagesOrigin + '/login?error=google_callback');
+      expect(await db.prepare('SELECT consumed_at FROM oauth_login_tokens WHERE token_hash=?').bind(tokenHash).first())
+        .toEqual({ consumed_at: null });
+
+      // Two requests that carry the initiating browser cookie still get exactly
+      // one session: the database must consume the token in one statement.
+      const completions = await Promise.all([
+        request(bridgeUrl.href, browserCookie), request(bridgeUrl.href, browserCookie),
+      ]);
+      const complete = completions.find((response) => response.headers.get('location') === pagesOrigin)!;
+      expect(completions.filter((response) => response.headers.get('location') === pagesOrigin)).toHaveLength(1);
+      expect(complete).toBeDefined();
       expect(complete.status).toBe(302);
       expect(complete.headers.get('location')).toBe(pagesOrigin);
       const cookie = (complete.headers.get('set-cookie') ?? '').match(/(?:^|,\s*)(n3_session=[^;]+)/)?.[1];
@@ -118,7 +150,7 @@ describe('Preview cross-origin OAuth bridge (Google provider mocked; local D1)',
       expect((await db.prepare('SELECT consumed_at FROM oauth_login_tokens WHERE token_hash=?').bind(tokenHash).first<{ consumed_at: number }>())?.consumed_at)
         .toBeGreaterThan(0);
 
-      const replay = await request(bridgeUrl.href);
+      const replay = await request(bridgeUrl.href, browserCookie);
       expect(replay.status).toBe(302);
       expect(replay.headers.get('location')).toBe(pagesOrigin + '/login?error=google_callback');
       expect(replay.headers.get('set-cookie') ?? '').not.toContain('n3_session=');

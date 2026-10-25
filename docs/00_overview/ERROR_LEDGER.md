@@ -1,5 +1,16 @@
 # 오류·회귀 차단 원장
 
+## 2026-10-26 — 인증·요청·출력 보안 경계
+
+- `INC-SEC-129` (로컬 수정, 운영 미배포): 공개 이메일의 관리자 부여, Google 이메일 자동 병합, OAuth 브라우저 증명/소비 경쟁, CSRF, 푸시 임의 URL, 저장형 관리자 출력, 비밀번호 대입 및 로그아웃 실패 은폐를 보강했다. 공유 버킷의 Preview 리포트 경로도 격리한다. 독립 검토에서 찾은 hash Preview OAuth/만료 세션 logout 회귀를 함께 수정한다. 공격은 격리 fixture에서만 검사했다. 상세 증거와 제한은 [보안 보강 기록](SECURITY_HARDENING_2026-10-26.md)에 한 번 기록한다. DB·콘텐츠·음성·FSRS/XP 산정은 변경하지 않는다.
+
+## 2026-10-26 — 찾아보기 탭 클릭 무반응
+
+- `INC-UI-128` (로컬 수정, 운영 미배포): `useBrowse.switchType`에서 새 `/browse/:type`으로 이동한 직후 `setSearchParams`가 이전 렌더의 pathname으로 다시 이동해 탭 전환을 취소했다. 경로와 빈 search를 하나의 `navigate`에 전달하도록 수정했다. 실제 Router·모바일/PC 버튼을 사용하는 회귀7건에서 수정 전7실패→수정 후7통과, 검색/급수 초기화·Back 복원도 확인했다. 기존 브라우저 검사는 각 URL 직접 진입 중심이라 탭 간 실제 클릭 전환을 놓쳤다. `e2e/vocab-search.spec.ts`에 모바일/PC 네 탭의 API 데이터 표시·새로고침·Back 검사를 추가했다. 로그는 `.artifacts/operations/browse-tabs-2026-10-25/`에 보존한다(착수일 기준 폴더). DB·API·음성 변경 없음.
+
+- 위 수정의 브라우저 영향 검사는 Chromium/WebKit×390/1440px 탭 전환과 기존 검색/동음이의어를 합쳐 **12통과·실패/skip/flaky0**이다. 격리 로컬 D1의 실제 API를 사용했으며 운영 계정을 만들지 않았다. 첫 실행의 신규 검사4건은 raw API의 `ja`/`char`와 UI DTO의 `word`/`character`를 혼동해 실패했다. 기존 normalize 계약을 적용한 검사로 재실행했으며 최초8통과/4실패와 실패 캡처는 보존한다. 앱 수정으로 검사 실패를 덮거나 검사 조건을 제거하지 않았다.
+- 웹 전체 단위276건/63파일·typecheck·웹 build 통과. 문서 catalog993경로·링크/lifecycle 및 diff 검사를 통과했다. 이는 로컬 영향 검증이며 새 Preview·Production·가청·전체 배포 gate를 수행한 결과가 아니다. 커밋/push와 운영 배포는 아직 하지 않았다.
+
 ## 2026-10-25 — 문자 설명 열 압축
 
 - `INC-UI-126` (운영 반영): 제한된 본문 안에서 viewport breakpoint 기반 고정 열을 중첩해 문자 설명이 한 글자 폭으로 압축됐다. JLPT/Hangul 공통 컨테이너 반응형 구조로 교체했다. 실제 설명 열 최소 폭·4개 화면 폭·양테마·양언어·Chromium/WebKit 및 기존 학습 동작을 검사했다. 확대 묶음44통과 후 최종 후보 전체303통과/30정책 제외, Preview 문자·재개·가청 확인과 배포 gate를 거쳐 Pages `92c6e58b`에 반영했다. [변경·검사 범위·최초 실패 보존](DETAIL_UI_AUDIT_2026-10-25.md).

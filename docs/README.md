@@ -9,6 +9,7 @@
 | 반복 테스트 계정·안전한 회원 정리 | [QA 계정 운영](00_overview/QA_ACCOUNT_OPERATIONS.md) |
 | 모델·인수인계 | [AGENTS](../AGENTS.md), [인수인계](00_overview/SUB_AGENT_HANDOFF.md) |
 | 오류 재현·실패 이력 | [오류 원장](00_overview/ERROR_LEDGER.md): 해당 ID만 검색 |
+| 계정·요청 보안 보강 후보 | [2026-10-26 보안 검증](00_overview/SECURITY_HARDENING_2026-10-26.md) |
 | 날짜별 변경·릴리스 | [변경 이력](00_overview/CHANGELOG.md), [릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md) |
 | 최신 UI·계정·통계 설계/배포 | [통합 UI 기록](00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md) |
 | 세부 페이지 반응형·문자 연습 개선 | [2026-10-25 후보·Preview UI 감사](00_overview/DETAIL_UI_AUDIT_2026-10-25.md) |

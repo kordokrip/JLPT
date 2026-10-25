@@ -11,6 +11,7 @@ import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, created, badRequest, conflict, notFound } from '../lib/response.js';
 import { sendPushNotification } from '../lib/push.js';
 import { reminderLanguage, reminderPayload } from '../lib/push-reminders.js';
+import { isValidPushSubscription } from '../lib/push-subscription.js';
 
 const notifications = new Hono<AppEnv>();
 notifications.use('*', cfAccessAuth);
@@ -38,6 +39,9 @@ notifications.post('/notifications/subscribe', async (c) => {
 
   if (!body?.endpoint || !body?.p256dh || !body?.auth) {
     return badRequest(c, 'endpoint, p256dh, auth 필드가 필요합니다');
+  }
+  if (!isValidPushSubscription(body)) {
+    return badRequest(c, '유효한 Web Push 구독 정보가 아닙니다');
   }
 
   const userId = c.get('userId');

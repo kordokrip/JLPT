@@ -18,6 +18,7 @@ import {
 } from '../lib/auth-session.js';
 import { safeErrorName } from '../lib/safe-log.js';
 import { googlePicture } from '../lib/account-personalization.js';
+import { equalSecret } from '../lib/secret.js';
 
 const auth = new Hono<AppEnv>();
 
@@ -26,6 +27,7 @@ type UserRow = {
   email: string;
   display_name: string;
   password_hash?: string | null;
+  google_sub?: string | null;
   role: 'user' | 'admin';
   auth_provider: 'password' | 'google' | 'cf-access';
   learning_track: 'jlpt-ja' | 'topik-ko';
@@ -48,6 +50,20 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 1024;
+const MAX_DISPLAY_NAME_LENGTH = 200;
+
+function validEmail(email: string): boolean {
+  return email.length <= MAX_EMAIL_LENGTH && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
+function oversizedAuthFields(body: Record<string, unknown>): boolean {
+  return (typeof body.email === 'string' && body.email.length > MAX_EMAIL_LENGTH)
+    || (typeof body.password === 'string' && body.password.length > MAX_PASSWORD_LENGTH)
+    || (typeof body.display_name === 'string' && body.display_name.length > MAX_DISPLAY_NAME_LENGTH);
+}
+
 async function readBody(c: Context<AppEnv>): Promise<Record<string, unknown>> {
   const body = await c.req.json<unknown>().catch(() => ({}));
   return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
@@ -65,7 +81,7 @@ function publicUser(row: { id: string; email: string; display_name: string; role
 }
 
 function isPasswordStrong(password: string): boolean {
-  return password.length >= 10 && /[A-Za-z]/.test(password) && /\d/.test(password);
+  return password.length >= 10 && password.length <= MAX_PASSWORD_LENGTH && /[A-Za-z]/.test(password) && /\d/.test(password);
 }
 
 async function findUserByEmail(c: Context<AppEnv>, email: string): Promise<UserRow | null> {
@@ -98,24 +114,22 @@ async function consumeOAuthState(c: Context<AppEnv>, state: string): Promise<Use
   const stateHash = await sha256Hex(state);
   const now = Math.floor(Date.now() / 1000);
   const row = await c.env.DB.prepare(
-    `SELECT learning_track
-       FROM oauth_states
+    `UPDATE oauth_states SET consumed_at = ?
       WHERE state_hash = ?
         AND consumed_at IS NULL
         AND expires_at > ?
-      LIMIT 1`,
+      RETURNING learning_track`,
   )
-    .bind(stateHash, now)
+    .bind(now, stateHash, now)
     .first<{ learning_track: UserRow['learning_track'] }>();
   if (!row) return null;
-  await c.env.DB.prepare('UPDATE oauth_states SET consumed_at = ? WHERE state_hash = ?')
-    .bind(now, stateHash)
-    .run();
   return row.learning_track === 'topik-ko' ? 'topik-ko' : 'jlpt-ja';
 }
 
-async function createOAuthBridgeToken(c: Context<AppEnv>, userId: string): Promise<string> {
-  const token = randomToken(32);
+async function createOAuthBridgeToken(c: Context<AppEnv>, userId: string, state: string): Promise<string> {
+  // Hash the whole opaque token so its browser-binding suffix cannot be swapped.
+  // The Pages cookie remains on the initiating host until /auth/complete.
+  const token = `${randomToken(32)}.${state}`;
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
   await c.env.DB.prepare(
@@ -131,51 +145,51 @@ async function consumeOAuthBridgeToken(c: Context<AppEnv>, token: string): Promi
   const tokenHash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
   const row = await c.env.DB.prepare(
-    `SELECT user_id
-       FROM oauth_login_tokens
+    `UPDATE oauth_login_tokens SET consumed_at = ?
       WHERE token_hash = ?
         AND consumed_at IS NULL
         AND expires_at > ?
-      LIMIT 1`,
+      RETURNING user_id`,
   )
-    .bind(tokenHash, now)
+    .bind(now, tokenHash, now)
     .first<{ user_id: string }>();
   if (!row) return null;
-  await c.env.DB.prepare('UPDATE oauth_login_tokens SET consumed_at = ? WHERE token_hash = ?')
-    .bind(now, tokenHash)
-    .run();
   return row.user_id;
 }
+
+class GoogleAccountLinkRequired extends Error {}
 
 async function upsertGoogleUser(
   c: Context<AppEnv>,
   profile: { sub: string; email: string; name: string; picture?: string | null },
 ): Promise<UserRow> {
   const existing = await c.env.DB.prepare(
-    `SELECT id, email, display_name, COALESCE(role, 'user') AS role, auth_provider, learning_track
+    `SELECT id, email, display_name, google_sub, COALESCE(role, 'user') AS role, auth_provider, learning_track
        FROM users
-      WHERE google_sub = ? OR lower(email) = lower(?)
+      WHERE google_sub = ?
       LIMIT 1`,
   )
-    .bind(profile.sub, profile.email)
+    .bind(profile.sub)
     .first<UserRow>();
 
   const now = Math.floor(Date.now() / 1000);
   if (existing) {
     await c.env.DB.prepare(
       `UPDATE users
-          SET google_sub = COALESCE(google_sub, ?),
-              auth_provider = CASE WHEN auth_provider = 'password' THEN auth_provider ELSE 'google' END,
-              display_name = COALESCE(NULLIF(display_name, ''), ?),
+          SET display_name = COALESCE(NULLIF(display_name, ''), ?),
               last_login_at = ?,
               updated_at = ?
         WHERE id = ?`,
     )
-      .bind(profile.sub, profile.name, now, now, existing.id)
+      .bind(profile.name, now, now, existing.id)
       .run();
     await saveGooglePicture(c, existing.id, profile.picture);
     return existing;
   }
+
+  // Email possession alone is not consent to connect an existing password or
+  // another Google account. Preserve all credentials, roles and learning data.
+  if (await findUserByEmail(c, profile.email)) throw new GoogleAccountLinkRequired();
 
   const user: UserRow = {
     id: `google_${profile.sub}`,
@@ -229,8 +243,13 @@ async function fetchGoogleProfile(accessToken: string): Promise<{ sub: string; e
   });
   if (!res.ok) throw new Error(`Google userinfo failed: HTTP ${res.status}`);
   const profile = await res.json<{ sub?: string; email?: string; name?: string; email_verified?: boolean; picture?: string }>();
-  if (!profile.sub || !profile.email || profile.email_verified === false) throw new Error('Google profile is not verified');
-  return { sub: profile.sub, email: profile.email.toLowerCase(), name: profile.name ?? profile.email, picture: googlePicture(profile.picture) };
+  const email = normalizeEmail(profile.email);
+  if (typeof profile.sub !== 'string' || !profile.sub || profile.sub.length > 255
+    || !validEmail(email) || profile.email_verified !== true
+    || (profile.name !== undefined && (typeof profile.name !== 'string' || profile.name.length > MAX_DISPLAY_NAME_LENGTH))) {
+    throw new Error('Google profile is not verified');
+  }
+  return { sub: profile.sub, email, name: profile.name ?? email, picture: googlePicture(profile.picture) };
 }
 
 auth.get('/auth/config', (c) => {
@@ -256,23 +275,24 @@ auth.get('/auth/me', async (c) => {
 
 auth.post('/auth/register', async (c) => {
   const body = await readBody(c);
+  if (oversizedAuthFields(body)) return c.json({ error: '입력값이 너무 깁니다' }, 400);
   const email = normalizeEmail(body.email);
   const password = text(body.password);
   const displayName = text(body.display_name) || email.split('@')[0] || '학습자';
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return c.json({ error: '올바른 이메일을 입력하세요' }, 400);
+  if (!validEmail(email)) return c.json({ error: '올바른 이메일을 입력하세요' }, 400);
+  if (displayName.length > MAX_DISPLAY_NAME_LENGTH) return c.json({ error: '입력값이 너무 깁니다' }, 400);
   if (!isPasswordStrong(password)) return c.json({ error: '비밀번호는 10자 이상이며 영문과 숫자를 포함해야 합니다' }, 400);
 
   const existing = await findUserByEmail(c, email);
   if (existing) return c.json({ error: '이미 가입된 이메일입니다' }, 409);
 
   const now = Math.floor(Date.now() / 1000);
-  const role = email === c.env.ADMIN_EMAIL?.toLowerCase() ? 'admin' : 'user';
   const user: UserRow = {
     id: `user_${randomToken(18)}`,
     email,
     display_name: displayName,
     password_hash: await hashPassword(password),
-    role,
+    role: 'user',
     auth_provider: 'password',
     learning_track: 'jlpt-ja',
   };
@@ -289,6 +309,7 @@ auth.post('/auth/register', async (c) => {
 
 auth.post('/auth/login', async (c) => {
   const body = await readBody(c);
+  if (oversizedAuthFields(body)) return c.json({ error: '입력값이 너무 깁니다' }, 400);
   const email = normalizeEmail(body.email);
   const password = text(body.password);
   const user = await findUserByEmail(c, email);
@@ -307,8 +328,8 @@ auth.post('/auth/login', async (c) => {
 });
 
 auth.post('/auth/logout', appSessionAuth, async (c) => {
-  await recordLoginEvent(c, { userId: c.get('userId'), email: c.get('userEmail'), provider: 'password', eventType: 'logout' });
   await revokeCurrentSession(c);
+  await recordLoginEvent(c, { userId: c.get('userId'), email: c.get('userEmail'), provider: 'password', eventType: 'logout' });
   return c.json({ data: { ok: true } });
 });
 
@@ -329,6 +350,14 @@ auth.get('/auth/google/start', async (c) => {
     return c.json({ error: 'Google 로그인이 아직 설정되지 않았습니다' }, 503);
   }
   const requestedTrack = c.req.query('track') === 'topik-ko' ? 'topik-ko' : 'jlpt-ja';
+  const configuredApp = new URL(appOrigin(c)).origin;
+  const configuredCallback = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
+  if (new URL(configuredCallback).origin !== configuredApp
+    && (c.req.header('Origin') ?? new URL(c.req.url).origin) !== configuredApp) {
+    // Hash Preview와 고정 Preview callback의 host-only 쿠키가 갈라지지 않게
+    // state를 만들기 전에 설정된 앱 호스트에서 OAuth를 시작한다.
+    return c.redirect(`${configuredApp}/api/v1/auth/google/start?track=${requestedTrack}`, 302);
+  }
   const state = randomToken(24);
   setOauthStateCookie(c, state);
   await saveOAuthState(c, state, requestedTrack);
@@ -348,16 +377,22 @@ auth.get('/auth/google/callback', async (c) => {
   const code = c.req.query('code');
   const state = c.req.query('state');
   const expected = readOauthStateCookie(c);
-  clearOauthStateCookie(c);
   const origin = appOrigin(c);
-  if (!code || !state) {
+  const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
+  const crossOriginCallback = new URL(redirectUri).origin !== new URL(origin).origin;
+  if (!code || code.length > 4096 || !state || !/^[A-Za-z0-9_-]{32}$/.test(state)) {
     return c.redirect(`${origin}/login?error=google_state`, 302);
   }
-  const requestedTrack = state ? await consumeOAuthState(c, state) : null;
-  const cookieStateOk = Boolean(state && expected && state === expected);
-  if (!cookieStateOk && !requestedTrack) {
+  // Same-origin callbacks require both proofs. A configured cross-origin
+  // callback cannot see the Pages cookie; defer that proof to /auth/complete.
+  if (!crossOriginCallback && (!expected || state !== expected)) {
     return c.redirect(`${origin}/login?error=google_state`, 302);
   }
+  const requestedTrack = await consumeOAuthState(c, state);
+  if (!requestedTrack) {
+    return c.redirect(`${origin}/login?error=google_state`, 302);
+  }
+  if (!crossOriginCallback) clearOauthStateCookie(c);
   try {
     const token = await tokenExchange(c, code);
     const profile = await fetchGoogleProfile(token.access_token);
@@ -369,14 +404,16 @@ auth.get('/auth/google/callback', async (c) => {
       user.learning_track = requestedTrack;
     }
     await recordLoginEvent(c, { userId: user.id, email: user.email, provider: 'google', eventType: 'google_callback' });
-    const redirectUri = c.env.GOOGLE_REDIRECT_URI || `${apiOrigin(c)}/api/v1/auth/google/callback`;
-    if (new URL(redirectUri).origin !== new URL(origin).origin) {
-      const bridgeToken = await createOAuthBridgeToken(c, user.id);
+    if (crossOriginCallback) {
+      const bridgeToken = await createOAuthBridgeToken(c, user.id, state);
       return c.redirect(`${origin}/api/v1/auth/complete?token=${encodeURIComponent(bridgeToken)}`, 302);
     }
     await createSession(c, user.id);
     return c.redirect(origin, 302);
   } catch (err) {
+    if (err instanceof GoogleAccountLinkRequired) {
+      return c.redirect(`${origin}/login?error=google_account_link`, 302);
+    }
     console.error({ event: 'google_oauth_callback_error', error_name: safeErrorName(err) });
     return c.redirect(`${origin}/login?error=google_callback`, 302);
   }
@@ -385,22 +422,25 @@ auth.get('/auth/google/callback', async (c) => {
 auth.get('/auth/complete', async (c) => {
   const origin = appOrigin(c);
   const token = text(c.req.query('token'));
-  if (!token) return c.redirect(`${origin}/login?error=google_callback`, 302);
+  const binding = /^[A-Za-z0-9_-]{43}\.([A-Za-z0-9_-]{32})$/.exec(token)?.[1];
+  const expected = readOauthStateCookie(c);
+  if (!binding || !expected || binding !== expected) return c.redirect(`${origin}/login?error=google_callback`, 302);
   const userId = await consumeOAuthBridgeToken(c, token);
   if (!userId) return c.redirect(`${origin}/login?error=google_callback`, 302);
   await createSession(c, userId);
+  clearOauthStateCookie(c);
   return c.redirect(origin, 302);
 });
 
 auth.post('/auth/bootstrap-admin', async (c) => {
   const body = await readBody(c);
   const token = text(body.token);
-  if (!c.env.ADMIN_BOOTSTRAP_TOKEN || token !== c.env.ADMIN_BOOTSTRAP_TOKEN) {
+  if (!c.env.ADMIN_BOOTSTRAP_TOKEN || token.length > 1024 || !await equalSecret(c.env.ADMIN_BOOTSTRAP_TOKEN, token)) {
     return c.json({ error: '관리자 초기화 토큰이 올바르지 않습니다' }, 403);
   }
   const email = normalizeEmail(body.email || c.env.ADMIN_EMAIL);
   const password = text(body.password || c.env.ADMIN_PASSWORD);
-  if (!email || !isPasswordStrong(password)) return c.json({ error: '관리자 이메일/비밀번호가 올바르지 않습니다' }, 400);
+  if (oversizedAuthFields(body) || !validEmail(email) || !isPasswordStrong(password)) return c.json({ error: '관리자 이메일/비밀번호가 올바르지 않습니다' }, 400);
 
   const now = Math.floor(Date.now() / 1000);
   const existing = await findUserByEmail(c, email);

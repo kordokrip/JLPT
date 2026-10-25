@@ -70,6 +70,7 @@ export function AccountMenu() {
         : "JPEG, 256 × 256, 128 KiB 이하";
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const authError = useAuthStore((state) => state.error);
   const track = useSettingsStore((state) => state.learningTrack);
   const accent = useSettingsStore((state) => state.accent);
   const [open, setOpen] = useState(false);
@@ -278,14 +279,15 @@ export function AccountMenu() {
                   type="button"
                   className="account-menu-link w-full"
                   onClick={() =>
-                    void logout().then(() =>
-                      navigate("/welcome", { replace: true }),
-                    )
+                    void logout().then((success) => {
+                      if (success) navigate("/welcome", { replace: true });
+                    })
                   }
                 >
                   <LogOut size={17} />
                   {t("nav.logout")}
                 </button>
+                {authError === "logout_failed" && <p role="alert">{t("study.auth.logoutFailed")}</p>}
               </div>
               <p className="mt-3 flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
                 <Camera size={13} /> {photoSpec}

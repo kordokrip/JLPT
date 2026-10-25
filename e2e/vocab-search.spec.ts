@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { ensureAuthenticated } from './auth-helper';
+import { normalizeGrammarContentItem, normalizeKanjiContentItem, normalizeVocabContentItem, type ApiRawContentRecord } from '../packages/shared/src/content-dto';
 
 /**
  * e2e/vocab-search.spec.ts
@@ -91,4 +92,36 @@ test.describe('어휘 검색', () => {
     await expect(page.getByText('紙', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/최종 검토|Last reviewed|最終確認/).first()).toBeVisible();
   });
+
+  for (const width of [390, 1440]) {
+    test(`실제 탭 클릭으로 네 자료 목록과 URL이 함께 전환된다 (${width}px)`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/browse/grammar?q=previous');
+      const cases = [
+        { type: 'vocab', button: /^어휘(?:\s+vocab)?$/, text: (row: ApiRawContentRecord) => normalizeVocabContentItem(row).word },
+        { type: 'kanji', button: /^한자(?:\s+kanji)?$/, text: (row: ApiRawContentRecord) => normalizeKanjiContentItem(row).character },
+        { type: 'homophones', button: /^동음이의어(?:\s+homophones)?$/, text: (row: ApiRawContentRecord) => row.reading },
+        { type: 'grammar', button: /^문법(?:\s+grammar)?$/, text: (row: ApiRawContentRecord) => normalizeGrammarContentItem(row).pattern },
+      ];
+      for (const entry of cases) {
+        // Read the isolated local API, not mocked content or a page-only title.
+        const response = await page.request.get(`/api/v1/${entry.type}?limit=100`);
+        expect(response.ok()).toBe(true);
+        const body = await response.json();
+        expect(body.data.length).toBeGreaterThan(0);
+        const expectedText = entry.text(body.data[0]);
+        expect(typeof expectedText).toBe('string');
+        expect(String(expectedText).length).toBeGreaterThan(0);
+        await page.getByRole('button', { name: entry.button }).click();
+        await expect(page).toHaveURL(new RegExp(`/browse/${entry.type}$`));
+        await expect(page.locator('main article').filter({ hasText: String(expectedText) }).first()).toBeVisible();
+      }
+      await page.reload();
+      await expect(page).toHaveURL(/\/browse\/grammar$/);
+      await expect(page.locator('main article').first()).toBeVisible();
+      await page.goBack();
+      await expect(page).toHaveURL(/\/browse\/homophones$/);
+      await expect(page.getByText(/최종 검토|Last reviewed|最終確認/).first()).toBeVisible();
+    });
+  }
 });

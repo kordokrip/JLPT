@@ -8,6 +8,7 @@
  *   VAPID_PUBLIC_KEY:  base64url(65-byte uncompressed P-256 point)
  *   VAPID_PRIVATE_KEY: base64url(JSON.stringify(full ECDSA P-256 JWK))
  */
+import { isValidPushSubscription } from './push-subscription.js';
 
 // ─── 공개 인터페이스 ───────────────────────────────────────────────────────
 
@@ -203,6 +204,10 @@ export async function sendPushNotification(
   vapidPrivateKey: string,
 ): Promise<{ ok: boolean; status: number; error?: string }> {
   try {
+    // Legacy rows are checked again before parsing keys or making an outbound request.
+    if (!isValidPushSubscription(subscription)) {
+      return { ok: false, status: 0, error: 'Invalid push subscription' };
+    }
     const [authorization, body] = await Promise.all([
       buildVapidAuth(subscription.endpoint, vapidPublicKey, vapidPrivateKey),
       encryptPayload(JSON.stringify(payload), subscription),
@@ -218,8 +223,15 @@ export async function sendPushNotification(
         'Urgency':          'normal',
       },
       body,
+      // Workers does not implement redirect:error. Manual plus an explicit
+      // failure below retains the no-redirect boundary for this endpoint.
+      redirect: 'manual',
+      signal: AbortSignal.timeout(10_000),
     });
 
+    if (res.status >= 300 && res.status < 400) {
+      return { ok: false, status: res.status, error: 'Push service redirect rejected' };
+    }
     if (res.ok || res.status === 201) return { ok: true, status: res.status };
     const text = await res.text().catch(() => '');
     return { ok: false, status: res.status, error: text };

@@ -23,7 +23,7 @@ async function receiver() {
   const publicBytes = new Uint8Array(await crypto.subtle.exportKey('raw', keys.publicKey) as ArrayBuffer);
   const auth = crypto.getRandomValues(new Uint8Array(16));
   return {
-    subscription: { endpoint: 'https://push.example.invalid/send/test', p256dh: encode(publicBytes), auth: encode(auth) },
+    subscription: { endpoint: 'https://fcm.googleapis.com/fcm/send/synthetic-test', p256dh: encode(publicBytes), auth: encode(auth) },
     async decrypt(body: Uint8Array, authentication = auth) {
       expect(body.length).toBeGreaterThan(102);
       expect(new DataView(body.buffer, body.byteOffset, body.byteLength).getUint32(16)).toBe(4096);
@@ -90,6 +90,7 @@ describe('Web Push standards interoperability (synthetic receiver, no real deliv
     expect(request.method).toBe('POST');
     expect(request.headers.get('Content-Encoding')).toBe('aes128gcm');
     expect(request.headers.get('Content-Type')).toBe('application/octet-stream');
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual' });
     expect(await f.ua.decrypt(new Uint8Array(await request.arrayBuffer()))).toEqual(payload);
   });
 

@@ -2,20 +2,20 @@
 
 `pnpm docs:catalog`로 생성합니다. Git 관리 대상과 새 파일 중 ignore되지 않은 현재 파일을 포함하며, 삭제 예정 파일·의존성·빌드·로컬 DB·비밀·증적 원문은 제외합니다.
 
-총 **992개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
+총 **1000개**. 폴더 역할·보존 기준은 [프로젝트 인벤토리](PROJECT_INVENTORY.md)를 참조합니다.
 
 | 분류 | 파일 수 |
 | --- | ---: |
 | Agent 운영 지침 | 21 |
 | API route | 42 |
-| API 공통 서비스 | 22 |
+| API 공통 서비스 | 23 |
 | DB migration 및 snapshot | 42 |
 | DB schema 및 설정 | 4 |
 | DB seed 및 parser | 53 |
 | DB 검증 및 운영 | 180 |
 | GitHub 비활성 설정 | 1 |
 | UI 컴포넌트 | 25 |
-| Worker 진입점 및 설정 | 21 |
+| Worker 진입점 및 설정 | 22 |
 | 공통 API 및 학습 계약 | 21 |
 | 로컬 운영 스크립트 및 테스트 | 34 |
 | 루트 실행 및 정책 | 22 |
@@ -24,8 +24,8 @@
 | 브라우저 시각 기준 | 60 |
 | 브라우저 테스트 및 설정 | 37 |
 | 브랜드 및 PWA 자산 | 18 |
-| 앱 회귀 테스트 | 80 |
-| 운영 문서 | 31 |
+| 앱 회귀 테스트 | 85 |
+| 운영 문서 | 32 |
 | 웹 공통 상태·계약·음성 | 50 |
 | 웹 진입점 및 설정 | 8 |
 | 콘텐츠 증적 및 리뷰 | 82 |
@@ -117,6 +117,7 @@
 - [apps/api/src/lib/motivation.ts](../../apps/api/src/lib/motivation.ts)
 - [apps/api/src/lib/owner-publication.ts](../../apps/api/src/lib/owner-publication.ts)
 - [apps/api/src/lib/push-reminders.ts](../../apps/api/src/lib/push-reminders.ts)
+- [apps/api/src/lib/push-subscription.ts](../../apps/api/src/lib/push-subscription.ts)
 - [apps/api/src/lib/push.ts](../../apps/api/src/lib/push.ts)
 - [apps/api/src/lib/quiz-choice-order.ts](../../apps/api/src/lib/quiz-choice-order.ts)
 - [apps/api/src/lib/quiz-publication.ts](../../apps/api/src/lib/quiz-publication.ts)
@@ -464,6 +465,7 @@
 - [apps/api/src/middleware/maintenance.ts](../../apps/api/src/middleware/maintenance.ts)
 - [apps/api/src/middleware/observability.ts](../../apps/api/src/middleware/observability.ts)
 - [apps/api/src/middleware/rate-limit.ts](../../apps/api/src/middleware/rate-limit.ts)
+- [apps/api/src/middleware/request-intent.ts](../../apps/api/src/middleware/request-intent.ts)
 - [apps/api/src/middleware/security.ts](../../apps/api/src/middleware/security.ts)
 - [apps/api/src/observability-receiver.ts](../../apps/api/src/observability-receiver.ts)
 - [apps/api/src/types.ts](../../apps/api/src/types.ts)
@@ -698,13 +700,17 @@
 
 - [apps/api/src/__tests__/account-personalization.test.ts](../../apps/api/src/__tests__/account-personalization.test.ts)
 - [apps/api/src/__tests__/auth-bridge.test.ts](../../apps/api/src/__tests__/auth-bridge.test.ts)
+- [apps/api/src/__tests__/auth-security.test.ts](../../apps/api/src/__tests__/auth-security.test.ts)
 - [apps/api/src/__tests__/fsrs.test.ts](../../apps/api/src/__tests__/fsrs.test.ts)
 - [apps/api/src/__tests__/learning-insights.test.ts](../../apps/api/src/__tests__/learning-insights.test.ts)
 - [apps/api/src/__tests__/maintenance-background.test.ts](../../apps/api/src/__tests__/maintenance-background.test.ts)
 - [apps/api/src/__tests__/observability-alerts.test.ts](../../apps/api/src/__tests__/observability-alerts.test.ts)
 - [apps/api/src/__tests__/push-encryption.test.ts](../../apps/api/src/__tests__/push-encryption.test.ts)
+- [apps/api/src/__tests__/push-subscription.test.ts](../../apps/api/src/__tests__/push-subscription.test.ts)
 - [apps/api/src/__tests__/reminder-scheduled-time.test.ts](../../apps/api/src/__tests__/reminder-scheduled-time.test.ts)
+- [apps/api/src/__tests__/request-security.test.ts](../../apps/api/src/__tests__/request-security.test.ts)
 - [apps/api/src/__tests__/routes.test.ts](../../apps/api/src/__tests__/routes.test.ts)
+- [apps/api/src/__tests__/stored-output-security.test.ts](../../apps/api/src/__tests__/stored-output-security.test.ts)
 - [apps/api/src/lib/ai-learning-assistance.eval.test.ts](../../apps/api/src/lib/ai-learning-assistance.eval.test.ts)
 - [apps/api/src/lib/ai-learning-assistance.test.ts](../../apps/api/src/lib/ai-learning-assistance.test.ts)
 - [apps/api/src/lib/content-release-control-plane.test.ts](../../apps/api/src/lib/content-release-control-plane.test.ts)
@@ -720,6 +726,7 @@
 - [apps/web/src/components/layout/BottomTabBar.test.tsx](../../apps/web/src/components/layout/BottomTabBar.test.tsx)
 - [apps/web/src/components/layout/learner-layout.test.ts](../../apps/web/src/components/layout/learner-layout.test.ts)
 - [apps/web/src/features/browse/types.test.ts](../../apps/web/src/features/browse/types.test.ts)
+- [apps/web/src/features/browse/useBrowse.test.tsx](../../apps/web/src/features/browse/useBrowse.test.tsx)
 - [apps/web/src/features/character-trainer/CharacterLesson.test.tsx](../../apps/web/src/features/character-trainer/CharacterLesson.test.tsx)
 - [apps/web/src/features/learning/LearnerLessonLibrary.test.tsx](../../apps/web/src/features/learning/LearnerLessonLibrary.test.tsx)
 - [apps/web/src/features/learning/LearningMap.helpers.test.ts](../../apps/web/src/features/learning/LearningMap.helpers.test.ts)
@@ -807,6 +814,7 @@
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-08-30.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-08-30.md)
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-10.md)
 - [docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-14.md](../../docs/00_overview/REPOSITORY_MAINTENANCE_2026-10-14.md)
+- [docs/00_overview/SECURITY_HARDENING_2026-10-26.md](../../docs/00_overview/SECURITY_HARDENING_2026-10-26.md)
 - [docs/00_overview/SUB_AGENT_HANDOFF.md](../../docs/00_overview/SUB_AGENT_HANDOFF.md)
 - [docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md](../../docs/00_overview/TOPIK_GOOGLE_SPEECH_INCIDENT_2026-08-23.md)
 - [docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md](../../docs/00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md)

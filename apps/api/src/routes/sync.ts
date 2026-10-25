@@ -15,13 +15,22 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types.js';
 import { cfAccessAuth } from '../middleware/auth.js';
 import { ok, badRequest } from '../lib/response.js';
-import { syncBodySchema } from '@nihongo-n3/shared';
+import { syncBodySchema, itemTypeSchema, ratingSchema } from '@nihongo-n3/shared';
+import { z } from 'zod';
 import type { SyncOperation } from '@nihongo-n3/shared';
 import { schedule } from '../lib/fsrs.js';
 import type { CardSnapshot } from '../lib/fsrs.js';
 
 const sync = new Hono<AppEnv>();
 sync.use('*', cfAccessAuth);
+
+const reviewPayload = z.object({
+  card_id: z.number().int().positive().optional(),
+  item_type: itemTypeSchema.optional(),
+  item_id: z.number().int().positive().optional(),
+  rating: ratingSchema,
+  response_ms: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable().optional(),
+}).refine(p => p.card_id !== undefined || (p.item_type !== undefined && p.item_id !== undefined));
 
 // ─────────────────────────────────────────────
 // 각 operation 타입 처리
@@ -32,14 +41,8 @@ async function applyReview(
   learningTrack: 'jlpt-ja' | 'topik-ko',
   op: SyncOperation,
 ): Promise<void> {
-  const p = op.payload as {
-    card_id?: number;
-    item_type?: string;
-    item_id?: number;
-    rating?: string;
-    response_ms?: number;
-  };
-  if (!p.rating) return;
+  // 실패한 오프라인 항목은 processed 목록에 넣지 않는다. TS cast는 입력 검증이 아니다.
+  const p = reviewPayload.parse(op.payload);
 
   const hasCardId = typeof p.card_id === 'number' && Number.isFinite(p.card_id);
   const hasItemKey =

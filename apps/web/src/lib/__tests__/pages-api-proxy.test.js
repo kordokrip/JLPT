@@ -1,3 +1,5 @@
+// @vitest-environment node
+// Pages receives server Request headers; happy-dom removes forbidden Origin headers.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,6 +12,23 @@ afterEach(() => {
 });
 
 describe("Pages API proxy isolation", () => {
+  it.each(["https://attacker.test", "null", "https://nihongo-n3.pages.dev.attacker.test"])("rejects browser writes from %s before rewriting Origin", async origin => {
+    const upstream = vi.fn();
+    vi.stubGlobal("fetch", upstream);
+    const response = await onRequest({ request: new Request("https://nihongo-n3.pages.dev/api/v1/auth/logout", {
+      method: "POST", headers: { Origin: origin, Cookie: "__Host-nihongo_session=synthetic" },
+    }) });
+    expect(response.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+  it("rejects cross-site browser writes without Origin and preserves legitimate same-origin writes", async () => {
+    const upstream = vi.fn(async () => Response.json({ ok: true }));
+    vi.stubGlobal("fetch", upstream);
+    const url = "https://nihongo-n3.pages.dev/api/v1/auth/logout";
+    expect((await onRequest({ request: new Request(url, { method: "POST", headers: { "Sec-Fetch-Site": "cross-site" } }) })).status).toBe(403);
+    expect((await onRequest({ request: new Request(url, { method: "POST", headers: { Origin: "https://nihongo-n3.pages.dev" } }) })).status).toBe(200);
+    expect(upstream).toHaveBeenCalledOnce();
+  });
   it("uses the production Worker only on the production Pages hostname", () => {
     expect(
       resolveApiOrigin(new URL("https://nihongo-n3.pages.dev/api/v1/health")),

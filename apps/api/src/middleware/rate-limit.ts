@@ -8,9 +8,30 @@
  */
 import type { Context, Next } from 'hono';
 import type { AppEnv } from '../types.js';
+import { sha256Hex } from '../lib/auth-session.js';
 
 interface RateLimiterBinding {
   limit(opts: { key: string }): Promise<{ success: boolean }>;
+}
+
+// 로그인/가입은 인증 전이므로 사용자 ID 대신 IP와 정규화한 계정의 해시를 제한한다.
+export async function loginRateLimit(c: Context<AppEnv>, next: Next): Promise<Response | void> {
+  if (c.req.method !== 'POST') return next();
+  const limiter = (c.env as unknown as Record<string, unknown>).RATE_LIMITER_SYNC as RateLimiterBinding | undefined;
+  if (!limiter) return next();
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const keys = [`auth-entry:ip:${ip}`];
+  const body = await c.req.raw.clone().json().catch(() => null) as { email?: unknown } | null;
+  if (typeof body?.email === 'string' && body.email.length <= 254) {
+    keys.push(`auth-entry:account:${await sha256Hex(body.email.trim().toLowerCase())}`);
+  }
+  for (const key of keys) {
+    if (!(await limiter.limit({ key })).success) {
+      c.header('Retry-After', '60');
+      return c.json({ status: 429, title: 'Too Many Requests', detail: 'Please retry in one minute.' }, 429);
+    }
+  }
+  return next();
 }
 
 type RateLimiterName =

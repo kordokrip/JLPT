@@ -62,10 +62,10 @@ export function useBrowse() {
   }
 
   function switchType(nextType: ContentType) {
-    navigate(`/browse/${nextType}`);
+    // 강성호 · 2026-10-26: 경로와 검색조건을 한 번에 바꿔 이전 경로로의 재이동을 방지한다.
+    navigate({ pathname: `/browse/${nextType}`, search: '' });
     setLevel(undefined);
     setQuery('');
-    setSearchParams({}, { replace: true });
   }
 
   const items: Array<VocabItem | GrammarItem | KanjiItem | HomophonePairItem> =

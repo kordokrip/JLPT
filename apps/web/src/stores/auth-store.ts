@@ -20,7 +20,7 @@ interface AuthState {
     password: string,
     displayName: string,
   ) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   switchTrack: (track: LearningTrackId) => Promise<boolean>;
 }
 
@@ -111,9 +111,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     invalidateOlderSessionProbes();
-    await authApi.logout().catch(() => undefined);
+    const mutationVersion = authMutationVersion;
+    const owner = get().user?.id;
+    const res = await authApi.logout().catch(() => null);
+    if (mutationVersion !== authMutationVersion || owner !== get().user?.id) return false;
+    if (!res?.ok && res?.status !== 401) {
+      set({ error: "logout_failed" });
+      return false;
+    }
     setActiveLocalUserId(null);
-    set({ status: "anonymous", user: null });
+    set({ status: "anonymous", user: null, error: null });
+    return true;
   },
 
   switchTrack: async (track) => {

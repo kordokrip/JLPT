@@ -30,6 +30,7 @@ export function RootLayout() {
   useAccountPreferences(accountPersonalizationEnabled);
   const user = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.logout);
+  const authError = useAuthStore(s => s.error);
 
   return (
     <div
@@ -79,6 +80,7 @@ export function RootLayout() {
         ].join(' ')}
       >
         {learningExperienceEnabled && <header className="learner-header">{accountPersonalizationEnabled ? <><Link to="/settings" className="learner-header__track"><span className="learner-header__seal" aria-hidden="true" lang={learningTrack==='jlpt-ja'?'ja':'ko'}>{learningTrack==='jlpt-ja'?'あ':'가'}</span><span className="text-[var(--track-accent)]">{learningTrack==='jlpt-ja'?'JLPT':'TOPIK'}</span><span className="learner-header__level">{profile.data?.target_level??''}</span></Link><AccountMenu /></> : <details className="learner-header__legacy"><summary className={studyButton + ' cursor-pointer text-right'}>{t('study.account')}</summary><div className="space-y-4 py-4"><Link to="/settings" className={studyButton + ' inline-flex items-center'}>{t('nav.settings')}</Link>{user?.role === 'admin' && <Link to="/admin/users" className={studyButton + ' ml-2 inline-flex items-center'}>{t('nav.adminUsers')}</Link>}<button className={studyButton + ' ml-2'} onClick={() => void logout()}>{t('nav.logout')}</button></div></details>}</header>}
+        {authError === 'logout_failed' && <p role="alert" className="surface-card mx-4 p-4">{t('study.auth.logoutFailed')}</p>}
         <div className="app-outlet" key={scope}><Outlet /></div>
       </main>
 

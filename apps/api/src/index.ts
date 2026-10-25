@@ -4,7 +4,7 @@ import { handleContentReleaseQueueBatch } from './lib/content-release-control-pl
 import { runPushReminder } from './lib/push-reminders.js';
 import { safeErrorName } from './lib/safe-log.js';
 import { isReadOnlyMaintenance } from './middleware/maintenance.js';
-import { buildWeeklyReport, sendReportEmail } from './routes/admin.js';
+import { buildWeeklyReport, sendReportEmail, weeklyReportKey } from './routes/admin.js';
 import type { Env } from './types.js';
 import { runObservabilityAlerts } from './jobs/observability-alerts.js';
 
@@ -56,7 +56,7 @@ export default {
       if (cron === '0 14 * * 0') {
         try {
           const { markdown, weekLabel } = await buildWeeklyReport(env.DB);
-          const key = `reports/weekly/${weekLabel}.md`;
+          const key = weeklyReportKey(env.ENVIRONMENT, weekLabel);
           await env.REPORTS.put(key, markdown, {
             httpMetadata: { contentType: 'text/markdown; charset=utf-8' },
             customMetadata: { generatedAt: new Date().toISOString() },

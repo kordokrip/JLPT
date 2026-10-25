@@ -30,6 +30,8 @@ const R2_AUDIO_GONE = {
 
 // ── GET /dashboard ──────────────────────────────────────────
 admin.get('/dashboard', async (c) => {
+  c.header('Content-Security-Policy', "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+  c.header('Cache-Control', 'private, no-store');
   const db = c.env.DB;
   const todayStart = Math.floor(
     new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z').getTime() / 1000,
@@ -63,7 +65,7 @@ admin.get('/dashboard', async (c) => {
     .prepare(
       `SELECT COUNT(*) AS cnt
        FROM review_logs
-       WHERE reviewed_at >= ? AND response_ms IS NOT NULL`,
+       WHERE reviewed_at >= ? AND typeof(response_ms) IN ('integer','real') AND response_ms >= 0`,
     )
     .bind(todayStart)
     .first<{ cnt: number }>();
@@ -75,13 +77,14 @@ admin.get('/dashboard', async (c) => {
       .prepare(
         `SELECT response_ms
          FROM review_logs
-         WHERE reviewed_at >= ? AND response_ms IS NOT NULL
+         WHERE reviewed_at >= ? AND typeof(response_ms) IN ('integer','real') AND response_ms >= 0
          ORDER BY response_ms
          LIMIT 1 OFFSET ?`,
       )
       .bind(todayStart, p95Offset)
       .first<{ response_ms: number }>();
-    p95Ms = p95Row?.response_ms ?? null;
+    const value = p95Row?.response_ms;
+    p95Ms = typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
   }
 
   // 활성 카드 수 + FSRS 평균
@@ -121,7 +124,8 @@ admin.get('/dashboard', async (c) => {
   const sparkBars = trend
     .map((r) => {
       const h = Math.round((r.cnt / maxCnt) * 40);
-      return `<div style="width:10px;height:${h}px;background:#E08278;border-radius:2px 2px 0 0;align-self:flex-end" title="${r.day}: ${r.cnt}"></div>`;
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(r.day ?? '') ? r.day : '';
+      return `<div style="width:10px;height:${h}px;background:#E08278;border-radius:2px 2px 0 0;align-self:flex-end" title="${day}: ${Number(r.cnt)}"></div>`;
     })
     .join('');
 
@@ -199,7 +203,7 @@ admin.get('/dashboard', async (c) => {
 
 // ── GET /weekly-report ──────────────────────────────────────
 admin.get('/weekly-report', async (c) => {
-  const reportKey = latestReportKey();
+  const reportKey = weeklyReportKey(c.env.ENVIRONMENT, currentWeekLabel());
 
   const obj = await c.env.REPORTS.get(reportKey);
   if (!obj) {
@@ -219,7 +223,7 @@ admin.get('/weekly-report', async (c) => {
 admin.post('/weekly-report', async (c) => {
   const { markdown, weekLabel } = await buildWeeklyReport(c.env.DB);
 
-  const key = `reports/weekly/${weekLabel}.md`;
+  const key = weeklyReportKey(c.env.ENVIRONMENT, weekLabel);
   await c.env.REPORTS.put(key, markdown, {
     httpMetadata: { contentType: 'text/markdown; charset=utf-8' },
     customMetadata: { generatedAt: new Date().toISOString() },
@@ -243,8 +247,9 @@ function currentWeekLabel(): string {
   return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
-function latestReportKey(): string {
-  return `reports/weekly/${currentWeekLabel()}.md`;
+export function weeklyReportKey(environment: string, weekLabel: string): string {
+  // 공유 버킷에서도 Preview가 운영 리포트를 읽거나 덮어쓰지 않는다. 운영 경로는 유지한다.
+  return environment === 'production' ? `reports/weekly/${weekLabel}.md` : `reports/non-production/${environment}/${weekLabel}.md`;
 }
 
 // ─────────────────────────────────────────────────────────────────

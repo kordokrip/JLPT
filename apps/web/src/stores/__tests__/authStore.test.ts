@@ -39,6 +39,33 @@ function deferred<T>() {
 }
 
 describe("useAuthStore", () => {
+  it("does not clear a newer login when an older logout finishes late", async () => {
+    useAuthStore.setState({ status: "authenticated", user });
+    const pending = deferred<{ ok: true; data: { ok: true } }>();
+    mocks.authApi.logout.mockReturnValueOnce(pending.promise);
+    const logout = useAuthStore.getState().logout();
+    const newer = { ...user, id: 'newer-session-user' };
+    mocks.authApi.login.mockResolvedValueOnce({ ok: true, data: { user: newer } });
+    await useAuthStore.getState().login(user.email, 'Synthetic-password');
+    pending.resolve({ ok: true, data: { ok: true } });
+    expect(await logout).toBe(false);
+    expect(useAuthStore.getState()).toMatchObject({ status: 'authenticated', user: newer });
+  });
+  it("finishes logout when the server confirms that the session already expired or was revoked", async () => {
+    useAuthStore.setState({ status: "authenticated", user });
+    mocks.authApi.logout.mockResolvedValueOnce({ ok: false, status: 401, message: "Unauthorized" });
+    expect(await useAuthStore.getState().logout()).toBe(true);
+    expect(useAuthStore.getState()).toMatchObject({ status: "anonymous", user: null, error: null });
+    expect(mocks.setActiveLocalUserId).toHaveBeenCalledWith(null);
+  });
+  it.each(["http", "network"])("keeps the session and exposes a retryable logout error on %s failure", async failure => {
+    useAuthStore.setState({ status: "authenticated", user });
+    if (failure === "http") mocks.authApi.logout.mockResolvedValueOnce({ ok: false, message: "Unavailable" });
+    else mocks.authApi.logout.mockRejectedValueOnce(new Error("Offline"));
+    expect(await useAuthStore.getState().logout()).toBe(false);
+    expect(useAuthStore.getState()).toMatchObject({ status: "authenticated", user, error: "logout_failed" });
+    expect(mocks.setActiveLocalUserId).not.toHaveBeenCalledWith(null);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useSettingsStore.setState({ learningTrack: "jlpt-ja" });

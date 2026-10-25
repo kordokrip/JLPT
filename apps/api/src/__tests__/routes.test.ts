@@ -221,7 +221,9 @@ describe('quiz withdrawal compatibility', () => {
 async function fetch(path: string, init?: RequestInit) {
   const request = new Request(`http://localhost${path}`, init);
   const ctx = createExecutionContext();
-  const res = await app.fetch(request, env, ctx);
+  // Isolate route semantics from a whole-suite shared IP budget. Throttle rejection is
+  // independently exercised in request-security.test.ts with success/failure bindings.
+  const res = await app.fetch(request, { ...env, RATE_LIMITER_SYNC: { limit: async () => ({ success: true }) } }, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -229,7 +231,7 @@ async function fetch(path: string, init?: RequestInit) {
 async function fetchWithEnv(path: string, testEnv: typeof env, init?: RequestInit) {
   const request = new Request(`https://api.example.test${path}`, init);
   const ctx = createExecutionContext();
-  const res = await app.fetch(request, testEnv, ctx);
+  const res = await app.fetch(request, { ...testEnv, RATE_LIMITER_SYNC: { limit: async () => ({ success: true }) } }, ctx);
   await waitOnExecutionContext(ctx);
   return res;
 }
@@ -264,6 +266,12 @@ async function registerTestSession(role: 'user' | 'admin' = 'user'): Promise<str
   }
 
   return register.headers.get('set-cookie') ?? '';
+}
+
+async function pushFixture(endpoint: string) {
+  const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']) as CryptoKeyPair;
+  const encode = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return { endpoint, p256dh: encode(new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey) as ArrayBuffer)), auth: encode(crypto.getRandomValues(new Uint8Array(16))) };
 }
 
 const OPENAPI_METHODS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'] as const;
@@ -307,7 +315,7 @@ describe('OpenAPI route coverage', () => {
   });
 
   it('protects the admin specification with an application session', async () => {
-    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session', APP_ORIGIN: 'https://nihongo-n3.pages.dev' };
     const publicSpec = await fetchWithEnv('/openapi.json', productionEnv);
     const adminSpec = await fetchWithEnv('/openapi/admin.json', productionEnv);
     expect(publicSpec.status).toBe(200);
@@ -776,7 +784,7 @@ describe('App auth', () => {
 
   it('logs out cleanly with production __Host session cookies', async () => {
     const email = `prod-user-${Date.now()}@example.com`;
-    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session', APP_ORIGIN: 'https://nihongo-n3.pages.dev' };
     const register = await app.fetch(
       new Request('https://api.example.test/api/v1/auth/register', {
         method: 'POST',
@@ -2229,7 +2237,7 @@ describe('POST /api/v1/ai/translate', () => {
   });
 
   it('운영 app-session 모드에서는 세션 없는 요청을 거부한다', async () => {
-    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session' };
+    const productionEnv = { ...env, ENVIRONMENT: 'production', AUTH_MODE: 'app-session', APP_ORIGIN: 'https://nihongo-n3.pages.dev' };
     const res = await fetchWithEnv('/api/v1/ai/translate', productionEnv, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Origin: 'https://nihongo-n3.pages.dev' },
@@ -2584,8 +2592,8 @@ describe('timezone-aware Push reminders', () => {
     const first = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
     const second = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
     const firstUser = await json<{ data: { user: { id: string } } }>('/api/v1/auth/me', { headers: first });
-    const endpoint = `https://push.example.test/owner-${crypto.randomUUID()}`;
-    const body = { endpoint, p256dh: 'test-key', auth: 'test-auth', morningOn: true, notificationLanguage: 'ko' };
+    const endpoint = `https://fcm.googleapis.com/fcm/send/owner-${crypto.randomUUID()}`;
+    const body = { ...await pushFixture(endpoint), morningOn: true, notificationLanguage: 'ko' };
     expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: first, body: JSON.stringify(body) })).status).toBe(201);
     expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: first, body: JSON.stringify(body) })).status).toBe(201);
     expect((await fetch('/api/v1/notifications/subscribe', { method: 'POST', headers: second, body: JSON.stringify({ ...body, notificationLanguage: 'ja' }) })).status).toBe(409);
@@ -2597,10 +2605,10 @@ describe('timezone-aware Push reminders', () => {
   it('keeps a new subscription disabled until the learner explicitly opts in', async () => {
     const db = (env as typeof env & { DB: D1Database }).DB;
     const headers = { Cookie: await registerTestSession(), 'Content-Type': 'application/json' };
-    const endpoint = `https://push.example.test/consent-${crypto.randomUUID()}`;
+    const endpoint = `https://fcm.googleapis.com/fcm/send/consent-${crypto.randomUUID()}`;
     const response = await fetch('/api/v1/notifications/subscribe', {
       method: 'POST', headers,
-      body: JSON.stringify({ endpoint, p256dh: 'test-key', auth: 'test-auth', notificationLanguage: 'ja' }),
+      body: JSON.stringify({ ...await pushFixture(endpoint), notificationLanguage: 'ja' }),
     });
     expect(response.status).toBe(201);
     expect(await db.prepare(
