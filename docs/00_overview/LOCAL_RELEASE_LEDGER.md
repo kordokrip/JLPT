@@ -2,6 +2,8 @@
 
 ## 2026-10-25 — 문자·세부 UI Production 배포 완료
 
+후속 문서·운영 정책 커밋 `d7aae08` push 완료. 런타임/의존성 tree는 배포 source `6ecc203`과 동일하다. clean Git과 원격 branch 동기화, 최종 local40/remote52통과·각각 manifest 경고1/실패0을 확인했다.
+
 후보 `6ecc203ddce31fe373ed17527dafad25f615463e`를 작업 branch에 push하고 **Pages `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`**에 출시했다. canonical https://nihongo-n3.pages.dev, Production branch `main`. 로컬·Preview·사용자 양언어 가청·77표 백업/복원·점검 복귀와 최종 predeploy를 통과했다. 사후188 HTTP/호스트 격리·인증proxy3·canonical392·Worker smoke7 통과. Worker `69cffaa1`, schema0033, 콘텐츠·학습 기록은 유지했다. UI 복귀는 이전 Pages `1d102c82`; DB 복원은 하지 않는다. 검사 실패/수정과 실제 청취 범위는 [출시 감사](DETAIL_UI_AUDIT_2026-10-25.md), 정리는 [유지보수 후속](REPOSITORY_MAINTENANCE_2026-10-14.md)에 보존한다.
 
 ## 2026-10-14 — 재개 안내 모달 Pages 운영 배포 완료

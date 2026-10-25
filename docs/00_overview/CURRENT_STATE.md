@@ -30,7 +30,7 @@ Production은 `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`이다. 위 2026-10-14 절�
 | content source SHA | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 
-D1 일반 테이블77개. Pages Production branch는 `main`, Git 작업 branch는 `feature/topik-product-expansion`. 직전 완료 문서 커밋은 `eae03f4a1475bf3a418604401ea5f39c8a16ce68`이며 runtime SHA와 구분한다. 마지막 릴리스는 점검 off·background writer 복원·학습 저장 활성으로 종료했다.
+D1 일반 테이블77개. Pages Production branch는 `main`, Git 작업 branch는 `feature/topik-product-expansion`. 문서·운영 정책 정리 커밋 `d7aae08`을 push했으며 runtime SHA `6ecc203`과 구분한다. 최종 local40통과/remote52통과, 각각 기존 manifest 경고1/실패0이다. 마지막 릴리스는 점검 off·background writer 복원·학습 저장 활성으로 종료했다.
 
 ## 구현된 제품
 
