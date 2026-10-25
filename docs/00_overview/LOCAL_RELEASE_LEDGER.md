@@ -1,5 +1,13 @@
 # 로컬 형상관리·릴리스 원장
 
+## 2026-10-26 — 보안·찾아보기 Production 배포 완료
+
+`8d57e1b4f177769dd0c0bf2579aa02f9584599d5`를 `feature/topik-product-expansion`에 일반 push하고, clean 별도 worktree에서 Worker **`bdeec858-143b-456b-8fe2-c8ea1e40d055`**와 Pages **`df4bb452-b588-4f57-ba4f-630378d43529`**에 배포했다. canonical https://nihongo-n3.pages.dev, Pages Production branch `main`.
+
+전체 로컬920건·브라우저309통과/30정책 제외/실패0, Preview47항목·86파일 및 실제 Chrome 양언어 종료/Network0·사용자 **두 언어 모두 들림** 확인. 새0033/77표 백업·복원/FK0·데이터 불변·점검 복귀 후 predeploy, Worker→Pages, 사후 HTTP188·canonical392·인증3·Worker smoke7·원격 ledger/R2 guard와 postdeploy gate 통과. maintenance off/queue2개 복원/학습 저장 활성, DB migration·콘텐츠 재시드·음성/FSRS/XP 변경0. 운영 Chrome 종료 각1회는 새로운 사람 가청 또는 운영 Network0 확인과 구분한다.
+
+백업 경로는 `.artifacts/operations/security-hardening-2026-10-26/production-0033-backup-security-20261026-01/`. 복귀는 Worker `69cffaa1-996d-42a7-9080-13c526203e86` → Pages `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`; 이전 Worker의 보안 방어 부재를 기록하고 정상 D1 학습 기록을 복원으로 덮어쓰지 않는다. PATH 실행 실패·이전 문서 ID 불일치와 재검증을 별도 보존했다. 문서 후속 커밋은 같은 branch로 동기화하며 배포 runtime SHA와 구분한다. [상세 변경·검증·제한](SECURITY_HARDENING_2026-10-26.md).
+
 ## 2026-10-25 — 문자·세부 UI Production 배포 완료
 
 후속 문서·운영 정책 커밋 `d7aae08` push 완료. 런타임/의존성 tree는 배포 source `6ecc203`과 동일하다. clean Git과 원격 branch 동기화, 최종 local40/remote52통과·각각 manifest 경고1/실패0을 확인했다.

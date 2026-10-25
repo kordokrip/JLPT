@@ -2,20 +2,20 @@
 
 한국어 사용자의 JLPT 일본어와 일본어 사용자의 TOPIK 한국어를 위한 개인·가족 학습 앱. 오늘 / 학습 / 복습 / 기록 네 메뉴, 학습 지도, quick/daily, FSRS, 메모, 사진 프로필·설정·알림·학습 통계를 제공한다.
 
-갱신: 2026-10-25. [현재 상태](docs/00_overview/CURRENT_STATE.md) · [문서 안내](docs/README.md) · [개발/모델 규칙](AGENTS.md) · [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md).
+갱신: 2026-10-26. [현재 상태](docs/00_overview/CURRENT_STATE.md) · [문서 안내](docs/README.md) · [개발/모델 규칙](AGENTS.md) · [폴더 안내](docs/00_overview/PROJECT_INVENTORY.md).
 
-문자 기초·세부 화면 반응형 개선은 [현재 후보 검사](docs/00_overview/DETAIL_UI_AUDIT_2026-10-25.md)를 참고한다. 코드 push와 운영 배포는 별개이며 아래 표는 마지막 완료 배포다.
+문자 기초·세부 화면 반응형 개선은 [출시 검사](docs/00_overview/DETAIL_UI_AUDIT_2026-10-25.md)를 참고한다. [계정·요청 보안 및 찾아보기 수정](docs/00_overview/SECURITY_HARDENING_2026-10-26.md)은 `8d57e1b`의 로컬·Preview·사용자 가청·새 백업/복원·predeploy 검증 후 Production Worker와 Pages에 반영했다. 아래 표는 실제 운영 배포이며 문서 후속 커밋과 runtime SHA를 구분한다.
 
 ## 마지막 완료 배포
 
 | 항목 | 값 |
 | --- | --- |
 | D1 | nihongo-n3-prod-v2, `0000–0033`, 77표 |
-| Worker | `69cffaa1-996d-42a7-9080-13c526203e86` |
-| Pages | `https://92c6e58b.nihongo-n3.pages.dev`, `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8` |
+| Worker | `bdeec858-143b-456b-8fe2-c8ea1e40d055` |
+| Pages | `https://df4bb452.nihongo-n3.pages.dev`, `df4bb452-b588-4f57-ba4f-630378d43529` |
 | canonical | https://nihongo-n3.pages.dev |
-| Worker source | `78ee09a5ddec3254454fe14f174c03e5051f90d0` |
-| Web source | `6ecc203ddce31fe373ed17527dafad25f615463e` |
+| Worker source | `8d57e1b4f177769dd0c0bf2579aa02f9584599d5` |
+| Web source | `8d57e1b4f177769dd0c0bf2579aa02f9584599d5` |
 | 콘텐츠 source | `3485c6ef8addda3cd3e209730646c296175cf3c9` |
 | manifest | `content-v3-d102868e3d43b9b3c1a4` |
 

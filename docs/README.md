@@ -1,6 +1,6 @@
 # JLPT · TOPIK 문서 안내
 
-갱신: 2026-10-25. 현재 배포·미확인 사항은 [현재 상태](00_overview/CURRENT_STATE.md) 한 곳에서 관리한다. 시작 때 모든 문서를 읽지 않는다.
+갱신: 2026-10-26. 현재 배포·미확인 사항은 [현재 상태](00_overview/CURRENT_STATE.md) 한 곳에서 관리한다. 시작 때 모든 문서를 읽지 않는다.
 
 | 목적 | 문서 |
 | --- | --- |
@@ -9,10 +9,10 @@
 | 반복 테스트 계정·안전한 회원 정리 | [QA 계정 운영](00_overview/QA_ACCOUNT_OPERATIONS.md) |
 | 모델·인수인계 | [AGENTS](../AGENTS.md), [인수인계](00_overview/SUB_AGENT_HANDOFF.md) |
 | 오류 재현·실패 이력 | [오류 원장](00_overview/ERROR_LEDGER.md): 해당 ID만 검색 |
-| 계정·요청 보안 보강 후보 | [2026-10-26 보안 검증](00_overview/SECURITY_HARDENING_2026-10-26.md) |
+| 계정·요청 보안 및 찾아보기 운영 릴리스 | [2026-10-26 보안 검증](00_overview/SECURITY_HARDENING_2026-10-26.md) |
 | 날짜별 변경·릴리스 | [변경 이력](00_overview/CHANGELOG.md), [릴리스 원장](00_overview/LOCAL_RELEASE_LEDGER.md) |
 | 최신 UI·계정·통계 설계/배포 | [통합 UI 기록](00_overview/UNIFIED_FRONTEND_DESIGN_2026-10-14.md) |
-| 세부 페이지 반응형·문자 연습 개선 | [2026-10-25 후보·Preview UI 감사](00_overview/DETAIL_UI_AUDIT_2026-10-25.md) |
+| 세부 페이지 반응형·문자 연습 개선 | [2026-10-25 출시 UI 감사](00_overview/DETAIL_UI_AUDIT_2026-10-25.md) |
 | 공개 600문항·220레슨 출판 | [콘텐츠 릴리스](00_overview/LEARNING_COHORT_RELEASE_2026-10-13.md) |
 | 콘텐츠 수·출처·검수 | [감사](00_overview/CONTENT_AUDIT.md), [원본 지도](00_overview/00_source_map.md), [품질 계약](00_overview/QUESTION_BANK_QUALITY_PIPELINE.md), [출처](ATTRIBUTIONS.md) |
 | 다음 개발 | [로드맵](ROADMAP.md) |

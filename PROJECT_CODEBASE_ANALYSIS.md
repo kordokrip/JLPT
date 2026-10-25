@@ -1,10 +1,10 @@
 # JLPT · TOPIK 코드·DB·API 지도
 
-갱신: 2026-10-25. 개인·가족용 모노레포로 분리된 마이크로서비스/새 운영 플랫폼을 추가할 필요는 없다. 인증·계정 격리·오프라인/재전송·채점·출판 원자성은 작은 앱에서도 높은 위험이다.
+갱신: 2026-10-26. 개인·가족용 모노레포로 분리된 마이크로서비스/새 운영 플랫폼을 추가할 필요는 없다. 인증·계정 격리·오프라인/재전송·채점·출판 원자성은 작은 앱에서도 높은 위험이다.
 
 ## 마지막 완료 배포 기준
 
-D1 `0000–0033`/77표. Worker `69cffaa1-996d-42a7-9080-13c526203e86`, source `78ee09a5ddec3254454fe14f174c03e5051f90d0`. Pages `https://92c6e58b.nihongo-n3.pages.dev`, ID `92c6e58b-f01f-47c6-b1e5-9df9762d3ab8`, web source `6ecc203ddce31fe373ed17527dafad25f615463e`. 콘텐츠 source `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`. [현재 상태](docs/00_overview/CURRENT_STATE.md).
+D1 `0000–0033`/77표. Worker `bdeec858-143b-456b-8fe2-c8ea1e40d055`, Pages `https://df4bb452.nihongo-n3.pages.dev`, ID `df4bb452-b588-4f57-ba4f-630378d43529`. Worker/web source 모두 `8d57e1b4f177769dd0c0bf2579aa02f9584599d5`. 콘텐츠 source `3485c6ef8addda3cd3e209730646c296175cf3c9` / manifest `content-v3-d102868e3d43b9b3c1a4`. [현재 상태](docs/00_overview/CURRENT_STATE.md).
 
 ## 실행 계층
 
@@ -47,7 +47,21 @@ D1 `0000–0033`/77표. Worker `69cffaa1-996d-42a7-9080-13c526203e86`, source `7
 - /notifications: opt-in·기기 권한/구독·예약 구분, 시간대·학습 완료 skip·발송 claim.
 - 오프라인은 pending과 서버 수락을 구분하며 계정 전환 중 도착한 응답/캐시를 격리한다.
 
-## 콘텐츠·음성·운영
+## 운영 보안 코드 계약
+
+다음은 Production에 반영한 `8d57e1b`의 구현이다. 최신 배포 값은 [현재 상태](docs/00_overview/CURRENT_STATE.md)로 확인한다. API·DB 학습 계약과 음성 코어는 바꾸지 않았다.
+
+- `routes/auth.ts`, `lib/auth-session.ts`: 공개 가입은 일반 사용자, Google `sub` 우선 식별과 검증된 이메일, 이메일만 같은 비연결 계정의 자동 병합 금지. OAuth state/bridge는 브라우저 cookie와 결합해 원자적으로 한 번 소비한다. 기존 연결 계정과 비밀번호 로그인은 유지한다.
+- `middleware/request-intent.ts`와 Pages `functions/api/[[path]].js`: 프록시가 Origin을 바꾸기 전에 원래 출처를 검증하고 Worker에서도 독립 검사한다. 운영의 Preview Origin 허용으로 문제를 우회하지 않는다.
+- `middleware/rate-limit.ts`와 `app.ts`: 인증 진입은 기존 바인딩으로 IP·정규화 계정 hash별 제한, 초과 시429/Retry-After60. 인증·알림 본문16KiB 제한. 영구 잠금/CAPTCHA는 추가하지 않는다.
+- `lib/push-subscription.ts`, `lib/push.ts`: 등록과 발송 시 제공자 HTTPS·키 형식/크기를 검사하고 redirect를 거부한다. 기존 padded Base64와 Base64url을 모두 허용하며 재등록/DB 변환은 없다.
+- `routes/sync.ts`, `routes/admin.ts`: 오프라인 review 입력과 과거 duration의 숫자 타입을 검증한다. 관리자 HTML은 실행 차단 CSP를 적용한다. 정상 학습 기록을 삭제하지 않는다.
+- `stores/auth-store.ts`, `AccountMenu`, `RootLayout`: 로그아웃 실패는 재시도 상태로 남기고401은 로컬 해제한다. 계정 전환 뒤 늦게 도착한 응답이 새 계정을 지우지 않게 한다.
+- `features/browse/useBrowse.ts`: 유형 탭은 pathname과 빈 search를 단일 navigate로 갱신한다. 데이터 조회·필터·Back 회귀는 실제 Router 및 브라우저 검사로 유지한다.
+
+발견/검증/제한은 [보안 보강 기록](docs/00_overview/SECURITY_HARDENING_2026-10-26.md)에 통합한다. 이 문서는 모든 의존성·인프라의 취약점 부재를 보증하지 않는다.
+
+## 콘텐츠·음성·운영 계약
 
 600문항/220레슨은 공개 완료다. `learning-cohort-remote.ts`의 stage/publish/verify/withdraw와 정확한5개 release 계약을 사용한다. 실패 초안과 Preview-only 도구를 새 공개 우회에 사용하지 않는다. [원본 지도](docs/00_overview/00_source_map.md), [감사](docs/00_overview/CONTENT_AUDIT.md).
 

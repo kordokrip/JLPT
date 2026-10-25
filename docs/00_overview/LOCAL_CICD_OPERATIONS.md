@@ -1,6 +1,6 @@
 # 로컬 CI/CD — 변경 위험에 맞는 검증
 
-갱신: 2026-10-25. 개인·가족 앱에 별도 기업형 파이프라인을 추가하지 않는다. GitHub Actions는 비활성 placeholder, 기존 pnpm/script와 로컬 증적을 사용한다. 현재 배포는 [CURRENT_STATE](CURRENT_STATE.md), 역사적 실행은 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)이다.
+갱신: 2026-10-26. 개인·가족 앱에 별도 기업형 파이프라인을 추가하지 않는다. GitHub Actions는 비활성 placeholder, 기존 pnpm/script와 로컬 증적을 사용한다. 현재 배포는 [CURRENT_STATE](CURRENT_STATE.md), 역사적 실행은 [릴리스 원장](LOCAL_RELEASE_LEDGER.md)이다.
 
 ## 테스트 선택표
 
@@ -28,6 +28,17 @@
 - Pages HTTP 검사는 canonical의 운영 API 연결과, API_ORIGIN이 없는 비canonical 호스트의503 격리를 구분한다. 격리를 풀어 검사에 맞추지 않는다. verifier 자체의 exclusive 출력 경로와 셸 리다이렉션 로그 경로는 분리한다(`INC-QA-127`).
 
 ## 배포 gate — 생략 금지
+
+### 인증·요청 경계 변경의 영향 검사
+
+- OAuth state/bridge 재사용·cookie 결합·Preview 호스트·기존 계정 연결, 공개 가입 역할, production cookie를 검사한다. Google provider mock과 실제 OAuth 시작/완료를 구분한다.
+- Worker와 Pages 프록시 각각의 외부 Origin/null/Fetch Metadata 차단 및 정상 요청, IP/계정 제한, 로그아웃401/5xx/계정 전환 경쟁을 검사한다.
+- 푸시는 기존 저장 구독을 읽기 전용 대조하고 표준 Base64/Base64url·제공자·redirect 거부를 확인한다. 실제 기기 수신과 발송 수락은 별도다.
+- 합성 사용자 수백 명의 로컬 가입은 `isolateLocalAuthClient`로 IP를 분리한다. 실제 계정 제한은 별도 E2E로 유지하며 제품 limiter를 끄거나 한도를 늘리지 않는다. 운영 가입 시험은 금지한다.
+- 운영 상태의 branch 검사는 원래 branch에서, 앱 build/deploy는 clean release worktree에서 수행한다. detached checkout 또는 보존 증거 부재 때문에 실패한 진단을 앱 장애로 오판하지 않는다.
+- [2026-10-26 후보 증거](SECURITY_HARDENING_2026-10-26.md)를 참조하되 다른 SHA의 통과로 복사하지 않는다. 문서만 달라진 후속 커밋은 runtime source와 구분한다.
+
+### 실행 순서
 
 현재 세션의 명시적 사용자 승인 → clean 후보 SHA 고정 → 최종 로컬 gate → 전용 Preview(해당 기능·기존 학습 회귀) → 실제 Chrome ko/ja lifecycle·사람 가청·Network R2/legacy0 → 현 schema backup/restore와 복귀 대상 → predeploy → 승인 범위 배포 → 사후 verifier/smoke → 점검 해제/저장 확인. 필수 gate 실패 시 다음 단계로 진행하지 않는다.
 

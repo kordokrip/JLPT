@@ -1,10 +1,12 @@
 # Sub Agent 인수인계
 
-갱신: 2026-10-25. 상시 운영 에이전트를 만들지 않는다. 작업이 있을 때만 [AGENTS](../../AGENTS.md)의 역할을 호출한다. 현황은 [CURRENT_STATE](CURRENT_STATE.md), 검증은 [CI/CD](LOCAL_CICD_OPERATIONS.md), 모델 파일은 `.codex/agents/`가 기준이다.
+갱신: 2026-10-26. 상시 운영 에이전트를 만들지 않는다. 작업이 있을 때만 [AGENTS](../../AGENTS.md)의 역할을 호출한다. 현황은 [CURRENT_STATE](CURRENT_STATE.md), 검증은 [CI/CD](LOCAL_CICD_OPERATIONS.md), 모델 파일은 `.codex/agents/`가 기준이다.
 
 현재 출시 검증은 [세부 UI 감사](DETAIL_UI_AUDIT_2026-10-25.md)에 있다. 배포 source `6ecc203`과 문서 후속 커밋을 구분하고 같은 후보의 유효한 전체 테스트를 이유 없이 재실행하지 않는다. 임시 산출물 복구는 [정리 명세](REPOSITORY_MAINTENANCE_2026-10-14.md)를 따르며, 과거 통과를 새 배포 성공으로 기록하지 않는다.
 
 ## 넘길 문맥 — 전체 대화 복제 금지
+
+최신 [보안·찾아보기 릴리스](SECURITY_HARDENING_2026-10-26.md)는 `8d57e1b`, 운영 Worker `bdeec858`/Pages `df4bb452`다. 로컬920·브라우저309/정책제외30·Preview47·사용자 양언어 가청·새77표 backup/restore·predeploy·사후 gate를 완료했다. 다음 작업은 운영 관찰이며 완료된 감사/전체 테스트/배포를 다시 시작하지 않는다. 실제 푸시 수신·Google 제공자 로그인 완료는 별도 미확인 범위다. 같은 후보 증적은 링크하고 새 변경에 필요한 검사만 실행한다. 문서 후속 커밋을 runtime SHA 또는 새로운 운영 배포로 오인하지 않는다.
 
 - 목표와 완료 조건 1~3개
 - 허용 파일/책임, 부모·다른 작업자의 소유 파일
